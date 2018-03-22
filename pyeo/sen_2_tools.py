@@ -1,6 +1,8 @@
 from sentinelsat.sentinel import SentinelAPI, read_geojson, geojson_to_wkt
 import configparser
 import shapefile
+import json
+import tempfile
 
 
 def sen2_json_query(geojson_path, cloud, start_date, end_date, conf):
@@ -18,7 +20,6 @@ def sen2_json_query(geojson_path, cloud, start_date, end_date, conf):
     -------
 
     """
-    #TODO: Support for .shp libraries
     api = SentinelAPI(conf["sen2"]["user"], conf["sen2"]["pass"], 'https://scihub.copernicus.eu/dhus')
     footprint = geojson_to_wkt(read_geojson(geojson_path))
     products = api.query(footprint,
@@ -42,15 +43,30 @@ def shp_to_geojson(shp_path, outpath = None):
     shp_path:
         Path to a shapefile folder
     outpath
-        If not None, saves the geojson to disk
+        Where to save the shapefile
 
     Returns
     -------
-        An open geojson object to be passed along
-    """
-    shp = shapefile.Reader(shp_path)
-    for shape in shp.iterShapes():
+    If outpath is None, a geojson-like dict
 
+    """
+    #Thanks to http://geospatialpython.com/2013/07/shapefile-to-geojson.html
+    shp = shapefile.Reader(shp_path)
+    fields = shp.fields[1:]
+    field_names = [field[0] for field in fields]
+    buffer = []
+    for sr in shp.shapeRecords():
+        atr = dict(zip(field_names, sr.record))
+        geom = sr.shape.__geo_interface__
+        buffer.append(dict(type="Feature", \
+                           geometry=geom, properties=atr))
+
+    if outpath:
+        with open(outpath, "w") as geojson:
+            geojson.write(json.dumps({"type": "FeatureCollection", \
+                                "features": buffer}, indent=2) + "\n")
+    else:
+        return {"type": "FeatureCollection", "features": buffer}
 
 
 if __name__ == "__main__":
