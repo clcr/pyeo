@@ -3,6 +3,7 @@ import configparser
 import shapefile
 import json
 import tempfile
+import os
 
 
 def sen2_json_query(geojson_path, cloud, start_date, end_date, conf):
@@ -27,6 +28,14 @@ def sen2_json_query(geojson_path, cloud, start_date, end_date, conf):
                         cloudcoverpercentage = (0, cloud),
                         date = (start_date, end_date))
     return products
+	
+	
+def sen2_shp_query(shp_path, cloud, start_date, end_date, conf):
+    geojson_dir = tempfile.TemporaryDirectory()
+    with open(os.path.join(geojson_dir.name, 'temp_geojson.json')) as temp_geojson:
+        shp_to_geojson(shp_path, temp_geojson)
+        sen2_json_query(temp_geojson, cloud, start_date, end_date, conf)
+    geojson_dir.cleanup()
 
 
 def sen2_download(products, conf):
@@ -74,7 +83,7 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('conf.ini')
     query = config['query']
-    products = sen2_json_query(geojson_path=query['geojson_path'],
+    products = sen2_shp_query(shp_path=query['shapefile_path'],
                                cloud=query['max_cloud_cover'],
                                start_date=query['start_date'],
                                end_date=query['end_date'],
