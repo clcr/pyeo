@@ -11,7 +11,7 @@ setup(
     description='Modular processing chain from download to ard',
     long_description=open('README.md').read(),
     install_requires=[
-        'Shapely >= 1.6.2',
+        'pyshp >= 1.2.12',
         'sentinelsat >= 0.12.1'
     ],
 )
