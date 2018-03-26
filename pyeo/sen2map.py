@@ -58,8 +58,6 @@ shapefile = 'Sitios_Poly.shp'
 scenedir = 'S2A_MSIL1C_20170413T173821_N0204_R012_T13QDB_20170413T173823.SAFE'
 tiffdir = datadir + scenedir + '/tiff/' # directory where geotiffs are stored
 bands = [5,4,3] # band selection for RGB
-figsizex = 8 # figure width for output maps in inches
-figsizey = 6 # figure height for output maps in inches
 
 #############################################################################
 # FUNCTION DECLARATIONS
@@ -462,6 +460,108 @@ def read_sen2_rgb(rgbfiles, enhance=True):
             rgbdata[i, :, :] = np.uint8(stretch(data)[0])
     return rgbdata
 
+def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
+           plottitle='', figsizex=10, figsizey=10):
+    '''
+    standard map making function that saves a jpeg file of the output
+    and visualises it on screen
+    rgbdata = numpy array of the red, green and blue channels, made by read_sen2rgb
+    tifproj = map projection of the tiff files from which the rgbdata originate
+    mapextent = extent of the map in map coordinates
+    shapefile = shapefile name to be plotted on top of the map
+    shpproj = map projection of the shapefile
+    plotfile = output filename for the map plot
+    plottitle = text to be written above the map
+    figsizex = width of the figure in inches
+    figsizey = height of the figure in inches
+    '''
+    # get shapefile projection from the file
+    # get driver to read a shapefile and open it
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    dataSource = driver.Open(shapefile, 0)
+    if dataSource is None:
+        print('Could not open ' + shapefile)
+        sys.exit(1)  # exit with an error code
+    # get the layer from the shapefile
+    layer = dataSource.GetLayer()
+    # get the projection information and convert to wkt
+    ####################################
+    # most certain that we do not need all this
+    ####################################
+    projsr = layer.GetSpatialRef()
+    projwkt = projsr.ExportToWkt()
+    projosr = osr.SpatialReference()
+    projosr.ImportFromWkt(projwkt)
+    ####################################
+    # convert wkt projection to Cartopy projection
+    projcs = projosr.GetAuthorityCode('PROJCS')
+    shapeproj = ccrs.epsg(projcs)
+
+    # make the figure and the axes
+    subplot_kw = dict(projection=tifproj)
+    fig, ax = plt.subplots(figsize=(figsizex,figsizey),
+                           subplot_kw=subplot_kw)
+
+    # set a margin around the data
+    ax.set_xmargin(0.05)
+    ax.set_ymargin(0.10)
+
+    # add a background image for rendering
+    ax.stock_img()
+
+    # show the data from the geotiff RGB image
+    img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
+                    extent=extent, origin='upper')
+
+    # read shapefile and plot it onto the tiff image map
+    shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
+                            crs=shapeproj, edgecolor='yellow',
+                            facecolor='none')
+    ax.add_feature(shape_feature)
+
+    # add a title
+    plt.title(plottitle)
+
+    # set map extent
+    ax.set_extent(mapextent, tifproj)
+
+    # add coastlines
+    ax.coastlines(resolution='10m', color='navy', linewidth=1)
+
+    # add lakes and rivers
+    ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
+    ax.add_feature(cartopy.feature.RIVERS)
+
+    # add borders
+    BORDERS.scale = '10m'
+    ax.add_feature(BORDERS, color='red')
+
+    # format the gridline positions nicely
+    xticks, yticks = get_gridlines(mapextent[0], mapextent[1],
+                                   mapextent[2], mapextent[3],
+                                   nticks = 10)
+
+    # add gridlines
+    gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks,
+                      linestyle='--', color='grey', alpha=1, linewidth=1)
+
+    # add ticks
+    ax.set_xticks(xticks, crs=tifproj)
+    ax.set_yticks(yticks, crs=tifproj)
+
+    # stagger x gridline / tick labels
+    labels = ax.set_xticklabels(xticks)
+    for i, label in enumerate(labels):
+        label.set_y(label.get_position()[1] - (i % 2) * 0.075)
+
+    # add scale bar
+    scale_bar_left(ax, bars=4, length=40, col='dimgrey')
+
+    # show the map
+    plt.show()
+
+    # save it to a file
+    plt.savefig(plotfile)
 
 #############################################################################
 # MAIN
@@ -536,70 +636,41 @@ rgbdata = read_sen2_rgb(rgbfiles)
 #######################################
 plotfile = 'map1.jpg'
 mapextent = extent
+title = 'Sentinel 2 RGB image'
+map_it(rgbdata, projection, mapextent, wd+shapefile,
+       plotdir+plotfile,
+       plottitle='Sentinel 2 RGB Quicklook',
+       figsizex=10, figsizey=10)
 
-subplot_kw = dict(projection=projection)
-fig, ax = plt.subplots(figsize=(figsizex,figsizey),
-                       subplot_kw=subplot_kw)
+plotfile = 'map2.jpg'
+# need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+mapextent = (extent[0]-(extent[1]-extent[0])*0.5,
+             extent[1]+(extent[1]-extent[0])*0.5,
+             extent[2]-(extent[3]-extent[2])*0.5,
+             extent[3]+(extent[3]-extent[2])*0.5)
+title = 'Sentinel 2 zoom out'
+map_it(rgbdata, projection, mapextent, wd+shapefile,
+       plotdir+plotfile,
+       plottitle='Sentinel 2 RGB Quicklook',
+       figsizex=10, figsizey=10)
 
-# set a margin around the data
-ax.set_xmargin(0.05)
-ax.set_ymargin(0.10)
+plotfile = 'map3.jpg'
+# need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+# zoom in to the upper right corner, for example
+mapextent = (extent[0]+(extent[1]-extent[0])*0.5,
+             extent[1],
+             extent[2]+(extent[3]-extent[2])*0.5,
+             extent[3])
+title = 'Sentinel 2 zoom in'
+map_it(rgbdata, projection, mapextent, wd+shapefile,
+       plotdir+plotfile,
+       plottitle='Sentinel 2 RGB Quicklook',
+       figsizex=10, figsizey=10)
 
-# Put a background image on for nice sea rendering.
-# ax.stock_img()
-
-# show the geotiff RGB image
-img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
-                extent=extent, origin='upper')
-
-# read shapefile and plot it onto the tiff image map
-shape_feature = ShapelyFeature(Reader(wd+shapefile).geometries(),
-                        crs=ccrs.PlateCarree(), edgecolor='yellow',
-                        facecolor='none')
-ax.add_feature(shape_feature)
-
-# to mark a known place on the map:
-#ax.plot(-117.1625, 32.715, 'bo', markersize=7, transform=ccrs.Geodetic())
-#ax.text(-117, 33, 'San Diego', transform=ccrs.Geodetic())
-
-# add a title
-plt.title('Sentinel 2 RGB image')
-
-# set map extent
-ax.set_extent(mapextent, projection)
-
-# add coastlines
-ax.coastlines(resolution='10m', color='navy', linewidth=1)
-
-# add lakes and rivers
-ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
-ax.add_feature(cartopy.feature.RIVERS)
-
-# add borders
-BORDERS.scale = '10m'
-ax.add_feature(BORDERS, color='red')
-
-# format the gridline positions nicely
-xticks, yticks = get_gridlines(extent[0], extent[1], extent[2], extent[3], nticks = 10)
-
-# add gridlines
-gl = ax.gridlines(crs=projection, xlocs=xticks, ylocs=yticks,
-                  linestyle='--', color='grey', alpha=1, linewidth=1)
-
-# add ticks
-ax.set_xticks(xticks, crs=projection)
-ax.set_yticks(yticks, crs=projection)
-
-# stagger x gridline / tick labels
-labels = ax.set_xticklabels(xticks)
-for i, label in enumerate(labels):
-    label.set_y(label.get_position()[1] - (i % 2) * 0.075)
-
-# add scale bar
-scale_bar_left(ax, bars=4, length=40, col='white')
-
-# show the map
-plt.show()
-
-# save it to a file
-plt.savefig(plotdir+plotfile)
+########################
+#
+# need to improve the colour of the scale bar on different background colours
+# or even better, plot the scale bar below the map outside of its boundaries
+#
+#
+########################
