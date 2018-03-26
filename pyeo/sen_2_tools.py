@@ -4,6 +4,7 @@ import shapefile
 import json
 import tempfile
 import os
+import pickle
 
 
 def sen2_json_query(geojson_path, cloud, start_date, end_date, conf):
@@ -19,6 +20,7 @@ def sen2_json_query(geojson_path, cloud, start_date, end_date, conf):
 
     Returns
     -------
+    A dicitonary of products
 
     """
     api = SentinelAPI(conf["sen2"]["user"], conf["sen2"]["pass"], 'https://scihub.copernicus.eu/dhus')
@@ -79,6 +81,10 @@ def shp_to_geojson(shp_path, outpath = None):
     else:
         return {"type": "FeatureCollection", "features": buffer}
 
+def save_query_output(products, filepath = "last_query"):
+    with open(filepath, 'w') as output_file:
+        pickle.dump(products, output_file)
+
 
 def main():
     #TODO Add fine-grained processing control here
@@ -97,6 +103,7 @@ def main():
                                   start_date=query['start_date'],
                                   end_date=query['end_date'],
                                   conf=config)
+    save_query_output(products)
     sen2_download(products, config["data"]["out_folder"])
 
 
