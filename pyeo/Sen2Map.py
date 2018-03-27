@@ -566,10 +566,6 @@ if not os.path.exists(plotdir):
     os.mkdir(plotdir)
 
 ###################################################
-# TODO make geotiff files or use original jpeg files
-###################################################
-
-###################################################
 # get names of all scenes
 ###################################################
 
@@ -647,7 +643,9 @@ for x in range(len(allscenes)):
             print("Creating directory: ", tiffdir)
             os.mkdir(tiffdir)
 
-        # enumerate produces a counter and the contents of the list
+        ###################################################
+        # enumerate produces a counter and the contents of the band list
+        ###################################################
         for i, iband in enumerate(sbands):
 
             # open a band
