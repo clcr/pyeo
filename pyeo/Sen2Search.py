@@ -2,10 +2,8 @@ from sentinelsat.sentinel import SentinelAPI, read_geojson, geojson_to_wkt
 import configparser
 import shapefile
 import json
-import tempfile
 import os
 import pickle
-
 
 def sen2_json_query(geojson_path, cloud, start_date, end_date, conf):
     """
@@ -42,12 +40,6 @@ def sen2_shp_query(shp_path, cloud, start_date, end_date, conf):
     return products
 
 
-def sen2_download(products, conf):
-    # TODO: Specify download location, file resuming.
-    api = SentinelAPI(conf["sen2"]["user"], conf["sen2"]["pass"], 'https://scihub.copernicus.eu/dhus')
-    api.download_all(products, conf["data"]["out_folder"])
-
-
 def shp_to_geojson(shp_path, outpath = None):
     """
     Converts a shapefile's geometry to a Geojson
@@ -81,32 +73,7 @@ def shp_to_geojson(shp_path, outpath = None):
     else:
         return {"type": "FeatureCollection", "features": buffer}
 
+
 def save_query_output(products, filepath = "last_query"):
     with open(filepath, 'w') as output_file:
         pickle.dump(products, output_file)
-
-
-def main():
-    #TODO Add fine-grained processing control here
-    config = configparser.ConfigParser()
-    config.read('conf.ini')
-    query = config['query']
-    if query['aoi_format'] == "shapefile":
-        products = sen2_shp_query(shp_path=query['aoi_path'],
-                                cloud=query['max_cloud_cover'],
-                                start_date=query['start_date'],
-                                end_date=query['end_date'],
-                                conf=config)
-    elif query['aoi_format'] == "geojson":
-        products = sen2_json_query(geojson_path=query['aoi_path'],
-                                  cloud=query['max_cloud_cover'],
-                                  start_date=query['start_date'],
-                                  end_date=query['end_date'],
-                                  conf=config)
-    save_query_output(products)
-    sen2_download(products, config["data"]["out_folder"])
-
-
-if __name__ == "__main__":
-    main()
-
