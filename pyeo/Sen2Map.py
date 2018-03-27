@@ -57,8 +57,7 @@ datadir = wd + 'data/'  # directory of Sentinel data files
 # the shapefile resides in wd
 shapefile = 'Sitios_Poly.shp'
 # define the Sentinel 2 scene ID (this is the directory name)
-scenedir = 'S2A_MSIL1C_20170413T173821_N0204_R012_T13QDB_20170413T173823.SAFE'
-tiffdir = datadir + scenedir + '/tiff/'  # directory where geotiffs are stored
+#scenedir = 'S2A_MSIL1C_20170413T173821_N0204_R012_T13QDB_20170413T173823.SAFE'
 bands = [5, 4, 3]  # band selection for RGB
 
 
@@ -689,97 +688,99 @@ for x in range(len(allscenes)):
         print("Output number of columns = %6d\nOutput number of rows = %6d." \
               % (ncolmax, nrowmax))
 
-###################################################
-# get names of all 10 m resolution geotiff files
-###################################################
+    print("Resampling to 10 m resolution and conversion to Geotiff completed.")
 
-# change working directory
-os.chdir(tiffdir)
+    ###################################################
+    # get names of all 10 m resolution geotiff files
+    ###################################################
 
-# get list of all geotiff filenames
-allfiles = sorted([f for f in os.listdir(tiffdir) if f.endswith('.tif')])
-nfiles = len(allfiles)
-print('\nProcessing %d Geotiff files:' % nfiles)
-for thisfile in allfiles:
-    print(thisfile)
-print('\n\n')
+    # change working directory
+    os.chdir(tiffdir)
 
-###################################################
-# read and plot the selected RGB bands / geotiffs onto a map
-###################################################
+    # get list of all geotiff filenames
+    allfiles = sorted([f for f in os.listdir(tiffdir) if f.endswith('.tif')])
+    nfiles = len(allfiles)
+    print('\nProcessing %d Geotiff files:' % nfiles)
+    for thisfile in allfiles:
+        print(thisfile)
+    print('\n\n')
 
-# identify the filenames of the geotiff files for RGB map display
-rgbfiles = []
-for i in bands:
-    rgbfiles.append(allfiles[i - 1])
-for thisfile in rgbfiles:
-    print(thisfile)
-print('\n\n')
+    ###################################################
+    # read and plot the selected RGB bands / geotiffs onto a map
+    ###################################################
 
-# open the first tiff file with GDAL to get file dimensions
-thisfile = allfiles[0]
-ds = gdal.Open(thisfile)
-data = ds.ReadAsArray()
+    # identify the filenames of the geotiff files for RGB map display
+    rgbfiles = []
+    for i in bands:
+        rgbfiles.append(allfiles[i - 1])
+    for thisfile in rgbfiles:
+        print(thisfile)
+    print('\n\n')
 
-# get the projection information and convert to wkt
-gt = ds.GetGeoTransform()
-proj = ds.GetProjection()
-inproj = osr.SpatialReference()
-inproj.ImportFromWkt(proj)
-print(inproj)
+    # open the first tiff file with GDAL to get file dimensions
+    thisfile = allfiles[0]
+    ds = gdal.Open(thisfile)
+    data = ds.ReadAsArray()
 
-# convert wkt projection to Cartopy projection
-projcs = inproj.GetAuthorityCode('PROJCS')
-projection = ccrs.epsg(projcs)
-print(projection)
+    # get the projection information and convert to wkt
+    gt = ds.GetGeoTransform()
+    proj = ds.GetProjection()
+    inproj = osr.SpatialReference()
+    inproj.ImportFromWkt(proj)
+    print(inproj)
 
-# get the extent of the image
-extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
-          gt[3] + ds.RasterYSize * gt[5], gt[3])
+    # convert wkt projection to Cartopy projection
+    projcs = inproj.GetAuthorityCode('PROJCS')
+    projection = ccrs.epsg(projcs)
+    print(projection)
 
-# read in the three geotiff files
-rgbdata = read_sen2_rgb(rgbfiles)
+    # get the extent of the image
+    extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
+              gt[3] + ds.RasterYSize * gt[5], gt[3])
 
-#######################################
-# make a plot of the tiff file in the image projection
-#######################################
-plotfile = 'map1.jpg'
-mapextent = extent
-title = 'Sentinel 2 RGB image'
-map_it(rgbdata, projection, mapextent, wd + shapefile,
-       plotdir + plotfile,
-       plottitle='Sentinel 2 RGB Quicklook',
-       figsizex=10, figsizey=10)
+    # read in the three geotiff files
+    rgbdata = read_sen2_rgb(rgbfiles)
 
-plotfile = 'map2.jpg'
-# need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-mapextent = (extent[0] - (extent[1] - extent[0]) * 0.5,
-             extent[1] + (extent[1] - extent[0]) * 0.5,
-             extent[2] - (extent[3] - extent[2]) * 0.5,
-             extent[3] + (extent[3] - extent[2]) * 0.5)
-title = 'Sentinel 2 zoom out'
-map_it(rgbdata, projection, mapextent, wd + shapefile,
-       plotdir + plotfile,
-       plottitle='Sentinel 2 RGB Quicklook',
-       figsizex=10, figsizey=10)
+    #######################################
+    # make a plot of the tiff file in the image projection
+    #######################################
+    plotfile = 'map1.jpg'
+    mapextent = extent
+    title = 'Sentinel 2 RGB image'
+    map_it(rgbdata, projection, mapextent, wd + shapefile,
+           plotdir + plotfile,
+           plottitle='Sentinel 2 RGB Quicklook',
+           figsizex=10, figsizey=10)
 
-plotfile = 'map3.jpg'
-# need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-# zoom in to the upper right corner, for example
-mapextent = (extent[0] + (extent[1] - extent[0]) * 0.5,
-             extent[1],
-             extent[2] + (extent[3] - extent[2]) * 0.5,
-             extent[3])
-title = 'Sentinel 2 zoom in'
-map_it(rgbdata, projection, mapextent, wd + shapefile,
-       plotdir + plotfile,
-       plottitle='Sentinel 2 RGB Quicklook',
-       figsizex=10, figsizey=10)
+    plotfile = 'map2.jpg'
+    # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+    mapextent = (extent[0] - (extent[1] - extent[0]) * 0.5,
+                 extent[1] + (extent[1] - extent[0]) * 0.5,
+                 extent[2] - (extent[3] - extent[2]) * 0.5,
+                 extent[3] + (extent[3] - extent[2]) * 0.5)
+    title = 'Sentinel 2 zoom out'
+    map_it(rgbdata, projection, mapextent, wd + shapefile,
+           plotdir + plotfile,
+           plottitle='Sentinel 2 RGB Quicklook',
+           figsizex=10, figsizey=10)
 
-########################
-#
-# TODO need to improve the colour of the scale bar on different background colours
-# TODO or even better, plot the scale bar below the map outside of its boundaries
-#
-#
-########################
+    plotfile = 'map3.jpg'
+    # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+    # zoom in to the upper right corner, for example
+    mapextent = (extent[0] + (extent[1] - extent[0]) * 0.5,
+                 extent[1],
+                 extent[2] + (extent[3] - extent[2]) * 0.5,
+                 extent[3])
+    title = 'Sentinel 2 zoom in'
+    map_it(rgbdata, projection, mapextent, wd + shapefile,
+           plotdir + plotfile,
+           plottitle='Sentinel 2 RGB Quicklook',
+           figsizex=10, figsizey=10)
+
+    ########################
+    #
+    # TODO need to improve the colour of the scale bar on different background colours
+    # TODO or even better, plot the scale bar below the map outside of its boundaries
+    #
+    #
+    ########################
