@@ -65,29 +65,17 @@ bands = [5, 4, 3]  # band selection for RGB
 #############################################################################
 # FUNCTION DECLARATIONS
 #############################################################################
-def func(t, A, K, C):
-    return A * np.exp(-K * t) + C
-
-
-def fit_exp_nonlinear(t, y):
-    opt_parms, parm_cov = optimize.curve_fit(func, t, y, maxfev=15000)
-    A, K, C = opt_parms
-    return A, K, C
-
-
 # define functions to read/write floating point numbers from/to a text file
 def read_floats(filename):
     with open(filename) as f:
         return [float(x) for x in f]
     f.close()
 
-
 def write_floats(data, filename):
     file = open(filename, 'w')
     for item in data:
         file.write("%f\n" % item)
     file.close()
-
 
 def get_gridlines(x0, x1, y0, y1, nticks):
     '''
@@ -270,37 +258,6 @@ def convertXY(xy_source, inproj, outproj):
     yy = xy_target[:, 1].reshape(shape)
     return xx, yy
 
-
-# define a plotting function to make a map, masking out all values < -99
-def do_map(image, lat, lon, parallels, meridians, file, title, zlim):
-    # image = 2D array
-    # lat, lon = arrays of latitude / longitude coordinates (same dimensions as image)
-    # parallels = vector of parralels to be drawn, e.g. np.arange(-90., 99., 30.)
-    # meridians = vector of meridians, e.g. np.arange(-180., 180., 60.)
-    # file = filename including path
-    # title = title string for map
-    # zlim = min and max values for color scale [zmin,zmax]
-    masked_image = ma.masked_less(image, -99)
-    # make the figure
-    fig = plt.figure()
-    ax = fig.add_axes([0.05, 0.05, 0.9, 0.9])
-    # if coastlines not used, set resolution to None to skip continent processing (this speeds things up a bit)
-    mymap = Basemap(projection='kav7', lon_0=0, resolution='c')
-    # color background of map projection region. Missing values over land will show up this color.
-    mymap.drawmapboundary(fill_color="#7777ff")
-    # mymap.fillcontinents(color='slategrey',lake_color='royalblue', alpha=1)
-    mymap.drawlsmask(land_color="chocolate", ocean_color="cornflowerblue", resolution='i')
-    # land_color = "#ddaa66", ocean_color="#7777ff", resolution = 'l')
-    # mymap.bluemarble()
-    im1 = mymap.pcolormesh(lon, lat, masked_image, shading='flat', cmap=plt.cm.jet, vmin=zlim[0], vmax=zlim[1],
-                           latlon=True)
-    mymap.drawparallels(parallels, linewidth=0.5)
-    mymap.drawmeridians(meridians, linewidth=0.5)
-    cb = mymap.colorbar(im1, "bottom", size="5%", pad="2%")
-    ax.set_title(title)
-    mymap.drawcoastlines(linewidth=0.5, color='white')
-    mymap.drawcountries(linewidth=0.5, color='white'), pylab.savefig(file, figsize=(figsizex, figsizey), dpi=300)
-    fig.clf()
 
 
 # This function will convert the rasterized clipper shapefile to a mask for use within GDAL.
@@ -592,18 +549,18 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     plt.savefig(plotfile)
 
 
+
+
 #############################################################################
 # MAIN
 #############################################################################
 
-# set working directory
+# go to working directory
 os.chdir(wd)
 
 ###################################################
-# make plots directory for outputs
-###################################################
-
 # make a 'plots' directory (if it does not exist yet) for map output files
+###################################################
 plotdir = wd + 'plots_' + shapefile.split(".")[0] + "/"
 if not os.path.exists(plotdir):
     print("Creating directory: ", plotdir)
@@ -613,12 +570,127 @@ if not os.path.exists(plotdir):
 # TODO make geotiff files or use original jpeg files
 ###################################################
 
+###################################################
+# get names of all scenes
+###################################################
 
-
-
+# get list of all data subdirectories (one for each image)
+allscenes = [f for f in listdir(datadir) if isdir(join(datadir, f))]
+print('\nProcessing Sentinel-2 scenes:')
+for scene in allscenes:
+    print(scene)
 
 ###################################################
-# get names of all geotiff files
+# resample all Sentinel-2 scenes in the data directory to 10 m
+###################################################
+for x in range(len(allscenes)):
+    if allscenes[x].split(".")[1] == "SAFE":
+        # open the file
+        print("Reading scene", x + 1, ":", allscenes[x])
+
+        # set working directory to the Sentinel scene subdirectory
+        scenedir = datadir + allscenes[x] + "/"
+        os.chdir(scenedir)
+
+        ###################################################
+        # get footprint of the scene from the metadatafile
+        ###################################################
+        # get the list of filenames ending in .xml, but exclude 'INSPIRE.xml'
+        xmlfiles = [f for f in os.listdir(scenedir) if f.endswith('.xml') & (1 - f.startswith('INSPIRE'))]
+        print('Reading footprint from ' + xmlfiles[0])
+        # use the first .xml file in the directory
+        with open(xmlfiles[0]) as f:
+            content = f.readlines()
+        # remove whitespace characters like `\n` at the end of each line
+        content = [x.strip() for x in content]
+        # find the footprint in the metadata
+        footprint = [x for x in content if x.startswith('<EXT_POS_LIST>')]
+        # the first element of the returned list is a string
+        #   so extract the string and split it
+        footprint = footprint[0].split(" ")
+        #   and split off the metadata text
+        footprint[0] = footprint[0].split(">")[1]
+        #   and remove the metadata text at the end of the list
+        footprint = footprint[:-1]
+        # convert the string list to floats
+        footprint = [float(s) for s in footprint]
+        # list slicing to separate lon and lat coordinates: list[start:stop:step]
+        footprinty = footprint[0::2]  # latitudes
+        footprintx = footprint[1::2]  # longitudes
+        print(footprint)
+
+        # set working directory to the Granule subdirectory
+        os.chdir(datadir + allscenes[x] + "/" + "GRANULE" + "/")
+        sdir = listdir()[0]  # only one subdirectory expected in this directory
+
+        # set working directory to the image data subdirectory
+        imgdir = datadir + allscenes[x] + "/" + "GRANULE" + "/" + sdir + "/" + "IMG_DATA" + "/"
+        os.chdir(imgdir)
+
+        ###################################################
+        # get the list of filenames for all bands in .jp2 format
+        ###################################################
+        sbands = sorted([f for f in os.listdir(imgdir) if f.endswith('.jp2')])
+        print('Bands:')
+        for band in sbands:
+            print(band)
+        nbands = len(sbands)  # get the number of bands in the image
+
+        ###################################################
+        # load all bands to get row and column numbers, and resample to 10 m
+        ###################################################
+        ncolmax = nrowmax = 0
+        obands = sbands  # filenames of output tiff files, all at 10 m resolution
+
+        # in the scene directory, make a 'tiff' subdirectory for 10 m Geotiffs
+        tiffdir = scenedir + 'tiff/'
+        if not os.path.exists(tiffdir):
+            print("Creating directory: ", tiffdir)
+            os.mkdir(tiffdir)
+
+        # enumerate produces a counter and the contents of the list
+        for i, iband in enumerate(sbands):
+
+            # open a band
+            bandx = gdal.Open(iband, gdal.GA_Update)
+
+            # get image dimensions
+            ncols = bandx.RasterXSize
+            nrows = bandx.RasterYSize
+
+            # get raster georeferencing information
+            geotrans = bandx.GetGeoTransform()
+            ulx = geotrans[0]  # Upper Left corner coordinate in x
+            uly = geotrans[3]  # Upper Left corner coordinate in y
+            pixelWidth = geotrans[1]  # pixel spacing in map units in x
+            pixelHeight = geotrans[5]  # (negative) pixel spacing in y
+            print("Band %s has %6d columns, %6d rows and a %d m resolution." \
+                  % (iband, ncols, nrows, pixelWidth))
+            # scale factor for resampling to 10 m pixel resolution
+            sf = abs(int(pixelWidth / 10))
+            # determining the maximum number of columns and rows at 10 m
+            ncolmax = max(ncols * sf, ncolmax)
+            nrowmax = max(nrows * sf, nrowmax)
+
+            # resample the 20 m and 40 m images to 10 m and convert to Geotiff
+            if pixelWidth != 999:  # can be removed, is redundant as all images will be converted to GeoTiff
+                print('  Resampling %s image from %d m to 10 m resolution' \
+                      % (iband, pixelWidth))
+                # define the zoom factor in %
+                zf = str(pixelWidth * 10) + '%'
+                # define an output file name
+                obands[i] = iband[:-4] + '_10m.tif'
+                # assemble command line code
+                res_cmd = ['gdal_translate', '-outsize', zf, zf, '-of', 'GTiff',
+                           iband, tiffdir + obands[i]]
+            # save geotiff file at 10 m resolution
+            subprocess.call(res_cmd)
+
+        print("Output number of columns = %6d\nOutput number of rows = %6d." \
+              % (ncolmax, nrowmax))
+
+###################################################
+# get names of all 10 m resolution geotiff files
 ###################################################
 
 # change working directory
