@@ -5,6 +5,8 @@ Created on Sat Mar 24 12:11:00 2018
 @author: Heiko Balzter
 """
 
+
+
 #############################################################################
 # read all Sentinel-2 band geotiffs in a directory and a shape file
 #   and make RGB quicklook maps at different scales
