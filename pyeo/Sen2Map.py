@@ -11,7 +11,7 @@ Created on Sat Mar 24 12:11:00 2018
 # written for Python 3.6.4
 #############################################################################
 
-# TODO IMPORTANT:
+# TODO for John IMPORTANT:
 # When you start the IPython Kernel, type in:
 #   %matplotlib
 # This will launch a graphical user interface (GUI) loop
