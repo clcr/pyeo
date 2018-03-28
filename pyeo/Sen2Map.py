@@ -18,6 +18,7 @@ Created on Sat Mar 24 12:11:00 2018
 
 ########################
 # TODO for Heiko
+# TODO fix RuntimeError: Unable to open EPSG support file gcs.csv.  Try setting the GDAL_DATA environment variable to point to the directory containing EPSG csv files.
 # TODO improve the colour of the scale bar on different background colours
 # TODO plot the scale bar below the map outside of its boundaries
 # TODO add a north arrow
@@ -660,8 +661,9 @@ for x in range(len(allscenes)):
         ###################################################
         # process all the bands to 10 m resolution
         ###################################################
+
+        # enumerate produces a counter and the contents of the band list
         for i, iband in enumerate(sbands):
-            # enumerate produces a counter and the contents of the band list
 
             # open a band
             bandx = gdal.Open(iband, gdal.GA_Update)
