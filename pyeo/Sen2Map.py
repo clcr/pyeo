@@ -692,103 +692,103 @@ for x in range(len(allscenes)):
         print("Output number of columns = %6d\nOutput number of rows = %6d." \
               % (ncolmax, nrowmax))
 
-    print("\n")
-    print("Resampling to 10 m resolution and conversion to Geotiff completed.")
-    print("\n")
+        print("\n")
+        print("Resampling to 10 m resolution and conversion to Geotiff completed.")
+        print("\n")
 
-    ###################################################
-    # Make RGB maps from three Geotiff files
-    ###################################################
+        ###################################################
+        # Make RGB maps from three Geotiff files
+        ###################################################
 
-    print('\n******************************')
-    print('Making maps from Geotiff RGB files')
-    print('******************************'\n)
+        print('\n******************************')
+        print('Making maps from Geotiff RGB files')
+        print('******************************'\n)
 
-    # get names of all 10 m resolution geotiff files
-    os.chdir(tiffdir)
-    allfiles = sorted([f for f in os.listdir(tiffdir) if f.endswith('.tif')])
-    nfiles = len(allfiles)
-    print('\nProcessing %d Geotiff files:' % nfiles)
-    for thisfile in allfiles:
-        print(thisfile)
-    print('\n\n')
+        # get names of all 10 m resolution geotiff files
+        os.chdir(tiffdir)
+        allfiles = sorted([f for f in os.listdir(tiffdir) if f.endswith('.tif')])
+        nfiles = len(allfiles)
+        print('\nProcessing %d Geotiff files:' % nfiles)
+        for thisfile in allfiles:
+            print(thisfile)
+        print('\n\n')
 
-    ###################################################
-    # read and plot the selected RGB bands / geotiffs onto a map
-    ###################################################
+        ###################################################
+        # read and plot the selected RGB bands / geotiffs onto a map
+        ###################################################
 
-    # identify the filenames of the geotiff files for RGB map display
-    rgbfiles = []
-    for i in bands:
-        rgbfiles.append(allfiles[i - 1])
-    for thisfile in rgbfiles:
-        print(thisfile)
-    print('\n\n')
+        # identify the filenames of the geotiff files for RGB map display
+        rgbfiles = []
+        for i in bands:
+            rgbfiles.append(allfiles[i - 1])
+        for thisfile in rgbfiles:
+            print(thisfile)
+        print('\n\n')
 
-    # open the first tiff file with GDAL to get file dimensions
-    thisfile = allfiles[0]
-    ds = gdal.Open(thisfile)
-    data = ds.ReadAsArray()
+        # open the first tiff file with GDAL to get file dimensions
+        thisfile = allfiles[0]
+        ds = gdal.Open(thisfile)
+        data = ds.ReadAsArray()
 
-    # get the projection information and convert to wkt
-    gt = ds.GetGeoTransform()
-    proj = ds.GetProjection()
-    inproj = osr.SpatialReference()
-    inproj.ImportFromWkt(proj)
-    print(inproj)
+        # get the projection information and convert to wkt
+        gt = ds.GetGeoTransform()
+        proj = ds.GetProjection()
+        inproj = osr.SpatialReference()
+        inproj.ImportFromWkt(proj)
+        print(inproj)
 
-    # convert wkt projection to Cartopy projection
-    projcs = inproj.GetAuthorityCode('PROJCS')
-    projection = ccrs.epsg(projcs)
-    print(projection)
+        # convert wkt projection to Cartopy projection
+        projcs = inproj.GetAuthorityCode('PROJCS')
+        projection = ccrs.epsg(projcs)
+        print(projection)
 
-    # get the extent of the image
-    extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
-              gt[3] + ds.RasterYSize * gt[5], gt[3])
+        # get the extent of the image
+        extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
+                  gt[3] + ds.RasterYSize * gt[5], gt[3])
 
-    # read in the three geotiff files
-    rgbdata = read_sen2_rgb(rgbfiles)
+        # read in the three geotiff files
+        rgbdata = read_sen2_rgb(rgbfiles)
 
-    #######################################
-    # make a plot of the tiff file in the image projection
-    #######################################
-    plotfile = 'map1.jpg'
-    mapextent = extent
-    title = 'Sentinel 2 RGB image'
-    map_it(rgbdata, projection, mapextent, wd + shapefile,
-           plotdir + plotfile,
-           plottitle='Sentinel 2 RGB Quicklook',
-           figsizex=10, figsizey=10)
+        #######################################
+        # make a plot of the tiff file in the image projection
+        #######################################
+        plotfile = 'map1.jpg'
+        mapextent = extent
+        title = 'Sentinel 2 RGB image'
+        map_it(rgbdata, projection, mapextent, wd + shapefile,
+               plotdir + plotfile,
+               plottitle='Sentinel 2 RGB Quicklook',
+               figsizex=10, figsizey=10)
 
-    plotfile = 'map2.jpg'
-    # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-    mapextent = (extent[0] - (extent[1] - extent[0]) * 0.5,
-                 extent[1] + (extent[1] - extent[0]) * 0.5,
-                 extent[2] - (extent[3] - extent[2]) * 0.5,
-                 extent[3] + (extent[3] - extent[2]) * 0.5)
-    title = 'Sentinel 2 zoom out'
-    map_it(rgbdata, projection, mapextent, wd + shapefile,
-           plotdir + plotfile,
-           plottitle='Sentinel 2 RGB Quicklook',
-           figsizex=10, figsizey=10)
+        plotfile = 'map2.jpg'
+        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+        mapextent = (extent[0] - (extent[1] - extent[0]) * 0.5,
+                     extent[1] + (extent[1] - extent[0]) * 0.5,
+                     extent[2] - (extent[3] - extent[2]) * 0.5,
+                     extent[3] + (extent[3] - extent[2]) * 0.5)
+        title = 'Sentinel 2 zoom out'
+        map_it(rgbdata, projection, mapextent, wd + shapefile,
+               plotdir + plotfile,
+               plottitle='Sentinel 2 RGB Quicklook',
+               figsizex=10, figsizey=10)
 
-    plotfile = 'map3.jpg'
-    # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-    # zoom in to the upper right corner, for example
-    mapextent = (extent[0] + (extent[1] - extent[0]) * 0.5,
-                 extent[1],
-                 extent[2] + (extent[3] - extent[2]) * 0.5,
-                 extent[3])
-    title = 'Sentinel 2 zoom in'
-    map_it(rgbdata, projection, mapextent, wd + shapefile,
-           plotdir + plotfile,
-           plottitle='Sentinel 2 RGB Quicklook',
-           figsizex=10, figsizey=10)
+        plotfile = 'map3.jpg'
+        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+        # zoom in to the upper right corner, for example
+        mapextent = (extent[0] + (extent[1] - extent[0]) * 0.5,
+                     extent[1],
+                     extent[2] + (extent[3] - extent[2]) * 0.5,
+                     extent[3])
+        title = 'Sentinel 2 zoom in'
+        map_it(rgbdata, projection, mapextent, wd + shapefile,
+               plotdir + plotfile,
+               plottitle='Sentinel 2 RGB Quicklook',
+               figsizex=10, figsizey=10)
 
-    ########################
-    #
-    # TODO need to improve the colour of the scale bar on different background colours
-    # TODO or even better, plot the scale bar below the map outside of its boundaries
-    # TODO manage memory better, script runs out of memory when processing scene 2
-    #
-    ########################
+        ########################
+        #
+        # TODO need to improve the colour of the scale bar on different background colours
+        # TODO or even better, plot the scale bar below the map outside of its boundaries
+        # TODO manage memory better, script runs out of memory when processing scene 2
+        #
+        ########################
