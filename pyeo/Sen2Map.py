@@ -39,7 +39,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 # import mpl_toolkits
 # from mpl_toolkits.basemap import Basemap, shiftgrid, cm
-io.use_plugin('matplotlib')
 import numpy as np
 import os, sys
 from os import listdir
@@ -50,6 +49,7 @@ import pylab
 from skimage import io
 from scipy import stats, optimize, ndimage
 import subprocess
+io.use_plugin('matplotlib')
 
 # The pyplot interface provides 4 commands that are useful for interactive control.
 # plt.isinteractive() returns the interactive setting True|False
@@ -557,8 +557,8 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     plt.savefig(plotfile)
 
     # close the figure to save memory
-    close(fig)
-
+    fig.close()
+    plt.close()
 
 
 #############################################################################
