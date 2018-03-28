@@ -16,6 +16,17 @@ Created on Sat Mar 24 12:11:00 2018
 #   %matplotlib
 # This will launch a graphical user interface (GUI) loop
 
+########################
+# TODO for Heiko
+# TODO improve the colour of the scale bar on different background colours
+# TODO plot the scale bar below the map outside of its boundaries
+# TODO add a north arrow
+# TODO manage memory better, script runs out of memory when processing scene 2, probably due to open figure windows from previous run
+# TODO separate geotiff conversion and 10 m resampling into 2 functions
+# TODO directory management: save outputs to a different subdirectory outside raw scene directory structure
+#
+########################
+
 # import geojson as gj
 # from geojson import Polygon
 # import matplotlib
@@ -785,10 +796,3 @@ for x in range(len(allscenes)):
                plottitle='Sentinel 2 RGB Quicklook',
                figsizex=10, figsizey=10)
 
-        ########################
-        #
-        # TODO need to improve the colour of the scale bar on different background colours
-        # TODO or even better, plot the scale bar below the map outside of its boundaries
-        # TODO manage memory better, script runs out of memory when processing scene 2
-        #
-        ########################
