@@ -13,7 +13,7 @@ Created on Sat Mar 24 12:11:00 2018
 
 # TODO for John IMPORTANT:
 # When you start the IPython Kernel, type in:
-#   %matplotlib inline
+#   %matplotlib
 # This will launch a graphical user interface (GUI) loop
 
 ########################
