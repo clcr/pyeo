@@ -780,5 +780,6 @@ for x in range(len(allscenes)):
     #
     # TODO need to improve the colour of the scale bar on different background colours
     # TODO or even better, plot the scale bar below the map outside of its boundaries
+    # TODO manage memory better, script runs out of memory when processing scene 2
     #
     ########################
