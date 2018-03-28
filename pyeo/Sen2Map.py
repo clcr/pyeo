@@ -34,6 +34,7 @@ import os, sys
 from os import listdir
 from os.path import isfile, isdir, join
 from osgeo import gdal, gdalnumeric, ogr, osr
+import subprocess
 
 gdal.UseExceptions()
 import pylab
@@ -779,6 +780,5 @@ for x in range(len(allscenes)):
     #
     # TODO need to improve the colour of the scale bar on different background colours
     # TODO or even better, plot the scale bar below the map outside of its boundaries
-    #
     #
     ########################
