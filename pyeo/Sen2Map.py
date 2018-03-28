@@ -44,11 +44,11 @@ import os, sys
 from os import listdir
 from os.path import isfile, isdir, join
 from osgeo import gdal, gdalnumeric, ogr, osr
-gdal.UseExceptions()
 import pylab
 from skimage import io
 from scipy import stats, optimize, ndimage
 import subprocess
+gdal.UseExceptions()
 io.use_plugin('matplotlib')
 
 # The pyplot interface provides 4 commands that are useful for interactive control.
@@ -581,7 +581,7 @@ if not os.path.exists(plotdir):
 
 # get list of all data subdirectories (one for each image)
 allscenes = [f for f in listdir(datadir) if isdir(join(datadir, f))]
-print('\nProcessing Sentinel-2 scenes:')
+print('\nList of Sentinel-2 scenes:')
 for scene in allscenes:
     print(scene)
 print('\n')
