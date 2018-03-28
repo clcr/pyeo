@@ -22,7 +22,6 @@ Created on Sat Mar 24 12:11:00 2018
 # TODO improve the colour of the scale bar on different background colours
 # TODO plot the scale bar below the map outside of its boundaries
 # TODO add a north arrow
-# TODO manage memory better, script runs out of memory when processing scene 2, probably due to open figure windows from previous run
 # TODO separate geotiff conversion and 10 m resampling into 2 functions
 # TODO directory management: save outputs to a different subdirectory outside raw scene directory structure
 ########################
