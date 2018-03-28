@@ -470,6 +470,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     figsizex = width of the figure in inches
     figsizey = height of the figure in inches
     '''
+
     # get shapefile projection from the file
     # get driver to read a shapefile and open it
     driver = ogr.GetDriverByName('ESRI Shapefile')
@@ -477,17 +478,15 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     if dataSource is None:
         print('Could not open ' + shapefile)
         sys.exit(1)  # exit with an error code
+
     # get the layer from the shapefile
     layer = dataSource.GetLayer()
+
     # get the projection information and convert to wkt
-    ####################################
-    # most certain that we do not need all this
-    ####################################
     projsr = layer.GetSpatialRef()
     projwkt = projsr.ExportToWkt()
     projosr = osr.SpatialReference()
     projosr.ImportFromWkt(projwkt)
-    ####################################
     # convert wkt projection to Cartopy projection
     projcs = projosr.GetAuthorityCode('PROJCS')
     shapeproj = ccrs.epsg(projcs)
@@ -556,7 +555,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     plt.show()
 
     # save it to a file
-    plt.savefig(plotfile)
+    fig.savefig(plotfile)
 
 
 #############################################################################
