@@ -768,36 +768,36 @@ for x in range(len(allscenes)):
         #######################################
         # make a plot of the tiff file in the image projection
         #######################################
-        plotfile = 'map1.jpg'
+        plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
+        title = allscenes[x].split('.')[0]
         mapextent = extent
-        title = 'Sentinel 2 RGB image'
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
-               plottitle='Sentinel 2 RGB Quicklook',
+               plottitle=title,
                figsizex=10, figsizey=10)
 
-        plotfile = 'map2.jpg'
+        plotfile = allscenes[x].split('.')[0] + '_map2.jpg'
+        title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
         mapextent = (extent[0] - (extent[1] - extent[0]) * 0.5,
                      extent[1] + (extent[1] - extent[0]) * 0.5,
                      extent[2] - (extent[3] - extent[2]) * 0.5,
                      extent[3] + (extent[3] - extent[2]) * 0.5)
-        title = 'Sentinel 2 zoom out'
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
-               plottitle='Sentinel 2 RGB Quicklook',
+               plottitle=title,
                figsizex=10, figsizey=10)
 
-        plotfile = 'map3.jpg'
+        plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
+        title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
         # zoom in to the upper right corner, for example
         mapextent = (extent[0] + (extent[1] - extent[0]) * 0.5,
                      extent[1],
                      extent[2] + (extent[3] - extent[2]) * 0.5,
                      extent[3])
-        title = 'Sentinel 2 zoom in'
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
-               plottitle='Sentinel 2 RGB Quicklook',
+               plottitle=title,
                figsizex=10, figsizey=10)
 
