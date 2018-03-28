@@ -575,6 +575,7 @@ allscenes = [f for f in listdir(datadir) if isdir(join(datadir, f))]
 print('\nProcessing Sentinel-2 scenes:')
 for scene in allscenes:
     print(scene)
+print('\n')
 
 ###################################################
 # resample all Sentinel-2 scenes in the data directory to 10 m
@@ -582,7 +583,9 @@ for scene in allscenes:
 for x in range(len(allscenes)):
     if allscenes[x].split(".")[1] == "SAFE":
         # open the file
+        print('\n******************************')
         print("Reading scene", x + 1, ":", allscenes[x])
+        print('******************************'\n)
 
         # set working directory to the Sentinel scene subdirectory
         scenedir = datadir + allscenes[x] + "/"
@@ -593,7 +596,7 @@ for x in range(len(allscenes)):
         ###################################################
         # get the list of filenames ending in .xml, but exclude 'INSPIRE.xml'
         xmlfiles = [f for f in os.listdir(scenedir) if f.endswith('.xml') & (1 - f.startswith('INSPIRE'))]
-        print('Reading footprint from ' + xmlfiles[0])
+        #print('Reading footprint from ' + xmlfiles[0])
         # use the first .xml file in the directory
         with open(xmlfiles[0]) as f:
             content = f.readlines()
@@ -613,7 +616,7 @@ for x in range(len(allscenes)):
         # list slicing to separate lon and lat coordinates: list[start:stop:step]
         footprinty = footprint[0::2]  # latitudes
         footprintx = footprint[1::2]  # longitudes
-        print(footprint)
+        #print(footprint)
 
         # set working directory to the Granule subdirectory
         os.chdir(datadir + allscenes[x] + "/" + "GRANULE" + "/")
@@ -631,6 +634,7 @@ for x in range(len(allscenes)):
         for band in sbands:
             print(band)
         nbands = len(sbands)  # get the number of bands in the image
+        print('\n')
 
         ###################################################
         # load all bands to get row and column numbers, and resample to 10 m
@@ -645,9 +649,10 @@ for x in range(len(allscenes)):
             os.mkdir(tiffdir)
 
         ###################################################
-        # enumerate produces a counter and the contents of the band list
+        # process all the bands to 10 m resolution
         ###################################################
         for i, iband in enumerate(sbands):
+            # enumerate produces a counter and the contents of the band list
 
             # open a band
             bandx = gdal.Open(iband, gdal.GA_Update)
@@ -672,7 +677,7 @@ for x in range(len(allscenes)):
 
             # resample the 20 m and 40 m images to 10 m and convert to Geotiff
             if pixelWidth != 999:  # can be removed, is redundant as all images will be converted to GeoTiff
-                print('  Resampling %s image from %d m to 10 m resolution' \
+                print('  Resampling %s image from %d m to 10 m resolution and converting to Geotiff' \
                       % (iband, pixelWidth))
                 # define the zoom factor in %
                 zf = str(pixelWidth * 10) + '%'
@@ -687,16 +692,20 @@ for x in range(len(allscenes)):
         print("Output number of columns = %6d\nOutput number of rows = %6d." \
               % (ncolmax, nrowmax))
 
+    print("\n")
     print("Resampling to 10 m resolution and conversion to Geotiff completed.")
+    print("\n")
 
     ###################################################
+    # Make RGB maps from three Geotiff files
+    ###################################################
+
+    print('\n******************************')
+    print('Making maps from Geotiff RGB files')
+    print('******************************'\n)
+
     # get names of all 10 m resolution geotiff files
-    ###################################################
-
-    # change working directory
     os.chdir(tiffdir)
-
-    # get list of all geotiff filenames
     allfiles = sorted([f for f in os.listdir(tiffdir) if f.endswith('.tif')])
     nfiles = len(allfiles)
     print('\nProcessing %d Geotiff files:' % nfiles)
