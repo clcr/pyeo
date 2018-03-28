@@ -556,6 +556,8 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # save it to a file
     plt.savefig(plotfile)
 
+    # close the figure to save memory
+    close(fig)
 
 
 
