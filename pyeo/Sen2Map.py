@@ -585,7 +585,7 @@ for x in range(len(allscenes)):
         # open the file
         print('\n******************************')
         print("Reading scene", x + 1, ":", allscenes[x])
-        print('******************************'\n)
+        print('******************************\n')
 
         # set working directory to the Sentinel scene subdirectory
         scenedir = datadir + allscenes[x] + "/"
@@ -702,7 +702,7 @@ for x in range(len(allscenes)):
 
         print('\n******************************')
         print('Making maps from Geotiff RGB files')
-        print('******************************'\n)
+        print('******************************\n')
 
         # get names of all 10 m resolution geotiff files
         os.chdir(tiffdir)
