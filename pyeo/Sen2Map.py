@@ -451,6 +451,8 @@ def read_sen2_rgb(rgbfiles, enhance=True):
             # histogram stretching and keeping the values in
             #   the RGB data array as 8 bit unsigned integers
             rgbdata[i, :, :] = np.uint8(stretch(data)[0])
+
+        ds = None
     return rgbdata
 
 
@@ -748,9 +750,6 @@ for x in range(len(allscenes)):
         inproj.ImportFromWkt(proj)
         print(inproj)
 
-        # close the GDAL file
-        ds = None
-
         # convert wkt projection to Cartopy projection
         projcs = inproj.GetAuthorityCode('PROJCS')
         projection = ccrs.epsg(projcs)
@@ -762,6 +761,9 @@ for x in range(len(allscenes)):
 
         # read in the three geotiff files
         rgbdata = read_sen2_rgb(rgbfiles)
+
+        # close the GDAL file
+        ds = None
 
         #######################################
         # make a plot of the tiff file in the image projection
