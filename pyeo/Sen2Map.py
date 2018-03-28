@@ -557,9 +557,6 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # save it to a file
     plt.savefig(plotfile)
 
-    # close the figure to save memory
-    fig.close()
-
 
 #############################################################################
 # MAIN
@@ -700,6 +697,9 @@ for x in range(len(allscenes)):
             # save geotiff file at 10 m resolution
             subprocess.call(res_cmd)
 
+            #close GDAL file
+            bandx = None
+
         print("Output number of columns = %6d\nOutput number of rows = %6d." \
               % (ncolmax, nrowmax))
 
@@ -747,6 +747,9 @@ for x in range(len(allscenes)):
         inproj = osr.SpatialReference()
         inproj.ImportFromWkt(proj)
         print(inproj)
+
+        # close the GDAL file
+        ds = None
 
         # convert wkt projection to Cartopy projection
         projcs = inproj.GetAuthorityCode('PROJCS')
