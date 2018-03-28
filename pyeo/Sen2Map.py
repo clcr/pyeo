@@ -13,7 +13,7 @@ Created on Sat Mar 24 12:11:00 2018
 
 # TODO for John IMPORTANT:
 # When you start the IPython Kernel, type in:
-#   %matplotlib
+#   %matplotlib inline
 # This will launch a graphical user interface (GUI) loop
 
 ########################
@@ -40,19 +40,17 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 # import mpl_toolkits
 # from mpl_toolkits.basemap import Basemap, shiftgrid, cm
+io.use_plugin('matplotlib')
 import numpy as np
 import os, sys
 from os import listdir
 from os.path import isfile, isdir, join
 from osgeo import gdal, gdalnumeric, ogr, osr
-import subprocess
-
 gdal.UseExceptions()
 import pylab
 from skimage import io
-
-io.use_plugin('matplotlib')
 from scipy import stats, optimize, ndimage
+import subprocess
 
 # The pyplot interface provides 4 commands that are useful for interactive control.
 # plt.isinteractive() returns the interactive setting True|False
