@@ -18,11 +18,11 @@ Created on Sat Mar 24 12:11:00 2018
 
 ########################
 # TODO for Heiko
-# TODO fix RuntimeError: Unable to open EPSG support file gcs.csv.  Try setting the GDAL_DATA environment variable to point to the directory containing EPSG csv files.
-# TODO improve the colour of the scale bar on different background colours
 # TODO plot the scale bar below the map outside of its boundaries
 # TODO add a north arrow
 # TODO separate geotiff conversion and 10 m resampling into 2 functions
+# TODO plot multiple scenes onto the same map by providing a list of scene IDs to map_it instead
+# TODO   of rgbdata and running readsen2rgb from within map_it
 # TODO directory management: save outputs to a different subdirectory outside raw scene directory structure
 ########################
 
@@ -62,7 +62,7 @@ io.use_plugin('matplotlib')
 #############################################################################
 # wd = '/scratch/clcr/shared/py/' # working directory on Linux HPC
 wd = '/home/heiko/linuxpy/mexico/'  # working directory on Linux Virtual Box
-datadir = wd + 'data/'  # directory of Sentinel data files
+datadir = wd + 'data/'  # directory of Sentinel L1C data files in .SAFE format
 # the shapefile resides in wd
 shapefile = 'Sitios_Poly.shp'
 # define the Sentinel 2 scene ID (this is the directory name)
@@ -758,7 +758,7 @@ for x in range(len(allscenes)):
         extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
                   gt[3] + ds.RasterYSize * gt[5], gt[3])
 
-        # read in the three geotiff files
+        # read in the three geotiff files, one for each band
         rgbdata = read_sen2_rgb(rgbfiles)
 
         # close the GDAL file
