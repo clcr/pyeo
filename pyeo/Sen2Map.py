@@ -1016,8 +1016,8 @@ def test_map_it3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     bottom, height = 0.3, 0.6
     bottom2, height2 = 0.1, 0.2
     # set bounding boxes for the two axes
-    rect1 = [left, bottom, width, height]
-    rect2 = [left, bottom2, width, height2]
+    rect1 = ([left, bottom, width, height])
+    rect2 = ([left, bottom2, width, height2])
 
     # make the figure and the axes
     subplot_kw = dict(projection=tifproj)
@@ -1117,3 +1117,128 @@ test_map_it3(rgbdata, projection, mapextent, wd + shapefile,
        plottitle=title,
        figsizex=10, figsizey=10)
 
+plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
+shapefile = wd+'Sitios_Poly.shp'
+
+
+
+
+# get shapefile projection from the file
+# get driver to read a shapefile and open it
+driver = ogr.GetDriverByName('ESRI Shapefile')
+dataSource = driver.Open(shapefile, 0)
+if dataSource is None:
+    print('Could not open ' + shapefile)
+    sys.exit(1)  # exit with an error code
+# get the layer from the shapefile
+layer = dataSource.GetLayer()
+# get the projection information and convert to wkt
+projsr = layer.GetSpatialRef()
+projwkt = projsr.ExportToWkt()
+projosr = osr.SpatialReference()
+projosr.ImportFromWkt(projwkt)
+# convert wkt projection to Cartopy projection
+projcs = projosr.GetAuthorityCode('PROJCS')
+shapeproj = ccrs.epsg(projcs)
+
+# definitions for the axes in map coordinates
+left1, right1 = mapextent[0], mapextent[1]
+bottom1, top1 = mapextent[2], mapextent[3]
+left2, right2 = mapextent[0], mapextent[1]
+bottom2, top2 = mapextent[2] - (mapextent[3] - mapextent[2]) * 0.3, mapextent[2]
+
+# set bounding boxes for the two axes
+extent1 = (left1, right1, bottom1, top1)
+extent2 = (left2, right2, bottom2, top2)
+
+# make the figure and the axes
+subplot_kw = dict(projection=tifproj)
+fig, ax = plt.subplots(figsize=(figsizex, figsizey),
+                       subplot_kw=subplot_kw)
+
+# make first subplot
+#plt.subplot(211)
+# ax = plt.axes(rect1)
+
+# set a margin around the data
+ax.set_xmargin(0.05)
+ax.set_ymargin(0.10)
+
+# add a background image for rendering
+ax.stock_img()
+
+# show the data from the geotiff RGB image
+img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
+                extent=extent, origin='upper')
+
+# read shapefile and plot it onto the tiff image map
+shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
+                               crs=shapeproj, edgecolor='yellow',
+                               facecolor='none')
+ax.add_feature(shape_feature)
+
+# add a title
+plt.title(plottitle)
+
+# set map extent
+ax.set_extent(extent1, tifproj)
+
+# draw the x axis where the image ends and the scale bar area of the map begins
+ax.spines['left'].set_position(('data', mapextent[0]))
+ax.spines['right'].set_color('none')
+ax.spines['bottom'].set_position(('data', mapextent[2]))
+ax.spines['top'].set_color('none')
+ax.spines['left'].set_smart_bounds(True)
+ax.spines['bottom'].set_smart_bounds(True)
+
+# do not draw the bounding box
+plt.box(on=None)
+
+# make bottom axis line invisible
+#    ax.spines["top"].set_visible(True)
+#    ax.spines["right"].set_visible(True)
+#    ax.spines["bottom"].set_visible(False)
+#    ax.spines["left"].set_visible(True)
+
+# add coastlines
+ax.coastlines(resolution='10m', color='navy', linewidth=1)
+
+# add lakes and rivers
+ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
+ax.add_feature(cartopy.feature.RIVERS)
+
+# add borders
+BORDERS.scale = '10m'
+ax.add_feature(BORDERS, color='red')
+
+# format the gridline positions nicely
+xticks, yticks = get_gridlines(mapextent[0], mapextent[1],
+                               mapextent[2], mapextent[3],
+                               nticks=10)
+
+# add gridlines
+gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks,
+                  linestyle='--', color='grey', alpha=1, linewidth=1)
+
+# add ticks
+ax.set_xticks(xticks, crs=tifproj)
+ax.set_yticks(yticks, crs=tifproj)
+
+# stagger x gridline / tick labels
+labels = ax.set_xticklabels(xticks)
+for i, label in enumerate(labels):
+    label.set_y(label.get_position()[1] - (i % 2) * 0.2)
+
+# add second subplot for annotation
+#plt.subplot(212)
+ax2 = ax
+ax2.set_extent(extent2, tifproj)
+
+# add scale bar
+test_draw_scale_bar(ax2, bars=4, length=40, location=(0.1, 0.025), col='black')
+
+# show the map
+plt.show()
+
+# save it to a file
+fig.savefig(plotfile)
