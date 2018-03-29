@@ -31,6 +31,7 @@ from cartopy.io.shapereader import Reader
 from cartopy.feature import ShapelyFeature, BORDERS
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import numpy as np
 import os, sys
 from os import listdir
@@ -432,12 +433,10 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     subplot_kw = dict(projection=tifproj)
     hr = 1 / 10 # height ratio of annotation subplot below the map, default should be one tenth
     hr = round(hr * 20)
-    fig, (ax,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, sharey=False,
-                                 figsize=(figsizex, figsizey), subplot_kw=subplot_kw,
-                                 gridspec_kw={'height_ratios': [20-hr, hr]})
-
-    # draw on first subplot
-    plt.subplot(211)
+    fig = plt(figsize=(figsizex, figsizey), subplot_kw=subplot_kw)
+    gs  = gridspec.GridSpec(1, 2, height_ratios=[20-hr, hr])
+    ax  = plt.subplot(gs[0])
+    ax2 = plt.subplot(gs[1])
 
     # set a margin around the map
     ax.set_xmargin(0.05)
@@ -457,7 +456,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     ax.add_feature(shape_feature)
 
     # add a title
-    plt.title(plottitle)
+    ax.set_title(plottitle)
 
     # set map extent
     ax.set_extent(mapextent, tifproj)
@@ -491,16 +490,12 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     for i, label in enumerate(labels):
         label.set_y(label.get_position()[1] - (i % 2) * 0.075)
 
-    # draw on second subplot
-    plt.subplot(212)
-
     # add scale bar to the second subplot underneath the map
     # set axis extent based on the height ratio
-    ax2extent = (mapextent[0], mapextent[1], mapextent[2] * hr / 20, mapextent[3] * hr / 20)
-    ax2.set_extent(ax2extent, tifproj)
     scale_bar_left(ax2, bars=4, length=40, col='black')
 
     # show the map
+    plt.tight_layout()
     plt.show()
 
     # save it to a file
