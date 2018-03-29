@@ -29,9 +29,20 @@ import cartopy
 import cartopy.crs as ccrs
 from cartopy.io.shapereader import Reader
 from cartopy.feature import ShapelyFeature, BORDERS
+import cartopy
+import cartopy.crs as ccrs
+from cartopy.io.img_tiles import OSM
+import cartopy.feature as cfeature
+from cartopy.io import shapereader
+from cartopy.io.img_tiles import StamenTerrain
+from cartopy.io.img_tiles import GoogleTiles
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
+from matplotlib.path import Path
+import matplotlib.patheffects as PathEffects
+from matplotlib import patheffects
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 import numpy as np
 import os, sys
 from os import listdir
@@ -41,6 +52,15 @@ from skimage import io
 import subprocess
 gdal.UseExceptions()
 io.use_plugin('matplotlib')
+import pandas as pd
+import subprocess
+import datetime
+import platform
+import datetime
+import math
+import matplotlib.pyplot as plt
+from owslib.wmts import WebMapTileService
+
 
 # The pyplot interface provides 4 commands that are useful for interactive control.
 # plt.isinteractive() returns the interactive setting True|False
@@ -61,6 +81,26 @@ bands = [5, 4, 3]  # band selection for RGB
 #############################################################################
 # FUNCTION DECLARATIONS
 #############################################################################
+
+def blank_axes(ax):
+    """
+    blank_axes:  blank the extraneous spines and tick marks for an axes
+
+    Input:
+    ax:  a matplotlib Axes object
+
+    Output: None
+    """
+
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.yaxis.set_ticks_position('none')
+    ax.xaxis.set_ticks_position('none')
+    ax.tick_params(labelbottom='off', labeltop='off', labelleft='off', labelright='off', \
+                   bottom='off', top='off', left='off', right='off')
+
 # define functions to read/write floating point numbers from/to a text file
 def read_floats(filename):
     with open(filename) as f:
@@ -497,169 +537,6 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig.savefig(plotfile)
 
 
-# plot a scale bar with 4 subdivisions on the left side of the map
-def test_scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, col='black'):
-    """
-
-    MODIFIED TO PLOT ON A SECOND AXIS ON SCALE OF 0-1
-    NOT TESTED YET
-
-    ax is the axes to draw the scalebar on.
-    bars is the number of subdivisions of the bar (black and white chunks)
-    length is the length of the scalebar in km.
-    location is left side of the scalebar in axis coordinates.
-    (ie. 0 is the left side of the plot)
-    linewidth is the thickness of the scalebar.
-    color is the color of the scale bar and the text
-    """
-    # Get the limits of the axis
-    x0, x1, y0, y1 = ax.get_extent()
-
-    # set scale bar position
-    sbx, sby = x0 + location[0], y0+location[1]
-
-    # Calculate a scale bar length if none has been given
-    if not length:
-        length = (x1 - x0) / 2 # half the width of the axis
-
-    # Generate the x coordinate for the ends of the scalebar
-    bar_xs = [sbx, sbx + length / bars]
-    # Plot the scalebar chunks
-    barcol = 'white'
-    for i in range(0, bars):
-        # plot the chunk
-        ax.plot(bar_xs, [sby, sby], color=barcol, linewidth=linewidth)
-        # alternate the colour
-        if barcol == 'white':
-            barcol = col
-        else:
-            barcol = 'white'
-        # Generate the x coordinate for the number
-        bar_xt = sbx + i * length / bars
-        # Plot the scalebar label for that chunk
-        ax.text(bar_xt, sby, str(round(i * length / bars)),
-                horizontalalignment='center', verticalalignment='bottom',
-                color=col)
-        # work out the position of the next chunk of the bar
-        bar_xs[0] = bar_xs[1]
-        bar_xs[1] = bar_xs[1] + length / bars
-    # Generate the x coordinate for the last number
-    bar_xt = sbx + length
-    # Plot the last scalebar label
-    ax.text(bar_xt, sby, str(round(length)),
-            horizontalalignment='center', verticalalignment='bottom',
-            color=col)
-    # Plot the unit label below the bar
-    bar_xt = sbx + length / 2
-    bar_yt = y0 + (y1 - y0) * (location[1] / 4)
-    ax.text(bar_xt, bar_yt, 'km', horizontalalignment='center',
-            verticalalignment='bottom', color=col)
-
-def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
-           plottitle='', figsizex=10, figsizey=10):
-    '''
-
-    MODIFIED TO USE SUBPLOTS TO PLACE SCALE BAR OUTSIDE OF MAP
-    NOT TESTED YET
-
-    standard map making function that saves a jpeg file of the output
-    and visualises it on screen
-    rgbdata = numpy array of the red, green and blue channels, made by read_sen2rgb
-    tifproj = map projection of the tiff files from which the rgbdata originate
-    mapextent = extent of the map in map coordinates
-    shapefile = shapefile name to be plotted on top of the map
-    shpproj = map projection of the shapefile
-    plotfile = output filename for the map plot
-    plottitle = text to be written above the map
-    figsizex = width of the figure in inches
-    figsizey = height of the figure in inches
-    '''
-    # get shapefile projection from the file
-    # get driver to read a shapefile and open it
-    driver = ogr.GetDriverByName('ESRI Shapefile')
-    dataSource = driver.Open(shapefile, 0)
-    if dataSource is None:
-        print('Could not open ' + shapefile)
-        sys.exit(1)  # exit with an error code
-    # get the layer from the shapefile
-    layer = dataSource.GetLayer()
-    # get the projection information and convert to wkt
-    projsr = layer.GetSpatialRef()
-    projwkt = projsr.ExportToWkt()
-    projosr = osr.SpatialReference()
-    projosr.ImportFromWkt(projwkt)
-    # convert wkt projection to Cartopy projection
-    projcs = projosr.GetAuthorityCode('PROJCS')
-    shapeproj = ccrs.epsg(projcs)
-
-    # make the figure and the axes
-    subplot_kw = dict(projection=tifproj)
-    fig, ax = plt.subplots(figsize=(figsizex, figsizey),
-                           subplot_kw=subplot_kw)
-
-    # add a second axis for the scale bar
-    ax2 = fig.add_axes([0.1, 0.8, 0.9, 0.1]) # scale bar area
-
-    # set a margin around the data
-#    ax.set_xmargin(0.05)
- #   ax.set_ymargin(0.10)
-
-    # add a background image for rendering
-    ax.stock_img()
-
-    # show the data from the geotiff RGB image
-    img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
-                    extent=extent, origin='upper')
-
-    # read shapefile and plot it onto the tiff image map
-    shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
-                                   crs=shapeproj, edgecolor='yellow',
-                                   facecolor='none')
-    ax.add_feature(shape_feature)
-
-    # add a title
-    plt.title(plottitle)
-
-    # set map extent
-    ax.set_extent(mapextent, tifproj)
-
-    # add coastlines
-    ax.coastlines(resolution='10m', color='navy', linewidth=1)
-
-    # add lakes and rivers
-    ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
-    ax.add_feature(cartopy.feature.RIVERS)
-
-    # add borders
-    BORDERS.scale = '10m'
-    ax.add_feature(BORDERS, color='red')
-
-    # format the gridline positions nicely
-    xticks, yticks = get_gridlines(mapextent[0], mapextent[1],
-                                   mapextent[2], mapextent[3],
-                                   nticks=10)
-
-    # add gridlines
-    gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks,
-                      linestyle='--', color='grey', alpha=1, linewidth=1)
-
-    # add ticks
-    ax.set_xticks(xticks, crs=tifproj)
-    ax.set_yticks(yticks, crs=tifproj)
-
-    # stagger x gridline / tick labels
-    labels = ax1.set_xticklabels(xticks)
-    for i, label in enumerate(labels):
-        label.set_y(label.get_position()[1] - (i % 2) * 0.075)
-
-    # add scale bar
-    test_scale_bar_left(ax2, bars=4, length=40, col='dimgrey')
-
-    # show the map
-    plt.show()
-
-    # save it to a file
-    fig.savefig(plotfile)
 
 
 #############################################################################
@@ -873,7 +750,7 @@ for x in range(len(allscenes)):
         plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
         title = allscenes[x].split('.')[0]
         mapextent = extent
-        test_map_it2(rgbdata, projection, mapextent, wd + shapefile,
+        map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
                plottitle=title,
                figsizex=10, figsizey=10)
@@ -905,4 +782,5 @@ for x in range(len(allscenes)):
                plotdir + plotfile,
                plottitle=title,
                figsizex=10, figsizey=10)
+
 
