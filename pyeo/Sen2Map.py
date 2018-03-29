@@ -492,6 +492,9 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # add scale bar to the second subplot underneath the map
     # set axis extent based on the height ratio
+    h2 = (mapextent[3] - mapextent[2]) * hr / 20
+    ax2extent = (mapextent[0], mapextent[1], mapextent[2] - h2, mapextent[2],)
+    ax2.set_extent(ax2extent, tifproj)
     scale_bar_left(ax2, bars=4, length=40, col='black')
 
     # show the map
