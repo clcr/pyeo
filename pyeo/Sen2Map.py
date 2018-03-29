@@ -855,6 +855,9 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.05), linewidth
 def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
            plottitle='', figsizex=10, figsizey=10):
     '''
+    This version attempt to expand the map towards the bottom and plot the scale bar there.
+    It is not satisfactory that the background image covers that area and a box is drawn around it.
+
     standard map making function that saves a jpeg file of the output
     and visualises it on screen
     rgbdata = numpy array of the red, green and blue channels, made by read_sen2rgb
@@ -972,12 +975,144 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig.savefig(plotfile)
 
 
+def test_map_it3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
+                 plottitle='', figsizex=10, figsizey=10):
+    '''
+    This version creates two subplots, one for the map and one for the legend.
+    To make the scale bar the right scale, both have to be in map coordinates.
+
+    standard map making function that saves a jpeg file of the output
+    and visualises it on screen
+    rgbdata = numpy array of the red, green and blue channels, made by read_sen2rgb
+    tifproj = map projection of the tiff files from which the rgbdata originate
+    mapextent = extent of the map in map coordinates
+    shapefile = shapefile name to be plotted on top of the map
+    shpproj = map projection of the shapefile
+    plotfile = output filename for the map plot
+    plottitle = text to be written above the map
+    figsizex = width of the figure in inches
+    figsizey = height of the figure in inches
+    '''
+    # get shapefile projection from the file
+    # get driver to read a shapefile and open it
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    dataSource = driver.Open(shapefile, 0)
+    if dataSource is None:
+        print('Could not open ' + shapefile)
+        sys.exit(1)  # exit with an error code
+    # get the layer from the shapefile
+    layer = dataSource.GetLayer()
+    # get the projection information and convert to wkt
+    projsr = layer.GetSpatialRef()
+    projwkt = projsr.ExportToWkt()
+    projosr = osr.SpatialReference()
+    projosr.ImportFromWkt(projwkt)
+    # convert wkt projection to Cartopy projection
+    projcs = projosr.GetAuthorityCode('PROJCS')
+    shapeproj = ccrs.epsg(projcs)
+
+    # definitions for the axes
+    left, width = 0.1, 0.8
+    bottom, height = 0.3, 0.6
+    bottom2, height2 = 0.1, 0.2
+    # set bounding boxes for the two axes
+    rect1 = [left, bottom, width, height]
+    rect2 = [left, bottom2, width, height2]
+
+    # make the figure and the axes
+    subplot_kw = dict(projection=tifproj)
+    fig, ax = plt.subplots(rect1, figsize=(figsizex, figsizey),
+                           subplot_kw=subplot_kw)
+    ax2 = plt.axes(rect2)
+
+    # set a margin around the data
+    ax.set_xmargin(0.05)
+    ax.set_ymargin(0.10)
+
+    # add a background image for rendering
+    ax.stock_img()
+
+    # show the data from the geotiff RGB image
+    img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
+                    extent=extent, origin='upper')
+
+    # read shapefile and plot it onto the tiff image map
+    shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
+                                   crs=shapeproj, edgecolor='yellow',
+                                   facecolor='none')
+    ax.add_feature(shape_feature)
+
+    # add a title
+    plt.title(plottitle)
+
+    # set map extent plus a margin for the scale bar
+    ax.set_extent(mapextent, tifproj)
+
+    #### add width and height
+    ax2.set_extent((mapextent[0], mapextent[1], mapextent[1] - mapextent[0], (mapextent[3] - mapextent[2]) * 0.2), tifproj)
+
+    # draw the x axis where the image ends and the scale bar area of the map begins
+    ax.spines['left'].set_position(('data', mapextent[0]))
+    ax.spines['right'].set_color('none')
+    ax.spines['bottom'].set_position(('data', mapextent[2]))
+    ax.spines['top'].set_color('none')
+    ax.spines['left'].set_smart_bounds(True)
+    ax.spines['bottom'].set_smart_bounds(True)
+
+    # do not draw the bounding box
+    plt.box(on=None)
+
+    # make bottom axis line invisible
+    #    ax.spines["top"].set_visible(True)
+    #    ax.spines["right"].set_visible(True)
+    #    ax.spines["bottom"].set_visible(False)
+    #    ax.spines["left"].set_visible(True)
+
+    # add coastlines
+    ax.coastlines(resolution='10m', color='navy', linewidth=1)
+
+    # add lakes and rivers
+    ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
+    ax.add_feature(cartopy.feature.RIVERS)
+
+    # add borders
+    BORDERS.scale = '10m'
+    ax.add_feature(BORDERS, color='red')
+
+    # format the gridline positions nicely
+    xticks, yticks = get_gridlines(mapextent[0], mapextent[1],
+                                   mapextent[2], mapextent[3],
+                                   nticks=10)
+
+    # add gridlines
+    gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks,
+                      linestyle='--', color='grey', alpha=1, linewidth=1)
+
+    # add ticks
+    ax.set_xticks(xticks, crs=tifproj)
+    ax.set_yticks(yticks, crs=tifproj)
+
+    # stagger x gridline / tick labels
+    labels = ax.set_xticklabels(xticks)
+    for i, label in enumerate(labels):
+        label.set_y(label.get_position()[1] - (i % 2) * 0.2)
+
+    # add scale bar
+    test_draw_scale_bar(ax2, bars=4, length=40, location=(0.1, 0.025), col='black')
+
+    # show the map
+    plt.show()
+
+    # save it to a file
+    fig.savefig(plotfile)
+
+
 ###########MAIN################
 
 plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
 title = allscenes[x].split('.')[0]
 mapextent = extent
-test_map_it2(rgbdata, projection, mapextent, wd + shapefile,
+test_map_it3(rgbdata, projection, mapextent, wd + shapefile,
        plotdir + plotfile,
        plottitle=title,
        figsizex=10, figsizey=10)
