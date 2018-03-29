@@ -437,7 +437,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
                                  gridspec_kw={'height_ratios': [20-hr, hr]})
 
     # draw on first subplot
-    plt.subplot(111)
+    plt.subplot(211)
 
     # set a margin around the map
     ax.set_xmargin(0.05)
@@ -492,7 +492,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
         label.set_y(label.get_position()[1] - (i % 2) * 0.075)
 
     # draw on second subplot
-    plt.subplot(211)
+    plt.subplot(212)
 
     # add scale bar to the second subplot underneath the map
     # set axis extent based on the height ratio
