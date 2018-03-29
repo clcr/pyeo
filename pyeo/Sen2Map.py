@@ -294,10 +294,6 @@ def projectshape(inshp, outshp, t_srs):
         from osgeo import ogr, osr
         import os
     """
-    # for testing:
-    #    inshp = wd+shapefile
-    #    outshp = wd+shapefile[:-4]+"_4326.shp"
-    #    t_srs = 4326
 
     driver = ogr.GetDriverByName('ESRI Shapefile')  # get shapefile driver
     infile = driver.Open(inshp, 0)
@@ -458,14 +454,10 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # get the layer from the shapefile
     layer = dataSource.GetLayer()
     # get the projection information and convert to wkt
-    ####################################
-    # most certain that we do not need all this
-    ####################################
     projsr = layer.GetSpatialRef()
     projwkt = projsr.ExportToWkt()
     projosr = osr.SpatialReference()
     projosr.ImportFromWkt(projwkt)
-    ####################################
     # convert wkt projection to Cartopy projection
     projcs = projosr.GetAuthorityCode('PROJCS')
     shapeproj = ccrs.epsg(projcs)
