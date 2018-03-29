@@ -428,11 +428,16 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     projcs = projosr.GetAuthorityCode('PROJCS')
     shapeproj = ccrs.epsg(projcs)
 
-    # make the figure and axis
+    # make the figure and axes for two subplots, one for the map, one for the scale bar
     subplot_kw = dict(projection=tifproj)
-#    fig, (ax,ax2) = plt.subplots(nrows=2, ncols=1, sharex=False, sharey=False,
-#                                   figsize=(figsizex, figsizey), subplot_kw=subplot_kw)
-    fig, ax = plt.subplots(figsize=(figsizex, figsizey), subplot_kw=subplot_kw)
+    hr = 1 / 10 # height ratio of annotation subplot below the map, default should be one tenth
+    hr = round(hr * 20)
+    fig, (ax,ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, sharey=False,
+                                 figsize=(figsizex, figsizey), subplot_kw=subplot_kw,
+                                 gridspec_kw={'height_ratios': [20-hr, hr]})
+
+    # draw on first subplot
+    plt.subplot(111)
 
     # set a margin around the map
     ax.set_xmargin(0.05)
@@ -486,8 +491,14 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     for i, label in enumerate(labels):
         label.set_y(label.get_position()[1] - (i % 2) * 0.075)
 
-    # add scale bar
-    scale_bar_left(ax, location=(0.1, -0.2), bars=4, length=40, col='black')
+    # draw on second subplot
+    plt.subplot(211)
+
+    # add scale bar to the second subplot underneath the map
+    # set axis extent based on the height ratio
+    ax2extent = (mapextent[0], mapextent[1], mapextent[2] * hr / 20, mapextent[3] * hr / 20)
+    ax2.set_extent(ax2extent, tifproj)
+    scale_bar_left(ax2, bars=4, length=40, col='black')
 
     # show the map
     plt.show()
@@ -713,7 +724,7 @@ for x in range(len(allscenes)):
                figsizex=10, figsizey=10)
 
         # zoom out
-        zf = 1 / 10 # zoom factor < 1 means zoom out
+        zf = 10
         plotfile = allscenes[x].split('.')[0] + '_map2.jpg'
         title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
@@ -727,7 +738,7 @@ for x in range(len(allscenes)):
                figsizex=10, figsizey=10)
 
         # zoom in to the upper right corner
-        zf = 10 # zoom factor > 1 means zoom in
+        zf = 1 / 16
         plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
         title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
