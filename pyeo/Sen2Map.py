@@ -17,7 +17,6 @@ Created on Sat Mar 24 12:11:00 2018
 # This will launch a graphical user interface (GUI) loop
 
 ########################
-# TODO for Heiko
 # TODO plot the scale bar below the map outside of its boundaries
 # TODO add a north arrow
 # TODO separate geotiff conversion and 10 m resampling into 2 functions
@@ -26,27 +25,18 @@ Created on Sat Mar 24 12:11:00 2018
 # TODO directory management: save outputs to a different subdirectory outside raw scene directory structure
 ########################
 
-# import geojson as gj
-# from geojson import Polygon
-# import matplotlib
 import cartopy
 import cartopy.crs as ccrs
 from cartopy.io.shapereader import Reader
 from cartopy.feature import ShapelyFeature, BORDERS
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-# from geospatial_learn import geodata, learning
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
-# import mpl_toolkits
-# from mpl_toolkits.basemap import Basemap, shiftgrid, cm
 import numpy as np
 import os, sys
 from os import listdir
 from os.path import isfile, isdir, join
 from osgeo import gdal, gdalnumeric, ogr, osr
-import pylab
 from skimage import io
-from scipy import stats, optimize, ndimage
 import subprocess
 gdal.UseExceptions()
 io.use_plugin('matplotlib')
@@ -63,10 +53,7 @@ io.use_plugin('matplotlib')
 # wd = '/scratch/clcr/shared/py/' # working directory on Linux HPC
 wd = '/home/heiko/linuxpy/mexico/'  # working directory on Linux Virtual Box
 datadir = wd + 'data/'  # directory of Sentinel L1C data files in .SAFE format
-# the shapefile resides in wd
-shapefile = 'Sitios_Poly.shp'
-# define the Sentinel 2 scene ID (this is the directory name)
-#scenedir = 'S2A_MSIL1C_20170413T173821_N0204_R012_T13QDB_20170413T173823.SAFE'
+shapefile = 'Sitios_Poly.shp' # the shapefile resides in wd
 bands = [5, 4, 3]  # band selection for RGB
 
 
@@ -140,7 +127,7 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
     location is left side of the scalebar in axis coordinates.
     (ie. 0 is the left side of the plot)
     linewidth is the thickness of the scalebar.
-    color is the color of the scale bar
+    color is the color of the scale bar and the text
     """
     # Get the limits of the axis in lat long
     llx0, llx1, lly0, lly1 = ax.get_extent(ccrs.PlateCarree())
@@ -180,7 +167,7 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
         ax.plot(bar_xs, [sby, sby], transform=tmc, color=barcol, linewidth=linewidth)
         # alternate the colour
         if barcol == 'white':
-            barcol = 'dimgrey'
+            barcol = col
         else:
             barcol = 'white'
         # Generate the x coordinate for the number
@@ -205,55 +192,6 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
             verticalalignment='bottom', color=col)
 
 
-# plot a scale bar on the map
-def scale_bar(ax, length=None, location=(0.5, 0.05), linewidth=3, col='black'):
-    """
-    ax is the axes to draw the scalebar on.
-    length is the length of the scalebar in km.
-    location is center of the scalebar in axis coordinates.
-    (ie. 0.5 is the middle of the plot)
-    linewidth is the thickness of the scalebar.
-    color is the color of the scale bar
-    """
-    # Get the limits of the axis in lat long
-    llx0, llx1, lly0, lly1 = ax.get_extent(ccrs.PlateCarree())
-    # Make tmc horizontally centred on the middle of the map,
-    # vertically at scale bar location
-    sbllx = (llx1 + llx0) / 2
-    sblly = lly0 + (lly1 - lly0) * location[1]
-    tmc = ccrs.TransverseMercator(sbllx, sblly)
-    # Get the extent of the plotted area in coordinates in metres
-    x0, x1, y0, y1 = ax.get_extent(tmc)
-    # Turn the specified scalebar location into coordinates in metres
-    sbx = x0 + (x1 - x0) * location[0]
-    sby = y0 + (y1 - y0) * location[1]
-
-    # Calculate a scale bar length if none has been given
-    # (Theres probably a more pythonic way of rounding the number but this works)
-    if not length:
-        length = (x1 - x0) / 5000  # in km
-        ndim = int(np.floor(np.log10(length)))  # number of digits in number
-        length = round(length, -ndim)  # round to 1sf
-
-        # Returns numbers starting with the list
-        def scale_number(x):
-            if str(x)[0] in ['1', '2', '5']:
-                return int(x)
-            else:
-                return scale_number(x - 10 ** ndim)
-
-        length = scale_number(length)
-
-    # Generate the x coordinate for the ends of the scalebar
-    bar_xs = [sbx - length * 500, sbx + length * 500]
-    # Plot the scalebar
-    ax.plot(bar_xs, [sby, sby], transform=tmc, color=col, linewidth=linewidth)
-    # Plot the scalebar label
-    ax.text(sbx, sby, str(length) + ' km', transform=tmc,
-            horizontalalignment='center', verticalalignment='bottom',
-            color=col)
-
-
 # function to convert coordinates
 def convertXY(xy_source, inproj, outproj):
     shape = xy_source[0, :, :].shape
@@ -265,7 +203,6 @@ def convertXY(xy_source, inproj, outproj):
     xx = xy_target[:, 0].reshape(shape)
     yy = xy_target[:, 1].reshape(shape)
     return xx, yy
-
 
 
 # This function will convert the rasterized clipper shapefile to a mask for use within GDAL.
@@ -491,12 +428,13 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     projcs = projosr.GetAuthorityCode('PROJCS')
     shapeproj = ccrs.epsg(projcs)
 
-    # make the figure and the axes
+    # make the figure and axis
     subplot_kw = dict(projection=tifproj)
-    fig, ax = plt.subplots(figsize=(figsizex, figsizey),
-                           subplot_kw=subplot_kw)
+#    fig, (ax,ax2) = plt.subplots(nrows=2, ncols=1, sharex=False, sharey=False,
+#                                   figsize=(figsizex, figsizey), subplot_kw=subplot_kw)
+    fig, ax = plt.subplots(figsize=(figsizex, figsizey), subplot_kw=subplot_kw)
 
-    # set a margin around the data
+    # set a margin around the map
     ax.set_xmargin(0.05)
     ax.set_ymargin(0.10)
 
@@ -549,7 +487,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
         label.set_y(label.get_position()[1] - (i % 2) * 0.075)
 
     # add scale bar
-    scale_bar_left(ax, bars=4, length=40, col='dimgrey')
+    scale_bar_left(ax, location=(0.1, -0.2), bars=4, length=40, col='black')
 
     # show the map
     plt.show()
@@ -774,26 +712,29 @@ for x in range(len(allscenes)):
                plottitle=title,
                figsizex=10, figsizey=10)
 
+        # zoom out
+        zf = 1 / 10 # zoom factor < 1 means zoom out
         plotfile = allscenes[x].split('.')[0] + '_map2.jpg'
         title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        mapextent = (extent[0] - (extent[1] - extent[0]) * 0.5,
-                     extent[1] + (extent[1] - extent[0]) * 0.5,
-                     extent[2] - (extent[3] - extent[2]) * 0.5,
-                     extent[3] + (extent[3] - extent[2]) * 0.5)
+        mapextent = (extent[0] - (extent[1] - extent[0]) * zf,
+                     extent[1] + (extent[1] - extent[0]) * zf,
+                     extent[2] - (extent[3] - extent[2]) * zf,
+                     extent[3] + (extent[3] - extent[2]) * zf)
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
                plottitle=title,
                figsizex=10, figsizey=10)
 
+        # zoom in to the upper right corner
+        zf = 10 # zoom factor > 1 means zoom in
         plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
         title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        # zoom in to the upper right corner, for example
-        mapextent = (extent[0] + (extent[1] - extent[0]) * 0.5,
-                     extent[1],
-                     extent[2] + (extent[3] - extent[2]) * 0.5,
-                     extent[3])
+        mapextent = (extent[0] - (extent[1] - extent[0]) * zf,
+                     extent[1] + (extent[1] - extent[0]),
+                     extent[2] - (extent[3] - extent[2]) * zf,
+                     extent[3] + (extent[3] - extent[2]))
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
                plottitle=title,
