@@ -887,7 +887,7 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # make the figure and the axes
     subplot_kw = dict(projection=tifproj)
-    fig, ax = plt.subplots(figsize=(figsizex, figsizey), frameon=False,
+    fig, ax = plt.subplots(figsize=(figsizex, figsizey),
                            subplot_kw=subplot_kw)
 
     # set a margin around the data
