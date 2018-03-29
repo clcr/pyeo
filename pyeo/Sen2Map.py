@@ -597,8 +597,7 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig, ax = plt.subplots(figsize=(figsizex, figsizey),
                            subplot_kw=subplot_kw)
 
-    # add two axes underneath each other
-    ax1 = fig.add_axes([0.1, 0.1, 0.9, 0.8]) # main map area
+    # add a second axis for the scale bar
     ax2 = fig.add_axes([0.1, 0.8, 0.9, 0.1]) # scale bar area
 
     # set a margin around the data
@@ -606,34 +605,34 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
  #   ax.set_ymargin(0.10)
 
     # add a background image for rendering
-    ax1.stock_img()
+    ax.stock_img()
 
     # show the data from the geotiff RGB image
-    img = ax1.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
+    img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
                     extent=extent, origin='upper')
 
     # read shapefile and plot it onto the tiff image map
     shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
                                    crs=shapeproj, edgecolor='yellow',
                                    facecolor='none')
-    ax1.add_feature(shape_feature)
+    ax.add_feature(shape_feature)
 
     # add a title
     plt.title(plottitle)
 
     # set map extent
-    ax1.set_extent(mapextent, tifproj)
+    ax.set_extent(mapextent, tifproj)
 
     # add coastlines
-    ax1.coastlines(resolution='10m', color='navy', linewidth=1)
+    ax.coastlines(resolution='10m', color='navy', linewidth=1)
 
     # add lakes and rivers
-    ax1.add_feature(cartopy.feature.LAKES, alpha=0.5)
-    ax1.add_feature(cartopy.feature.RIVERS)
+    ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
+    ax.add_feature(cartopy.feature.RIVERS)
 
     # add borders
     BORDERS.scale = '10m'
-    ax1.add_feature(BORDERS, color='red')
+    ax.add_feature(BORDERS, color='red')
 
     # format the gridline positions nicely
     xticks, yticks = get_gridlines(mapextent[0], mapextent[1],
@@ -641,12 +640,12 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
                                    nticks=10)
 
     # add gridlines
-    gl = ax1.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks,
+    gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks,
                       linestyle='--', color='grey', alpha=1, linewidth=1)
 
     # add ticks
-    ax1.set_xticks(xticks, crs=tifproj)
-    ax1.set_yticks(yticks, crs=tifproj)
+    ax.set_xticks(xticks, crs=tifproj)
+    ax.set_yticks(yticks, crs=tifproj)
 
     # stagger x gridline / tick labels
     labels = ax1.set_xticklabels(xticks)
@@ -874,7 +873,7 @@ for x in range(len(allscenes)):
         plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
         title = allscenes[x].split('.')[0]
         mapextent = extent
-        map_it(rgbdata, projection, mapextent, wd + shapefile,
+        test_map_it2(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
                plottitle=title,
                figsizex=10, figsizey=10)
