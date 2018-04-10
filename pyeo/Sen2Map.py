@@ -781,7 +781,7 @@ for x in range(len(allscenes)):
 #################################################
 
 # plot a scale bar with 4 subdivisions on the map
-def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, col='black'):
+def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=3, col='black'):
     """
     ax is the axes to draw the scalebar on.
     bars is the number of subdivisions of the bar (black and white chunks)
@@ -842,12 +842,14 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.05), linewidth
     # Generate the x coordinate for the last number
     bar_xt = sbx + length * 1000
     # Plot the last scalebar label
-    ax.text(bar_xt, sby, str(round(length)), transform=tifproj,
+    t = ax.text(bar_xt, sby, str(round(length)), transform=tifproj,
             horizontalalignment='center', verticalalignment='bottom',
             color=col)
     # Plot the unit label below the bar
     bar_xt = sbx + length * 1000 / 2
-    bar_yt = y0 + (y1 - y0) * (location[1] / 4)
+    # get text height
+    th = t.get_size()
+    bar_yt = y0 + (y1 - y0) * location[1] - th
     ax.text(bar_xt, bar_yt, 'km', transform=tifproj, horizontalalignment='center',
             verticalalignment='bottom', color=col)
 
@@ -1060,50 +1062,39 @@ subplot_kw = dict(projection=tifproj)
 fig, ax = plt.subplots(figsize=(figsizex, figsizey),
                        subplot_kw=subplot_kw)
 
-# ax is the primary common axis of the whole figure
-# ax1 is the axis covering the map extent
-# ax2 is the axis covering the annotation
-ax1 = ax
-ax2 = ax
-
-blank_axes(ax)
-blank_axes(ax2)
+# clear axis formatting
+#blank_axes(ax)
 
 # set a margin around the data
-ax1.set_xmargin(0.05)
-ax1.set_ymargin(0.10)
+ax.set_xmargin(0.05)
+ax.set_ymargin(0.10)
 
 # set map extent
 ax.set_extent(extent0, tifproj)
-ax1.set_extent(extent1, tifproj)
-ax2.set_extent(extent2, tifproj)
 
 # add a background image for rendering
-ax1.stock_img()
+#ax.stock_img()
 
 # show the data from the geotiff RGB image
-img = ax1.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
+img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
                 extent=extent, origin='upper')
 
 # read shapefile and plot it onto the tiff image map
 shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
                                crs=shapeproj, edgecolor='yellow',
                                facecolor='none')
-ax1.add_feature(shape_feature)
+ax.add_feature(shape_feature, zorder=10)
 
 # add a title
 plt.title(plottitle)
 
 # draw the x axis where the image ends and the scale bar area of the map begins
-ax1.spines['left'].set_position(('data', mapextent[0]))
-ax1.spines['right'].set_color('none')
-ax1.spines['bottom'].set_position(('data', mapextent[2]))
-ax1.spines['top'].set_color('none')
-ax1.spines['left'].set_smart_bounds(True)
-ax1.spines['bottom'].set_smart_bounds(True)
-
-# do not draw the bounding box
-#plt.box(on=None)
+ax.spines['left'].set_position(('data', extent1[0]))
+ax.spines['right'].set_color('none')
+ax.spines['bottom'].set_position(('data', extent1[2]))
+ax.spines['top'].set_color('none')
+ax.spines['left'].set_smart_bounds(True)
+ax.spines['bottom'].set_smart_bounds(True)
 
 # make bottom axis line invisible
 #    ax.spines["top"].set_visible(True)
@@ -1112,43 +1103,42 @@ ax1.spines['bottom'].set_smart_bounds(True)
 #    ax.spines["left"].set_visible(True)
 
 # add coastlines
-ax1.coastlines(resolution='10m', color='navy', linewidth=1)
+ax.coastlines(resolution='10m', color='navy', linewidth=1)
 
 # add lakes and rivers
-ax1.add_feature(cartopy.feature.LAKES, alpha=0.5)
-ax1.add_feature(cartopy.feature.RIVERS)
+ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
+ax.add_feature(cartopy.feature.RIVERS)
 
 # add borders
 BORDERS.scale = '10m'
-ax1.add_feature(BORDERS, color='red')
+ax.add_feature(BORDERS, color='red')
 
 # format the gridline positions nicely
-xticks, yticks = get_gridlines(mapextent[0], mapextent[1],
-                               mapextent[2], mapextent[3],
-                               nticks=10)
-
+xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
 # add gridlines
-gl = ax1.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks,
-                  linestyle='--', color='grey', alpha=1, linewidth=1)
+gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey', alpha=1, linewidth=1)
 
 # add ticks
-ax1.set_xticks(xticks, crs=tifproj)
-ax1.set_yticks(yticks, crs=tifproj)
+ax.set_xticks(xticks, crs=tifproj)
+ax.set_yticks(yticks, crs=tifproj)
 
 # stagger x gridline / tick labels
-labels = ax1.set_xticklabels(xticks)
+labels = ax.set_xticklabels(xticks)
 for i, label in enumerate(labels):
     label.set_y(label.get_position()[1] - (i % 2) * 0.2)
 
-# add second subplot for annotation
-#plt.subplot(212)
+# draw a white box over the bottom margin of the background figure
+rect = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
+                     transform=ax.get_xaxis_transform(), zorder=3,
+                     fill=True, facecolor="red", clip_on=False)
+ax.add_patch(rect)
 
 # add scale bar
-test_draw_scale_bar(ax2, bars=4, length=40, location=(0.1, 0.025), col='black')
+test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black')
 
 # show the map
 #plt.tight_layout()
-plt.show()
+fig.show()
 
 # save it to a file
 plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
