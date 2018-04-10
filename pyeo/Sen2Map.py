@@ -766,10 +766,10 @@ for x in range(len(allscenes)):
         plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
         title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        mapextent = (extent[0] - (extent[1] - extent[0]) * zf,
-                     extent[1] + (extent[1] - extent[0]),
-                     extent[2] - (extent[3] - extent[2]) * zf,
-                     extent[3] + (extent[3] - extent[2]))
+        mapextent = (extent[0] + (extent[1] - extent[0]) * (1-zf),
+                     extent[1],
+                     extent[2] + (extent[3] - extent[2]) * (1-zf),
+                     extent[3])
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
                plottitle=title,
@@ -848,7 +848,8 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
     # Plot the unit label below the bar
     bar_xt = sbx + length * 1000 / 2
     # get text height
-    th = t.get_size()
+#    TODO th = t.get_size() # does not work
+    th = (y1 - y0) * 0.05
     bar_yt = y0 + (y1 - y0) * location[1] - th
     ax.text(bar_xt, bar_yt, 'km', transform=tifproj, horizontalalignment='center',
             verticalalignment='bottom', color=col)
@@ -1002,6 +1003,7 @@ def test_map_it3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 # make new map_it function from the code below once it works
 ############################################################
 
+'''
 # this calls the function once it is ready, for testing
 plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
 title = allscenes[x].split('.')[0]
@@ -1009,15 +1011,26 @@ mapextent = extent
 test_map_it3(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd+shapefile, plotfile=plotdir+plotfile,
        plottitle=title, figsizex=10, figsizey=10)
 
+'''
 
 # set some variables
-x=0
+x=1
 figsizex=10
 figsizey=10
 plotfile = plotdir + 'Test_map1.jpg'
 shapefile = wd+'Sitios_Poly.shp'
 tifproj = projection
 plottitle='Test'
+# zoom in to the upper right corner
+zf = 1 / 16
+plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
+title = allscenes[x].split('.')[0]
+# need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+mapextent = (extent[0] + (extent[1] - extent[0]) * (1-zf),
+             extent[1],
+             extent[2] + (extent[3] - extent[2]) * (1-zf),
+             extent[3])
+mapextent = extent
 
 # get shapefile projection from the file
 # get driver to read a shapefile and open it
@@ -1057,6 +1070,15 @@ rect0 = [left0, right0 - left0, bottom0, top0 - bottom0]
 rect1 = [left1, right1 - left1, bottom1, top1 - bottom1]
 rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
 
+
+#############################
+#
+#
+# run from here
+#
+#
+#############################
+
 # make the figure and the axes
 subplot_kw = dict(projection=tifproj)
 fig, ax = plt.subplots(figsize=(figsizex, figsizey),
@@ -1073,17 +1095,17 @@ ax.set_ymargin(0.10)
 ax.set_extent(extent0, tifproj)
 
 # add a background image for rendering
-#ax.stock_img()
+ax.stock_img()
 
 # show the data from the geotiff RGB image
 img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
                 extent=extent, origin='upper')
 
-# read shapefile and plot it onto the tiff image map
-shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
-                               crs=shapeproj, edgecolor='yellow',
+#  read shapefile and plot it onto the tiff image map
+shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
+                               edgecolor='purple',
                                facecolor='none')
-ax.add_feature(shape_feature, zorder=10)
+ax.add_feature(shape_feature)
 
 # add a title
 plt.title(plottitle)
@@ -1113,8 +1135,13 @@ ax.add_feature(cartopy.feature.RIVERS)
 BORDERS.scale = '10m'
 ax.add_feature(BORDERS, color='red')
 
+# TODO this does not work anymore
+
 # format the gridline positions nicely
 xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
+print(xticks)
+print(yticks)
+
 # add gridlines
 gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey', alpha=1, linewidth=1)
 
@@ -1125,21 +1152,28 @@ ax.set_yticks(yticks, crs=tifproj)
 # stagger x gridline / tick labels
 labels = ax.set_xticklabels(xticks)
 for i, label in enumerate(labels):
+#    print(i,label)
     label.set_y(label.get_position()[1] - (i % 2) * 0.2)
+    print(i,label)
 
 # draw a white box over the bottom margin of the background figure
-rect = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
+whitebox = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
                      transform=ax.get_xaxis_transform(), zorder=3,
                      fill=True, facecolor="red", clip_on=False)
-ax.add_patch(rect)
+ax.add_patch(whitebox)
 
 # add scale bar
 test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black')
 
 # show the map
 #plt.tight_layout()
+#plt.show()
 fig.show()
 
 # save it to a file
-plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
+
+# plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
+
 fig.savefig(plotfile)
+
+fig.close()
