@@ -1000,12 +1000,12 @@ def test_map_it3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 # make new map_it function from the code below once it works
 ############################################################
 
+# this calls the function once it is ready, for testing
 plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
 title = allscenes[x].split('.')[0]
 mapextent = extent
 test_map_it3(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd+shapefile, plotfile=plotdir+plotfile,
        plottitle=title, figsizex=10, figsizey=10)
-
 
 
 # set some variables
@@ -1045,12 +1045,15 @@ left2, right2 = mapextent[0], mapextent[1]
 bottom2, top2 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[2]
 
 # set bounding boxes for the two drawing areas
-extent0 = (left1, right1, bottom0, top0)
+#   extent0 covers (mapextent plus the margin below it)
+#   extent1 covers the area for the map (the same as mapextent)
+#   extent2 covers the area below the map for scalebar annotation (a margin outside of mapextent)
+extent0 = (left0, right0, bottom0, top0)
 extent1 = (left1, right1, bottom1, top1)
-extent2 = (left1, right1, bottom2, top1)
-rect0 = [left1, right1 - left1, bottom0, top0 - bottom0]
+extent2 = (left2, right2, bottom2, top2)
+rect0 = [left0, right0 - left0, bottom0, top0 - bottom0]
 rect1 = [left1, right1 - left1, bottom1, top1 - bottom1]
-rect2 = [left1, right1 - left1, bottom2, top2 - bottom2]
+rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
 
 # make the figure and the axes
 subplot_kw = dict(projection=tifproj)
@@ -1067,8 +1070,8 @@ blank_axes(ax)
 blank_axes(ax2)
 
 # set a margin around the data
-ax.set_xmargin(0.05)
-ax.set_ymargin(0.10)
+ax1.set_xmargin(0.05)
+ax1.set_ymargin(0.10)
 
 # set map extent
 ax.set_extent(extent0, tifproj)
@@ -1076,7 +1079,7 @@ ax1.set_extent(extent1, tifproj)
 ax2.set_extent(extent2, tifproj)
 
 # add a background image for rendering
-#ax1.stock_img()
+ax1.stock_img()
 
 # show the data from the geotiff RGB image
 img = ax1.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
@@ -1100,7 +1103,7 @@ ax1.spines['left'].set_smart_bounds(True)
 ax1.spines['bottom'].set_smart_bounds(True)
 
 # do not draw the bounding box
-plt.box(on=None)
+#plt.box(on=None)
 
 # make bottom axis line invisible
 #    ax.spines["top"].set_visible(True)
