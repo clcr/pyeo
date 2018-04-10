@@ -1020,17 +1020,22 @@ def test_map_it3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     rect2 = ([left, bottom2, width, height2])
 
     # make the figure and the axes
+    # we have three axis objects:
+    #   ax  = axis with map projection information and cartopy faetures
+    #   ax1 = axis with map area in the top row of the two subplots
+    #   ax2 = axis with scale bar in the bottom row of the two subplots
     subplot_kw = dict(projection=tifproj)
-    fig, ax = plt.subplots(rect1, figsize=(figsizex, figsizey),
+    fig, ax = plt.subplots(nrows=2, ncols=1, sharex=False, sharey='all', figsize=(figsizex, figsizey),
                            subplot_kw=subplot_kw)
+    ax1 = plt.axes(rect1)
     ax2 = plt.axes(rect2)
 
     # set a margin around the data
-    ax.set_xmargin(0.05)
-    ax.set_ymargin(0.10)
+#    ax.set_xmargin(0.05)
+#    ax.set_ymargin(0.10)
 
     # add a background image for rendering
-    ax.stock_img()
+#    ax.stock_img()
 
     # show the data from the geotiff RGB image
     img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
@@ -1040,7 +1045,7 @@ def test_map_it3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     shape_feature = ShapelyFeature(Reader(shapefile).geometries(),
                                    crs=shapeproj, edgecolor='yellow',
                                    facecolor='none')
-    ax.add_feature(shape_feature)
+    ax.add_feature(shape_feature, zorder=99)
 
     # add a title
     plt.title(plottitle)
@@ -1107,16 +1112,19 @@ def test_map_it3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig.savefig(plotfile)
 
 
-###########MAIN################
+
+############################################################
+# TODO
+# make new map_it function from the code below once it works
+############################################################
 
 plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
 title = allscenes[x].split('.')[0]
 mapextent = extent
-test_map_it3(rgbdata, projection, mapextent, wd + shapefile,
-       plotdir + plotfile,
-       plottitle=title,
-       figsizex=10, figsizey=10)
+test_map_it3(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd+shapefile, plotfile=plotdir+plotfile,
+       plottitle=title, figsizex=10, figsizey=10)
 
+x=0
 plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
 shapefile = wd+'Sitios_Poly.shp'
 
