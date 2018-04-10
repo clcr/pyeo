@@ -560,6 +560,7 @@ print('\n')
 ###################################################
 # resample all Sentinel-2 scenes in the data directory to 10 m
 ###################################################
+tiffdirs = [''] # make a list of all tiff file directories of the same length as the number of scenes
 for x in range(len(allscenes)):
     if allscenes[x].split(".")[1] == "SAFE":
         # open the file
@@ -627,6 +628,10 @@ for x in range(len(allscenes)):
         if not os.path.exists(tiffdir):
             print("Creating directory: ", tiffdir)
             os.mkdir(tiffdir)
+        if x == 1:
+            tiffdirs[0] = tiffdir
+        else:
+            tiffdirs.append(tiffdir) # remember all tiff file directories later
 
         ###################################################
         # process all the bands to 10 m resolution
@@ -680,15 +685,23 @@ for x in range(len(allscenes)):
         print("Resampling to 10 m resolution and conversion to Geotiff completed.")
         print("\n")
 
+###################################################
+# make maps from all Sentinel-2 Geotiffs
+###################################################
+for x in range(len(allscenes)):
+
+        print('\n******************************')
+        print("Reading scene", x + 1, ":", allscenes[x])
+        print('******************************\n')
+
         ###################################################
         # Make RGB maps from three Geotiff files
         ###################################################
 
-        print('\n******************************')
         print('Making maps from Geotiff RGB files')
-        print('******************************\n')
 
         # get names of all 10 m resolution geotiff files
+        tiffdir = tiffdirs[x]
         os.chdir(tiffdir)
         allfiles = sorted([f for f in os.listdir(tiffdir) if f.endswith('.tif')])
         nfiles = len(allfiles)
@@ -719,12 +732,12 @@ for x in range(len(allscenes)):
         proj = ds.GetProjection()
         inproj = osr.SpatialReference()
         inproj.ImportFromWkt(proj)
-        print(inproj)
+#        print(inproj)
 
         # convert wkt projection to Cartopy projection
         projcs = inproj.GetAuthorityCode('PROJCS')
         projection = ccrs.epsg(projcs)
-        print(projection)
+#        print(projection)
 
         # get the extent of the image
         extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
@@ -747,29 +760,58 @@ for x in range(len(allscenes)):
                plottitle=title,
                figsizex=10, figsizey=10)
 
-        # zoom out
-        zf = 10
+        # zoom out (negative values zoom out, positive zoom in)
+        zf = -2
+        # offsets in map coordinates
+        width = extent[1] - extent[0]
+        height = extent[3] - extent[2]
+        xoffset = 0
+        yoffset = 0
+        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+        mapextent = (extent[0] + width / zf / 2 + xoffset,
+                     extent[1] - width / zf / 2 + xoffset,
+                     extent[2] + height / zf / 2 + yoffset,
+                     extent[3] - height / zf / 2 + yoffset)
         plotfile = allscenes[x].split('.')[0] + '_map2.jpg'
         title = allscenes[x].split('.')[0]
-        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        mapextent = (extent[0] - (extent[1] - extent[0]) * zf,
-                     extent[1] + (extent[1] - extent[0]) * zf,
-                     extent[2] - (extent[3] - extent[2]) * zf,
-                     extent[3] + (extent[3] - extent[2]) * zf)
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
                plottitle=title,
                figsizex=10, figsizey=10)
 
-        # zoom in to the upper right corner
-        zf = 1 / 16
+        # zoom in to the centre (negative values zoom out, positive zoom in)
+        zf = 4
+        # offsets in map coordinates
+        width = extent[1] - extent[0]
+        height = extent[3] - extent[2]
+        xoffset = 0
+        yoffset = 0
+        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+        mapextent = (extent[0] + width / zf / 2 + xoffset,
+                     extent[1] - width / zf / 2 + xoffset,
+                     extent[2] + height / zf / 2 + yoffset,
+                     extent[3] - height / zf / 2 + yoffset)
         plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
         title = allscenes[x].split('.')[0]
+        map_it(rgbdata, projection, mapextent, wd + shapefile,
+               plotdir + plotfile,
+               plottitle=title,
+               figsizex=10, figsizey=10)
+
+        # zoom in to the top right corner (negative values zoom out, positive zoom in)
+        zf = 2
+        # offsets in map coordinates
+        width = extent[1] - extent[0]
+        height = extent[3] - extent[2]
+        xoffset = round(width / zf / 2)
+        yoffset = round(height / zf / 2)
+        plotfile = allscenes[x].split('.')[0] + '_map4.jpg'
+        title = allscenes[x].split('.')[0]
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        mapextent = (extent[0] + (extent[1] - extent[0]) * (1-zf),
-                     extent[1],
-                     extent[2] + (extent[3] - extent[2]) * (1-zf),
-                     extent[3])
+        mapextent = (extent[0] + width / zf / 2 + xoffset,
+                     extent[1] - width / zf / 2 + xoffset,
+                     extent[2] + height / zf / 2 + yoffset,
+                     extent[3] - height / zf / 2 + yoffset)
         map_it(rgbdata, projection, mapextent, wd + shapefile,
                plotdir + plotfile,
                plottitle=title,
@@ -1014,23 +1056,22 @@ test_map_it3(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd+shap
 '''
 
 # set some variables
-x=1
+x=2
 figsizex=10
 figsizey=10
 plotfile = plotdir + 'Test_map1.jpg'
 shapefile = wd+'Sitios_Poly.shp'
 tifproj = projection
 plottitle='Test'
-# zoom in to the upper right corner
-zf = 1 / 16
-plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
+# zoom out
+zf = 2.0
+plotfile = allscenes[x].split('.')[0] + '_map2.jpg'
 title = allscenes[x].split('.')[0]
 # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-mapextent = (extent[0] + (extent[1] - extent[0]) * (1-zf),
-             extent[1],
-             extent[2] + (extent[3] - extent[2]) * (1-zf),
-             extent[3])
-mapextent = extent
+mapextent = (extent[0] - (extent[1] - extent[0]) * zf,
+             extent[1] + (extent[1] - extent[0]) * zf,
+             extent[2] - (extent[3] - extent[2]) * zf,
+             extent[3] + (extent[3] - extent[2]) * zf)
 
 # get shapefile projection from the file
 # get driver to read a shapefile and open it
@@ -1176,4 +1217,3 @@ fig.show()
 
 fig.savefig(plotfile)
 
-fig.close()
