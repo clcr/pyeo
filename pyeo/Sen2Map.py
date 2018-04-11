@@ -1063,15 +1063,19 @@ plotfile = plotdir + 'Test_map1.jpg'
 shapefile = wd+'Sitios_Poly.shp'
 tifproj = projection
 plottitle='Test'
-# zoom out
-zf = 2.0
-plotfile = allscenes[x].split('.')[0] + '_map2.jpg'
-title = allscenes[x].split('.')[0]
+# zoom in to the top right corner (negative values zoom out, positive zoom in)
+zf = 2
+# offsets in map coordinates
+width = extent[1] - extent[0]
+height = extent[3] - extent[2]
+xoffset = round(width / zf / 2)
+yoffset = round(height / zf / 2)
+plotfile = allscenes[x].split('.')[0] + '_TEST.jpg'
 # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-mapextent = (extent[0] - (extent[1] - extent[0]) * zf,
-             extent[1] + (extent[1] - extent[0]) * zf,
-             extent[2] - (extent[3] - extent[2]) * zf,
-             extent[3] + (extent[3] - extent[2]) * zf)
+mapextent = (extent[0] + width / zf / 2 + xoffset,
+             extent[1] - width / zf / 2 + xoffset,
+             extent[2] + height / zf / 2 + yoffset,
+             extent[3] - height / zf / 2 + yoffset)
 
 # get shapefile projection from the file
 # get driver to read a shapefile and open it
@@ -1140,13 +1144,13 @@ ax.stock_img()
 
 # show the data from the geotiff RGB image
 img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
-                extent=extent, origin='upper')
+                extent=extent, origin='upper', zorder=1)
 
 #  read shapefile and plot it onto the tiff image map
 shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
-                               edgecolor='purple',
+                               edgecolor='yellow', linewidth=2,
                                facecolor='none')
-ax.add_feature(shape_feature)
+ax.add_feature(shape_feature, zorder=2)
 
 # add a title
 plt.title(plottitle)
@@ -1178,10 +1182,16 @@ ax.add_feature(BORDERS, color='red')
 
 # TODO this does not work anymore
 
+# draw a white box over the bottom margin of the background figure
+whitebox = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
+                     transform=ax.get_xaxis_transform(), zorder=3,
+                     fill=True, facecolor="red", clip_on=False)
+ax.add_patch(whitebox)
+
 # format the gridline positions nicely
 xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
-print(xticks)
-print(yticks)
+#print(xticks)
+#print(yticks)
 
 # add gridlines
 gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey', alpha=1, linewidth=1)
@@ -1195,13 +1205,7 @@ labels = ax.set_xticklabels(xticks)
 for i, label in enumerate(labels):
 #    print(i,label)
     label.set_y(label.get_position()[1] - (i % 2) * 0.2)
-    print(i,label)
-
-# draw a white box over the bottom margin of the background figure
-whitebox = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
-                     transform=ax.get_xaxis_transform(), zorder=3,
-                     fill=True, facecolor="red", clip_on=False)
-ax.add_patch(whitebox)
+#    print(i,label)
 
 # add scale bar
 test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black')
