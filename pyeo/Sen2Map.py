@@ -823,7 +823,7 @@ for x in range(len(allscenes)):
 #################################################
 
 # plot a scale bar with 4 subdivisions on the map
-def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=5, col='black'):
+def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=5, col='black', zorder=20):
     """
     ax is the axes to draw the scalebar on.
     bars is the number of subdivisions of the bar (black and white chunks)
@@ -866,7 +866,7 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
     barcol = 'white'
     for i in range(0, bars):
         # plot the chunk
-        ax.plot(bar_xs, [sby, sby], transform=tifproj, color=barcol, linewidth=linewidth)
+        ax.plot(bar_xs, [sby, sby], transform=tifproj, color=barcol, linewidth=linewidth, zorder=zorder)
         # alternate the colour
         if barcol == 'white':
             barcol = col
@@ -877,7 +877,7 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
         # Plot the scalebar label for that chunk
         ax.text(bar_xt, sby, str(round(i * length / bars)), transform=tifproj,
                 horizontalalignment='center', verticalalignment='bottom',
-                color=col)
+                color=col, zorder=zorder)
         # work out the position of the next chunk of the bar
         bar_xs[0] = bar_xs[1]
         bar_xs[1] = bar_xs[1] + length * 1000 / bars
@@ -886,7 +886,7 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
     # Plot the last scalebar label
     t = ax.text(bar_xt, sby, str(round(length)), transform=tifproj,
             horizontalalignment='center', verticalalignment='bottom',
-            color=col)
+            color=col, zorder=zorder)
     # Plot the unit label below the bar
     bar_xt = sbx + length * 1000 / 2
     # get text height
@@ -894,7 +894,7 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
     th = (y1 - y0) * 0.05
     bar_yt = y0 + (y1 - y0) * location[1] - th
     ax.text(bar_xt, bar_yt, 'km', transform=tifproj, horizontalalignment='center',
-            verticalalignment='bottom', color=col)
+            verticalalignment='bottom', color=col, zorder=zorder)
 
 
 def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
@@ -1150,6 +1150,7 @@ img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
 shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
                                edgecolor='yellow', linewidth=2,
                                facecolor='none')
+# higher zorder means that the shapefile is plotted over the image
 ax.add_feature(shape_feature, zorder=2)
 
 # add a title
@@ -1181,13 +1182,14 @@ BORDERS.scale = '10m'
 ax.add_feature(BORDERS, color='red')
 
 # draw a white box over the bottom part of the figure area as a space for the scale bar etc.
-plt.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white",zorder=3)
+plt.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white", zorder=3)
 
 # format the gridline positions nicely
 xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
 
 # add gridlines
-gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey', alpha=1, linewidth=1)
+gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey',
+                  alpha=1, linewidth=1, zorder=5)
 
 # add ticks
 ax.set_xticks(xticks, crs=tifproj)
@@ -1200,11 +1202,9 @@ for i, label in enumerate(labels):
 #    print(i,label)
 
 # add scale bar
-test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black')
+test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black', zorder=4)
 
 # show the map
-#plt.tight_layout()
-#plt.show()
 fig.show()
 
 # save it to a file
