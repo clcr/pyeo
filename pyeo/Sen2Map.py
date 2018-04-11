@@ -823,7 +823,7 @@ for x in range(len(allscenes)):
 #################################################
 
 # plot a scale bar with 4 subdivisions on the map
-def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=3, col='black'):
+def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=5, col='black'):
     """
     ax is the axes to draw the scalebar on.
     bars is the number of subdivisions of the bar (black and white chunks)
@@ -1180,19 +1180,11 @@ ax.add_feature(cartopy.feature.RIVERS)
 BORDERS.scale = '10m'
 ax.add_feature(BORDERS, color='red')
 
-# TODO this does not work anymore
-
-# draw a white box over the bottom margin of the background figure
-#whitebox = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
-#                     transform=ax.get_xaxis_transform(), zorder=3,
-#                     fill=True, facecolor="red", clip_on=False)
-#ax.add_patch(whitebox)
-plt.axhspan(ymin=extent2[2], ymax=extent2[3],zorder=3,fill=True, facecolor="red")
+# draw a white box over the bottom part of the figure area as a space for the scale bar etc.
+plt.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white",zorder=3)
 
 # format the gridline positions nicely
 xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
-#print(xticks)
-#print(yticks)
 
 # add gridlines
 gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey', alpha=1, linewidth=1)
@@ -1204,7 +1196,6 @@ ax.set_yticks(yticks, crs=tifproj)
 # stagger x gridline / tick labels
 labels = ax.set_xticklabels(xticks)
 for i, label in enumerate(labels):
-#    print(i,label)
     label.set_y(label.get_position()[1] - (i % 2) * 0.2)
 #    print(i,label)
 
