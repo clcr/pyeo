@@ -1070,7 +1070,7 @@ width = extent[1] - extent[0]
 height = extent[3] - extent[2]
 xoffset = round(width / zf / 2)
 yoffset = round(height / zf / 2)
-plotfile = allscenes[x].split('.')[0] + '_TEST.jpg'
+# plotfile = plotdir + allscenes[x].split('.')[0] + '_TEST.jpg'
 # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
 mapextent = (extent[0] + width / zf / 2 + xoffset,
              extent[1] - width / zf / 2 + xoffset,
@@ -1151,7 +1151,7 @@ shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
                                edgecolor='yellow', linewidth=2,
                                facecolor='none')
 # higher zorder means that the shapefile is plotted over the image
-ax.add_feature(shape_feature, zorder=2)
+ax.add_feature(shape_feature, zorder=1.1)
 
 # add a title
 plt.title(plottitle)
@@ -1182,14 +1182,14 @@ BORDERS.scale = '10m'
 ax.add_feature(BORDERS, color='red')
 
 # draw a white box over the bottom part of the figure area as a space for the scale bar etc.
-plt.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white", zorder=3)
+plt.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white", zorder=1.2)
 
 # format the gridline positions nicely
 xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
 
 # add gridlines
 gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey',
-                  alpha=1, linewidth=1, zorder=5)
+                  alpha=1, linewidth=1, zorder=1.3)
 
 # add ticks
 ax.set_xticks(xticks, crs=tifproj)
@@ -1199,7 +1199,10 @@ ax.set_yticks(yticks, crs=tifproj)
 labels = ax.set_xticklabels(xticks)
 for i, label in enumerate(labels):
     label.set_y(label.get_position()[1] - (i % 2) * 0.2)
-#    print(i,label)
+
+# set axis tick mark parameters
+ax.tick_params(zorder=1.4) # bring to foreground
+# N.B. note that zorder of axis ticks is reset to he default of 2.5 when the plot is drawn. This is a known bug.
 
 # add scale bar
 test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black', zorder=4)
@@ -1208,8 +1211,6 @@ test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black', zor
 fig.show()
 
 # save it to a file
-
 # plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
-
 fig.savefig(plotfile)
 
