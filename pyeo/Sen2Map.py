@@ -1183,10 +1183,11 @@ ax.add_feature(BORDERS, color='red')
 # TODO this does not work anymore
 
 # draw a white box over the bottom margin of the background figure
-whitebox = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
-                     transform=ax.get_xaxis_transform(), zorder=3,
-                     fill=True, facecolor="red", clip_on=False)
-ax.add_patch(whitebox)
+#whitebox = plt.Rectangle((extent2[0], extent2[2]), width=extent2[1]-extent2[0], height=extent2[3]-extent2[2],
+#                     transform=ax.get_xaxis_transform(), zorder=3,
+#                     fill=True, facecolor="red", clip_on=False)
+#ax.add_patch(whitebox)
+plt.axhspan(ymin=extent2[2], ymax=extent2[3],zorder=3,fill=True, facecolor="red")
 
 # format the gridline positions nicely
 xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
