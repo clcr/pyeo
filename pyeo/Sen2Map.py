@@ -170,6 +170,10 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
     (ie. 0 is the left side of the plot)
     linewidth is the thickness of the scalebar.
     color is the color of the scale bar and the text
+
+    modified from
+    https://stackoverflow.com/questions/32333870/how-can-i-show-a-km-ruler-on-a-cartopy-matplotlib-plot/35705477#35705477
+
     """
     # Get the limits of the axis in lat long
     llx0, llx1, lly0, lly1 = ax.get_extent(ccrs.PlateCarree())
@@ -833,6 +837,10 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.8), linewidth=
     (ie. 0 is the left side of the plot)
     linewidth is the thickness of the scalebar.
     color is the color of the scale bar and the text
+
+    modified from
+    https://stackoverflow.com/questions/32333870/how-can-i-show-a-km-ruler-on-a-cartopy-matplotlib-plot/35705477#35705477
+
     """
     # Get the limits of the axis in map coordinates
     x0, x1, y0, y1 = ax.get_extent(tifproj)
