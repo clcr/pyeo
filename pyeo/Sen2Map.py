@@ -1232,7 +1232,7 @@ ax1.tick_params(zorder=1.4) # bring to foreground
 # N.B. note that zorder of axis ticks is reset to he default of 2.5 when the plot is drawn. This is a known bug.
 
 # add scale bar on the second axes in row 2 of the subplots
-#test_draw_scale_bar(ax2, bars=4, length=40, col='black', zorder=4)
+test_draw_scale_bar(ax2, bars=4, length=40, col='black', zorder=4)
 
 # show the map
 fig.tight_layout()
