@@ -1192,6 +1192,10 @@ ax2.spines['bottom'].set_position(('data', extent2[2]))
 ax2.spines['left'].set_smart_bounds(True)
 ax2.spines['bottom'].set_smart_bounds(True)
 
+# do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
+#   there is a bug in Cartopy that always draws the box.
+ax2.outline_patch.set_visible(False)
+
 # draw a white box over the bottom part of the figure area as a space for the scale bar etc.
 #ax2.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white", zorder=1.2)
 
