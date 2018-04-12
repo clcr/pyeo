@@ -38,6 +38,7 @@ from cartopy.io.img_tiles import StamenTerrain
 from cartopy.io.img_tiles import GoogleTiles
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from matplotlib.path import Path
 import matplotlib.patheffects as PathEffects
 from matplotlib import patheffects
@@ -823,7 +824,7 @@ for x in range(len(allscenes)):
 #################################################
 
 # plot a scale bar with 4 subdivisions on the map
-def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=5, col='black', zorder=20):
+def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.8), linewidth=5, col='black', zorder=20):
     """
     ax is the axes to draw the scalebar on.
     bars is the number of subdivisions of the bar (black and white chunks)
@@ -835,7 +836,6 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
     """
     # Get the limits of the axis in map coordinates
     x0, x1, y0, y1 = ax.get_extent(tifproj)
-    #    print(x0, x1, y0, y1)
 
     # Set the relative position of the scale bar
     sbllx = x0 + (x1 - x0) * location[0]
@@ -844,6 +844,9 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
     # Turn the specified relative scalebar location into coordinates in metres
     sbx = x0 + (x1 - x0) * location[0]
     sby = y0 + (y1 - y0) * location[1]
+
+    # Get the thickness of the scalebar
+    thickness = (y1 - y0) / 20
 
     # Calculate a scale bar length if none has been given
     if not length:
@@ -862,20 +865,31 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
 
     # Generate the x coordinate for the ends of the scalebar
     bar_xs = [sbx, sbx + length * 1000 / bars]
+
+    # Generate the y coordinate for the ends of the scalebar
+    bar_ys = [sby, sby + thickness]
+
     # Plot the scalebar chunks
     barcol = 'white'
     for i in range(0, bars):
         # plot the chunk
-        ax.plot(bar_xs, [sby, sby], transform=tifproj, color=barcol, linewidth=linewidth, zorder=zorder)
+        rect = patches.Rectangle((bar_xs[0], bar_ys[0]), bar_xs[1]-bar_xs[0], bar_ys[1]-bar_ys[0],
+                                 linewidth=1, edgecolor='black', facecolor=barcol)
+        ax.add_patch(rect)
+
+#        ax.plot(bar_xs, bar_ys, transform=tifproj, color=barcol, linewidth=linewidth, zorder=zorder)
+
         # alternate the colour
         if barcol == 'white':
             barcol = col
         else:
             barcol = 'white'
-        # Generate the x coordinate for the number
+        # Generate the x,y coordinates for the number
         bar_xt = sbx + i * length * 1000 / bars
+        bar_yt = sby + thickness
+
         # Plot the scalebar label for that chunk
-        ax.text(bar_xt, sby, str(round(i * length / bars)), transform=tifproj,
+        ax.text(bar_xt, bar_yt, str(round(i * length / bars)), transform=tifproj,
                 horizontalalignment='center', verticalalignment='bottom',
                 color=col, zorder=zorder)
         # work out the position of the next chunk of the bar
@@ -884,17 +898,9 @@ def test_draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.1), linewidth=
     # Generate the x coordinate for the last number
     bar_xt = sbx + length * 1000
     # Plot the last scalebar label
-    t = ax.text(bar_xt, sby, str(round(length)), transform=tifproj,
+    t = ax.text(bar_xt, bar_yt, str(round(length))+' km', transform=tifproj,
             horizontalalignment='center', verticalalignment='bottom',
             color=col, zorder=zorder)
-    # Plot the unit label below the bar
-    bar_xt = sbx + length * 1000 / 2
-    # get text height
-#    TODO th = t.get_size() # does not work
-    th = (y1 - y0) * 0.05
-    bar_yt = y0 + (y1 - y0) * location[1] - th
-    ax.text(bar_xt, bar_yt, 'km', transform=tifproj, horizontalalignment='center',
-            verticalalignment='bottom', color=col, zorder=zorder)
 
 
 def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
@@ -1054,66 +1060,66 @@ test_map_it3(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd+shap
        plottitle=title, figsizex=10, figsizey=10)
 
 '''
+def preprocess():
+    # set some variables
+    x=2
+    figsizex=8
+    figsizey=10
+    plotfile = plotdir + 'Test_map1.jpg'
+    shapefile = wd+'Sitios_Poly.shp'
+    tifproj = projection
+    plottitle='Test'
+    # zoom in to the top right corner (negative values zoom out, positive zoom in)
+    zf = 2
+    # offsets in map coordinates
+    width = extent[1] - extent[0]
+    height = extent[3] - extent[2]
+    xoffset = round(width / zf / 2)
+    yoffset = round(height / zf / 2)
+    # plotfile = plotdir + allscenes[x].split('.')[0] + '_TEST.jpg'
+    # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+    mapextent = (extent[0] + width / zf / 2 + xoffset,
+                 extent[1] - width / zf / 2 + xoffset,
+                 extent[2] + height / zf / 2 + yoffset,
+                 extent[3] - height / zf / 2 + yoffset)
 
-# set some variables
-x=2
-figsizex=10
-figsizey=10
-plotfile = plotdir + 'Test_map1.jpg'
-shapefile = wd+'Sitios_Poly.shp'
-tifproj = projection
-plottitle='Test'
-# zoom in to the top right corner (negative values zoom out, positive zoom in)
-zf = 2
-# offsets in map coordinates
-width = extent[1] - extent[0]
-height = extent[3] - extent[2]
-xoffset = round(width / zf / 2)
-yoffset = round(height / zf / 2)
-# plotfile = plotdir + allscenes[x].split('.')[0] + '_TEST.jpg'
-# need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-mapextent = (extent[0] + width / zf / 2 + xoffset,
-             extent[1] - width / zf / 2 + xoffset,
-             extent[2] + height / zf / 2 + yoffset,
-             extent[3] - height / zf / 2 + yoffset)
+    # get shapefile projection from the file
+    # get driver to read a shapefile and open it
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    dataSource = driver.Open(shapefile, 0)
+    if dataSource is None:
+        print('Could not open ' + shapefile)
+        sys.exit(1)  # exit with an error code
+    # get the layer from the shapefile
+    layer = dataSource.GetLayer()
+    # get the projection information and convert to wkt
+    projsr = layer.GetSpatialRef()
+    projwkt = projsr.ExportToWkt()
+    projosr = osr.SpatialReference()
+    projosr.ImportFromWkt(projwkt)
+    # convert wkt projection to Cartopy projection
+    projcs = projosr.GetAuthorityCode('PROJCS')
+    shapeproj = ccrs.epsg(projcs)
 
-# get shapefile projection from the file
-# get driver to read a shapefile and open it
-driver = ogr.GetDriverByName('ESRI Shapefile')
-dataSource = driver.Open(shapefile, 0)
-if dataSource is None:
-    print('Could not open ' + shapefile)
-    sys.exit(1)  # exit with an error code
-# get the layer from the shapefile
-layer = dataSource.GetLayer()
-# get the projection information and convert to wkt
-projsr = layer.GetSpatialRef()
-projwkt = projsr.ExportToWkt()
-projosr = osr.SpatialReference()
-projosr.ImportFromWkt(projwkt)
-# convert wkt projection to Cartopy projection
-projcs = projosr.GetAuthorityCode('PROJCS')
-shapeproj = ccrs.epsg(projcs)
+    # definitions for the axes in map coordinates
+    margin = 0.2 # set aside this proportion of the height of the figure for the annotations
+    left0, right0 = mapextent[0], mapextent[1]
+    bottom0, top0 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[3]
+    left1, right1 = mapextent[0], mapextent[1]
+    bottom1, top1 = mapextent[2], mapextent[3]
+    left2, right2 = mapextent[0], mapextent[1]
+    bottom2, top2 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[2]
 
-# definitions for the axes in map coordinates
-margin = 0.2 # set aside this proportion of the height of the figure for the annotations
-left0, right0 = mapextent[0], mapextent[1]
-bottom0, top0 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[3]
-left1, right1 = mapextent[0], mapextent[1]
-bottom1, top1 = mapextent[2], mapextent[3]
-left2, right2 = mapextent[0], mapextent[1]
-bottom2, top2 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[2]
-
-# set bounding boxes for the two drawing areas
-#   extent0 covers (mapextent plus the margin below it)
-#   extent1 covers the area for the map (the same as mapextent)
-#   extent2 covers the area below the map for scalebar annotation (a margin outside of mapextent)
-extent0 = (left0, right0, bottom0, top0)
-extent1 = (left1, right1, bottom1, top1)
-extent2 = (left2, right2, bottom2, top2)
-rect0 = [left0, right0 - left0, bottom0, top0 - bottom0]
-rect1 = [left1, right1 - left1, bottom1, top1 - bottom1]
-rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
+    # set bounding boxes for the two drawing areas
+    #   extent0 covers (mapextent plus the margin below it)
+    #   extent1 covers the area for the map (the same as mapextent)
+    #   extent2 covers the area below the map for scalebar annotation (a margin outside of mapextent)
+    extent0 = (left0, right0, bottom0, top0)
+    extent1 = (left1, right1, bottom1, top1)
+    extent2 = (left2, right2, bottom2, top2)
+    rect0 = [left0, right0 - left0, bottom0, top0 - bottom0]
+    rect1 = [left1, right1 - left1, bottom1, top1 - bottom1]
+    rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
 
 
 #############################
@@ -1126,24 +1132,30 @@ rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
 
 # make the figure and the axes
 subplot_kw = dict(projection=tifproj)
-fig, ax = plt.subplots(figsize=(figsizex, figsizey),
-                       subplot_kw=subplot_kw)
+fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(figsizex, figsizey),
+                               gridspec_kw = {'height_ratios':[8, 2]},
+                               subplot_kw=subplot_kw)
 
-# clear axis formatting
-#blank_axes(ax)
+# clear axis formatting of a matplotlib axes object
+#blank_axes(ax2)
+
+#fig.patch.set_visible(False)
+#ax2.axis('off')
 
 # set a margin around the data
-ax.set_xmargin(0.05)
-ax.set_ymargin(0.10)
+ax1.set_xmargin(0.05)
+ax1.set_ymargin(0.10)
 
 # set map extent
-ax.set_extent(extent0, tifproj)
+ax1.set_extent(extent1, tifproj)
+# set matching extent of the annotation area for the scale bar
+ax2.set_extent(extent2, tifproj)
 
 # add a background image for rendering
-ax.stock_img()
+ax1.stock_img()
 
 # show the data from the geotiff RGB image
-img = ax.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
+img = ax1.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
                 extent=extent, origin='upper', zorder=1)
 
 #  read shapefile and plot it onto the tiff image map
@@ -1151,66 +1163,71 @@ shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
                                edgecolor='yellow', linewidth=2,
                                facecolor='none')
 # higher zorder means that the shapefile is plotted over the image
-ax.add_feature(shape_feature, zorder=1.1)
+ax1.add_feature(shape_feature, zorder=1.1)
 
 # add a title
-plt.title(plottitle)
-
-# draw the x axis where the image ends and the scale bar area of the map begins
-ax.spines['left'].set_position(('data', extent1[0]))
-ax.spines['right'].set_color('none')
-ax.spines['bottom'].set_position(('data', extent1[2]))
-ax.spines['top'].set_color('none')
-ax.spines['left'].set_smart_bounds(True)
-ax.spines['bottom'].set_smart_bounds(True)
-
-# make bottom axis line invisible
-#    ax.spines["top"].set_visible(True)
-#    ax.spines["right"].set_visible(True)
-#    ax.spines["bottom"].set_visible(False)
-#    ax.spines["left"].set_visible(True)
+ax1.set_title(plottitle)
 
 # add coastlines
-ax.coastlines(resolution='10m', color='navy', linewidth=1)
+ax1.coastlines(resolution='10m', color='navy', linewidth=1)
 
 # add lakes and rivers
-ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
-ax.add_feature(cartopy.feature.RIVERS)
+ax1.add_feature(cartopy.feature.LAKES, alpha=0.5)
+ax1.add_feature(cartopy.feature.RIVERS)
 
 # add borders
 BORDERS.scale = '10m'
-ax.add_feature(BORDERS, color='red')
+ax1.add_feature(BORDERS, color='red')
+
+# draw the x axis where the image ends and the scale bar area of the map begins
+ax1.spines['left'].set_position(('data', extent1[0]))
+ax1.spines['right'].set_color('none')
+ax1.spines['bottom'].set_position(('data', extent1[2]))
+ax1.spines['top'].set_color('none')
+ax1.spines['left'].set_smart_bounds(True)
+ax1.spines['bottom'].set_smart_bounds(True)
+
+ax2.spines['left'].set_position(('data', extent2[0]))
+ax2.spines['bottom'].set_position(('data', extent2[2]))
+ax2.spines['left'].set_smart_bounds(True)
+ax2.spines['bottom'].set_smart_bounds(True)
 
 # draw a white box over the bottom part of the figure area as a space for the scale bar etc.
-plt.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white", zorder=1.2)
+#ax2.axhspan(ymin=extent2[2], ymax=extent2[3], fill=True, facecolor="white", zorder=1.2)
+
 
 # format the gridline positions nicely
 xticks, yticks = get_gridlines(extent1[0], extent1[1], extent1[2], extent1[3], nticks=10)
 
 # add gridlines
-gl = ax.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey',
+gl = ax1.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey',
                   alpha=1, linewidth=1, zorder=1.3)
 
 # add ticks
-ax.set_xticks(xticks, crs=tifproj)
-ax.set_yticks(yticks, crs=tifproj)
+ax1.set_xticks(xticks, crs=tifproj)
+ax1.set_yticks(yticks, crs=tifproj)
 
 # stagger x gridline / tick labels
-labels = ax.set_xticklabels(xticks)
+labels = ax1.set_xticklabels(xticks)
 for i, label in enumerate(labels):
-    label.set_y(label.get_position()[1] - (i % 2) * 0.2)
+    label.set_y(label.get_position()[1] - (i % 2) * 0.1)
+
+# rotate the font orientation of the axis tick labels
+plt.setp(ax1.get_xticklabels(), rotation=30, horizontalalignment='right')
 
 # set axis tick mark parameters
-ax.tick_params(zorder=1.4) # bring to foreground
+ax1.tick_params(zorder=1.4) # bring to foreground
 # N.B. note that zorder of axis ticks is reset to he default of 2.5 when the plot is drawn. This is a known bug.
 
-# add scale bar
-test_draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.1), col='black', zorder=4)
+# add scale bar on the second axes in row 2 of the subplots
+#test_draw_scale_bar(ax2, bars=4, length=40, col='black', zorder=4)
 
 # show the map
+fig.tight_layout()
 fig.show()
 
 # save it to a file
 # plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
 fig.savefig(plotfile)
 
+# plt.close(fig)
