@@ -1068,66 +1068,65 @@ test_map_it3(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd+shap
        plottitle=title, figsizex=10, figsizey=10)
 
 '''
-def preprocess():
-    # set some variables
-    x=2
-    figsizex=8
-    figsizey=10
-    plotfile = plotdir + 'Test_map1.jpg'
-    shapefile = wd+'Sitios_Poly.shp'
-    tifproj = projection
-    plottitle='Test'
-    # zoom in to the top right corner (negative values zoom out, positive zoom in)
-    zf = 2
-    # offsets in map coordinates
-    width = extent[1] - extent[0]
-    height = extent[3] - extent[2]
-    xoffset = round(width / zf / 2)
-    yoffset = round(height / zf / 2)
-    # plotfile = plotdir + allscenes[x].split('.')[0] + '_TEST.jpg'
-    # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-    mapextent = (extent[0] + width / zf / 2 + xoffset,
-                 extent[1] - width / zf / 2 + xoffset,
-                 extent[2] + height / zf / 2 + yoffset,
-                 extent[3] - height / zf / 2 + yoffset)
+# set some variables
+x=2
+figsizex=8
+figsizey=10
+plotfile = plotdir + 'Test_map1.jpg'
+shapefile = wd+'Sitios_Poly.shp'
+tifproj = projection
+plottitle='Test'
+# zoom in to the top right corner (negative values zoom out, positive zoom in)
+zf = 2
+# offsets in map coordinates
+width = extent[1] - extent[0]
+height = extent[3] - extent[2]
+xoffset = round(width / zf / 2)
+yoffset = round(height / zf / 2)
+# plotfile = plotdir + allscenes[x].split('.')[0] + '_TEST.jpg'
+# need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+mapextent = (extent[0] + width / zf / 2 + xoffset,
+             extent[1] - width / zf / 2 + xoffset,
+             extent[2] + height / zf / 2 + yoffset,
+             extent[3] - height / zf / 2 + yoffset)
 
-    # get shapefile projection from the file
-    # get driver to read a shapefile and open it
-    driver = ogr.GetDriverByName('ESRI Shapefile')
-    dataSource = driver.Open(shapefile, 0)
-    if dataSource is None:
-        print('Could not open ' + shapefile)
-        sys.exit(1)  # exit with an error code
-    # get the layer from the shapefile
-    layer = dataSource.GetLayer()
-    # get the projection information and convert to wkt
-    projsr = layer.GetSpatialRef()
-    projwkt = projsr.ExportToWkt()
-    projosr = osr.SpatialReference()
-    projosr.ImportFromWkt(projwkt)
-    # convert wkt projection to Cartopy projection
-    projcs = projosr.GetAuthorityCode('PROJCS')
-    shapeproj = ccrs.epsg(projcs)
+# get shapefile projection from the file
+# get driver to read a shapefile and open it
+driver = ogr.GetDriverByName('ESRI Shapefile')
+dataSource = driver.Open(shapefile, 0)
+if dataSource is None:
+    print('Could not open ' + shapefile)
+    sys.exit(1)  # exit with an error code
+# get the layer from the shapefile
+layer = dataSource.GetLayer()
+# get the projection information and convert to wkt
+projsr = layer.GetSpatialRef()
+projwkt = projsr.ExportToWkt()
+projosr = osr.SpatialReference()
+projosr.ImportFromWkt(projwkt)
+# convert wkt projection to Cartopy projection
+projcs = projosr.GetAuthorityCode('PROJCS')
+shapeproj = ccrs.epsg(projcs)
 
-    # definitions for the axes in map coordinates
-    margin = 0.2 # set aside this proportion of the height of the figure for the annotations
-    left0, right0 = mapextent[0], mapextent[1]
-    bottom0, top0 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[3]
-    left1, right1 = mapextent[0], mapextent[1]
-    bottom1, top1 = mapextent[2], mapextent[3]
-    left2, right2 = mapextent[0], mapextent[1]
-    bottom2, top2 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[2]
+# definitions for the axes in map coordinates
+margin = 0.2 # set aside this proportion of the height of the figure for the annotations
+left0, right0 = mapextent[0], mapextent[1]
+bottom0, top0 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[3]
+left1, right1 = mapextent[0], mapextent[1]
+bottom1, top1 = mapextent[2], mapextent[3]
+left2, right2 = mapextent[0], mapextent[1]
+bottom2, top2 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[2]
 
-    # set bounding boxes for the two drawing areas
-    #   extent0 covers (mapextent plus the margin below it)
-    #   extent1 covers the area for the map (the same as mapextent)
-    #   extent2 covers the area below the map for scalebar annotation (a margin outside of mapextent)
-    extent0 = (left0, right0, bottom0, top0)
-    extent1 = (left1, right1, bottom1, top1)
-    extent2 = (left2, right2, bottom2, top2)
-    rect0 = [left0, right0 - left0, bottom0, top0 - bottom0]
-    rect1 = [left1, right1 - left1, bottom1, top1 - bottom1]
-    rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
+# set bounding boxes for the two drawing areas
+#   extent0 covers (mapextent plus the margin below it)
+#   extent1 covers the area for the map (the same as mapextent)
+#   extent2 covers the area below the map for scalebar annotation (a margin outside of mapextent)
+extent0 = (left0, right0, bottom0, top0)
+extent1 = (left1, right1, bottom1, top1)
+extent2 = (left2, right2, bottom2, top2)
+rect0 = [left0, right0 - left0, bottom0, top0 - bottom0]
+rect1 = [left1, right1 - left1, bottom1, top1 - bottom1]
+rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
 
 
 #############################
