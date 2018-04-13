@@ -24,42 +24,40 @@ Created on Sat Mar 24 12:11:00 2018
 # TODO directory management: save outputs to a different subdirectory outside raw scene directory structure
 ########################
 
-import cartopy
-import cartopy.crs as ccrs
 from cartopy.io.shapereader import Reader
 from cartopy.feature import ShapelyFeature, BORDERS
 import cartopy
 import cartopy.crs as ccrs
-from cartopy.io.img_tiles import OSM
-import cartopy.feature as cfeature
-from cartopy.io import shapereader
-from cartopy.io.img_tiles import StamenTerrain
-from cartopy.io.img_tiles import GoogleTiles
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+#from cartopy.io.img_tiles import OSM
+#import cartopy.feature as cfeature
+#from cartopy.io import shapereader
+#from cartopy.io.img_tiles import StamenTerrain
+#from cartopy.io.img_tiles import GoogleTiles
+#from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from matplotlib.path import Path
-import matplotlib.patheffects as PathEffects
-from matplotlib import patheffects
-import matplotlib.patches as mpatches
-import matplotlib.lines as mlines
+#from matplotlib.path import Path
+#import matplotlib.patheffects as PathEffects
+#from matplotlib import patheffects
+#import matplotlib.patches as mpatches
+#import matplotlib.lines as mlines
 import numpy as np
 import os, sys
 from os import listdir
 from os.path import isfile, isdir, join
 from osgeo import gdal, gdalnumeric, ogr, osr
 from skimage import io
-import subprocess
+#import subprocess
 gdal.UseExceptions()
 io.use_plugin('matplotlib')
 import pandas as pd
 import subprocess
-import datetime
-import platform
-import datetime
-import math
+#import datetime
+#import platform
+#import datetime
+#import math
 import matplotlib.pyplot as plt
-from owslib.wmts import WebMapTileService
+#from owslib.wmts import WebMapTileService
 
 
 # The pyplot interface provides 4 commands that are useful for interactive control.
@@ -535,7 +533,7 @@ def map_it_old(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig.savefig(plotfile)
 
 
-def draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.8), linewidth=5, col='black', zorder=20):
+def draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.8), linewidth=5, tifproj, col='black', zorder=20):
     """
     Plot a nice scale bar with 4 subdivisions on an axis linked to the map scale.
 
@@ -734,7 +732,7 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
         label.set_y(label.get_position()[1] - (i % 2) * 0.2)
 
     # add scale bar
-    draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.025), col='black')
+    draw_scale_bar(ax, bars=4, length=40, location=(0.1, 0.025), tifproj=projection, col='black')
 
     # show the map
     plt.show()
@@ -886,7 +884,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # N.B. note that zorder of axis ticks is reset to he default of 2.5 when the plot is drawn. This is a known bug.
 
     # add scale bar on the second axes in row 2 of the subplots
-    draw_scale_bar(ax2, bars=4, length=40, col='black', zorder=4)
+    draw_scale_bar(ax2, bars=4, length=40, col='black', tifproj=projection, zorder=4)
 
     # show the map
     fig.tight_layout()
@@ -1099,12 +1097,10 @@ for x in range(len(allscenes)):
         proj = ds.GetProjection()
         inproj = osr.SpatialReference()
         inproj.ImportFromWkt(proj)
-#        print(inproj)
 
         # convert wkt projection to Cartopy projection
         projcs = inproj.GetAuthorityCode('PROJCS')
         projection = ccrs.epsg(projcs)
-#        print(projection)
 
         # get the extent of the image
         extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
