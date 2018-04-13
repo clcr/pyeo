@@ -1119,7 +1119,7 @@ for x in range(len(allscenes)):
         title = allscenes[x].split('.')[0]
         mapextent = extent
         map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title, figsizex=6, figsizey=7.5)
+                plottitle=title)
 
         #######################################
         # Zoom out
@@ -1139,7 +1139,7 @@ for x in range(len(allscenes)):
                      extent[2] + height / zf / 2 + yoffset,
                      extent[3] - height / zf / 2 + yoffset)
         map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title, figsizex=6, figsizey=7.5)
+                plottitle=title)
 
         #######################################
         # Zoom in to the centre
@@ -1159,7 +1159,7 @@ for x in range(len(allscenes)):
                      extent[2] + height / zf / 2 + yoffset,
                      extent[3] - height / zf / 2 + yoffset)
         map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title, figsizex=6, figsizey=7.5)
+                plottitle=title)
 
         #######################################
         # Zoom in to the top right corner
@@ -1179,5 +1179,5 @@ for x in range(len(allscenes)):
                      extent[2] + height / zf / 2 + yoffset,
                      extent[3] - height / zf / 2 + yoffset)
         map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title, figsizex=6, figsizey=7.5)
+                plottitle=title)
 
