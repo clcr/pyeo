@@ -533,11 +533,12 @@ def map_it_old(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig.savefig(plotfile)
 
 
-def draw_scale_bar(ax, bars=4, length=None, location=(0.1, 0.8), linewidth=5, tifproj, col='black', zorder=20):
+def draw_scale_bar(ax, tifproj, bars=4, length=None, location=(0.1, 0.8), linewidth=5, col='black', zorder=20):
     """
     Plot a nice scale bar with 4 subdivisions on an axis linked to the map scale.
 
     ax is the axes to draw the scalebar on.
+    tifproj is the map projection
     bars is the number of subdivisions of the bar (black and white chunks)
     length is the length of the scalebar in km.
     location is left side of the scalebar in axis coordinates.
