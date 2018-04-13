@@ -17,11 +17,10 @@ Created on Sat Mar 24 12:11:00 2018
 # This will launch a graphical user interface (GUI) loop
 
 ########################
-# TODO add a north arrow
+# TODO write a draw_north_arrow function that adds an artist to axis 2
 # TODO separate geotiff conversion and 10 m resampling into 2 functions
-# TODO plot multiple scenes onto the same map by providing a list of scene IDs to map_it instead
-# TODO   of rgbdata and running readsen2rgb from within map_it
-# TODO directory management: save outputs to a different subdirectory outside raw scene directory structure
+# TODO plot multiple adjacent scenes onto the same map by providing a list of scene IDs to map_it instead of rgbdata and running readsen2rgb from within map_it
+# TODO tiffdir: save outputs to a different subdirectory outside raw scene directory structure
 ########################
 
 from cartopy.io.shapereader import Reader
@@ -743,7 +742,7 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
 
 def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
-            plottitle='', figsizex=6, figsizey=7.5):
+            plottitle='', figsizex=8, figsizey=10):
     '''
     New map_it function with improved scale bar plotting below the map.
     This version creates two subplots, one for the map and one for the annotation.
