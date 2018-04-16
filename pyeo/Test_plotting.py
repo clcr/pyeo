@@ -195,3 +195,37 @@ fig.show()
 fig.savefig('Map_with_subplots.jpg')
 
 
+
+#########################################################
+# Hack to get text size in renderer coordinates
+#########################################################
+import matplotlib.pyplot as plt
+
+xx=[1,2,3]
+yy=[2,3,4]
+dy=[0.1,0.2,0.05]
+
+fig=plt.figure()
+figname = "out.png"
+ax=fig.add_subplot(111)
+
+ax.errorbar(xx,yy,dy,fmt='ro-',ms=6,elinewidth=4)
+
+# start of hack to get renderer
+fig.savefig(figname)
+renderer = plt.gca().get_renderer_cache()
+# end of hack
+
+txt = ax.text(xx[1], yy[1],r'$S=0$',fontsize=16)
+tbox = txt.get_window_extent(renderer)
+dbox = tbox.transformed(ax.transData.inverted())
+text_width = dbox.x1-dbox.x0
+text_height = dbox.y1-dbox.y0
+x = xx[1] - text_height
+y = yy[1] - text_width/2
+txt.set_position((x,y))
+
+ax.set_xlim([0.,3.4])
+ax.set_ylim([0.,4.4])
+
+fig.savefig(figname)
