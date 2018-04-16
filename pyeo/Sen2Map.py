@@ -11,7 +11,6 @@ Created on Sat Mar 24 12:11:00 2018
 # written for Python 3.6.4
 #############################################################################
 
-# TODO for John IMPORTANT:
 # When you start the IPython Kernel, type in:
 #   %matplotlib
 # This will launch a graphical user interface (GUI) loop
@@ -33,7 +32,6 @@ import cartopy.crs as ccrs
 #from cartopy.io.img_tiles import StamenTerrain
 #from cartopy.io.img_tiles import GoogleTiles
 #from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 #from matplotlib.path import Path
 #import matplotlib.patheffects as PathEffects
