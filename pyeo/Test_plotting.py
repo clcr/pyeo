@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Apr 15, 2018
+Created on 17 April 2018
 
 @author: Heiko Balzter
 """
@@ -42,9 +42,11 @@ tifproj = ccrs.epsg(27700) # EPSG 27700 is the British National Grid
 
 # make the figure and the axes objects
 subplot_kw = dict(projection=tifproj)
-fig, (ax1, ax) = plt.subplots(nrows=2, ncols=1, figsize=(8,10),
-                              sharex='all', sharey='all',
-                              gridspec_kw={'height_ratios': [8, 2]}, subplot_kw=subplot_kw)
+fig, (a0,a1) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[9, 1]}, figsize=(8,10))
+# the above command creates two subplots in different rows, they have axes objects a0 and a1
+
+# now we add two more subplots on top of the figure, with new geoAxes objects that share a common x axis scale
+ax1 = fig.add_subplot(211, projection=tifproj)
 
 # the corners below cover roughly the British Isles
 left1 = 49000
@@ -72,6 +74,13 @@ ax1.set_extent(extent1, crs=tifproj)
 
 # set matching extent of the annotation area for the scale bar in the lower subplot
 ax.set_extent(extent2, crs=tifproj)
+
+# do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
+#   there is a bug in Cartopy that always draws the box.
+ax.outline_patch.set_visible(False)
+
+# add land background
+#ax1.add_feature(cartopy.feature.LAND, zorder=1, edgecolor='black')
 
 # add coastlines
 ax1.coastlines(resolution='10m', color='navy', linewidth=1)
@@ -190,9 +199,20 @@ t = ax.text(bar_xt, bar_yt, str(round(length)) + ' km', transform=tifproj,
             horizontalalignment='center', verticalalignment='bottom',
             color=col, zorder=zorder)
 
+# plot a line on the map
+ax1.plot([left1 + 30000, left1 + 130000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
+         color='blue', linewidth=2, marker='o', zorder=90)
+
+# same on axes 2
+ax.plot([left2 + 30000, left2 + 130000], [(top2 + bottom2) / 2, (top2 + bottom2) / 2],
+         color='blue', linewidth=2, marker='o', zorder=90)
+
 fig.tight_layout()
 fig.show()
 fig.savefig('Map_with_subplots.jpg')
+
+
+
 
 
 
