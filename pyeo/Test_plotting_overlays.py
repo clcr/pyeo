@@ -15,6 +15,7 @@ Created on 17 April 2018
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.path as mpath
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, zoomed_inset_axes
 import numpy as np
 import cartopy
@@ -35,7 +36,7 @@ wd = '/home/heiko/linuxpy/test/'  # working directory on Linux Virtual Box
 os.chdir(wd)
 
 # define a map projection
-tifproj = ccrs.epsg(27700)
+tifproj = ccrs.OSGB()
 # EPSG 27700 is the British National Grid
 
 # make the figure and the axes objects
@@ -87,11 +88,6 @@ extent1 = (left1, right1, bottom1, top1)
 extent2 = (left2, right2, bottom2, top2)
 
 ax1.set_extent(extent1, crs=tifproj)
-'''
-verts = np.vstack([(left1,bottom1), (right1,bottom1), (right1,top1), (left1,top1)])
-bound1 = mpath.Path(verts, closed=True)
-ax1.set_boundary(bound1)
-'''
 
 # add scale bar
 
@@ -199,8 +195,17 @@ ax.set_extent(extent2, crs=tifproj)
 # do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
 #   there is a bug in Cartopy that always draws the box.
 ax.outline_patch.set_visible(False)
-# TODO need to remove the facecolor of the geoAxes as well
-#ax.outline_patch.par(alpha=0.0)
+# remove the facecolor of the geoAxes
+ax.background_patch.set_visible(False)
+
+# set boundaries for the axes objects
+verts = np.vstack([(left1,bottom1), (right1,bottom1), (right1,top1), (left1,top1)])
+bound1 = mpath.Path(verts, closed=True)
+ax1.set_boundary(bound1, transform=tifproj)
+
+verts = np.vstack([(left2,bottom2), (right2,bottom2), (right2,top2), (left2,top2)])
+bound2 = mpath.Path(verts, closed=True)
+ax.set_boundary(bound2, transform=tifproj)
 
 #fig.tight_layout()
 fig.show()
