@@ -47,7 +47,6 @@ fig, (a0,a1) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[9, 1]}, figsiz
 
 # now we add two more subplots on top of the figure, with new geoAxes objects that share a common x axis scale
 ax1 = fig.add_subplot(211, projection=tifproj)
-ax0 = fig.add_subplot(211, projection=tifproj, sharex=ax1)
 
 # the corners below cover roughly the British Isles
 left1 = 49000
@@ -63,22 +62,12 @@ top2 = bottom1
 #   extent1 covers the area for the map
 extent1 = (left1, right1, bottom1, top1)
 
-#   extent2 covers the area below the map for scalebar annotation
-extent2 = (left2, right2, bottom2, top2)
-
 # set a margin around the data
 ax1.set_xmargin(0.05)
 ax1.set_ymargin(0.10)
 
 # set map extent of the upper subplot
 ax1.set_extent(extent1, crs=tifproj)
-
-# set matching extent of the annotation area for the scale bar in the lower subplot
-ax.set_extent(extent2, crs=tifproj)
-
-# do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
-#   there is a bug in Cartopy that always draws the box.
-ax.outline_patch.set_visible(False)
 
 # add land background
 #ax1.add_feature(cartopy.feature.LAND, zorder=1, edgecolor='black')
@@ -100,6 +89,22 @@ ax1.add_feature(BORDERS, color='red')
 # add tick labels
 ax1.set_xticks(np.arange(left1, right1, 100000), crs=tifproj)
 ax1.set_yticks(np.arange(bottom1, top1, 100000), crs=tifproj)
+
+# plot a line on the map
+ax1.plot([left1 + 30000, left1 + 130000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
+         color='blue', linewidth=2, marker='o', zorder=90)
+
+
+
+# now on to the other subplot - start by creating an axes object
+ax = fig.add_subplot(211, projection=tifproj, sharex=ax1)
+#   extent2 covers the area below the map for scalebar annotation
+extent2 = (left2, right2, bottom2, top2)
+# set matching extent of the annotation area for the scale bar in the lower subplot
+ax.set_extent(extent2, crs=tifproj)
+# do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
+#   there is a bug in Cartopy that always draws the box.
+ax.outline_patch.set_visible(False)
 ax.set_xticks(np.arange(left2, right2, 100000), crs=tifproj)
 ax.set_yticks(np.arange(bottom2, top2, 100000), crs=tifproj)
 
@@ -199,10 +204,6 @@ bar_xt = sbx + length * 1000
 t = ax.text(bar_xt, bar_yt, str(round(length)) + ' km', transform=tifproj,
             horizontalalignment='center', verticalalignment='bottom',
             color=col, zorder=zorder)
-
-# plot a line on the map
-ax1.plot([left1 + 30000, left1 + 130000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
-         color='blue', linewidth=2, marker='o', zorder=90)
 
 # same on axes 2
 ax.plot([left2 + 30000, left2 + 130000], [(top2 + bottom2) / 2, (top2 + bottom2) / 2],

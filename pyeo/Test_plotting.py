@@ -13,6 +13,7 @@ Created on 17 April 2018
 #   %matplotlib
 # This will launch a graphical user interface (GUI) loop
 
+import matplotlib.path as mpath
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
@@ -31,23 +32,19 @@ io.use_plugin('matplotlib')
 # MAIN
 ##############################################
 
-# wd = '/scratch/clcr/shared/py/' # working directory on Linux HPC
-wd = '/home/heiko/linuxpy/test/'  # working directory on Linux Virtual Box
-
 # go to directory
+wd = '/home/heiko/linuxpy/test/'  # working directory on Linux Virtual Box
 os.chdir(wd)
 
 # define a map projection
-tifproj = ccrs.epsg(27700) # EPSG 27700 is the British National Grid
+tifproj = ccrs.epsg(27700)
+# EPSG 27700 is the British National Grid
 
 # make the figure and the axes objects
-subplot_kw = dict(projection=tifproj)
-fig, (a0,a1) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[9, 1]}, figsize=(8,10))
+fig, (a0,a1) = plt.subplots(2, 1, figsize=(4,5), gridspec_kw={'height_ratios':[9, 1]}, subplot_kw=dict(projection=tifproj))
+a0.set_visible(False)
+a1.set_visible(False)
 # the above command creates two subplots in different rows, they have axes objects a0 and a1
-
-# now we add two more subplots on top of the figure, with new geoAxes objects that share a common x axis scale
-ax1 = fig.add_subplot(211, projection=tifproj)
-ax0 = fig.add_subplot(211, projection=tifproj, sharex=ax1)
 
 # the corners below cover roughly the British Isles
 left1 = 49000
@@ -57,51 +54,39 @@ top1 = 1232000
 
 left2 = left1
 right2 = right1
-bottom2 = bottom1 - 0.2 * (top1 - bottom1)
+bottom2 = bottom1 + 0.2 * (top1 - bottom1)
 top2 = bottom1
 
-#   extent1 covers the area for the map
-extent1 = (left1, right1, bottom1, top1)
+# now we add two more subplots on top of the figure, with new geoAxes objects that share a common x axis scale
+ax1 = fig.add_subplot(211, projection=tifproj)
+#ax1 = plt.subplot(2,1,1, projection=tifproj)
 
+# add coastlines etc.
+ax1.coastlines(resolution='10m', color='navy', linewidth=1)
+ax1.gridlines()
+ax1.add_feature(cartopy.feature.LAKES, alpha=0.5)
+ax1.add_feature(cartopy.feature.RIVERS)
+BORDERS.scale = '10m'
+ax1.add_feature(BORDERS, color='red')
+ax1.set_xticks(np.arange(left1, right1, 100000), crs=tifproj)
+ax1.set_yticks(np.arange(bottom1, top1, 100000), crs=tifproj)
+
+# plot a line on the map
+ax1.plot([left1 + 30000, left1 + 130000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
+         color='blue', linewidth=2, marker='.', zorder=90)
+
+# mark a known place to help us geo-locate ourselves
+ax1.plot((left1+right1)/2, (top1+bottom1)/2, 'bo', markersize=7)
+
+# set extent
+extent1 = (left1, right1, bottom1, top1)
 #   extent2 covers the area below the map for scalebar annotation
 extent2 = (left2, right2, bottom2, top2)
 
-# set a margin around the data
-ax1.set_xmargin(0.05)
-ax1.set_ymargin(0.10)
-
-# set map extent of the upper subplot
 ax1.set_extent(extent1, crs=tifproj)
-
-# set matching extent of the annotation area for the scale bar in the lower subplot
-ax.set_extent(extent2, crs=tifproj)
-
-# do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
-#   there is a bug in Cartopy that always draws the box.
-ax.outline_patch.set_visible(False)
-
-# add land background
-#ax1.add_feature(cartopy.feature.LAND, zorder=1, edgecolor='black')
-
-# add coastlines
-ax1.coastlines(resolution='10m', color='navy', linewidth=1)
-
-# add gridlines
-ax1.gridlines()
-
-# add lakes and rivers
-ax1.add_feature(cartopy.feature.LAKES, alpha=0.5)
-ax1.add_feature(cartopy.feature.RIVERS)
-
-# add borders
-BORDERS.scale = '10m'
-ax1.add_feature(BORDERS, color='red')
-
-# add tick labels
-ax1.set_xticks(np.arange(left1, right1, 100000), crs=tifproj)
-ax1.set_yticks(np.arange(bottom1, top1, 100000), crs=tifproj)
-ax.set_xticks(np.arange(left2, right2, 100000), crs=tifproj)
-ax.set_yticks(np.arange(bottom2, top2, 100000), crs=tifproj)
+verts = np.vstack([(left1,bottom1), (right1,bottom1), (right1,top1), (left1,top1)])
+bound1 = mpath.Path(verts, closed=True)
+ax1.set_boundary(bound1)
 
 # add scale bar
 
@@ -112,6 +97,15 @@ location=(0.1, 0.2)
 linewidth=5
 col='black'
 zorder=20
+
+ax = fig.add_subplot(212, projection=tifproj, sharex=ax1)
+#ax = plt.subplot(2,1,2, projection=tifproj, sharex=ax1)
+
+
+# do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
+#   there is a bug in Cartopy that always draws the box.
+
+ax.outline_patch.set_visible(False)
 
 # def draw_scale_bar(ax, tifproj, bars=4, length=None, location=(0.1, 0.8), linewidth=5, col='black', zorder=20):
 
@@ -200,15 +194,25 @@ t = ax.text(bar_xt, bar_yt, str(round(length)) + ' km', transform=tifproj,
             horizontalalignment='center', verticalalignment='bottom',
             color=col, zorder=zorder)
 
-# plot a line on the map
-ax1.plot([left1 + 30000, left1 + 130000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
-         color='blue', linewidth=2, marker='o', zorder=90)
-
 # same on axes 2
 ax.plot([left2 + 30000, left2 + 130000], [(top2 + bottom2) / 2, (top2 + bottom2) / 2],
-         color='blue', linewidth=2, marker='o', zorder=90)
+         color='blue', linewidth=2, marker='.', zorder=90)
 
-fig.tight_layout()
+#ax.set_xticks(np.arange(left2, right2, 100000), crs=tifproj)
+#ax.set_yticks(np.arange(bottom2, top2, 100000), crs=tifproj)
+
+#ax1.set_extent(extent1, crs=tifproj)
+
+ax.set_extent(extent2, crs=tifproj)
+ax1.set_xlim([left1, right1])
+ax1.set_ylim([bottom1, top1])
+ax.set_xlim([left2, right2])
+ax.set_ylim([bottom2, top2])
+verts = np.vstack([(left2,bottom2), (right2,bottom2), (right2,top2), (left2,top2)])
+bound2 = mpath.Path(verts)
+ax.set_boundary(bound2)
+
+#fig.tight_layout()
 fig.show()
 fig.savefig('Map_with_subplots.jpg')
 
