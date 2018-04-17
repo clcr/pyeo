@@ -16,6 +16,7 @@ Created on 17 April 2018
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.path as mpath
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, zoomed_inset_axes
 import numpy as np
 import cartopy
@@ -64,6 +65,7 @@ top2 = bottom1 + 0.2 * (top1 - bottom1)
 # These are in unitless percentages of the figure size. (0,0 is bottom left)
 left, bottom, width, height = [0.05, 0.3, 0.9, 0.6]
 ax1 = fig.add_axes([left, bottom, width, height], projection=tifproj)
+ax1.set_adjustable('box-forced')
 
 # add coastlines etc.
 ax1.coastlines(resolution='10m', color='navy', linewidth=1)
@@ -91,9 +93,19 @@ ax1.set_extent(extent1, crs=tifproj)
 
 # add scale bar
 
+'''
+# following https://matplotlib.org/2.0.2/mpl_toolkits/axes_grid/users/overview.html#colorbar-whose-height-or-width-in-sync-with-the-master-axes
+# we need to set axes_class=plt.Axes, else it attempts to create
+# a GeoAxes as colorbar
+
+divider = make_axes_locatable(ax1)
+ax_cb = divider.new_vertical(size="10%", pad=0.1, axes_class=plt.Axes)
+'''
+
 # add a second overlaid axes object
 left, bottom, width, height = [0.05, 0.0, 0.9, 0.3]
-ax = fig.add_axes([left, bottom, width, height], projection=tifproj, sharex=ax0)
+ax = fig.add_axes([left, bottom, width, height], projection=tifproj, sharex=ax1, sharey=None)
+#ax.set_adjustable('box-forced')
 
 # define pars
 bars=4
@@ -198,6 +210,7 @@ ax.outline_patch.set_visible(False)
 # remove the facecolor of the geoAxes
 ax.background_patch.set_visible(False)
 
+'''
 # set boundaries for the axes objects
 verts = np.vstack([(left1,bottom1), (right1,bottom1), (right1,top1), (left1,top1)])
 bound1 = mpath.Path(verts, closed=True)
@@ -206,6 +219,7 @@ ax1.set_boundary(bound1, transform=tifproj)
 verts = np.vstack([(left2,bottom2), (right2,bottom2), (right2,top2), (left2,top2)])
 bound2 = mpath.Path(verts, closed=True)
 ax.set_boundary(bound2, transform=tifproj)
+'''
 
 #fig.tight_layout()
 fig.show()
@@ -249,3 +263,4 @@ ax.set_xlim([0.,3.4])
 ax.set_ylim([0.,4.4])
 
 fig.savefig(figname)
+
