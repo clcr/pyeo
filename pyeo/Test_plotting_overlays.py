@@ -235,6 +235,7 @@ The code below returns map coordinates, so it is no use. We need figure coordina
 
 '''
 
+'''
 # plot a line of the same length as the scale bar onto the map on ax1 but put it behind the map to make it invisible
 l = ax1.plot([left1, left1 + length * 1000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
          color='blue', linewidth=1, marker='', zorder=1, visible=False, transform=tifproj)
@@ -242,16 +243,40 @@ path1 = l[0]._path # extract the path of the line from the plot object
 l = ax.plot([left2, left2 + length * 1000], [(top2 + bottom2) / 2, (top2 + bottom2) / 2],
          color='blue', linewidth=1, marker='', zorder=1, visible=False, transform=tifproj)
 path2 = l[0]._path # extract the path of the line from the plot object
-length1 = path1.get_extents()[1,0] - path1.get_extents()[0,0]
-length2 = path2.get_extents()[1,0] - path2.get_extents()[0,0]
+'''
+# TODO Try:
+#ax1.outline_patch.get_window_extent()
+#ax.outline_patch.get_window_extent()
 
-# get axes positions in figure coordinates (relative to figure size)
-bbax1 = ax1.get_position()
-bbax = ax1.get_position()
+#ax1.patch.get_window_extent()
+#ax.patch.get_window_extent()
+
+# get axes positions in figure canvas coordinates
+#bbax1 = ax1.patch.get_window_extent()
+#bbax = ax.patch.get_window_extent()
+#l1 = bbax1.x1 - bbax1.x0
+#l2 = bbax.x1 - bbax.x0
+
+# You can use the ax.transData instance to transform from your data to your display coordinate system,
+#   either a single point or a sequence of points as shown below:
+#print( ax1.transData.transform((left1, bottom1)),
+#    ax1.transData.transform((right1, bottom1)),
+#    ax.transData.transform((left2, bottom2)),
+#    ax.transData.transform((right2, bottom2)))
+
+fig.canvas.show()
+renderer = plt.gca().get_renderer_cache()
+bbax1 = ax1.get_lines()[0].get_window_extent(renderer)
+bbax =  ax.get_lines()[0].get_window_extent(renderer)
+l1 = bbax1.x1 - bbax1.x0
+l2 = bbax.x1 - bbax.x0
 
 # define the bounding box of axes 2
-x0 = 0.3
-x1 = 0.6
+'''
+I need to get these parameters right !!!!
+'''
+x0 = l1 / l2 / 2
+x1 = 1 - l1 / l2 / 2
 y0 = 0.05
 y1 = 0.25
 bbax = Bbox(np.array([[x0, y0], [x1, y1]]))
@@ -261,7 +286,6 @@ ax.set_position(bbax)
 #fig.tight_layout()
 fig.show()
 fig.savefig('Map_with_subplots.jpg')
-
 
 '''
 #########################################################
