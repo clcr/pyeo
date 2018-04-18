@@ -15,6 +15,7 @@ Created on 17 April 2018
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.transforms import Bbox
 import matplotlib.path as mpath
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, zoomed_inset_axes
@@ -41,13 +42,15 @@ tifproj = ccrs.OSGB()
 # EPSG 27700 is the British National Grid
 
 # make the figure and the axes objects
-fig, ax00 = plt.subplots()
-#fig = plt.figure()
+fig = plt.figure()
+
+'''
 ax0 = fig.add_subplot(1, 1, 1, projection=tifproj)
-ax00.set_visible(False)
+
 # do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
 #   there is a bug in Cartopy that always draws the box.
 ax0.outline_patch.set_visible(False)
+'''
 
 # the corners below cover roughly the British Isles
 left1 = 49000
@@ -74,8 +77,18 @@ ax1.add_feature(cartopy.feature.LAKES, alpha=0.5)
 ax1.add_feature(cartopy.feature.RIVERS)
 BORDERS.scale = '10m'
 ax1.add_feature(BORDERS, color='red')
-ax1.set_xticks(np.arange(left1, right1, 100000), crs=tifproj)
-ax1.set_yticks(np.arange(bottom1, top1, 100000), crs=tifproj)
+
+# axes ticks
+xticks = np.arange(left1, right1, 100000)
+yticks = np.arange(bottom1, top1, 100000)
+ax1.set_xticks(xticks, crs=tifproj)
+ax1.set_yticks(yticks, crs=tifproj)
+# stagger x gridline / tick labels
+#labels = ax1.set_xticklabels(xticks)
+#for i, label in enumerate(labels):
+#    label.set_y(label.get_position()[1] - (i % 2) * 0.1)
+# rotate the font orientation of the axis tick labels
+plt.setp(ax1.get_xticklabels(), rotation=30, horizontalalignment='right')
 
 # plot a line on the map
 ax1.plot([left1 + 30000, left1 + 130000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
@@ -84,12 +97,14 @@ ax1.plot([left1 + 30000, left1 + 130000], [(top1 + bottom1) / 2, (top1 + bottom1
 # mark a known place to help us geo-locate ourselves
 ax1.plot((left1+right1)/2, (top1+bottom1)/2, 'bo', markersize=7, transform=tifproj)
 
-# set extent
+# define axes extents in map coordinates, extent1 is the map
 extent1 = (left1, right1, bottom1, top1)
-#   extent2 covers the area below the map for scalebar annotation
+# extent2 covers the area below the map for scalebar annotation
 extent2 = (left2, right2, bottom2, top2)
 
+# set axes extent
 ax1.set_extent(extent1, crs=tifproj)
+
 
 # add scale bar
 
@@ -203,7 +218,9 @@ t = ax.text(bar_xt, bar_yt, str(round(length)) + ' km', transform=tifproj,
 ax.plot([left2 + 30000, left2 + 130000], [(top2 + bottom2) / 2, (top2 + bottom2) / 2],
          color='blue', linewidth=2, marker='.', zorder=90, transform=tifproj)
 
+# set axes extent
 ax.set_extent(extent2, crs=tifproj)
+
 # do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
 #   there is a bug in Cartopy that always draws the box.
 ax.outline_patch.set_visible(False)
@@ -211,25 +228,42 @@ ax.outline_patch.set_visible(False)
 ax.background_patch.set_visible(False)
 
 '''
-# set boundaries for the axes objects
-verts = np.vstack([(left1,bottom1), (right1,bottom1), (right1,top1), (left1,top1)])
-bound1 = mpath.Path(verts, closed=True)
-ax1.set_boundary(bound1, transform=tifproj)
+The adjustment of the position of the axes objects below can be used to 'shrink' the length and height of the scale bar.
+A hack is needed to make the length of the scale bar match on ax the map scale on ax1.
 
-verts = np.vstack([(left2,bottom2), (right2,bottom2), (right2,top2), (left2,top2)])
-bound2 = mpath.Path(verts, closed=True)
-ax.set_boundary(bound2, transform=tifproj)
+The code below returns map coordinates, so it is no use. We need figure coordinates.
+
 '''
+
+# plot a line of the same length as the scale bar onto the map on ax1 but put it behind the map to make it invisible
+l = ax1.plot([left1, left1 + length * 1000], [(top1 + bottom1) / 2, (top1 + bottom1) / 2],
+         color='blue', linewidth=1, marker='', zorder=1, visible=False, transform=tifproj)
+path1 = l[0]._path # extract the path of the line from the plot object
+l = ax.plot([left2, left2 + length * 1000], [(top2 + bottom2) / 2, (top2 + bottom2) / 2],
+         color='blue', linewidth=1, marker='', zorder=1, visible=False, transform=tifproj)
+path2 = l[0]._path # extract the path of the line from the plot object
+length1 = path1.get_extents()[1,0] - path1.get_extents()[0,0]
+length2 = path2.get_extents()[1,0] - path2.get_extents()[0,0]
+
+# get axes positions in figure coordinates (relative to figure size)
+bbax1 = ax1.get_position()
+bbax = ax1.get_position()
+
+# define the bounding box of axes 2
+x0 = 0.3
+x1 = 0.6
+y0 = 0.05
+y1 = 0.25
+bbax = Bbox(np.array([[x0, y0], [x1, y1]]))
+# set axes 2 position to match the x position and width
+ax.set_position(bbax)
 
 #fig.tight_layout()
 fig.show()
 fig.savefig('Map_with_subplots.jpg')
 
 
-
-
-
-
+'''
 #########################################################
 # Hack to get text size in renderer coordinates
 #########################################################
@@ -263,4 +297,17 @@ ax.set_xlim([0.,3.4])
 ax.set_ylim([0.,4.4])
 
 fig.savefig(figname)
+'''
 
+
+
+
+'''
+##################
+#
+# this does not work either:
+fig = plt.figure()
+ax1 = plt.subplot2grid((4,3), (0,0), colspan=3, rowspan=2)
+ax2 = plt.subplot2grid((4,3), (2,0), colspan=3, sharex=ax1)
+ax3 = plt.subplot2grid((4,3), (3,0), colspan=3, sharex=ax1)
+'''
