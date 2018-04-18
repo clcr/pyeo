@@ -218,6 +218,14 @@ t = ax.text(bar_xt, bar_yt, str(round(length)) + ' km', transform=tifproj,
 ax.plot([left2 + 30000, left2 + 130000], [(top2 + bottom2) / 2, (top2 + bottom2) / 2],
          color='blue', linewidth=2, marker='.', zorder=90, transform=tifproj)
 
+
+'''
+# and below ax1
+ax1.set_ylim(bottom=bottom2-10000)
+ax1.plot([left2 + 30000, left2 + 130000], [bottom2, bottom2],
+         color='blue', linewidth=2, marker='.', zorder=90, transform=tifproj)
+'''
+
 # set axes extent
 ax.set_extent(extent2, crs=tifproj)
 
@@ -275,8 +283,8 @@ l2 = bbax.x1 - bbax.x0
 '''
 I need to get these parameters right !!!!
 '''
-x0 = l1 / l2 / 2
-x1 = 1 - l1 / l2 / 2
+x0 = 0.5 - l1 / l2 * 0.5
+x1 = 0.5 + l1 / l2 * 0.5
 y0 = 0.05
 y1 = 0.25
 bbax = Bbox(np.array([[x0, y0], [x1, y1]]))
