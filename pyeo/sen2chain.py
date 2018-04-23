@@ -21,7 +21,7 @@ def main():
                                   end_date=query['end_date'],
                                   conf=config)
     save_query_output(products)
-    sen2_download(products, config["data"]["out_folder"])
+    sen2_download(products, config)
 
 
 if __name__ == "__main__":
