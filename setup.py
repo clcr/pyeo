@@ -13,5 +13,6 @@ setup(
     install_requires=[
         'pyshp >= 1.2.12',
         'sentinelsat >= 0.12.1'
+        'pytest >= 3.5.0'
     ],
 )
