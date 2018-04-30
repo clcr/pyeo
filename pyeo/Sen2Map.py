@@ -966,45 +966,17 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
              'Map generated at ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
              fontsize=9)
 
-'''
-    # set bounding boxes for the two drawing areas
-    left0, right0 = mapextent[0], mapextent[1]
-    bottom0, top0 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin, mapextent[3]
-    #   extent0 covers (mapextent plus the margin below it)
-    #   extent2 covers the area below the map for scalebar annotation (a margin outside of mapextent)
-    extent0 = (left0, right0, bottom0, top0)
-    rect0 = [left0, right0 - left0, bottom0, top0 - bottom0]
-    rect1 = [left1, right1 - left1, bottom1, top1 - bottom1]
-    rect2 = [left2, right2 - left2, bottom2, top2 - bottom2]
-
-    # make the figure and the axes
-    subplot_kw = dict(projection=tifproj)
-    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(figsizex, figsizey),
-                                   gridspec_kw={'height_ratios': [8, 2]},
-                                   subplot_kw=subplot_kw)
-
-    # set a margin around the data
-    ax1.set_xmargin(0.05)
-    ax1.set_ymargin(0.10)
-'''
-
     # ---------------------- Main map ----------------------
     # set up main map almost full height (allow room for title), right 80% of figure
-    left = 0.25
+    left = 0.3
     bottom = 0.01
-    width = 0.65
+    width = 0.75
     height = 0.98
 
     rect = [left, bottom, width, height]
-    ax1 = plt.axes(rect, projection=tifproj)
+    ax1 = plt.axes(rect, projection=tifproj, )
 
-'''
-    #   extent1 covers the area for the map (the same as mapextent)
-    left1, right1 = mapextent[0], mapextent[1]
-    bottom1, top1 = mapextent[2], mapextent[3]
-    extent1 = (left1, right1, bottom1, top1)
-'''
-    ax1.set_extent(mapextent)
+    ax1.set_extent(mapextent, crs=tifproj)
 
     ax1.coastlines(resolution='10m', zorder=2)
 
@@ -1052,22 +1024,15 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # higher zorder means that the shapefile is plotted over the image
     ax1.add_feature(shape_feature, zorder=1.1)
 
-    '''
-    Plot a nice scale bar with 4 subdivisions on the map.
-
-    bars is the number of subdivisions of the bar (black and white chunks)
-    length is the length of the scalebar in map units
-    
-    modified from
-    https://stackoverflow.com/questions/32333870/how-can-i-show-a-km-ruler-on-a-cartopy-matplotlib-plot/35705477#35705477
-    '''
+    # ------------------------scale bar ----------------------------
+    # adapted from https://stackoverflow.com/questions/32333870/how-can-i-show-a-km-ruler-on-a-cartopy-matplotlib-plot/35705477#35705477
 
     # plot four bar segments
     bars = 4
 
     # Get the limits of the axis in map coordinates
     # get axes extent in map coordinates
-    x0, x1, y0, y1 = ax1.get_extent(tifproj)
+    x0, x1, y0, y1 = ax1.get_extent(crs=tifproj)
 
     # length of scale bar is 25% of the map width
     length = (x1 - x0) / 1000 / bars  # in km
@@ -1135,14 +1100,17 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # define the extent of the overview map in map coordinates
     margin = 5 # add 5 times the map extent
-    left2   = mapextent[0] - (mapextent[1] - mapextent[0]) * margin
-    right2  = mapextent[1] + (mapextent[1] - mapextent[0]) * margin
-    bottom2 = mapextent[2] - (mapextent[3] - mapextent[2]) * margin
-    top2    = mapextent[3] + (mapextent[3] - mapextent[2]) * margin
+    aspect = height / width # but maintain a feasible aspect ratio
+    marginx = margin
+    marginy = margin / aspect
+    left2   = mapextent[0] - (mapextent[1] - mapextent[0]) * marginx
+    right2  = mapextent[1] + (mapextent[1] - mapextent[0]) * marginx
+    bottom2 = mapextent[2] - (mapextent[3] - mapextent[2]) * marginy
+    top2    = mapextent[3] + (mapextent[3] - mapextent[2]) * marginy
     extent2 = (left2, right2, bottom2, top2)
 
     ax2 = plt.axes(rect, projection=tifproj, )
-    ax2.set_extent(extent2)
+    ax2.set_extent(extent2, crs=tifproj)
     #  ax2.set_global()  will show the whole world as context
 
     ax2.coastlines(resolution='110m', zorder=2)
@@ -1184,7 +1152,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # ------------------------------------  Legend -------------------------------------
     # legends can be quite long, so set near top of map (0.4 - bottom + 0.5 height = 0.9 - near top)
-    left = 0.04
+    left = 0.08
     bottom = 0.4
     width = 0.15
     height = 0.5
@@ -1285,6 +1253,9 @@ for x in range(len(allscenes)):
         # use the first .xml file in the directory
         with open(xmlfiles[0]) as f:
             content = f.readlines()
+
+
+
         # remove whitespace characters like `\n` at the end of each line
         content = [x.strip() for x in content]
         # find the footprint in the metadata
@@ -1297,6 +1268,9 @@ for x in range(len(allscenes)):
         #   and remove the metadata text at the end of the list
         footprint = footprint[:-1]
         # convert the string list to floats
+
+
+
         footprint = [float(s) for s in footprint]
         # list slicing to separate lon and lat coordinates: list[start:stop:step]
         footprinty = footprint[0::2]  # latitudes
