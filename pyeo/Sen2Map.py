@@ -900,7 +900,7 @@ def map_it_old2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
             plottitle='', figsizex=8, figsizey=10):
     '''
-    New map_it function with scale bar inside the map
+    New map_it function with scale bar located inside the map
     I could not find a way to print a true scale outside it with Cartopy.
 
     This version creates different axes objects for the map, the location map and the legend.
@@ -970,7 +970,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # set up main map almost full height (allow room for title), right 80% of figure
     left = 0.35
     bottom = 0.01
-    width = 0.7
+    width = 0.6
     height = 0.98
 
     rect = [left, bottom, width, height]
@@ -1152,7 +1152,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # ------------------------------------  Legend -------------------------------------
     # legends can be quite long, so set near top of map (0.4 - bottom + 0.5 height = 0.9 - near top)
-    left = 0.03
+    left = 0.05
     bottom = 0.4
     width = 0.15
     height = 0.5
@@ -1201,6 +1201,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
     fig.savefig(plotfile)
     plt.close(fig)
+
 
 
 #############################################################################
@@ -1493,4 +1494,345 @@ for x in range(len(allscenes)):
                      extent[3] - height / zf / 2 + yoffset)
         map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
                 plottitle=title)
+
+
+        ################### test from here
+
+def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
+                 plottitle='', figsizex=8, figsizey=8):
+    '''
+    New map_it function with scale bar located below the map but inside the enlarged map area
+    This version creates different axes objects for the map, the location map and the legend.
+
+    rgbdata = numpy array of the red, green and blue channels, made by read_sen2rgb
+    tifproj = map projection of the tiff files from which the rgbdata originate
+    mapextent = extent of the map in map coordinates
+    shapefile = shapefile name to be plotted on top of the map
+    shpproj = map projection of the shapefile
+    plotfile = output filename for the map plot
+    plottitle = text to be written above the map
+    figsizex = width of the figure in inches
+    figsizey = height of the figure in inches
+
+    ax1 is the axes object for the main map area
+    ax2 is the axes object for the location overview map in the bottom left corner
+    ax3 is the axes object for the entire figure area
+    ax4 is the axes object for the north arrow
+    ax5 is the axes object for the map legend
+    ax6 is the axes object for the map title
+
+    '''
+
+    # get shapefile projection from the file
+    # get driver to read a shapefile and open it
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    dataSource = driver.Open(shapefile, 0)
+    if dataSource is None:
+        print('Could not open ' + shapefile)
+        sys.exit(1)  # exit with an error code
+    # get the layer from the shapefile
+    layer = dataSource.GetLayer()
+    # get the projection information and convert to wkt
+    projsr = layer.GetSpatialRef()
+    projwkt = projsr.ExportToWkt()
+    projosr = osr.SpatialReference()
+    projosr.ImportFromWkt(projwkt)
+    # convert wkt projection to Cartopy projection
+    projcs = projosr.GetAuthorityCode('PROJCS')
+    shapeproj = ccrs.epsg(projcs)
+
+    # make the figure
+    fig = plt.figure(figsize=(figsizex, figsizey))
+
+    # ---------------------- Surrounding frame ----------------------
+    # set up frame full height, full width of figure, this must be called first
+    left = -0.01
+    bottom = -0.01
+    width = 1.02
+    height = 1.02
+    rect = [left, bottom, width, height]
+    ax3 = plt.axes(rect)
+
+    # turn on the spines we want
+    blank_axes(ax3)
+    ax3.spines['right'].set_visible(False)
+    ax3.spines['top'].set_visible(False)
+    ax3.spines['bottom'].set_visible(False)
+    ax3.spines['left'].set_visible(False)
+
+    # add copyright statement and production date in the bottom left corner
+    ax3.text(0.03, 0.03, '© University of Leicester, 2018. ' +
+             'Map generated at ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+             fontsize=9)
+
+    # ---------------------- Main map ----------------------
+    # set up main map almost full height (allow room for title), to the right of the figure
+    left = 0.35
+    bottom = 0.01
+    width = 0.6
+    height = 0.98
+
+    rect = [left, bottom, width, height]
+    ax1 = plt.axes(rect, projection=tifproj, )
+
+    # add 10% margin below the main map area of the image
+    extent1 = (mapextent[0], mapextent[1],
+               mapextent[2] - 0.1 * (mapextent[3] - mapextent[2]), mapextent[3])
+    ax1.set_extent(extent1, crs=tifproj)
+
+    ax1.coastlines(resolution='10m', zorder=2)
+
+    #LAND_10m = cartopy.feature.NaturalEarthFeature('physical', 'land', '10m',
+    #                                               edgecolor='face',
+    #                                               facecolor=cartopy.feature.COLORS['land'])
+    RIVERS_10m = cartopy.feature.NaturalEarthFeature('physical', 'rivers_lake_centerlines', '10m',
+                                                     edgecolor=cartopy.feature.COLORS['water'],
+                                                     facecolor='none')
+    BORDERS2_10m = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces',
+                                                       '10m', edgecolor='black', facecolor='none')
+    #ax1.add_feature(LAND_10m, edgecolor='grey', zorder=1.2)
+    ax1.add_feature(RIVERS_10m, edgecolor=cfeature.COLORS['water'], zorder=1.2)
+    ax1.add_feature(BORDERS2_10m, edgecolor='red', zorder=1.2)
+    ax1.stock_img()
+    # stock image is good enough for example, but OCEAN_10m could be used, but very slow
+    #       ax.add_feature(OCEAN_10m)
+
+    # work out gridline positions
+    xticks, yticks = get_gridlines(mapextent[0], mapextent[1], mapextent[2], mapextent[3], nticks=6)
+    # plot the gridlines
+    gl = ax1.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey',
+                       alpha=1, linewidth=1, zorder=1.3)
+    # add ticks
+    ax1.set_xticks(xticks, crs=tifproj)
+    ax1.set_yticks(yticks, crs=tifproj)
+
+    # stagger x gridline / tick labels
+    #labels = ax1.set_xticklabels(xticks)
+    #for i, label in enumerate(labels):
+    #    label.set_y(label.get_position()[1] - (i % 2) * 0.1)
+    # rotate the font orientation of the axis tick labels
+    #plt.setp(ax1.get_xticklabels(), rotation=30, horizontalalignment='right')
+
+    # set axis tick mark parameters
+    ax1.tick_params(bottom=False, top=True, left=True, right=False,
+                    labelbottom=False, labeltop=True, labelleft=True, labelright=False)
+    # N.B. note that zorder of axis ticks is reset to he default of 2.5 when the plot is drawn. This is a known bug.
+
+    # rotate x axis labels
+    ax1.tick_params(axis='x', labelrotation=90)
+
+    # show the data from the geotiff RGB image
+    img = ax1.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
+                     extent=mapextent, origin='upper', zorder=1)
+
+    #  read shapefile and plot it onto the tiff image map
+    shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
+                                   edgecolor='yellow', linewidth=2,
+                                   facecolor='none')
+    # higher zorder means that the shapefile is plotted over the image
+    ax1.add_feature(shape_feature, zorder=1.2)
+
+    # ------------------------scale bar ----------------------------
+    # adapted from https://stackoverflow.com/questions/32333870/how-can-i-show-a-km-ruler-on-a-cartopy-matplotlib-plot/35705477#35705477
+
+    # plot four bar segments
+    bars = 4
+
+    # Get the limits of the axis in map coordinates
+    # get axes extent in map coordinates
+    x0, x1, y0, y1 = ax1.get_extent(crs=tifproj)
+
+    # length of scale bar segments adds up to 33% of the map width
+    length = (x1 - x0) / 1000 / 3 / bars # in km
+    ndim = int(np.floor(np.log10(length)))  # number of digits in number
+    length = round(length, -ndim) # round to 1sf
+
+    # Returns numbers starting with the list
+    def scale_number(x):
+        if str(x)[0] in ['1', '2', '5']:
+            return int(x)
+        else:
+            return scale_number(x - 10 ** ndim)
+
+    length = scale_number(length)
+
+    # relative scalebar location in map coordinates, e.g. metres
+    sbx = x0 + 0.01 * (x1 - x0)
+    sby = y0 + 0.04 * (y1 - y0)
+
+    # thickness of the scalebar
+    thickness = (y1 - y0) / 80
+
+    # Generate the xy coordinates for the ends of the scalebar segment
+    bar_xs = [sbx, sbx + length * 1000]
+    bar_ys = [sby, sby + thickness]
+
+    # Plot the scalebar chunks
+    barcol = 'white'
+    for i in range(0, bars):
+        # plot the chunk
+        rect = patches.Rectangle((bar_xs[0], bar_ys[0]), bar_xs[1] - bar_xs[0], bar_ys[1] - bar_ys[0],
+                                 linewidth=1, edgecolor='black', facecolor=barcol, zorder=4)
+        ax1.add_patch(rect)
+
+        # alternate the colour
+        if barcol == 'white':
+            barcol = 'black'
+        else:
+            barcol = 'white'
+        # Generate the x,y coordinates for the number
+        bar_xt = sbx + i * length * 1000
+        bar_yt = sby + thickness
+
+        # Plot the scalebar label for that chunk
+        ax1.text(bar_xt, bar_yt, str(i * length), transform=tifproj,
+                 horizontalalignment='center', verticalalignment='bottom', color='black', zorder=4)
+
+        # work out the position of the next chunk of the bar
+        bar_xs[0] = bar_xs[1]
+        bar_xs[1] = bar_xs[1] + length * 1000
+
+    # Generate the x,y coordinates for the last number annotation
+    bar_xt = sbx + bars * length * 1000
+    bar_yt = sby + thickness
+
+    # Plot the last scalebar label
+    ax1.text(bar_xt, bar_yt, str(length * bars), transform=tifproj,
+             horizontalalignment='center', verticalalignment='bottom', color='black', zorder=4)
+
+    # work out xy coordinates for the position of the unit annotation
+    bar_xt = sbx + length * bars * 500
+    bar_yt = sby - thickness * 3
+    # add the text annotation below the scalebar
+    t = ax1.text(bar_xt, bar_yt, 'km', transform=tifproj,
+                 horizontalalignment='center', verticalalignment='bottom', color='black', zorder=4)
+
+    # do not draw the bounding box around the scale bar area. This seems to be the only way to make this work.
+    #   there is a bug in Cartopy that always draws the box.
+    ax1.outline_patch.set_visible(False)
+    # remove the facecolor of the geoAxes
+    ax1.background_patch.set_visible(False)
+    # plot a white rectangle underneath the scale bar to blank out the background image over the bottom map extension
+    rect = patches.Rectangle((x0, y0), x1 - x0, (y1 - y0) * 0.1, linewidth=1,
+                             edgecolor='white', facecolor='white', zorder=3)
+    ax1.add_patch(rect)
+
+    # ---------------------------------Overview Location Map ------------------------
+    # define where it should go, i.e. bottom left of the figure area
+    left = 0.03
+    bottom = 0
+    width = 0.16
+    height = 0.2
+    rect = [left, bottom, width, height]
+
+    # define the extent of the overview map in map coordinates
+    margin = 5  # add 5 times the map extent
+    aspect = height / width  # but maintain a feasible aspect ratio
+    marginx = margin
+    marginy = margin / aspect
+    left2 = mapextent[0] - (mapextent[1] - mapextent[0]) * marginx
+    right2 = mapextent[1] + (mapextent[1] - mapextent[0]) * marginx
+    bottom2 = mapextent[2] - (mapextent[3] - mapextent[2]) * marginy
+    top2 = mapextent[3] + (mapextent[3] - mapextent[2]) * marginy
+    extent2 = (left2, right2, bottom2, top2)
+
+    ax2 = plt.axes(rect, projection=tifproj, )
+    ax2.set_extent(extent2, crs=tifproj)
+    #  ax2.set_global()  will show the whole world as context
+
+    ax2.coastlines(resolution='110m', zorder=2)
+    ax2.add_feature(cfeature.LAND, zorder=2)
+    ax2.add_feature(cfeature.BORDERS, edgecolor='red', zorder=2)
+    ax2.add_feature(cfeature.OCEAN, zorder=2)
+
+    ax2.gridlines(zorder=3)
+
+    # add location box of the main map
+    box_x = [x0, x1, x1, x0, x0]
+    box_y = [y0, y0, y1, y1, y0]
+    plt.plot(box_x, box_y, color='black', transform=tifproj, zorder=4)
+
+    # -------------------------------- Title -----------------------------
+    # set up map title at top right of figure
+    left = 0.2
+    bottom = 0.95
+    width = 0.8
+    height = 0.04
+    rect = [left, bottom, width, height]
+    ax6 = plt.axes(rect)
+    ax6.text(0.5, 0.0, plottitle, ha='center', fontsize=10)
+    blank_axes(ax6)
+
+    # ---------------------------------North Arrow  ----------------------------
+    #
+    left = 0.03
+    bottom = 0.2
+    width = 0.16
+    height = 0.2
+    rect = [left, bottom, width, height]
+    rect = [left, bottom, width, height]
+    ax4 = plt.axes(rect)
+
+    # need a font that support enough Unicode to draw up arrow. need space after Unicode to allow wide char to be drawm?
+    ax4.text(0.5, 0.0, u'\u25B2 \nN ', ha='center', fontsize=30, family='Arial', rotation=0)
+    blank_axes(ax4)
+
+    # ------------------------------------  Legend -------------------------------------
+    # legends can be quite long, so set near top of map (0.4 - bottom + 0.5 height = 0.9 - near top)
+    left = 0.08
+    bottom = 0.4
+    width = 0.15
+    height = 0.5
+    rect = [left, bottom, width, height]
+    ax5 = plt.axes(rect)
+    blank_axes(ax5)
+
+    # create an array of color patches and associated names for drawing in a legend
+    # colors are the predefined colors for cartopy features (only for example, Cartopy names are unusual)
+    colors = sorted(cartopy.feature.COLORS.keys())
+
+    # handles is a list of patch handles
+    handles = []
+    # names is the list of corresponding labels to appear in the legend
+    names = []
+
+    # for each cartopy defined color, draw a patch, append handle to list, and append color name to names list
+    for c in colors:
+        patch = patches.Patch(color=cfeature.COLORS[c], label=c)
+    handles.append(patch)
+    names.append(c)
+    # end for
+
+    # do some example lines with colors
+    river = mlines.Line2D([], [], color=cfeature.COLORS['water'], marker='',
+                          markersize=15, label='river')
+    coast = mlines.Line2D([], [], color='blue', marker='',
+                          markersize=15, label='coast')
+    bdy = mlines.Line2D([], [], color='red', marker='',
+                        markersize=15, label='state boundary')
+    handles.append(river)
+    handles.append(coast)
+    handles.append(bdy)
+    names.append('river')
+    names.append('coast')
+    names.append('border')
+
+    # create legend
+    ax5.legend(handles, names)
+    ax5.set_title('Legend', loc='left')
+
+    # show the map
+    fig.show()
+
+    # save it to a file
+    # plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
+    fig.savefig(plotfile)
+    plt.close(fig)
+
+
+plotfile = 'testmapbelow.jpg'
+title = allscenes[x].split('.')[0]
+map_it_below(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
+        plottitle=title)
+
 
