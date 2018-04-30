@@ -60,10 +60,16 @@ fig = plt.figure(figsize=(10, 12))
 # ------------------------------- Surrounding frame ------------------------------
 # set up frame full height, full width of figure, this must be called first
 
-left = -0.05
-bottom = -0.05
-width = 1.1
-height = 1.05
+left = -0.01
+bottom = -0.01
+width = 1.02
+height = 1.02
+'''
+left = 0.01
+bottom = 0.01
+width = 0.98
+height = 0.98
+'''
 rect = [left, bottom, width, height]
 ax3 = plt.axes(rect)
 
@@ -74,7 +80,7 @@ ax3.spines['top'].set_visible(True)
 ax3.spines['bottom'].set_visible(True)
 ax3.spines['left'].set_visible(True)
 
-ax3.text(0.01, 0.01, '© Don Cameron, 2017: net-analysis.com. ' +
+ax3.text(0.03, 0.03, '© University of Leicester, 2018. ' +
          'Map generated at ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
          fontsize=8)
 
@@ -82,10 +88,16 @@ ax3.text(0.01, 0.01, '© Don Cameron, 2017: net-analysis.com. ' +
 #
 # set up main map almost full height (allow room for title), right 80% of figure
 
+'''
 left = 0.2
-bottom = 0
-width = 0.8
-height = 0.90
+bottom = 0.1
+width = 0.7
+height = 0.8
+'''
+left = 0.25
+bottom = 0.01
+width = 0.65
+height = 0.98
 rect = [left, bottom, width, height]
 
 ax = plt.axes(rect, projection=ccrs.PlateCarree(), )
@@ -93,18 +105,14 @@ ax.set_extent((150, 155, -30, -23))
 
 ax.coastlines(resolution='10m', zorder=2)
 
-BORDERS2_10m = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces',
-                                                   '10m', edgecolor='black', facecolor='none')
-# """country boundaries.""""
 LAND_10m = cartopy.feature.NaturalEarthFeature('physical', 'land', '10m',
                                                edgecolor='face',
                                                facecolor=cartopy.feature.COLORS['land'])
-# """land polygons, including major islands."""
-
 RIVERS_10m = cartopy.feature.NaturalEarthFeature('physical', 'rivers_lake_centerlines', '10m',
                                                  edgecolor=cartopy.feature.COLORS['water'],
                                                  facecolor='none')
-# """single-line drainages, including lake centerlines."""
+BORDERS2_10m = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces',
+                                                   '10m', edgecolor='black', facecolor='none')
 ax.add_feature(LAND_10m)
 ax.add_feature(RIVERS_10m)
 ax.add_feature(BORDERS2_10m, edgecolor='grey')
@@ -112,9 +120,7 @@ ax.stock_img()
 # stock image is good enough for example, but OCEAN_10m could be used, but very slow
 #       ax.add_feature(OCEAN_10m)
 
-
 ax.gridlines(draw_labels=True, xlocs=[150, 152, 154, 155])
-
 
 lon0, lon1, lat0, lat1 = ax.get_extent()
 
@@ -130,19 +136,17 @@ bars = bar_ticks = 5
 bar_alpha = 0.3
 zorder = 9
 
-bar_color = ['black', 'red']
-
-# draw a scale bar that is a set of colored line segments (bar_ticks of these), bar_tickmarks long
-
 # Get the limits of the axis in map coordinates
 x0, x1, y0, y1 = ax.get_extent(ccrs.PlateCarree())
 
 # specified scalebar location
+# TODO need to transform sbx and sby into metres or length into lon
+
 sbx = bar_lon0
 sby = bar_lat0
 
 # Get the thickness of the scalebar in map units
-thickness = (y1 - y0) / 20
+thickness = (y1 - y0) / 50
 
 # Generate the x coordinate for the ends of the scalebar
 bar_xs = [sbx, sbx + length / bars]
@@ -207,10 +211,10 @@ t0 = ax.text(text_lon0, text_lat0, str(bar_ticks * bar_tickmark / 1000) + ' ' + 
              path_effects=buffer, zorder=2)
 '''
 
-# ---------------------------------Locating Map ------------------------
+# ---------------------------------Overview Location Map ------------------------
 #
 # set up index map 20% height, left 16% of figure
-left = 0
+left = 0.03
 bottom = 0
 width = 0.16
 height = 0.2
@@ -246,7 +250,7 @@ blank_axes(ax6)
 
 # ---------------------------------North Arrow  ----------------------------
 #
-left = 0
+left = 0.03
 bottom = 0.2
 width = 0.16
 height = 0.2
@@ -260,9 +264,9 @@ blank_axes(ax4)
 
 # ------------------------------------  Legend -------------------------------------
 # legends can be quite long, so set near top of map (0.4 - bottom + 0.5 height = 0.9 - near top)
-left = 0
+left = 0.04
 bottom = 0.4
-width = 0.16
+width = 0.15
 height = 0.5
 rect =[left, bottom, width, height]
 ax5 = plt.axes(rect)
@@ -304,3 +308,6 @@ ax5.set_title('Legend', loc='left')
 
 plt.show()
 
+wd = '/home/heiko/linuxpy/test/'  # working directory on Linux Virtual Box
+plt.savefig(wd+'test1output.jpg')
+plt.close()
