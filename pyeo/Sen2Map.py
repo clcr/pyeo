@@ -968,9 +968,9 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # ---------------------- Main map ----------------------
     # set up main map almost full height (allow room for title), right 80% of figure
-    left = 0.3
+    left = 0.35
     bottom = 0.01
-    width = 0.75
+    width = 0.7
     height = 0.98
 
     rect = [left, bottom, width, height]
@@ -1133,7 +1133,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     height = 0.04
     rect = [left, bottom, width, height]
     ax6 = plt.axes(rect)
-    ax6.text(0.5, 0.0, plottitle, ha='center', fontsize=20)
+    ax6.text(0.5, 0.0, plottitle, ha='center', fontsize=14)
     blank_axes(ax6)
 
     # ---------------------------------North Arrow  ----------------------------
@@ -1152,7 +1152,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # ------------------------------------  Legend -------------------------------------
     # legends can be quite long, so set near top of map (0.4 - bottom + 0.5 height = 0.9 - near top)
-    left = 0.08
+    left = 0.03
     bottom = 0.4
     width = 0.15
     height = 0.5
