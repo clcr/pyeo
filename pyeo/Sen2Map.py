@@ -11,15 +11,12 @@ Created on Sat Mar 24 12:11:00 2018
 # written for Python 3.6.4
 #############################################################################
 
-# When you start the IPython Kernel, type in:
+# When you start the IPython Kernel, launch a graphical user interface (GUI) loop:
 #   %matplotlib
-# This will launch a graphical user interface (GUI) loop
 
 ########################
-# TODO write a draw_north_arrow function that adds an artist to axis 2
 # TODO separate geotiff conversion and 10 m resampling into 2 functions
 # TODO plot multiple adjacent scenes onto the same map by providing a list of scene IDs to map_it instead of rgbdata and running readsen2rgb from within map_it
-# TODO tiffdir: save outputs to a different subdirectory outside raw scene directory structure
 ########################
 
 from cartopy.io.shapereader import Reader
@@ -141,18 +138,18 @@ def get_gridlines(x0, x1, y0, y1, nticks):
     # update number of digits in case pretty is 10
     ndigits = int(np.log10(dx))
 
-    # find position of the first pretty gridline inside the map area, between x0 and x0+dx
-    xs = int((x0 + dx - 1) / 10 ** ndigits) * 10 ** ndigits
+    # find position of the first pretty gridline just outside the map area
+    xs = int(x0 / 10 ** ndigits) * 10 ** ndigits
 
     # set x ticks positions
-    xticks = np.arange(xs, x1, dx)
+    xticks = np.arange(xs, x1 + dx -1, dx)
     #xticks = [x for x in xt if (x >= x0 and x <=x1)] # checks whether outside of map boundary, not needed
 
-    # find position of the first pretty gridline inside the map area, between y0 and y0+dx
-    ys = int((y0 + dx - 1) / 10 ** ndigits) * 10 ** ndigits
+    # find position of the first pretty gridline just outside the map area
+    ys = int(y0 / 10 ** ndigits) * 10 ** ndigits
 
     # set y ticks positions
-    yticks = np.arange(ys, y1, dx)
+    yticks = np.arange(ys, y1 + dx -1, dx)
 
     return xticks, yticks
 
@@ -1437,7 +1434,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     rect = [left, bottom, width, height]
 
     # define the extent of the overview map in map coordinates
-    margin = 8  # add n times the map extent
+    margin = 20  # add n times the map extent
     aspect = height / width  # but maintain a feasible aspect ratio
     marginx = margin
     marginy = margin / aspect
@@ -1471,7 +1468,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     height = 0.04
     rect = [left, bottom, width, height]
     ax6 = plt.axes(rect)
-    ax6.text(0.5, 0.0, plottitle, ha='center', fontsize=12, fontweight='bold')
+    ax6.text(0.5, 0.0, plottitle, ha='center', fontsize=11, fontweight='bold')
     blank_axes(ax6)
 
     # ---------------------------------North Arrow  ----------------------------
@@ -1540,206 +1537,221 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig.savefig(plotfile)
     plt.close(fig)
 
+def convert2geotif(datadir):
+    '''
 
-#############################################################################
-# MAIN
-#############################################################################
+    resample all Sentinel-2 scenes in the data directory to 10 m
+      and convert to Geotiff format in a new directory
 
-# go to working directory
-os.chdir(wd)
+    inputs:
+      datadir = data directory path with Sentinel 2 scenes
 
-###################################################
-# make a 'plots' directory (if it does not exist yet) for map output files
-###################################################
-plotdir = wd + 'plots_' + shapefile.split(".")[0] + "/"
-if not os.path.exists(plotdir):
-    print("Creating directory: ", plotdir)
-    os.mkdir(plotdir)
+    returns:
+      tiffroot = root directory in which all geotiff subdirectories reside
+      tiffdirs = list of data directory paths to the geotiff subdirectories
 
-###################################################
-# get names of all scenes
-###################################################
+    '''
 
-# get list of all data subdirectories (one for each image)
-allscenes = [f for f in listdir(datadir) if isdir(join(datadir, f))]
-print('\nList of Sentinel-2 scenes:')
-for scene in allscenes:
-    print(scene)
-print('\n')
+    print("\n")
+    print("Resampling to 10 m resolution and conversion to Geotiff format")
+    print("\n")
 
-###################################################
-# resample all Sentinel-2 scenes in the data directory to 10 m
-###################################################
-tiffdirs = [''] # make a list of all tiff file directories of the same length as the number of scenes
-for x in range(len(allscenes)):
-    if allscenes[x].split(".")[1] == "SAFE":
-        # open the file
-        print('\n******************************')
-        print("Reading scene", x + 1, ":", allscenes[x])
-        print('******************************\n')
+    # get names of all scenes
+    #   i.e. get list of all data subdirectories (one for each image)
+    allscenes = [f for f in listdir(datadir) if isdir(join(datadir, f))]
+    print('\nList of Sentinel-2 scenes:')
+    for scene in allscenes:
+        print(scene)
+    print('\n')
 
-        # set working directory to the Sentinel scene subdirectory
-        scenedir = datadir + allscenes[x] + "/"
-        os.chdir(scenedir)
+    # make a list of all tiff file directories of the same length as the number of scenes
+    tiffdirs = ['']
 
-        ###################################################
-        # get footprint of the scene from the metadatafile
-        ###################################################
-        # get the list of filenames ending in .xml, but exclude 'INSPIRE.xml'
-        xmlfiles = [f for f in os.listdir(scenedir) if f.endswith('.xml') & (1 - f.startswith('INSPIRE'))]
-        #print('Reading footprint from ' + xmlfiles[0])
-        # use the first .xml file in the directory
-        with open(xmlfiles[0]) as f:
-            content = f.readlines()
+    # in the project directory above the data directory, make a subdirectory for 10 m Geotiff files
+    s = '/'  # separator for string join
+    tiffroot = s.join(datadir.split('/')[:-2]) + '/s2tif/'
+    if not os.path.exists(tiffroot):
+        print("Creating directory: ", tiffroot)
+        os.mkdir(tiffroot)
 
+    for x in range(len(allscenes)):
+        if allscenes[x].split(".")[1] == "SAFE":
+            # open the file
+            print('\n******************************')
+            print("Reading scene", x + 1, ":", allscenes[x])
+            print('******************************\n')
 
+            # set working directory to the Sentinel scene subdirectory
+            scenedir = datadir + allscenes[x] + "/"
+            os.chdir(scenedir)
 
-        # remove whitespace characters like `\n` at the end of each line
-        content = [x.strip() for x in content]
-        # find the footprint in the metadata
-        footprint = [x for x in content if x.startswith('<EXT_POS_LIST>')]
-        # the first element of the returned list is a string
-        #   so extract the string and split it
-        footprint = footprint[0].split(" ")
-        #   and split off the metadata text
-        footprint[0] = footprint[0].split(">")[1]
-        #   and remove the metadata text at the end of the list
-        footprint = footprint[:-1]
-        # convert the string list to floats
+            ###################################################
+            # get footprint of the scene from the metadatafile
+            ###################################################
+            # get the list of filenames ending in .xml, but exclude 'INSPIRE.xml'
+            xmlfiles = [f for f in os.listdir(scenedir) if f.endswith('.xml') & (1 - f.startswith('INSPIRE'))]
+            #print('Reading footprint from ' + xmlfiles[0])
+            # use the first .xml file in the directory
+            with open(xmlfiles[0]) as f:
+                content = f.readlines()
 
+            # remove whitespace characters like `\n` at the end of each line
+            content = [x.strip() for x in content]
+            # find the footprint in the metadata
+            footprint = [x for x in content if x.startswith('<EXT_POS_LIST>')]
+            # the first element of the returned list is a string
+            #   so extract the string and split it
+            footprint = footprint[0].split(" ")
+            #   and split off the metadata text
+            footprint[0] = footprint[0].split(">")[1]
+            #   and remove the metadata text at the end of the list
+            footprint = footprint[:-1]
+            # convert the string list to floats
 
+            footprint = [float(s) for s in footprint]
+            # list slicing to separate lon and lat coordinates: list[start:stop:step]
+            footprinty = footprint[0::2]  # latitudes
+            footprintx = footprint[1::2]  # longitudes
+            #print(footprint)
 
-        footprint = [float(s) for s in footprint]
-        # list slicing to separate lon and lat coordinates: list[start:stop:step]
-        footprinty = footprint[0::2]  # latitudes
-        footprintx = footprint[1::2]  # longitudes
-        #print(footprint)
+            # set working directory to the Granule subdirectory
+            os.chdir(datadir + allscenes[x] + "/" + "GRANULE" + "/")
+            sdir = listdir()[0]  # only one subdirectory expected in this directory
 
-        # set working directory to the Granule subdirectory
-        os.chdir(datadir + allscenes[x] + "/" + "GRANULE" + "/")
-        sdir = listdir()[0]  # only one subdirectory expected in this directory
+            # set working directory to the image data subdirectory
+            imgdir = datadir + allscenes[x] + "/" + "GRANULE" + "/" + sdir + "/" + "IMG_DATA" + "/"
+            os.chdir(imgdir)
 
-        # set working directory to the image data subdirectory
-        imgdir = datadir + allscenes[x] + "/" + "GRANULE" + "/" + sdir + "/" + "IMG_DATA" + "/"
-        os.chdir(imgdir)
+            ###################################################
+            # get the list of filenames for all bands in .jp2 format
+            ###################################################
+            sbands = sorted([f for f in os.listdir(imgdir) if f.endswith('.jp2')])
+            print('Bands:')
+            for band in sbands:
+                print(band)
+            nbands = len(sbands)  # get the number of bands in the image
+            print('\n')
 
-        ###################################################
-        # get the list of filenames for all bands in .jp2 format
-        ###################################################
-        sbands = sorted([f for f in os.listdir(imgdir) if f.endswith('.jp2')])
-        print('Bands:')
-        for band in sbands:
-            print(band)
-        nbands = len(sbands)  # get the number of bands in the image
-        print('\n')
+            ###################################################
+            # load all bands to get row and column numbers, and resample to 10 m
+            ###################################################
+            ncolmax = nrowmax = 0
+            obands = sbands  # filenames of output tiff files, all at 10 m resolution
 
-        ###################################################
-        # load all bands to get row and column numbers, and resample to 10 m
-        ###################################################
-        ncolmax = nrowmax = 0
-        obands = sbands  # filenames of output tiff files, all at 10 m resolution
+            # in the tiff root directory, make a subdirectory for the 10 m Geotiff files for each Sentinel scene
+            s = '/' # separator for string join
+            tiffdir = tiffroot + allscenes[x].split('.')[0] + '_tif/'
+            if not os.path.exists(tiffdir):
+                print("Creating directory: ", tiffdir)
+                os.mkdir(tiffdir)
+            if x == 1:
+                tiffdirs[0] = tiffdir
+            else:
+                tiffdirs.append(tiffdir) # remember all tiff file directories later
 
-        # in the scene directory, make a 'tiff' subdirectory for 10 m Geotiffs
-        tiffdir = scenedir + 'tiff/'
-        if not os.path.exists(tiffdir):
-            print("Creating directory: ", tiffdir)
-            os.mkdir(tiffdir)
-        if x == 1:
-            tiffdirs[0] = tiffdir
-        else:
-            tiffdirs.append(tiffdir) # remember all tiff file directories later
+            ###################################################
+            # process all the bands to 10 m resolution
+            ###################################################
 
-        ###################################################
-        # process all the bands to 10 m resolution
-        ###################################################
+            # enumerate produces a counter and the contents of the band list
+            for i, iband in enumerate(sbands):
 
-        # enumerate produces a counter and the contents of the band list
-        for i, iband in enumerate(sbands):
+                # open a band
+                bandx = gdal.Open(iband, gdal.GA_Update)
 
-            # open a band
-            bandx = gdal.Open(iband, gdal.GA_Update)
+                # get image dimensions
+                ncols = bandx.RasterXSize
+                nrows = bandx.RasterYSize
 
-            # get image dimensions
-            ncols = bandx.RasterXSize
-            nrows = bandx.RasterYSize
+                # get raster georeferencing information
+                geotrans = bandx.GetGeoTransform()
+                ulx = geotrans[0]  # Upper Left corner coordinate in x
+                uly = geotrans[3]  # Upper Left corner coordinate in y
+                pixelWidth = geotrans[1]  # pixel spacing in map units in x
+                pixelHeight = geotrans[5]  # (negative) pixel spacing in y
+                print("Band %s has %6d columns, %6d rows and a %d m resolution." \
+                      % (iband, ncols, nrows, pixelWidth))
+                # scale factor for resampling to 10 m pixel resolution
+                sf = abs(int(pixelWidth / 10))
+                # determining the maximum number of columns and rows at 10 m
+                ncolmax = max(ncols * sf, ncolmax)
+                nrowmax = max(nrows * sf, nrowmax)
 
-            # get raster georeferencing information
-            geotrans = bandx.GetGeoTransform()
-            ulx = geotrans[0]  # Upper Left corner coordinate in x
-            uly = geotrans[3]  # Upper Left corner coordinate in y
-            pixelWidth = geotrans[1]  # pixel spacing in map units in x
-            pixelHeight = geotrans[5]  # (negative) pixel spacing in y
-            print("Band %s has %6d columns, %6d rows and a %d m resolution." \
-                  % (iband, ncols, nrows, pixelWidth))
-            # scale factor for resampling to 10 m pixel resolution
-            sf = abs(int(pixelWidth / 10))
-            # determining the maximum number of columns and rows at 10 m
-            ncolmax = max(ncols * sf, ncolmax)
-            nrowmax = max(nrows * sf, nrowmax)
+                # resample the 20 m and 40 m images to 10 m and convert to Geotiff
+                if pixelWidth != 999:  # can be removed, is redundant as all images will be converted to GeoTiff
+                    print('  Resampling %s image from %d m to 10 m resolution and converting to Geotiff' \
+                          % (iband, pixelWidth))
+                    # define the zoom factor in %
+                    zf = str(pixelWidth * 10) + '%'
+                    # define an output file name
+                    obands[i] = iband[:-4] + '_10m.tif'
+                    # assemble command line code
+                    res_cmd = ['gdal_translate', '-outsize', zf, zf, '-of', 'GTiff',
+                               iband, tiffdir + obands[i]]
+                # save geotiff file at 10 m resolution
+                subprocess.call(res_cmd)
 
-            # resample the 20 m and 40 m images to 10 m and convert to Geotiff
-            if pixelWidth != 999:  # can be removed, is redundant as all images will be converted to GeoTiff
-                print('  Resampling %s image from %d m to 10 m resolution and converting to Geotiff' \
-                      % (iband, pixelWidth))
-                # define the zoom factor in %
-                zf = str(pixelWidth * 10) + '%'
-                # define an output file name
-                obands[i] = iband[:-4] + '_10m.tif'
-                # assemble command line code
-                res_cmd = ['gdal_translate', '-outsize', zf, zf, '-of', 'GTiff',
-                           iband, tiffdir + obands[i]]
-            # save geotiff file at 10 m resolution
-            subprocess.call(res_cmd)
+                #close GDAL file
+                bandx = None
 
-            #close GDAL file
-            bandx = None
+            print("Output number of columns = %6d\nOutput number of rows = %6d." \
+                  % (ncolmax, nrowmax))
 
-        print("Output number of columns = %6d\nOutput number of rows = %6d." \
-              % (ncolmax, nrowmax))
+    return tiffroot, tiffdirs
 
-        print("\n")
-        print("Resampling to 10 m resolution and conversion to Geotiff completed.")
-        print("\n")
+def geotif2maps(tiffroot, plotdir, bands=[5,4,3], id='map', zoom=1, xoffset=0, yoffset=0):
+    '''
 
-###################################################
-# make maps from all Sentinel-2 Geotiffs
-###################################################
-for x in range(len(allscenes)):
+    make jpeg maps from all Sentinel-2 Geotiffs in the list of tiff directories
 
-        print('\n******************************')
-        print("Reading scene", x + 1, ":", allscenes[x])
-        print('******************************\n')
+    inputs:
+      tiffroot = tiff root data directory path with Sentinel 2 geotiff subdirectories
+      id       = map id to be added to the output map filename as an identifier, e.g. 'map1'
+      plotdir  = output directory for all map files
+      bands    = array of three band numbers for the RGB channels in the main map, default 5,4,3
+      zoom     = zoom factor for the map, default 1 means no zoom, full image display, negative means zoom out
+      xoffset  = offset of the map in x directorion (in map coordinates)
+      yoffset  = offset of the map in y directorion (in map coordinates)
 
-        ###################################################
-        # Make RGB maps from three Geotiff files
-        ###################################################
+    returns:
+      nfiles   = number of map files created
+      mapfiles = list of filenames created
 
-        print('Making maps from Geotiff RGB files')
+    '''
 
-        # get names of all 10 m resolution geotiff files
+    print('\n******************************')
+    print("Processing GEOTIFF scenes to JPEG maps")
+    print('******************************\n')
+
+    # get the list of geotiff subdirectories
+    tiffdirs = sorted([f for f in os.listdir(tiffroot)])
+
+    # remember the created filenames
+    mapfiles = []
+
+    for x in range(len(tiffdirs)):
         tiffdir = tiffdirs[x]
-        os.chdir(tiffdir)
-        allfiles = sorted([f for f in os.listdir(tiffdir) if f.endswith('.tif')])
+        print('\n******************************')
+        print("Reading tiff file stack ", x + 1, ":", tiffdir)
+        print('******************************\n')
+        allfiles = sorted([f for f in os.listdir(tiffroot + tiffdir) if f.endswith('.tif')])
         nfiles = len(allfiles)
-        print('\nProcessing %d Geotiff files:' % nfiles)
-        for thisfile in allfiles:
-            print(thisfile)
-        print('\n\n')
+        #print('\nProcessing %d Geotiff files:' % nfiles)
+        #for thisfile in allfiles:
+        #    print(thisfile)
+        #print('\n\n')
 
-        ###################################################
         # read and plot the selected RGB bands / geotiffs onto a map
-        ###################################################
-
         # identify the filenames of the geotiff files for RGB map display
         rgbfiles = []
         for i in bands:
-            rgbfiles.append(allfiles[i - 1])
-        for thisfile in rgbfiles:
-            print(thisfile)
-        print('\n\n')
+            rgbfiles.append(tiffroot + tiffdir + '/' + allfiles[i - 1])
+        #for thisfile in rgbfiles:
+        #    print(thisfile)
+        #print('\n\n')
 
         # open the first tiff file with GDAL to get file dimensions
-        thisfile = allfiles[0]
+        thisfile = tiffroot + tiffdir + '/' + allfiles[0]
         ds = gdal.Open(thisfile)
         data = ds.ReadAsArray()
 
@@ -1763,71 +1775,68 @@ for x in range(len(allscenes)):
         # close the GDAL file
         ds = None
 
-        #######################################
-        # Overview map: make a map plot of the tiff file in the image projection
-        #######################################
-        plotfile = allscenes[x].split('.')[0] + '_map1.jpg'
-        title = allscenes[x].split('.')[0]
-        mapextent = extent
+        # make a map of the tiff file in the image projection
+        plotfile = plotdir + '_' + id + '.jpg'
+        mapfiles.append(plotfile)
+        s = '_'  # separator for string join
+        # make map title
+        title = s.join(tiffdirs[0].split('_')[:-1])
+        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
+        width = extent[1] - extent[0]
+        height = extent[3] - extent[2]
+        mapextent = (extent[0] + width / zoom / 2 + xoffset,
+                     extent[1] - width / zoom / 2 + xoffset,
+                     extent[2] + height / zoom / 2 + yoffset,
+                     extent[3] - height / zoom / 2 + yoffset)
         map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
                 plottitle=title)
 
-        #######################################
-        # Zoom out
-        #######################################
-        plotfile = allscenes[x].split('.')[0] + '_map2.jpg'
-        title = allscenes[x].split('.')[0]
-        # zoom out (negative values zoom out, positive zoom in)
-        zf = -2
-        # offsets in map coordinates
-        width = extent[1] - extent[0]
-        height = extent[3] - extent[2]
-        xoffset = 0
-        yoffset = 0
-        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        mapextent = (extent[0] + width / zf / 2 + xoffset,
-                     extent[1] - width / zf / 2 + xoffset,
-                     extent[2] + height / zf / 2 + yoffset,
-                     extent[3] - height / zf / 2 + yoffset)
-        map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title)
+    return len(mapfiles), mapfiles
 
-        #######################################
-        # Zoom in to the centre
-        #######################################
-        plotfile = allscenes[x].split('.')[0] + '_map3.jpg'
-        title = allscenes[x].split('.')[0]
-        # zoom in to the centre (negative values zoom out, positive zoom in)
-        zf = 4
-        # offsets in map coordinates
-        width = extent[1] - extent[0]
-        height = extent[3] - extent[2]
-        xoffset = 0
-        yoffset = 0
-        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        mapextent = (extent[0] + width / zf / 2 + xoffset,
-                     extent[1] - width / zf / 2 + xoffset,
-                     extent[2] + height / zf / 2 + yoffset,
-                     extent[3] - height / zf / 2 + yoffset)
-        map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title)
+#############################################################################
+# MAIN
+#############################################################################
 
-        #######################################
-        # Zoom in to the top right corner
-        #######################################
-        plotfile = allscenes[x].split('.')[0] + '_map4.jpg'
-        title = allscenes[x].split('.')[0]
-        # zoom in to the top right corner (negative values zoom out, positive zoom in)
-        zf = 2
-        # offsets in map coordinates
-        width = extent[1] - extent[0]
-        height = extent[3] - extent[2]
-        xoffset = round(width / zf / 2)
-        yoffset = round(height / zf / 2)
-        # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        mapextent = (extent[0] + width / zf / 2 + xoffset,
-                     extent[1] - width / zf / 2 + xoffset,
-                     extent[2] + height / zf / 2 + yoffset,
-                     extent[3] - height / zf / 2 + yoffset)
-        map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title)
+# go to working directory
+os.chdir(wd)
+
+###################################################
+# make a 'plots' directory (if it does not exist yet) for map output files
+###################################################
+plotdir = wd + 'plots_' + shapefile.split(".")[0] + "/"
+if not os.path.exists(plotdir):
+    print("Creating directory: ", plotdir)
+    os.mkdir(plotdir)
+
+###################################################
+# process all Sentinel 2 files in the data directory to 10 m resolution Geotiff format
+###################################################
+tiffroot, tiffdirs = convert2geotif(datadir)
+
+###################################################
+# process all tiff subdirectories into jpeg maps
+###################################################
+
+# Overview map: make a map plot of the tiff file in the image projection
+nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
+                               id='map1', zoom=1, xoffset=0, yoffset=0)
+print('Made map files:')
+print(mapfiles)
+
+# Zoom out
+nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
+                               id='map2', zoom=-2, xoffset=0, yoffset=0)
+print('Made map files:')
+print(mapfiles)
+
+# Zoom in to the centre
+nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
+                               id='map3', zoom=4, xoffset=0, yoffset=0)
+print('Made map files:')
+print(mapfiles)
+
+# Zoom in to the top right corner
+nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
+                               id='map4', zoom=4, xoffset=round(109800*0.75), yoffset=round(109800*0.75))
+print('Made map files:')
+print(mapfiles)
