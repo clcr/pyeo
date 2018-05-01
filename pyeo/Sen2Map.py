@@ -118,43 +118,42 @@ def get_gridlines(x0, x1, y0, y1, nticks):
         x0, x1 = minimum and maximum x positions in map projection coordinates
         y0, y1 = minimum and maximum y positions in map projection coordinates
         nticks = number of ticks / gridlines in x direction
-        returns two numpy arrays with x and y tick positions
+        returns a numpy array with x and y tick positions
     '''
-    # make sure gridline positions have min 2 digits
-    ndigits = len(str(abs(x0)).split('.')[0])  # number of digits before the decimal point
-    xx0 = x0
-    xfactor = 1  # how many time do we need to multiply by 10
-    while ndigits < 2:
-        xx0 = xx0 * 10
-        xfactor = xfactor * 10
-        ndigits = len(str(abs(xx0)).split('.')[0])  # number of digits before the decimal point
-        if xfactor > 100000:
-            print('\nError in XFactor while loop!')
-            break
-    x0 = round(x0 * xfactor, 0) / xfactor
-    x1 = round(x1 * xfactor, 0) / xfactor
-    y0 = round(y0 * xfactor, 0) / xfactor
-    y1 = round(y1 * xfactor, 0) / xfactor
-    # make sure gridline positions have max 3 digits
-    ndigits = len(str(abs(x0)).split('.')[0])  # number of digits before the decimal point
-    xx0 = x0
-    xfactor = 1  # how many time do we need to divide by 10
-    while ndigits > 3:
-        xx0 = xx0 / 10
-        xfactor = xfactor * 10
-        ndigits = len(str(abs(xx0)).split('.')[0])  # number of digits before the decimal point
-        if xfactor > 100000:
-            print('\nError in XFactor while loop!')
-            break
-    x0 = round(x0 / xfactor, 0) * xfactor
-    x1 = round(x1 / xfactor, 0) * xfactor
-    y0 = round(y0 / xfactor, 0) * xfactor
-    y1 = round(y1 / xfactor, 0) * xfactor
-    # carry on
-    dx = (x1 - x0) / nticks
-    dy = (y1 - y0) / nticks
-    xticks = np.arange(x0, x1 + dx, dx)
-    yticks = np.arange(y0, y1 + dy, dy)
+    # calculate length of axis
+    lx = x1 - x0
+
+    # count number of digits of axis lengths
+    nlx = int(np.log10(lx) + 1)
+
+    # divide lengths into segments and round to highest digit
+    #   remove all but the highest digit
+    ndigits = int(np.log10(lx / nticks))
+    dx = int(lx / nticks / 10 ** ndigits)
+    #   round to a single digit integer starting with 1, 2 or 5
+    pretty = [1, 2, 5, 10] # pretty numbers for the gridlines
+    d = [0, 0, 0, 0] # absolute differences between dx and pretty numbers
+    d[:] = [abs(x - dx) for x in pretty]
+    # find the index of the pretty number with the smallest difference to dx and then the number
+    dx = pretty[np.argmin(d)]
+    #   scale back up
+    dx = dx * 10 ** ndigits
+    # update number of digits in case pretty is 10
+    ndigits = int(np.log10(dx))
+
+    # find position of the first pretty gridline inside the map area, between x0 and x0+dx
+    xs = int((x0 + dx - 1) / 10 ** ndigits) * 10 ** ndigits
+
+    # set x ticks positions
+    xticks = np.arange(xs, x1, dx)
+    #xticks = [x for x in xt if (x >= x0 and x <=x1)] # checks whether outside of map boundary, not needed
+
+    # find position of the first pretty gridline inside the map area, between y0 and y0+dx
+    ys = int((y0 + dx - 1) / 10 ** ndigits) * 10 ** ndigits
+
+    # set y ticks positions
+    yticks = np.arange(ys, y1, dx)
+
     return xticks, yticks
 
 
@@ -1567,10 +1566,10 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # ---------------------- Main map ----------------------
     # set up main map almost full height (allow room for title), to the right of the figure
-    left = 0.35
+    left = 0.3
     bottom = 0.01
-    width = 0.6
-    height = 0.98
+    width = 0.69
+    height = 0.87
 
     rect = [left, bottom, width, height]
     ax1 = plt.axes(rect, projection=tifproj, )
@@ -1579,8 +1578,6 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     extent1 = (mapextent[0], mapextent[1],
                mapextent[2] - 0.1 * (mapextent[3] - mapextent[2]), mapextent[3])
     ax1.set_extent(extent1, crs=tifproj)
-
-    ax1.coastlines(resolution='10m', zorder=2)
 
     #LAND_10m = cartopy.feature.NaturalEarthFeature('physical', 'land', '10m',
     #                                               edgecolor='face',
@@ -1591,6 +1588,7 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     BORDERS2_10m = cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces',
                                                        '10m', edgecolor='black', facecolor='none')
     #ax1.add_feature(LAND_10m, edgecolor='grey', zorder=1.2)
+    ax1.coastlines(resolution='10m', edgecolor='blue', zorder=1.2)
     ax1.add_feature(RIVERS_10m, edgecolor=cfeature.COLORS['water'], zorder=1.2)
     ax1.add_feature(BORDERS2_10m, edgecolor='red', zorder=1.2)
     ax1.stock_img()
@@ -1599,6 +1597,7 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # work out gridline positions
     xticks, yticks = get_gridlines(mapextent[0], mapextent[1], mapextent[2], mapextent[3], nticks=6)
+
     # plot the gridlines
     gl = ax1.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey',
                        alpha=1, linewidth=1, zorder=1.3)
@@ -1717,16 +1716,24 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
                              edgecolor='white', facecolor='white', zorder=3)
     ax1.add_patch(rect)
 
+    # draws boxes on the map (not used anymore)
+    #rect = patches.Rectangle((x0, y0), x1 - x0, (y1 - y0) * 0.1, linewidth=1,
+    #                         edgecolor='purple', facecolor="None", zorder=9)
+    #ax1.add_patch(rect)
+    #rect = patches.Rectangle((x0, y0 + (y1 - y0) * 0.1), x1 - x0, y1 - y0, linewidth=1,
+    #                         edgecolor='purple', facecolor="None", zorder=9)
+    #ax1.add_patch(rect)
+
     # ---------------------------------Overview Location Map ------------------------
     # define where it should go, i.e. bottom left of the figure area
     left = 0.03
-    bottom = 0
-    width = 0.16
+    bottom = 0.1
+    width = 0.17
     height = 0.2
     rect = [left, bottom, width, height]
 
     # define the extent of the overview map in map coordinates
-    margin = 5  # add 5 times the map extent
+    margin = 8  # add n times the map extent
     aspect = height / width  # but maintain a feasible aspect ratio
     marginx = margin
     marginy = margin / aspect
@@ -1766,9 +1773,9 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # ---------------------------------North Arrow  ----------------------------
     #
     left = 0.03
-    bottom = 0.2
-    width = 0.16
-    height = 0.2
+    bottom = 0.35
+    width = 0.17
+    height = 0.1
     rect = [left, bottom, width, height]
     rect = [left, bottom, width, height]
     ax4 = plt.axes(rect)
@@ -1778,10 +1785,10 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     blank_axes(ax4)
 
     # ------------------------------------  Legend -------------------------------------
-    # legends can be quite long, so set near top of map (0.4 - bottom + 0.5 height = 0.9 - near top)
-    left = 0.08
+    # legends can be quite long, so set near top of map
+    left = 0.03
     bottom = 0.4
-    width = 0.15
+    width = 0.17
     height = 0.5
     rect = [left, bottom, width, height]
     ax5 = plt.axes(rect)
@@ -1809,7 +1816,7 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     coast = mlines.Line2D([], [], color='blue', marker='',
                           markersize=15, label='coast')
     bdy = mlines.Line2D([], [], color='red', marker='',
-                        markersize=15, label='state boundary')
+                        markersize=15, label='border')
     handles.append(river)
     handles.append(coast)
     handles.append(bdy)
@@ -1818,7 +1825,7 @@ def map_it_below(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     names.append('border')
 
     # create legend
-    ax5.legend(handles, names)
+    ax5.legend(handles, names, loc='upper left')
     ax5.set_title('Legend', loc='left')
 
     # show the map
