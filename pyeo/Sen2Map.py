@@ -410,8 +410,7 @@ def read_sen2_rgb(rgbfiles, enhance=True):
     # open the first file with GDAL to get dimensions
     ds = gdal.Open(rgbfiles[0])
     data = ds.ReadAsArray()
-    rgbdata = np.zeros([len(bands), data.shape[0], data.shape[1]], \
-                       dtype=np.uint8)
+    rgbdata = np.zeros([len(bands), data.shape[0], data.shape[1]], dtype=np.uint8)
 
     for i, thisfile in enumerate(rgbfiles):
         print('Reading data from ' + thisfile)
@@ -1198,7 +1197,9 @@ def map_it_old3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     fig.savefig(plotfile)
     plt.close(fig)
 
-def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
+
+
+def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg',
                  plottitle='', figsizex=8, figsizey=8):
     '''
     New map_it function with scale bar located below the map but inside the enlarged map area
@@ -1206,7 +1207,8 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     rgbdata = numpy array of the red, green and blue channels, made by read_sen2rgb
     tifproj = map projection of the tiff files from which the rgbdata originate
-    mapextent = extent of the map in map coordinates
+    mapextent = extent of the map to be plotted in map coordinates
+    imgextent = extent of the satellite image in map coordinates
     shapefile = shapefile name to be plotted on top of the map
     shpproj = map projection of the shapefile
     plotfile = output filename for the map plot
@@ -1303,8 +1305,8 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     gl = ax1.gridlines(crs=tifproj, xlocs=xticks, ylocs=yticks, linestyle='--', color='grey',
                        alpha=1, linewidth=1, zorder=1.3)
     # add ticks
-    ax1.set_xticks(xticks, crs=tifproj)
-    ax1.set_yticks(yticks, crs=tifproj)
+    ax1.set_xticks(xticks[1:-1], crs=tifproj)
+    ax1.set_yticks(yticks[1:-1], crs=tifproj)
 
     # stagger x gridline / tick labels
     #labels = ax1.set_xticklabels(xticks)
@@ -1323,7 +1325,7 @@ def map_it(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # show the data from the geotiff RGB image
     img = ax1.imshow(rgbdata[:3, :, :].transpose((1, 2, 0)),
-                     extent=mapextent, origin='upper', zorder=1)
+                     extent=imgextent, origin='upper', zorder=1)
 
     #  read shapefile and plot it onto the tiff image map
     shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
@@ -1699,17 +1701,18 @@ def convert2geotif(datadir):
 
     return tiffroot, tiffdirs
 
-def geotif2maps(tiffroot, plotdir, bands=[5,4,3], id='map', zoom=1, xoffset=0, yoffset=0):
+def geotif2maps(tiffroot, shapefile, plotdir, bands=[5,4,3], id='map', zoom=1, xoffset=0, yoffset=0):
     '''
 
     make jpeg maps from all Sentinel-2 Geotiffs in the list of tiff directories
 
     inputs:
       tiffroot = tiff root data directory path with Sentinel 2 geotiff subdirectories
-      id       = map id to be added to the output map filename as an identifier, e.g. 'map1'
+      shapefile= full directory path and filename of the shapefile to be plotted
       plotdir  = output directory for all map files
       bands    = array of three band numbers for the RGB channels in the main map, default 5,4,3
-      zoom     = zoom factor for the map, default 1 means no zoom, full image display, negative means zoom out
+      id       = map id to be added to the output map filename as an identifier, e.g. 'map1'
+      zoom     = zoom factor for the map, as proportion of map extent, i.e. 0.5 is zooming in, 2 is zooming out
       xoffset  = offset of the map in x directorion (in map coordinates)
       yoffset  = offset of the map in y directorion (in map coordinates)
 
@@ -1769,6 +1772,9 @@ def geotif2maps(tiffroot, plotdir, bands=[5,4,3], id='map', zoom=1, xoffset=0, y
         extent = (gt[0], gt[0] + ds.RasterXSize * gt[1],
                   gt[3] + ds.RasterYSize * gt[5], gt[3])
 
+        #print('Extent of the image data:')
+        #print(extent[0],extent[1],extent[2],extent[3])
+
         # read in the three geotiff files, one for each band
         rgbdata = read_sen2_rgb(rgbfiles)
 
@@ -1776,20 +1782,26 @@ def geotif2maps(tiffroot, plotdir, bands=[5,4,3], id='map', zoom=1, xoffset=0, y
         ds = None
 
         # make a map of the tiff file in the image projection
-        plotfile = plotdir + '_' + id + '.jpg'
+        plotfile = plotdir + tiffdir + '_' + id + '.jpg'
         mapfiles.append(plotfile)
         s = '_'  # separator for string join
         # make map title
         title = s.join(tiffdirs[0].split('_')[:-1])
+
+        # work out the width and height of the zoom image
+        width  = (extent[1] - extent[0]) * zoom
+        height = (extent[3] - extent[2]) * zoom
+
+        # calculate centre point positions
+        cx = extent[0] + (extent[1] - extent[0]) / 2 + xoffset
+        cy = extent[2] + (extent[3] - extent[2]) / 2 + yoffset
+
         # need to unpack the tuple 'extent' and create a new tuple 'mapextent'
-        width = extent[1] - extent[0]
-        height = extent[3] - extent[2]
-        mapextent = (extent[0] + width / zoom / 2 + xoffset,
-                     extent[1] - width / zoom / 2 + xoffset,
-                     extent[2] + height / zoom / 2 + yoffset,
-                     extent[3] - height / zoom / 2 + yoffset)
-        map_it(rgbdata, tifproj=projection, mapextent=mapextent, shapefile=wd + shapefile, plotfile=plotdir + plotfile,
-                plottitle=title)
+        mapextent = (cx - width / 2, cx + width / 2, cy - height / 2, cy + height / 2)
+
+        # call mapping routine
+        map_it(rgbdata, tifproj=projection, mapextent=mapextent, imgextent=extent,
+               shapefile=shapefile, plotfile=plotfile, plottitle=title)
 
     return len(mapfiles), mapfiles
 
@@ -1800,43 +1812,43 @@ def geotif2maps(tiffroot, plotdir, bands=[5,4,3], id='map', zoom=1, xoffset=0, y
 # go to working directory
 os.chdir(wd)
 
-###################################################
-# make a 'plots' directory (if it does not exist yet) for map output files
-###################################################
-plotdir = wd + 'plots_' + shapefile.split(".")[0] + "/"
-if not os.path.exists(plotdir):
-    print("Creating directory: ", plotdir)
-    os.mkdir(plotdir)
 
 ###################################################
 # process all Sentinel 2 files in the data directory to 10 m resolution Geotiff format
 ###################################################
 tiffroot, tiffdirs = convert2geotif(datadir)
 
+
 ###################################################
 # process all tiff subdirectories into jpeg maps
 ###################################################
 
+# make a 'plots' directory (if it does not exist yet) for map output files
+plotdir = wd + 'plots_' + shapefile.split(".")[0] + "/"
+if not os.path.exists(plotdir):
+    print("Creating directory: ", plotdir)
+    os.mkdir(plotdir)
+
 # Overview map: make a map plot of the tiff file in the image projection
-nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
+nfiles, mapfiles = geotif2maps(tiffroot, wd + shapefile, plotdir, bands=[5, 4, 3],
                                id='map1', zoom=1, xoffset=0, yoffset=0)
 print('Made map files:')
 print(mapfiles)
 
-# Zoom out
-nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
-                               id='map2', zoom=-2, xoffset=0, yoffset=0)
+# Zoom out, i.e. zoom factor greater than 1
+nfiles, mapfiles = geotif2maps(tiffroot, wd + shapefile, plotdir, bands=[5, 4, 3],
+                               id='map2', zoom=2, xoffset=0, yoffset=0)
 print('Made map files:')
 print(mapfiles)
 
-# Zoom in to the centre
-nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
-                               id='map3', zoom=4, xoffset=0, yoffset=0)
+# Zoom in to the centre, i.e. zoom factor smaller than 1
+nfiles, mapfiles = geotif2maps(tiffroot, wd + shapefile, plotdir, bands=[5, 4, 3],
+                               id='map3', zoom=1/4, xoffset=0, yoffset=0)
 print('Made map files:')
 print(mapfiles)
 
 # Zoom in to the top right corner
-nfiles, mapfiles = geotif2maps(tiffroot, plotdir, bands=[5, 4, 3],
-                               id='map4', zoom=4, xoffset=round(109800*0.75), yoffset=round(109800*0.75))
+nfiles, mapfiles = geotif2maps(tiffroot, wd + shapefile, plotdir, bands=[5, 4, 3],
+                               id='map4', zoom=1/4, xoffset=round(109800*0.75), yoffset=round(109800*0.75))
 print('Made map files:')
 print(mapfiles)
