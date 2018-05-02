@@ -521,7 +521,7 @@ def map_it_old(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
         label.set_y(label.get_position()[1] - (i % 2) * 0.075)
 
     # add scale bar
-    scale_bar_left(ax, bars=4, length=40, col='dimgrey')
+    scale_bar_left(ax, bars=4, length=40, col='olivedrab')
 
     # show the map
     plt.show()
@@ -1463,7 +1463,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
 
     # overlay shapefile
     shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
-                                   edgecolor='purple', linewidth=2,
+                                   edgecolor='yellow', linewidth=1,
                                    facecolor='none')
     ax2.add_feature(shape_feature, zorder=5)
 
@@ -1472,7 +1472,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     # add location box of the main map
     box_x = [x0, x1, x1, x0, x0]
     box_y = [y0, y0, y1, y1, y0]
-    plt.plot(box_x, box_y, color='black', transform=tifproj, zorder=6)
+    plt.plot(box_x, box_y, color='black', transform=tifproj, linewidth=1, zorder=6)
 
     # -------------------------------- Title -----------------------------
     # set up map title at top right of figure
