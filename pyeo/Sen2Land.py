@@ -21,7 +21,6 @@ def sen2cor_process_windows(safe_filepath, conf):
     # There's got to be a better way to get the live out/stderr than this.
     while not proc.poll:
         print(proc.stdout.read())
-        print(proc.stderr.read())
     print(proc.stdout.read())
     print(proc.stderr.read())
     return proc.returncode
