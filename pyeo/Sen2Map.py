@@ -69,9 +69,9 @@ io.use_plugin('matplotlib')
 # OPTIONS
 #############################################################################
 # wd = '/scratch/clcr/shared/py/' # working directory on Linux HPC
-wd = '/home/heiko/linuxpy/mexico/'  # working directory on Linux Virtual Box
+wd = '/home/heiko/linuxpy/spacepark/'  # working directory on Linux Virtual Box
 datadir = wd + 'data/'  # directory of Sentinel L1C data files in .SAFE format
-shapefile = 'Sitios_Poly.shp' # the shapefile resides in wd
+shapefile = 'spacepark.shp' # the shapefile resides in wd
 bands = [5, 4, 3]  # band selection for RGB
 
 

@@ -24,13 +24,14 @@ import json
 #from geojson import Polygon
 
 # OPTIONS
-ndown = 2 # number of scenes to be downloaded (in order of least cloud cover)
-wd = '/home/heiko/linuxpy/mexico/' # working directory on Virtualbox
+ndown = 20 # number of scenes to be downloaded (in order of least cloud cover)
+wd = '/home/heiko/linuxpy/spacepark/' # working directory on Virtualbox
 #wd = '/scratch/clcr/shared/py/' # working directory on ALICE
-shapefile = 'Sitios_Poly.shp' # ESRI Shapefile of the study area
-datefrom = '20170401' # start date for imagery search
-dateto   = '20170901' # end date for imagery search
-clouds = '[0 TO 10]'  # range of acceptable cloud cover % for imagery search
+#shapefile = 'Sitios_Poly.shp' # ESRI Shapefile of the study area
+shapefile = 'spacepark.shp' # ESRI Shapefile of the study area
+datefrom = '20180101' # start date for imagery search
+dateto   = '20181231' # end date for imagery search
+clouds = '[0 TO 20]'  # range of acceptable cloud cover % for imagery search
 credentials = '/home/heiko/linuxpy/sencredentials.txt'  # contains two lines of text with username and password
                                                         # for the Sentinel Data Hub
 
@@ -185,4 +186,6 @@ for x in range(len(allfiles)):
     if allfiles[x].split(".")[1] == "zip":
         print("Unzipping file ", x+1, ": ", allfiles[x])
         os.system("unzip "+allfiles[x])
+        # remove zip file after extraction
+        os.remove(allfiles[x])
 
