@@ -8,6 +8,8 @@ def sen2cor_process(safe_filepath, conf):
     """Uses sen2cor to calculate surface reflectance."""
     if platform.system() == "Windows":
         sen2cor_process_windows(safe_filepath, conf)
+    if platform.system() == "Linux":
+        sen2cor_process_unix()
 
 
 def sen2cor_process_windows(safe_filepath, conf):
