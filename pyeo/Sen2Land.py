@@ -10,8 +10,8 @@ def sen2cor_process(safe_filepath, conf):
     """Uses sen2cor to calculate surface reflectance."""
     if platform.system() == "Windows":
         sen2cor_process_windows(safe_filepath, conf)
-    if platform.system() == "Unix":
-        sen2cor_process_unix(safe_filepath)
+    if platform.system() == "Linux":
+        sen2cor_process_unix()
 
 
 def sen2cor_process_windows(safe_filepath, conf):
@@ -21,6 +21,7 @@ def sen2cor_process_windows(safe_filepath, conf):
     # There's got to be a better way to get the live out/stderr than this.
     while not proc.poll:
         print(proc.stdout.read())
+        print(proc.stderr.read())
     print(proc.stdout.read())
     print(proc.stderr.read())
     return proc.returncode
