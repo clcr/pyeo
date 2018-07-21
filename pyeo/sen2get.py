@@ -24,14 +24,18 @@ import json
 #from geojson import Polygon
 
 # OPTIONS
-ndown = 2 # number of scenes to be downloaded (in order of least cloud cover)
-wd = '/home/heiko/linuxpy/mexico/' # working directory on Virtualbox
-#wd = '/scratch/clcr/shared/py/' # working directory on ALICE
-shapefile = 'Sitios_Poly.shp' # ESRI Shapefile of the study area
-datefrom = '20170401' # start date for imagery search
-dateto   = '20170901' # end date for imagery search
-clouds = '[0 TO 10]'  # range of acceptable cloud cover % for imagery search
-credentials = '/home/heiko/linuxpy/sencredentials.txt'  # contains two lines of text with username and password
+ndown = 99 # number of scenes to be downloaded (in order of least cloud cover)
+#wd = '/home/heiko/linuxpy/mexico/' # working directory on Virtualbox
+#wd = '/scratch/clcr/shared/sen2demo/' # working directory on ALICE
+wd = '/scratch/clcr/shared/py/' # working directory on ALICE
+rfsdir = '/rfs/Landscape/hb91/hpcdata/spacepark/' # directory on R drive where shapefile is located
+shapefile = 'spacepark.shp' # ESRI Shapefile of the study area
+datefrom = '20180101' # start date for imagery search
+dateto   = '20181231' # end date for imagery search
+clouds = '[0 TO 20]'  # range of acceptable cloud cover % for imagery search
+#credentials = '/home/heiko/linuxpy/sencredentials.txt'  # VirtualBox: contains two lines of text with username and password
+#                                                        # for the Sentinel Data Hub
+credentials = '/home/h/hb91/credentials/sencredentials.txt' # ALICE: contains two lines of text with username and password
                                                         # for the Sentinel Data Hub
 
 ##############################################################################
@@ -59,9 +63,9 @@ api = SentinelAPI(username, password, 'https://scihub.copernicus.eu/dhus')
 driver = ogr.GetDriverByName('ESRI Shapefile')
 
 # open it
-dataSource = driver.Open(shapefile, 0)
+dataSource = driver.Open(rfsdir + shapefile, 0)
 if dataSource is None:
-    print('Could not open ' + shapefile)
+    print('Could not open ' + rfsdir + shapefile)
     sys.exit(1) #exit with an error code
 
 # get the layer from the shapefile
