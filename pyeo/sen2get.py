@@ -97,7 +97,7 @@ flag = os.system(com)
 if flag == 0:
     print('Shapefile converted to Geojson format: ' + gjfile)
 else:
-    print('Error converting shaoefile to Geojson')
+    print('Error converting shapefile to Geojson')
 
 # convert the geojson to wkt for the API search
 footprint = geojson_to_wkt(read_geojson(gjfile))
