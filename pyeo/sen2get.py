@@ -28,7 +28,8 @@ ndown = 99 # number of scenes to be downloaded (in order of least cloud cover)
 #wd = '/home/heiko/linuxpy/mexico/' # working directory on Virtualbox
 #wd = '/scratch/clcr/shared/sen2demo/' # working directory on ALICE
 wd = '/scratch/clcr/shared/py/' # working directory on ALICE
-rfsdir = '/rfs/Landscape/hb91/hpcdata/spacepark/' # directory on R drive where shapefile is located
+shapedir = '/scratch/clcr/shared/py/'  # directory where shapefile is located
+# rfsdir = '/rfs/Landscape/hb91/hpcdata/spacepark/' # pointer to R drive from login node only
 shapefile = 'spacepark.shp' # ESRI Shapefile of the study area
 datefrom = '20180101' # start date for imagery search
 dateto   = '20181231' # end date for imagery search
@@ -63,9 +64,9 @@ api = SentinelAPI(username, password, 'https://scihub.copernicus.eu/dhus')
 driver = ogr.GetDriverByName('ESRI Shapefile')
 
 # open it
-dataSource = driver.Open(rfsdir + shapefile, 0)
+dataSource = driver.Open(shapedir + shapefile, 0)
 if dataSource is None:
-    print('Could not open ' + rfsdir + shapefile)
+    print('Could not open ' + shapedir + shapefile)
     sys.exit(1) #exit with an error code
 
 # get the layer from the shapefile
@@ -92,7 +93,7 @@ print('Geometry of feature 1:', geom)
 # convert the shapefile to geojson
 ###############################################
 gjfile = shapefile.split(".")[0]+".geojson"
-com = "ogr2ogr -f GeoJSON -t_srs crs:84 " + gjfile + " " + rfsdir + shapefile
+com = "ogr2ogr -f GeoJSON -t_srs crs:84 " + gjfile + " " + shapedir + shapefile
 flag = os.system(com)
 if flag == 0:
     print('Shapefile converted to Geojson format: ' + gjfile)
