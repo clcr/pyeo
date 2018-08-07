@@ -92,7 +92,7 @@ print('Geometry of feature 1:', geom)
 # convert the shapefile to geojson
 ###############################################
 gjfile = shapefile.split(".")[0]+".geojson"
-com = "ogr2ogr -f GeoJSON -t_srs crs:84 " + gjfile + " " + shapefile
+com = "ogr2ogr -f GeoJSON -t_srs crs:84 " + gjfile + " " + rfsdir + shapefile
 flag = os.system(com)
 if flag == 0:
     print('Shapefile converted to Geojson format: ' + gjfile)
