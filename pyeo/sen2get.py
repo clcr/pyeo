@@ -16,6 +16,7 @@ Created on Thu Mar 16 14:26:46 2017
 from collections import OrderedDict
 from osgeo import ogr
 import os
+import sys
 from os import listdir
 from os.path import isfile, join
 from sentinelsat.sentinel import SentinelAPI, read_geojson, geojson_to_wkt
