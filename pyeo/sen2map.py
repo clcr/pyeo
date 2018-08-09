@@ -1614,7 +1614,7 @@ def convert2geotif(datadir):
             #print('Reading footprint from ' + xmlfiles[0])
             # use the first .xml file in the directory
             with open(xmlfiles[0]) as f:
-                content = f.decode('utf-8').readlines()
+                content = f.readlines()
 
             # remove whitespace characters like `\n` at the end of each line
             content = [x.strip() for x in content]
