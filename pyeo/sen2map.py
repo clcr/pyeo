@@ -21,20 +21,20 @@ Created on Sat Mar 24 12:11:00 2018
 
 from cartopy.io.shapereader import Reader
 from cartopy.feature import ShapelyFeature, BORDERS
-from cartopy.io import shapereader
-from cartopy.io.img_tiles import StamenTerrain
-from cartopy.io.img_tiles import GoogleTiles
+#from cartopy.io import shapereader
+#from cartopy.io.img_tiles import StamenTerrain
+#from cartopy.io.img_tiles import GoogleTiles
 import cartopy
 import cartopy.crs as ccrs
-from cartopy.io.img_tiles import OSM
+#from cartopy.io.img_tiles import OSM
 import cartopy.feature as cfeature
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+#from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import datetime
-import math
-import matplotlib.patches as patches
-from matplotlib.path import Path
-import matplotlib.patheffects as PathEffects
-from matplotlib import patheffects
+#import math
+#import matplotlib.patches as patches
+#from matplotlib.path import Path
+#import matplotlib.patheffects as PathEffects
+#from matplotlib import patheffects
 import matplotlib.image as im
 import matplotlib.lines as mlines
 import matplotlib.patches as patches
@@ -49,10 +49,10 @@ import os, sys
 from os import listdir
 from os.path import isfile, isdir, join
 from osgeo import gdal, gdalnumeric, ogr, osr
-from owslib.wmts import WebMapTileService
+#from owslib.wmts import WebMapTileService
 from skimage import io
 #import subprocess
-import pandas as pd
+#import pandas as pd
 import subprocess
 
 gdal.UseExceptions()
@@ -433,9 +433,9 @@ def read_sen2_rgb(rgbfiles, enhance=True):
     return rgbdata
 
 
+'''
 def map_it_old(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
            plottitle='', figsizex=10, figsizey=10):
-    '''
     standard map making function that saves a jpeg file of the output
     and visualises it on screen
     rgbdata = numpy array of the red, green and blue channels, made by read_sen2rgb
@@ -447,7 +447,6 @@ def map_it_old(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     plottitle = text to be written above the map
     figsizex = width of the figure in inches
     figsizey = height of the figure in inches
-    '''
     # get shapefile projection from the file
     # get driver to read a shapefile and open it
     driver = ogr.GetDriverByName('ESRI Shapefile')
@@ -531,7 +530,7 @@ def map_it_old(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # save it to a file
     fig.savefig(plotfile)
-
+'''
 
 def draw_scale_bar(ax, tifproj, bars=4, length=None, location=(0.1, 0.8), linewidth=5, col='black', zorder=20):
     """
@@ -618,10 +617,9 @@ def draw_scale_bar(ax, tifproj, bars=4, length=None, location=(0.1, 0.8), linewi
                 horizontalalignment='center', verticalalignment='bottom',
                 color=col, zorder=zorder)
 
-
+'''
 def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
                  plottitle='', figsizex=10, figsizey=10):
-    '''
     This version attempt to expand the map towards the bottom and plot the scale bar there.
     It is not satisfactory that the background image covers that area and a box is drawn around it.
 
@@ -636,7 +634,7 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     plottitle = text to be written above the map
     figsizex = width of the figure in inches
     figsizey = height of the figure in inches
-    '''
+
     # get shapefile projection from the file
     # get driver to read a shapefile and open it
     driver = ogr.GetDriverByName('ESRI Shapefile')
@@ -740,11 +738,12 @@ def test_map_it2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
 
     # save it to a file
     fig.savefig(plotfile)
+'''
 
-
+'''
 def map_it_old2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
             plottitle='', figsizex=8, figsizey=10):
-    '''
+
     New map_it function with improved scale bar plotting below the map.
     This version creates two subplots, one for the map and one for the annotation.
 
@@ -757,7 +756,7 @@ def map_it_old2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     plottitle = text to be written above the map
     figsizex = width of the figure in inches
     figsizey = height of the figure in inches
-    '''
+
 
     # get shapefile projection from the file
     # get driver to read a shapefile and open it
@@ -895,10 +894,12 @@ def map_it_old2(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
     fig.savefig(plotfile)
     plt.close(fig)
+'''
 
+'''
 def map_it_old3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
             plottitle='', figsizex=8, figsizey=10):
-    '''
+
     New map_it function with scale bar located inside the map
     I could not find a way to print a true scale outside it with Cartopy.
 
@@ -921,7 +922,6 @@ def map_it_old3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     ax5 is the axes object for the map legend
     ax6 is the axes object for the map title
 
-    '''
 
     # get shapefile projection from the file
     # get driver to read a shapefile and open it
@@ -1199,6 +1199,7 @@ def map_it_old3(rgbdata, tifproj, mapextent, shapefile, plotfile='map.jpg',
     # plotfile = plotdir + allscenes[x].split('.')[0] + '_map1.jpg'
     fig.savefig(plotfile)
     plt.close(fig)
+'''
 
 def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg',
                  plottitle='', figsizex=8, figsizey=8):
@@ -1231,8 +1232,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     driver = ogr.GetDriverByName('ESRI Shapefile')
     dataSource = driver.Open(shapefile, 0)
     if dataSource is None:
-        print('Could not open ' + shapefile)
-        sys.exit(1)  # exit with an error code
+        sys.exit('Could not open ' + shapefile)  # exit with an error code
     # get the layer from the shapefile
     layer = dataSource.GetLayer()
     # get the projection information and convert to wkt
@@ -1242,7 +1242,16 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     projosr.ImportFromWkt(projwkt)
     # convert wkt projection to Cartopy projection
     projcs = projosr.GetAuthorityCode('PROJCS')
+
+    # ***
+
+    # THIS IS WHERE IT FALLS OVER ON THE HPC, I THINK:
+
+    print("EPSG projection " + projcs)
+
     shapeproj = ccrs.epsg(projcs)
+
+    # ***
 
     # make the figure
     fig = plt.figure(figsize=(figsizex, figsizey))
@@ -1849,6 +1858,13 @@ if not os.path.exists(plotdir):
     os.mkdir(plotdir)
 
 # Overview map: make a map plot of the tiff file in the image projection
+print('Calling geotif2maps:')
+print('   tiffroot = ' + tiffroot)
+print('   shapefile = ' + shapedir + shapefile)
+print('   plotdir = ' + plotdir)
+print('   bands = 5,4,3')
+print('   zoom = 1')
+print('   offset = 0,0')
 nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
                                id='map1', zoom=1, xoffset=0, yoffset=0)
 print('Made map files:')
