@@ -177,9 +177,9 @@ for file in os.listdir(datadir):
 print("Scenes in product list earmarked for download:")
 for this_scene in products_df_n['title']:
     if this_scene in zipfiles:
-        products_df_n = products_df_n[products_df_n.title != this_scene]
+        products_df_n = products_df_n[products_df_n.title != this_scene] # drop duplicate from product list
     else:
-        print(this_scene)
+        print(this_scene) # print scene ID if not already in datadir
 
 # download sorted and reduced products in order
 api.download_all(products_df_n['uuid'])
@@ -208,7 +208,8 @@ os.chdir(datadir) # change to the data directory
 allfiles = [f for f in listdir(datadir) if isfile(join(datadir, f))]
 # unzip all files
 for x in range(len(allfiles)):
-    if allfiles[x].split(".")[1] == "zip":
-        print("Unzipping file ", x+1, ": ", allfiles[x])
-        os.system("unzip "+allfiles[x])
-
+# to only unzip the new downloads, use:
+# if allfiles[x].split(".")[1] == "zip" and allfiles[x].split(".")[1] in zipfiles:
+if allfiles[x].split(".")[1] == "zip":
+    print("Unzipping file ", x+1, ": ", allfiles[x])
+    os.system("unzip -o "+allfiles[x]) # -o is the overwrite flag, i.e. without prompting every time
