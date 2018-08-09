@@ -172,11 +172,8 @@ for file in os.listdir(datadir):
             zipfiles[1] = sen2id
         else:
             zipfiles.append(sen2id) # add to list of results
-
-
 # compare to search results and remove duplicates
-# products_df_n
-
+print(products_df_n)
 
 # download sorted and reduced products in order
 api.download_all(products_df_n['uuid'])
