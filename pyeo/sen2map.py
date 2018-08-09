@@ -54,8 +54,6 @@ from skimage import io
 #import subprocess
 import pandas as pd
 import subprocess
-import sys
-sys.setdefaultencoding('utf-8')
 
 gdal.UseExceptions()
 io.use_plugin('matplotlib')
@@ -1616,7 +1614,7 @@ def convert2geotif(datadir):
             #print('Reading footprint from ' + xmlfiles[0])
             # use the first .xml file in the directory
             with open(xmlfiles[0]) as f:
-                content = f.readlines()
+                content = f.decode('utf-8').readlines()
 
             # remove whitespace characters like `\n` at the end of each line
             content = [x.strip() for x in content]
