@@ -69,7 +69,9 @@ io.use_plugin('matplotlib')
 # OPTIONS
 #############################################################################
 wd = '/scratch/clcr/shared/py/' # working directory on Linux HPC
-rfsdir = '/rfs/Landscape/hb91/hpcdata/spacepark/' # directory on R drive where shapefile is located
+shapedir = wd # this is where the shapefile is located
+# rfsdir = '/rfs/Landscape/hb91/hpcdata/spacepark/' # directory on R drive where shapefile is located,
+#       only works on login node
 #wd = '/home/heiko/linuxpy/mexico/'  # working directory on Linux Virtual Box
 datadir = wd + 'data/'  # directory of Sentinel L1C data files in .SAFE format
 shapefile = 'spacepark.shp' # the shapefile resides in wd
@@ -1847,25 +1849,25 @@ if not os.path.exists(plotdir):
     os.mkdir(plotdir)
 
 # Overview map: make a map plot of the tiff file in the image projection
-nfiles, mapfiles = geotif2maps(tiffroot, rfsdir + shapefile, plotdir, bands=[5, 4, 3],
+nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
                                id='map1', zoom=1, xoffset=0, yoffset=0)
 print('Made map files:')
 for f in mapfiles: print(f)
 
 # Zoom out, i.e. zoom factor greater than 1
-nfiles, mapfiles = geotif2maps(tiffroot, rfsdir + shapefile, plotdir, bands=[5, 4, 3],
+nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
                                id='map2', zoom=2, xoffset=0, yoffset=0)
 print('Made map files:')
 for f in mapfiles: print(f)
 
 # Zoom in to the centre, i.e. zoom factor smaller than 1
-nfiles, mapfiles = geotif2maps(tiffroot, rfsdir + shapefile, plotdir, bands=[5, 4, 3],
+nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
                                id='map3', zoom=1/4, xoffset=0, yoffset=0)
 print('Made map files:')
 for f in mapfiles: print(f)
 
 # Zoom in to the top right corner
-nfiles, mapfiles = geotif2maps(tiffroot, rfsdir + shapefile, plotdir, bands=[5, 4, 3],
+nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
                                id='map4', zoom=1/4, xoffset=round(109800*0.25), yoffset=round(109800*0.25))
 print('Made map files:')
 for f in mapfiles: print(f)
