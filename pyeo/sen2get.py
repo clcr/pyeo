@@ -161,6 +161,12 @@ if not os.path.exists(datadir):
 # change to the 'data' directory
 os.chdir(datadir)
 
+# check whether any of the images have already been downloaded previously
+# get list of zip filenames from data directory
+# compare to search results and remove duplicates
+# products_df_n
+
+
 # download sorted and reduced products in order
 api.download_all(products_df_n['uuid'])
 
