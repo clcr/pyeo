@@ -1594,23 +1594,6 @@ def convert2geotif(datadir):
         print(scene)
     print('\n')
 
-    # TODO
-    # check for existing tiff directories and skip them
-    # get list of tiff directories from data directory
-    print("Skipping existing tiff directories in " + tiffroot + ":")
-    # get list of all subfolders
-    subfolders = [f.path for f in os.scandir(tiffroot) if f.is_dir()]
-    tiffexist = ["empty"]
-    for thisdir in subfolders:
-        if thisdir.endswith("_tif"):
-            print(thisdir)
-#            sen2id = file.split(".")[0]  # remove file extension
-#            if (len(tiffexist) == 1) and (tiffexist[0] == "empty"):
-#                tiffexist[0] = sen2id
-            else:
-                tiffexist.append(thisdir)  # add to list of results
-#            print(sen2id)
-
     # make a list of all tiff file directories of the same length as the number of scenes
     tiffdirs = ['']
 
@@ -1620,6 +1603,24 @@ def convert2geotif(datadir):
     if not os.path.exists(tiffroot):
         print("Creating directory: ", tiffroot)
         os.mkdir(tiffroot)
+
+    # TODO
+    # check for existing tiff directories and skip them by removing them from allscenes list
+    # get list of tiff directories from data directory
+    print("Skipping existing tiff directories in " + tiffroot + ":")
+    # get list of all subfolders
+    subfolders = [f.path for f in os.scandir(tiffroot) if f.is_dir()]
+    tiffexist = ["empty"]
+    for thisdir in subfolders:
+        if thisdir.endswith("_tif"):
+            print(thisdir)
+            #            sen2id = file.split(".")[0]  # remove file extension
+            #            if (len(tiffexist) == 1) and (tiffexist[0] == "empty"):
+            #                tiffexist[0] = sen2id
+            else:
+            tiffexist.append(thisdir)  # add to list of results
+    #            print(sen2id)
+
 
     for x in range(len(allscenes)):
         if allscenes[x].split(".")[1] == "SAFE":
