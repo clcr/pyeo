@@ -168,12 +168,15 @@ for file in os.listdir(datadir):
     if file.endswith(".zip"):
         print(os.path.join(datadir, file))
         sen2id = file.split(".")[0] # remove file extension
-        if len(zipfiles) == 1 and zipfiles[1] == "empty":
-            zipfiles[1] = sen2id
+        if (len(zipfiles) == 1) and (zipfiles[0] == "empty"):
+            zipfiles[0] = sen2id
         else:
             zipfiles.append(sen2id) # add to list of results
 # compare to search results and remove duplicates
-print(products_df_n)
+productlist = list(products_df_n['title'])
+for this_scene in productlist:
+    if key not in sen2id:
+        print(productlist)
 
 # download sorted and reduced products in order
 api.download_all(products_df_n['uuid'])
