@@ -1621,11 +1621,11 @@ def convert2geotif(datadir):
                tiffexist.append(thisdir)  # add to list of results
     # compare to allscenes and remove duplicates
     print("Scenes for processing to tiff files:")
-    for this_scene in allscenes:
-        if this_scene in tiffexist:
-            allscenes = allscenes[allscenes != this_scene]  # drop duplicate
+    for scene in allscenes:
+        if scene in tiffexist:
+            allscenes = allscenes[allscenes != scene]  # drop duplicate
         else:
-            print(this_scene)  # print scene ID if not already in tiff root dir
+            print(scene)  # print scene ID if not already in tiff root dir
 
     for x in range(len(allscenes)):
         if allscenes[x].split(".")[1] == "SAFE":
