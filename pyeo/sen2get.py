@@ -163,20 +163,22 @@ os.chdir(datadir)
 
 # check whether any of the images have already been downloaded previously
 # get list of zip filenames from data directory
+print("Existing zip files in " + datadir + ":")
 zipfiles = ["empty"]
 for file in os.listdir(datadir):
     if file.endswith(".zip"):
-        print(os.path.join(datadir, file))
         sen2id = file.split(".")[0] # remove file extension
         if (len(zipfiles) == 1) and (zipfiles[0] == "empty"):
             zipfiles[0] = sen2id
         else:
             zipfiles.append(sen2id) # add to list of results
+        print(sen2id)
 # compare to search results and remove duplicates
+print("Scenes in product list earmarked for download:")
 productlist = list(products_df_n['title'])
 for this_scene in productlist:
-    if key not in sen2id:
-        print(productlist)
+    if this_scene not in zipfiles:
+        print(this_scene)
 
 # download sorted and reduced products in order
 api.download_all(products_df_n['uuid'])
