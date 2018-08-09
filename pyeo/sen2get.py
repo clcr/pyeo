@@ -175,9 +175,10 @@ for file in os.listdir(datadir):
         print(sen2id)
 # compare to search results and remove duplicates
 print("Scenes in product list earmarked for download:")
-productlist = list(products_df_n['title'])
-for this_scene in productlist:
-    if this_scene not in zipfiles:
+for this_scene in products_df_n['title']:
+    if this_scene in zipfiles:
+        products_df_n = products_df_n[products_df_n.title != this_scene]
+    else:
         print(this_scene)
 
 # download sorted and reduced products in order
