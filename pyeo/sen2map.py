@@ -54,6 +54,9 @@ from skimage import io
 #import subprocess
 import pandas as pd
 import subprocess
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 gdal.UseExceptions()
 io.use_plugin('matplotlib')
