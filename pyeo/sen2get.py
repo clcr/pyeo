@@ -163,6 +163,17 @@ os.chdir(datadir)
 
 # check whether any of the images have already been downloaded previously
 # get list of zip filenames from data directory
+zipfiles = ["empty"]
+for file in os.listdir(datadir):
+    if file.endswith(".zip"):
+        print(os.path.join(datadir, file))
+        sen2id = file.split(".")[0] # remove file extension
+        if len(zipfiles) == 1 and zipfiles[1] == "empty":
+            zipfiles[1] = sen2id
+        else:
+            zipfiles.append(sen2id) # add to list of results
+
+
 # compare to search results and remove duplicates
 # products_df_n
 
