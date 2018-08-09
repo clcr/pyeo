@@ -1613,7 +1613,7 @@ def convert2geotif(datadir):
             xmlfiles = [f for f in os.listdir(scenedir) if f.endswith('.xml') & (1 - f.startswith('INSPIRE'))]
             #print('Reading footprint from ' + xmlfiles[0])
             # use the first .xml file in the directory
-            with open(xmlfiles[0]) as f:
+            with open(xmlfiles[0], errors='ignore') as f:
                 content = f.readlines()
 
             # remove whitespace characters like `\n` at the end of each line
