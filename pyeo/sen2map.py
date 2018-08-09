@@ -1243,7 +1243,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     # convert wkt projection to Cartopy projection
     projcs = projosr.GetAuthorityCode('PROJCS')
 
-    # ***
+    #TODO
 
     # THIS IS WHERE IT FALLS OVER ON THE HPC, I THINK:
 
@@ -1251,7 +1251,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
 
     shapeproj = ccrs.epsg(projcs)
 
-    # ***
+    # END OF TODO
 
     # make the figure
     fig = plt.figure(figsize=(figsizex, figsizey))
@@ -1593,6 +1593,20 @@ def convert2geotif(datadir):
     for scene in allscenes:
         print(scene)
     print('\n')
+
+    # TODO
+    # check for existing tiff directories and skip them
+    # get list of tiff directories from data directory
+#    print("Existing tiff directories in " + datadir + ":")
+#    tiffexist = ["empty"]
+#    for thisdir in os.listdir(datadir):
+#        if thisdir.endswith(".zip"):
+#            sen2id = file.split(".")[0]  # remove file extension
+#            if (len(tiffexist) == 1) and (tiffexist[0] == "empty"):
+#                tiffexist[0] = sen2id
+#            else:
+#                tiffexist.append(sen2id)  # add to list of results
+#            print(sen2id)
 
     # make a list of all tiff file directories of the same length as the number of scenes
     tiffdirs = ['']
