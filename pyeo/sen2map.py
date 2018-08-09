@@ -1614,7 +1614,8 @@ def convert2geotif(datadir):
     for thisdir in subfolders:
         if thisdir.endswith("_tif"):
             print(thisdir)
-            sen2id = thisdir[:-4]  # "_tif" from end of directory name
+            sen2id = thisdir.split('/')[-1] # remove root directory path
+            sen2id = sen2id[:-4] + '.SAFE' # remove "_tif" from end of directory name and add ".SAFE"
             if (len(tiffexist) == 1) and (tiffexist[0] == "empty"):
                 tiffexist[0] = sen2id
             else:
