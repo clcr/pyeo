@@ -1614,13 +1614,18 @@ def convert2geotif(datadir):
     for thisdir in subfolders:
         if thisdir.endswith("_tif"):
             print(thisdir)
-            #            sen2id = file.split(".")[0]  # remove file extension
-            #            if (len(tiffexist) == 1) and (tiffexist[0] == "empty"):
-            #                tiffexist[0] = sen2id
+            sen2id = thisdir[:-4]  # "_tif" from end of directory name
+            if (len(tiffexist) == 1) and (tiffexist[0] == "empty"):
+                tiffexist[0] = sen2id
             else:
-            tiffexist.append(thisdir)  # add to list of results
-    #            print(sen2id)
-
+               tiffexist.append(thisdir)  # add to list of results
+    # compare to allscenes and remove duplicates
+    print("Scenes for processing to tiff files:")
+    for this_scene in allscenes:
+        if this_scene in tiffexist:
+            allscenes = allscenes[allscenes != this_scene]  # drop duplicate
+        else:
+            print(this_scene)  # print scene ID if not already in tiff root dir
 
     for x in range(len(allscenes)):
         if allscenes[x].split(".")[1] == "SAFE":
