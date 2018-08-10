@@ -1245,6 +1245,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     # get the projection information and convert to wkt
     projosr = layer.GetSpatialRef()
     proj4 = projosr.exportToProj4()
+    print(proj4)
     shapeproj = ccrs(proj4)
     #projwkt = projsr.ExportToWkt()
     #projosr = osr.SpatialReference()
