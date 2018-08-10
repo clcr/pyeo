@@ -1618,16 +1618,14 @@ def convert2geotif(datadir):
             else:
                tiffexist.append(sen2id)  # add to list of results
     tiffexist = sorted(tiffexist)
+
     if not(tiffexist[0] == "none"):
         print("\nSkipping existing tiff directories in " + tiffroot + " for scenes:")
         for scene in tiffexist:
             print(scene)
+            if scene in allscenes:
+                allscenes.remove(scene)  # drop duplicate
         print('\n')
-
-    # compare to allscenes and remove duplicates
-    for scene in allscenes:
-        if scene in tiffexist:
-            allscenes = allscenes[allscenes != scene]  # drop duplicate
 
     # print list of scenes for processing
     if len(allscenes) > 0:
@@ -1766,10 +1764,11 @@ def convert2geotif(datadir):
     tiffdirs = ["none"]
     for thisdir in subfolders:
         if thisdir.endswith("_tif"):
+            d = thisdir.split('/')[-1]  # remove root directory path
             if (len(tiffdirs) == 1) and (tiffdirs[0] == "none"):
-                tiffdirs[0] = thisdir
+                tiffdirs[0] = d
             else:
-               tiffdirs.append(thisdir)  # add to list of results
+               tiffdirs.append(d)  # add to list of results
     tiffdirs = sorted(tiffdirs)
 
     return tiffroot, tiffdirs
