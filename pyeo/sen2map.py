@@ -1582,10 +1582,6 @@ def convert2geotif(datadir):
 
     '''
 
-    print("\n")
-    print("Resampling to 10 m resolution and conversion to Geotiff format")
-    print("\n")
-
     # get names of all scenes
     #   i.e. get list of all data subdirectories (one for each image)
     allscenes = [f for f in listdir(datadir) if isdir(join(datadir, f))]
@@ -1629,6 +1625,10 @@ def convert2geotif(datadir):
 
     # print list of scenes for processing
     if len(allscenes) > 0:
+        print("\n")
+        print("Resampling to 10 m resolution and conversion to Geotiff format")
+        print("\n")
+
         print("\nScenes for processing to tiff files:")
         allscenes = sorted(allscenes)
         for scene in allscenes:
