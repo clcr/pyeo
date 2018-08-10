@@ -1267,6 +1267,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
                                         # so EPSG codes such as 4326 (WGS-84) which define a “geodetic
                                         # coordinate system” will not work.
 
+
     print(shapeproj)
 
     # END OF TODO
