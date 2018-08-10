@@ -1250,12 +1250,17 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     # convert wkt projection to Cartopy projection
     #projcs = projosr.GetAttrValue('AUTHORITY')
     projcs = projosr.GetAuthorityCode('PROJCS')
+    if projcs == None:
+        projcs = 4326 # if no EPSG code given, set to geojson default
     print(projcs)
     #projcs = projosr.GetAuthorityCode(None)
-    shapeproj = ccrs.epsg(projcs)   # Returns the projection which corresponds to the given EPSG code.
-                                    # The EPSG code must correspond to a “projected coordinate system”,
-                                    # so EPSG codes such as 4326 (WGS-84) which define a “geodetic
-                                    # coordinate system” will not work.
+    if projcs == 4326:
+        shapeproj = ccrs.PlateCarree()
+    else:
+        shapeproj = ccrs.epsg(projcs)   # Returns the projection which corresponds to the given EPSG code.
+                                        # The EPSG code must correspond to a “projected coordinate system”,
+                                        # so EPSG codes such as 4326 (WGS-84) which define a “geodetic
+                                        # coordinate system” will not work.
 
     print(shapeproj)
 
