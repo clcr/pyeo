@@ -561,7 +561,7 @@ def stack_images(raster_paths: list, out_raster_path: str,
     out_raster = None
 
 
-def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.GDT_Int32, nodata = None):
+def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.GDT_Int32, nodata = 0):
     """Mosaics multiple images with the same number of layers into one single image. Overwrites
     overlapping pixels with the value furthest down raster_paths. Takes projection ect from the first
     raster."""
@@ -580,16 +580,17 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     log.info("New empty image created at {}".format(out_raster_file))
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     for i, raster in enumerate(rasters):
-        log.info("Now stacking raster {}".format(i))
+        log.info("Now mosaicing raster no. {}".format(i))
         in_raster_array = raster.GetVirtualMemArray()
         if len(in_raster_array.shape) == 2:
             in_raster_array = np.expand_dims(in_raster_array, 0)
         in_bounds = get_raster_bounds(raster)
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, in_bounds)
         out_raster_view = out_raster_array[:, out_y_min: out_y_max, out_x_min: out_x_max]
-        np.copyto(out_raster_view, in_raster_array != nodata)
+        np.copyto(out_raster_view, in_raster_array, where=in_raster_array != nodata)
         in_raster_array = None
         out_raster_view = None
+    log.info("Raster mosaicing done")
     out_raster_array = None
 
 
