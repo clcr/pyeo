@@ -1247,8 +1247,10 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     # get the projection information and convert to wkt
     projsr = layer.GetSpatialRef()
     projwkt = projsr.ExportToWkt()
+    print(projwkt)
     projosr = osr.SpatialReference()
     projosr.ImportFromWkt(projwkt)
+    print(projosr)
     # convert wkt projection to Cartopy projection
     #projcs = projosr.GetAttrValue('AUTHORITY')
     projcs = projosr.GetAuthorityCode('PROJCS')
