@@ -77,6 +77,8 @@ shapedir = wd # this is where the shapefile is located
 datadir = wd + 'data/'  # directory of Sentinel L1C data files in .SAFE format
 shapefile = 'spacepark_osgb.shp' # the shapefile resides in wd
 bands = [5, 4, 3]  # band selection for RGB
+#rosepath = '/home/heiko/PycharmProjects/pyeo/pyeo/' # location of compassrose.jpg on laptop
+rosepath = '/home/h/hb91/PycharmProjects/pyeo/pyeo/' # location of compassrose.jpg on HPC
 
 
 #############################################################################
@@ -1520,7 +1522,7 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     ax4 = plt.axes(rect)
 
     # add a graphics file with a North Arrow
-    compassrose = im.imread('/home/heiko/PycharmProjects/pyeo/pyeo/compassrose.jpg')
+    compassrose = im.imread(rosepath + 'compassrose.jpg')
     img = ax4.imshow(compassrose, zorder=4) #origin='upper'
 
     # need a font that support enough Unicode to draw up arrow. need space after Unicode to allow wide char to be drawm?
