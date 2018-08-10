@@ -1799,15 +1799,16 @@ def geotif2maps(tiffroot, shapefile, plotdir, bands=[5,4,3], id='map', zoom=1, x
     print("Processing GEOTIFF scenes to JPEG maps")
     print('******************************\n')
 
-    # get the list of geotiff subdirectories
+    # get list of all previously existing and new tiff directories from data directory
     subfolders = [f.path for f in os.scandir(tiffroot) if f.is_dir()]
     tiffdirs = ["none"]
     for thisdir in subfolders:
         if thisdir.endswith("_tif"):
+            d = thisdir.split('/')[-1]  # remove root directory path
             if (len(tiffdirs) == 1) and (tiffdirs[0] == "none"):
-                tiffdirs[0] = thisdir
+                tiffdirs[0] = d
             else:
-               tiffdirs.append(thisdir)  # add to list of results
+               tiffdirs.append(d)  # add to list of results
     tiffdirs = sorted(tiffdirs)
 
     # remember the created filenames
