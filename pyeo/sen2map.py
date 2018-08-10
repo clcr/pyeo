@@ -75,7 +75,7 @@ shapedir = wd # this is where the shapefile is located
 #       only works on login node
 #wd = '/home/heiko/linuxpy/mexico/'  # working directory on Linux Virtual Box
 datadir = wd + 'data/'  # directory of Sentinel L1C data files in .SAFE format
-shapefile = 'spacepark.shp' # the shapefile resides in wd
+shapefile = 'spacepark_osgb.shp' # the shapefile resides in wd
 bands = [5, 4, 3]  # band selection for RGB
 
 
