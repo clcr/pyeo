@@ -1246,15 +1246,16 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
 
     # get the projection information and convert to wkt
     projsr = layer.GetSpatialRef()
+    print(projsr)
     projwkt = projsr.ExportToWkt()
     print(projwkt)
     projosr = osr.SpatialReference()
+    # convert wkt projection to Cartopy projection
     projosr.ImportFromWkt(projwkt)
     print(projosr)
-    # convert wkt projection to Cartopy projection
-    #projcs = projosr.GetAttrValue('AUTHORITY')
     projcs = projosr.GetAuthorityCode('PROJCS')
     if projcs == None:
+        print("No EPSG code found in shapefile. Using EPSG 4326 instead.")
         projcs = 4326 # if no EPSG code given, set to geojson default
     print(projcs)
     #projcs = projosr.GetAuthorityCode(None)
