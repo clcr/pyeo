@@ -202,7 +202,8 @@ def download_planet_image_on_day(aoi_path, date, out_path, api_key, item_type="P
     try:
         planet_query(aoi_path, date, date, out_path, api_key, item_type, asset_type, threads)
     except IndexError:
-        log.warn("IndexError exception; likely no imagery available for chosen date")
+        log.warning("IndexError exception; likely no imagery available for chosen date")
+    return os.path.join()
 
 
 def planet_query(aoi_path, start_date, end_date, out_path, api_key, item_type="PSScene4Band", search_name="auto",
@@ -305,13 +306,14 @@ class TooManyRequests(requests.RequestException):
 )
 def activate_and_dl_planet_item(session, item, asset_type, file_path):
     """Activates and downloads a single planet item"""
+    log = logging.getLogger(__name__)
     #  TODO: Implement more robust error handling here (not just 429)
     item_id = item["id"]
     item_type = item["properties"]["item_type"]
     item_url = "https://api.planet.com/data/v1/"+ \
         "item-types/{}/items/{}/assets/".format(item_type, item_id)
     item_response = session.get(item_url)
-    print("Activating " + item_id)
+    log.info("Activating " + item_id)
     activate_response = session.post(item_response.json()[asset_type]["_links"]["activate"])
     while True:
         status = session.get(item_url)
@@ -322,14 +324,14 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
             break
     dl_link = status.json()[asset_type]["location"]
     item_fp = os.path.join(file_path, item_id + ".tif")
-    print("Downloading item {} from {} to {}".format(item_id, dl_link, item_fp))
+    log.info("Downloading item {} from {} to {}".format(item_id, dl_link, item_fp))
     # TODO Do we want the metadata in a separate file as well as embedded in the geotiff?
     with open(item_fp, 'wb+') as fp:
         image_response = session.get(dl_link)
         if image_response.status_code == 429:
             raise TooManyRequests
         fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
-        print("Item {} download complete".format(item_id))
+        log.info("Item {} download complete".format(item_id))
 
 
 def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
