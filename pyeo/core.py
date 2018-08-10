@@ -140,6 +140,7 @@ def create_file_structure(root: str):
         "output/categories",
         "output/probabilities",
         "output/report_image",
+        "output/display_images"
         "log/"
     ]
     for dir in dirs:
@@ -187,6 +188,21 @@ def download_new_s2_data(new_data: dict, aoi_image_dir: str):
     """Downloads new imagery from AWS. new_data is a dict from Sentinel_2"""
     for image in new_data:
         download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
+
+
+def load_api_key(path_to_api):
+    with open(path_to_api, 'r') as api_file:
+        return api_file.read()
+
+
+def download_planet_image_on_day(aoi_path, date, out_path, api_key, item_type="PSScene4Band", search_name="auto",
+                 asset_type="analytic", threads=5):
+    """Queries and downloads all images on the date in the aoi given"""
+    log = logging.getLogger(__name__)
+    try:
+        planet_query(aoi_path, date, date, out_path, api_key, item_type, asset_type, threads)
+    except IndexError:
+        log.warn("IndexError exception; likely no imagery available for chosen date")
 
 
 def planet_query(aoi_path, start_date, end_date, out_path, api_key, item_type="PSScene4Band", search_name="auto",
