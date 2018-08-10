@@ -1244,17 +1244,14 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
 
     # get the projection information and convert to wkt
     projosr = layer.GetSpatialRef()
-    proj4 = projosr.exportToProj4()
-    print(proj4)
-    shapeproj = ccrs(proj4)
     #projwkt = projsr.ExportToWkt()
     #projosr = osr.SpatialReference()
     #projosr.ImportFromWkt(projwkt)
     # convert wkt projection to Cartopy projection
     #projcs = projosr.GetAttrValue('AUTHORITY')
-    #projcs = projosr.GetAuthorityCode('PROJCS')
+    projcs = projosr.GetAuthorityCode('PROJCS')
     #projcs = projosr.GetAuthorityCode(None)
-    #shapeproj = ccrs.epsg(projcs)
+    shapeproj = ccrs.epsg(projcs)
 
     # END OF TODO
 
