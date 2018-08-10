@@ -1243,14 +1243,15 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     # projcs is None after this block of code
 
     # get the projection information and convert to wkt
-    projsr = layer.GetSpatialRef()
-    projwkt = projsr.ExportToWkt()
-    projosr = osr.SpatialReference()
-    projosr.ImportFromWkt(projwkt)
+    projosr = layer.GetSpatialRef()
+    #projwkt = projsr.ExportToWkt()
+    #projosr = osr.SpatialReference()
+    #projosr.ImportFromWkt(projwkt)
     # convert wkt projection to Cartopy projection
     projcs = projosr.GetAuthorityCode('PROJCS')
 
-    print("EPSG projection " + projcs)
+    print("EPSG projection:")
+    print(projcs)
 
     shapeproj = ccrs.epsg(projcs)
 
