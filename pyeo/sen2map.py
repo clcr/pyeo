@@ -1236,6 +1236,12 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
         sys.exit('Could not open ' + shapefile)  # exit with an error code
     # get the layer from the shapefile
     layer = dataSource.GetLayer()
+
+    #TODO
+
+    # THIS IS WHERE IT FALLS OVER ON THE HPC:
+    # projcs is None after this block of code
+
     # get the projection information and convert to wkt
     projsr = layer.GetSpatialRef()
     projwkt = projsr.ExportToWkt()
@@ -1243,10 +1249,6 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     projosr.ImportFromWkt(projwkt)
     # convert wkt projection to Cartopy projection
     projcs = projosr.GetAuthorityCode('PROJCS')
-
-    #TODO
-
-    # THIS IS WHERE IT FALLS OVER ON THE HPC, I THINK:
 
     print("EPSG projection " + projcs)
 
