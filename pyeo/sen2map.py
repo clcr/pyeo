@@ -1589,6 +1589,7 @@ def convert2geotif(datadir):
     # get names of all scenes
     #   i.e. get list of all data subdirectories (one for each image)
     allscenes = [f for f in listdir(datadir) if isdir(join(datadir, f))]
+    allscenes = sorted(allscenes)
     print('\nList of Sentinel-2 scenes:')
     for scene in allscenes:
         print(scene)
@@ -1604,156 +1605,172 @@ def convert2geotif(datadir):
         print("Creating directory: ", tiffroot)
         os.mkdir(tiffroot)
 
-    # TODO
     # check for existing tiff directories and skip them by removing them from allscenes list
     # get list of tiff directories from data directory
     subfolders = [f.path for f in os.scandir(tiffroot) if f.is_dir()]
-    tiffexist = ["empty"]
+    tiffexist = ["none"]
     for thisdir in subfolders:
         if thisdir.endswith("_tif"):
             sen2id = thisdir.split('/')[-1] # remove root directory path
             sen2id = sen2id[:-4] + '.SAFE' # remove "_tif" from end of directory name and add ".SAFE"
-            if (len(tiffexist) == 1) and (tiffexist[0] == "empty"):
+            if (len(tiffexist) == 1) and (tiffexist[0] == "none"):
                 tiffexist[0] = sen2id
             else:
                tiffexist.append(sen2id)  # add to list of results
-    print("\nSkipping existing tiff directories in " + tiffroot + " for scenes:")
-    for scene in tiffexist.sort():
-        print(scene)
-    print('\n')
+    tiffexist = sorted(tiffexist)
+    if not(tiffexist[0] == "none"):
+        print("\nSkipping existing tiff directories in " + tiffroot + " for scenes:")
+        for scene in tiffexist:
+            print(scene)
+        print('\n')
 
     # compare to allscenes and remove duplicates
     for scene in allscenes:
         if scene in tiffexist:
             allscenes = allscenes[allscenes != scene]  # drop duplicate
-    print("\nScenes for processing to tiff files:")
-    for scene in allscenes.sort():
-        print(scene)
-    print('\n')
 
+    # print list of scenes for processing
+    if len(allscenes) > 0:
+        print("\nScenes for processing to tiff files:")
+        allscenes = sorted(allscenes)
+        for scene in allscenes:
+            print(scene)
+        print('\n')
 
-    for x in range(len(allscenes)):
-        if allscenes[x].split(".")[1] == "SAFE":
-            # open the file
-            print('\n******************************')
-            print("Reading scene", x + 1, ":", allscenes[x])
-            print('******************************\n')
+        # now do the processing
+        for x in range(len(allscenes)):
+            if allscenes[x].split(".")[1] == "SAFE":
+                # open the file
+                print('\n******************************')
+                print("Reading scene", x + 1, ":", allscenes[x])
+                print('******************************\n')
 
-            # set working directory to the Sentinel scene subdirectory
-            scenedir = datadir + allscenes[x] + "/"
-            os.chdir(scenedir)
+                # set working directory to the Sentinel scene subdirectory
+                scenedir = datadir + allscenes[x] + "/"
+                os.chdir(scenedir)
 
-            ###################################################
-            # get footprint of the scene from the metadatafile
-            ###################################################
-            # get the list of filenames ending in .xml, but exclude 'INSPIRE.xml'
-            xmlfiles = [f for f in os.listdir(scenedir) if f.endswith('.xml') & (1 - f.startswith('INSPIRE'))]
-            #print('Reading footprint from ' + xmlfiles[0])
-            # use the first .xml file in the directory
-            with open(xmlfiles[0], errors='ignore') as f:
-                content = f.readlines()
+                ###################################################
+                # get footprint of the scene from the metadatafile
+                ###################################################
+                # get the list of filenames ending in .xml, but exclude 'INSPIRE.xml'
+                xmlfiles = [f for f in os.listdir(scenedir) if f.endswith('.xml') & (1 - f.startswith('INSPIRE'))]
+                #print('Reading footprint from ' + xmlfiles[0])
+                # use the first .xml file in the directory
+                with open(xmlfiles[0], errors='ignore') as f:
+                    content = f.readlines()
 
-            # remove whitespace characters like `\n` at the end of each line
-            content = [x.strip() for x in content]
-            # find the footprint in the metadata
-            footprint = [x for x in content if x.startswith('<EXT_POS_LIST>')]
-            # the first element of the returned list is a string
-            #   so extract the string and split it
-            footprint = footprint[0].split(" ")
-            #   and split off the metadata text
-            footprint[0] = footprint[0].split(">")[1]
-            #   and remove the metadata text at the end of the list
-            footprint = footprint[:-1]
-            # convert the string list to floats
+                # remove whitespace characters like `\n` at the end of each line
+                content = [x.strip() for x in content]
+                # find the footprint in the metadata
+                footprint = [x for x in content if x.startswith('<EXT_POS_LIST>')]
+                # the first element of the returned list is a string
+                #   so extract the string and split it
+                footprint = footprint[0].split(" ")
+                #   and split off the metadata text
+                footprint[0] = footprint[0].split(">")[1]
+                #   and remove the metadata text at the end of the list
+                footprint = footprint[:-1]
+                # convert the string list to floats
 
-            footprint = [float(s) for s in footprint]
-            # list slicing to separate lon and lat coordinates: list[start:stop:step]
-            footprinty = footprint[0::2]  # latitudes
-            footprintx = footprint[1::2]  # longitudes
-            #print(footprint)
+                footprint = [float(s) for s in footprint]
+                # list slicing to separate lon and lat coordinates: list[start:stop:step]
+                footprinty = footprint[0::2]  # latitudes
+                footprintx = footprint[1::2]  # longitudes
+                #print(footprint)
 
-            # set working directory to the Granule subdirectory
-            os.chdir(datadir + allscenes[x] + "/" + "GRANULE" + "/")
-            sdir = listdir()[0]  # only one subdirectory expected in this directory
+                # set working directory to the Granule subdirectory
+                os.chdir(datadir + allscenes[x] + "/" + "GRANULE" + "/")
+                sdir = listdir()[0]  # only one subdirectory expected in this directory
 
-            # set working directory to the image data subdirectory
-            imgdir = datadir + allscenes[x] + "/" + "GRANULE" + "/" + sdir + "/" + "IMG_DATA" + "/"
-            os.chdir(imgdir)
+                # set working directory to the image data subdirectory
+                imgdir = datadir + allscenes[x] + "/" + "GRANULE" + "/" + sdir + "/" + "IMG_DATA" + "/"
+                os.chdir(imgdir)
 
-            ###################################################
-            # get the list of filenames for all bands in .jp2 format
-            ###################################################
-            sbands = sorted([f for f in os.listdir(imgdir) if f.endswith('.jp2')])
-            print('Bands:')
-            for band in sbands:
-                print(band)
-            nbands = len(sbands)  # get the number of bands in the image
-            print('\n')
+                ###################################################
+                # get the list of filenames for all bands in .jp2 format
+                ###################################################
+                sbands = sorted([f for f in os.listdir(imgdir) if f.endswith('.jp2')])
+                print('Bands:')
+                for band in sbands:
+                    print(band)
+                nbands = len(sbands)  # get the number of bands in the image
+                print('\n')
 
-            ###################################################
-            # load all bands to get row and column numbers, and resample to 10 m
-            ###################################################
-            ncolmax = nrowmax = 0
-            obands = sbands  # filenames of output tiff files, all at 10 m resolution
+                ###################################################
+                # load all bands to get row and column numbers, and resample to 10 m
+                ###################################################
+                ncolmax = nrowmax = 0
+                obands = sbands  # filenames of output tiff files, all at 10 m resolution
 
-            # in the tiff root directory, make a subdirectory for the 10 m Geotiff files for each Sentinel scene
-            s = '/' # separator for string join
-            tiffdir = tiffroot + allscenes[x].split('.')[0] + '_tif/'
-            if not os.path.exists(tiffdir):
-                print("Creating directory: ", tiffdir)
-                os.mkdir(tiffdir)
-            if x == 1:
-                tiffdirs[0] = tiffdir
+                # in the tiff root directory, make a subdirectory for the 10 m Geotiff files for each Sentinel scene
+                s = '/' # separator for string join
+                tiffdir = tiffroot + allscenes[x].split('.')[0] + '_tif/'
+                if not os.path.exists(tiffdir):
+                    print("Creating directory: ", tiffdir)
+                    os.mkdir(tiffdir)
+                if x == 1:
+                    tiffdirs[0] = tiffdir
+                else:
+                    tiffdirs.append(tiffdir) # remember all tiff file directories later
+
+                ###################################################
+                # process all the bands to 10 m resolution
+                ###################################################
+
+                # enumerate produces a counter and the contents of the band list
+                for i, iband in enumerate(sbands):
+
+                    # open a band
+                    bandx = gdal.Open(iband, gdal.GA_Update)
+
+                    # get image dimensions
+                    ncols = bandx.RasterXSize
+                    nrows = bandx.RasterYSize
+
+                    # get raster georeferencing information
+                    geotrans = bandx.GetGeoTransform()
+                    ulx = geotrans[0]  # Upper Left corner coordinate in x
+                    uly = geotrans[3]  # Upper Left corner coordinate in y
+                    pixelWidth = geotrans[1]  # pixel spacing in map units in x
+                    pixelHeight = geotrans[5]  # (negative) pixel spacing in y
+                    print("Band %s has %6d columns, %6d rows and a %d m resolution." \
+                          % (iband, ncols, nrows, pixelWidth))
+                    # scale factor for resampling to 10 m pixel resolution
+                    sf = abs(int(pixelWidth / 10))
+                    # determining the maximum number of columns and rows at 10 m
+                    ncolmax = max(ncols * sf, ncolmax)
+                    nrowmax = max(nrows * sf, nrowmax)
+
+                    # resample the 20 m and 40 m images to 10 m and convert to Geotiff
+                    if pixelWidth != 999:  # can be removed, is redundant as all images will be converted to GeoTiff
+                        print('  Resampling %s image from %d m to 10 m resolution and converting to Geotiff' \
+                              % (iband, pixelWidth))
+                        # define the zoom factor in %
+                        zf = str(pixelWidth * 10) + '%'
+                        # define an output file name
+                        obands[i] = iband[:-4] + '_10m.tif'
+                        # assemble command line code
+                        res_cmd = ['gdal_translate', '-outsize', zf, zf, '-of', 'GTiff',
+                                   iband, tiffdir + obands[i]]
+                    # save geotiff file at 10 m resolution
+                    subprocess.call(res_cmd)
+
+                    #close GDAL file
+                    bandx = None
+
+                print("Output number of columns = %6d\nOutput number of rows = %6d." \
+                      % (ncolmax, nrowmax))
+
+    # get list of all previously existing and new tiff directories from data directory
+    subfolders = [f.path for f in os.scandir(tiffroot) if f.is_dir()]
+    tiffdirs = ["none"]
+    for thisdir in subfolders:
+        if thisdir.endswith("_tif"):
+            if (len(tiffdirs) == 1) and (tiffdirs[0] == "none"):
+                tiffdirs[0] = thisdir
             else:
-                tiffdirs.append(tiffdir) # remember all tiff file directories later
-
-            ###################################################
-            # process all the bands to 10 m resolution
-            ###################################################
-
-            # enumerate produces a counter and the contents of the band list
-            for i, iband in enumerate(sbands):
-
-                # open a band
-                bandx = gdal.Open(iband, gdal.GA_Update)
-
-                # get image dimensions
-                ncols = bandx.RasterXSize
-                nrows = bandx.RasterYSize
-
-                # get raster georeferencing information
-                geotrans = bandx.GetGeoTransform()
-                ulx = geotrans[0]  # Upper Left corner coordinate in x
-                uly = geotrans[3]  # Upper Left corner coordinate in y
-                pixelWidth = geotrans[1]  # pixel spacing in map units in x
-                pixelHeight = geotrans[5]  # (negative) pixel spacing in y
-                print("Band %s has %6d columns, %6d rows and a %d m resolution." \
-                      % (iband, ncols, nrows, pixelWidth))
-                # scale factor for resampling to 10 m pixel resolution
-                sf = abs(int(pixelWidth / 10))
-                # determining the maximum number of columns and rows at 10 m
-                ncolmax = max(ncols * sf, ncolmax)
-                nrowmax = max(nrows * sf, nrowmax)
-
-                # resample the 20 m and 40 m images to 10 m and convert to Geotiff
-                if pixelWidth != 999:  # can be removed, is redundant as all images will be converted to GeoTiff
-                    print('  Resampling %s image from %d m to 10 m resolution and converting to Geotiff' \
-                          % (iband, pixelWidth))
-                    # define the zoom factor in %
-                    zf = str(pixelWidth * 10) + '%'
-                    # define an output file name
-                    obands[i] = iband[:-4] + '_10m.tif'
-                    # assemble command line code
-                    res_cmd = ['gdal_translate', '-outsize', zf, zf, '-of', 'GTiff',
-                               iband, tiffdir + obands[i]]
-                # save geotiff file at 10 m resolution
-                subprocess.call(res_cmd)
-
-                #close GDAL file
-                bandx = None
-
-            print("Output number of columns = %6d\nOutput number of rows = %6d." \
-                  % (ncolmax, nrowmax))
+               tiffdirs.append(thisdir)  # add to list of results
+    tiffdirs = sorted(tiffdirs)
 
     return tiffroot, tiffdirs
 
