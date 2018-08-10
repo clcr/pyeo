@@ -2,7 +2,7 @@ import os
 from tempfile import TemporaryDirectory
 import numpy as np
 import gdal, ogr
-import submodules.pyeo as pyeo
+from .context import core as pyeo
 
 
 # see conftest.py for definition of managed_multiple_geotiff_dir

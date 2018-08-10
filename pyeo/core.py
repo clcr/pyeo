@@ -118,10 +118,7 @@ def init_log(log_path: str):
     log.setLevel(logging.DEBUG)
     file_handler = logging.FileHandler(log_path)
     file_handler.setLevel(logging.DEBUG)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
     log.addHandler(file_handler)
-    log.addHandler(stream_handler)
     log.info("****PROCESSING START****")
     return log
 
@@ -191,19 +188,28 @@ def download_new_s2_data(new_data: dict, aoi_image_dir: str):
 
 
 def load_api_key(path_to_api):
+    """Returns an API key from a single-line text file containing that API"""
     with open(path_to_api, 'r') as api_file:
         return api_file.read()
+
+
+def get_planet_product_path(planet_dir, product):
+    """Returns the path to a Planet product within a Planet directory"""
+    planet_folder = os.path.dirname(planet_dir)
+    product_file = glob.glob(planet_folder + '*' + product)
+    return os.path.join(planet_dir, product_file)
 
 
 def download_planet_image_on_day(aoi_path, date, out_path, api_key, item_type="PSScene4Band", search_name="auto",
                  asset_type="analytic", threads=5):
     """Queries and downloads all images on the date in the aoi given"""
     log = logging.getLogger(__name__)
+    start_time = date + "T00:00:00.000Z"
+    end_time = date + "T23:59:59.000Z"
     try:
-        planet_query(aoi_path, date, date, out_path, api_key, item_type, asset_type, threads)
+        planet_query(aoi_path, start_time, end_time, out_path, api_key, item_type, search_name, asset_type, threads)
     except IndexError:
         log.warning("IndexError exception; likely no imagery available for chosen date")
-    return os.path.join()
 
 
 def planet_query(aoi_path, start_date, end_date, out_path, api_key, item_type="PSScene4Band", search_name="auto",
@@ -318,7 +324,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     while True:
         status = session.get(item_url)
         if status.status_code == 429:
-            print("ID {} too fast; backing off".format(item_id))
+            log.warning("ID {} too fast; backing off".format(item_id))
             raise TooManyRequests
         if status.json()[asset_type]["status"] == "active":
             break
@@ -553,6 +559,33 @@ def stack_images(raster_paths: list, out_raster_path: str,
         present_layer += in_raster.RasterCount
     out_raster_array = None
     out_raster = None
+
+
+def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype = gdal.GDT_Int32):
+    """Mosaics multiple images with the same number of layers into one single image. Overwrites
+    overlapping pixels with the value furthest down raster_paths. Takes projection ect from the first
+    raster."""
+    # This, again, is very similar to stack_rasters
+    rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
+    projection = rasters[0].GetProjection()
+    in_gt = rasters[0].GetGeoTransform()
+    x_res = in_gt[1]
+    y_res = in_gt[5] * -1  # Y resolution in agt is -ve for Maths reasons
+    combined_polyon = get_combined_polygon(rasters, geometry_mode='union')
+    layers = rasters[0].RasterCount
+    out_raster = create_new_image_from_polygon(combined_polyon, out_raster_file, x_res, y_res,
+                                               projection, format, datatype)
+    out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    for raster in rasters:
+        in_raster_array = raster.GetVirtualMemArray()
+        if len(in_raster_array.shape) == 2:
+            in_raster_array = np.expand_dims(in_raster_array, 0)
+        in_bounds = get_raster_bounds(raster)
+        out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster_array, in_bounds)
+        out_raster_view = out_raster_array[:, out_y_min: out_y_max, out_x_min, out_y_max]
+        np.copyto(out_raster_view, in_raster_array)
+        in_raster_array = None
+        out_raster_view = None
 
 
 def get_combined_polygon(rasters, geometry_mode ="intersect"):
