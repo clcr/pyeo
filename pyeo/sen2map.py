@@ -1774,6 +1774,7 @@ def convert2geotif(datadir):
 
     return tiffroot, tiffdirs
 
+
 def geotif2maps(tiffroot, shapefile, plotdir, bands=[5,4,3], id='map', zoom=1, xoffset=0, yoffset=0):
     '''
 
@@ -1800,7 +1801,15 @@ def geotif2maps(tiffroot, shapefile, plotdir, bands=[5,4,3], id='map', zoom=1, x
     print('******************************\n')
 
     # get the list of geotiff subdirectories
-    tiffdirs = sorted([f for f in os.listdir(tiffroot)])
+    subfolders = [f.path for f in os.scandir(tiffroot) if f.is_dir()]
+    tiffdirs = ["none"]
+    for thisdir in subfolders:
+        if thisdir.endswith("_tif"):
+            if (len(tiffdirs) == 1) and (tiffdirs[0] == "none"):
+                tiffdirs[0] = thisdir
+            else:
+               tiffdirs.append(thisdir)  # add to list of results
+    tiffdirs = sorted(tiffdirs)
 
     # remember the created filenames
     mapfiles = []
