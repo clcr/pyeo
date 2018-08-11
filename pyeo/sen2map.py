@@ -1487,16 +1487,17 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     ax2.set_extent(extent2, crs=ccrs.PlateCarree())
     #  ax2.set_global()  will show the whole world as context
 
-    ax2.coastlines(resolution='110m', color='grey', zorder=4)
-    ax2.add_feature(cfeature.LAND, color='dimgrey', zorder=2)
+    ax2.coastlines(resolution='110m', color='grey', zorder=3.5)
+    ax2.add_feature(cfeature.LAND, color='dimgrey', zorder=1.1)
     ax2.add_feature(cfeature.BORDERS, edgecolor='red', linestyle='-', zorder=3)
     ax2.add_feature(cfeature.OCEAN, zorder=2)
 
     # overlay shapefile
+    # TODO change linewidth = 1, facecolor = 'none'
     shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
-                                   edgecolor='yellow', linewidth=1,
-                                   facecolor='none')
-    ax2.add_feature(shape_feature, zorder=5)
+                                   edgecolor='yellow', linewidth=2,
+                                   facecolor='yellow')
+    ax2.add_feature(shape_feature, zorder=4)
 
     ax2.gridlines(zorder=3)
 
