@@ -137,7 +137,7 @@ def create_file_structure(root: str):
         "output/categories",
         "output/probabilities",
         "output/report_image",
-        "output/display_images"
+        "output/display_images",
         "log/"
     ]
     for dir in dirs:
@@ -519,6 +519,8 @@ def stack_images(raster_paths: list, out_raster_path: str,
                  geometry_mode: str = "intersect", format: str = "GTiff", datatype: int=gdal.GDT_Int32):
     """Stacks multiple images in image_paths together, using the information of the top image.
     geometry_mode can be "union" or "intersect" """
+    log = logging.getLogger(__name__)
+    log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
@@ -536,7 +538,8 @@ def stack_images(raster_paths: list, out_raster_path: str,
     # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
-    for in_raster in rasters:
+    for i, in_raster in enumerate(rasters):
+        log.info("Stacking image {}".format(i))
         in_raster_array = in_raster.GetVirtualMemArray()
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
         in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
@@ -939,6 +942,8 @@ def apply_array_image_mask(array, mask):
 def classify_image(image_path, model_path, map_out_path, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2):
     """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
     with a ~15GB machine)"""
+    log = logging.getLogger(__name__)
+    log.info("Starting classification for {} with model {}".format(image_path, model_path))
     image = gdal.Open(image_path)
     model = joblib.load(model_path)
     map_out_image = create_matching_dataset(image, map_out_path)
@@ -947,6 +952,7 @@ def classify_image(image_path, model_path, map_out_path, prob_out_path, apply_ma
     image_array = image.GetVirtualMemArray()
     if apply_mask:
         mask_path = get_mask_path(image_path)
+        log.info("Applying mask at {}".format(mask_path))
         mask = gdal.Open(mask_path)
         mask_array = mask.GetVirtualMemArray()
         image_array = apply_array_image_mask(image_array, mask_array)
@@ -960,6 +966,7 @@ def classify_image(image_path, model_path, map_out_path, prob_out_path, apply_ma
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
     chunk_size = int(n_samples / num_chunks)
     for chunk_id in range(num_chunks):
+        log.info("Processing chunk {}".format(chunk_id))
         chunk_view = image_array[
             chunk_id*chunk_size: chunk_id * chunk_size + chunk_size, :
         ]
