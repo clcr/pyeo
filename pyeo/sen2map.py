@@ -1493,10 +1493,10 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     ax2.add_feature(cfeature.OCEAN, zorder=2)
 
     # overlay shapefile
-    # TODO change linewidth = 1, facecolor = 'none'
+    # TODO change linewidth = 1
     shape_feature = ShapelyFeature(Reader(shapefile).geometries(), crs=shapeproj,
                                    edgecolor='yellow', linewidth=2,
-                                   facecolor='yellow')
+                                   facecolor='none')
     ax2.add_feature(shape_feature, zorder=4)
 
     ax2.gridlines(zorder=3)
