@@ -36,6 +36,8 @@ import datetime
 #from matplotlib.path import Path
 #import matplotlib.patheffects as PathEffects
 #from matplotlib import patheffects
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.image as im
 import matplotlib.lines as mlines
 import matplotlib.patches as patches
