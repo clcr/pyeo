@@ -37,11 +37,11 @@ import datetime
 #import matplotlib.patheffects as PathEffects
 #from matplotlib import patheffects
 import matplotlib
-matplotlib.use('agg')
 import matplotlib.image as im
 import matplotlib.lines as mlines
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+plt.switch_backend('agg') # solves QT5 problem
 #from matplotlib.path import Path
 #import matplotlib.patheffects as PathEffects
 #from matplotlib import patheffects
