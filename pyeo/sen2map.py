@@ -16,8 +16,8 @@ Created on Sat Mar 24 12:11:00 2018
 #   %matplotlib
 
 ########################
-# TODO separate geotiff conversion and 10 m resampling into 2 functions
-# TODO plot multiple adjacent scenes onto the same map by providing a list of scene IDs to map_it instead of rgbdata and running readsen2rgb from within map_it
+# TODO plot multiple adjacent scenes onto the same map by providing a list of scene IDs to map_it
+#   instead of rgbdata and running readsen2rgb from within map_it
 ########################
 
 from cartopy.io.shapereader import Reader
@@ -657,26 +657,20 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
     # get the layer from the shapefile
     layer = dataSource.GetLayer()
 
-    #TODO
-
-    # THIS IS WHERE IT FALLS OVER ON THE HPC:
-    # projcs is None after this block of code
-
     # get the projection information and convert to wkt
     projsr = layer.GetSpatialRef()
-    print(projsr)
+    #print(projsr)
     projwkt = projsr.ExportToWkt()
-    print(projwkt)
+    #print(projwkt)
     projosr = osr.SpatialReference()
     # convert wkt projection to Cartopy projection
     projosr.ImportFromWkt(projwkt)
-    print(projosr)
+    #print(projosr)
     projcs = projosr.GetAuthorityCode('PROJCS')
     if projcs == None:
-        print("No EPSG code found in shapefile. Using EPSG 4326 instead.")
+        print("No EPSG code found in shapefile. Using EPSG 4326 instead. Make sure the .prj file contains AUTHORITY={CODE}.")
         projcs = 4326 # if no EPSG code given, set to geojson default
     print(projcs)
-    #projcs = projosr.GetAuthorityCode(None)
     if projcs == 4326:
         shapeproj = ccrs.PlateCarree()
     else:
@@ -684,11 +678,8 @@ def map_it(rgbdata, tifproj, mapextent, imgextent, shapefile, plotfile='map.jpg'
                                         # The EPSG code must correspond to a “projected coordinate system”,
                                         # so EPSG codes such as 4326 (WGS-84) which define a “geodetic
                                         # coordinate system” will not work.
-
-
+    print("\nShapefile projection:")
     print(shapeproj)
-
-    # END OF TODO
 
     # make the figure
     fig = plt.figure(figsize=(figsizex, figsizey))
