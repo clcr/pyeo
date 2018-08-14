@@ -1381,3 +1381,9 @@ nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5
                                id='map5', zoom=1/8, xoffset=round(-109800*0.25), yoffset=round(-109800*0.1))
 print('Made map files:')
 for f in mapfiles: print(f)
+
+# Zoom in even more
+nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
+                               id='map6', zoom=1/16, xoffset=round(-109800*0.25), yoffset=round(-109800*0.1))
+print('Made map files:')
+for f in mapfiles: print(f)
