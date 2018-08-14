@@ -194,7 +194,6 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
     sby = y0 + (y1 - y0) * location[1]
 
     # Calculate a scale bar length if none has been given
-    # (Theres probably a more pythonic way of rounding the number but this works)
     if not length:
         length = (x1 - x0) / 5000  # in km
         ndim = int(np.floor(np.log10(length)))  # number of digits in number
@@ -207,7 +206,10 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
             else:
                 return scale_number(x - 10 ** ndim)
 
-        length = scale_number(length)
+        if ndim > -1:
+            length = scale_number(length)
+        else:
+            length = scale_number(length * 10 ** ndim) / 10 ** ndim
 
     # Generate the x coordinate for the ends of the scalebar
     bar_xs = [sbx, sbx + length * 1000 / bars]
