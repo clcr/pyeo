@@ -1418,6 +1418,6 @@ for f in mapfiles: print(f)
 
 # Zoom in even more
 nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
-                               id='map8', zoom=1/256, xoffset=round(-109800*0.25), yoffset=round(-109800*0.1))
+                               id='map8', zoom=1/256, xoffset=round(-109800*0.311), yoffset=round(-109800*0.134))
 print('Made map files:')
 for f in mapfiles: print(f)
