@@ -206,13 +206,16 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
             else:
                 return scale_number(x - 10 ** ndim)
 
-        if ndim > -1:
-            length = scale_number(length)
-        else:
-            length = scale_number(length * 10 ** ndim) / 10 ** ndim
+    ndim = int(np.floor(np.log10(length)))  # number of digits in number
+    if ndim > -1:
+        length = scale_number(length)
+        # Generate the x coordinate for the ends of the scalebar
+        bar_xs = [sbx, sbx + length * 1000 / bars]
+    else:
+        length = scale_number(length * 10 ** ndim) / 10 ** ndim
+        # Generate the x coordinate for the ends of the scalebar
+        bar_xs = [sbx, sbx + length * 1000 / 10 ** ndim / bars]
 
-    # Generate the x coordinate for the ends of the scalebar
-    bar_xs = [sbx, sbx + length * 1000 / bars]
     # Plot the scalebar chunks
     barcol = 'white'
     for i in range(0, bars):
@@ -223,27 +226,50 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
             barcol = col
         else:
             barcol = 'white'
-        # Generate the x coordinate for the number
-        bar_xt = sbx + i * length * 1000 / bars
-        # Plot the scalebar label for that chunk
-        ax.text(bar_xt, sby, str(round(i * length / bars)), transform=tmc,
+        # Generate the x coordinate for the number and plot the scalebar label for that chunk
+        if ndim > -1:
+            bar_xt = sbx + i * length * 1000 / bars
+            ax.text(bar_xt, sby, str(int(i * length / bars)), transform=tmc,
+                    horizontalalignment='center', verticalalignment='bottom',
+                    color=col)
+        else:
+            bar_xt = sbx + i * length * 1000 / 10 ** ndim / bars
+        ax.text(bar_xt, sby, str(i * length / 10 ** ndim / bars), transform=tmc,
                 horizontalalignment='center', verticalalignment='bottom',
                 color=col)
+
         # work out the position of the next chunk of the bar
         bar_xs[0] = bar_xs[1]
-        bar_xs[1] = bar_xs[1] + length * 1000 / bars
-    # Generate the x coordinate for the last number
-    bar_xt = sbx + length * 1000
-    # Plot the last scalebar label
-    ax.text(bar_xt, sby, str(round(length)), transform=tmc,
-            horizontalalignment='center', verticalalignment='bottom',
-            color=col)
-    # Plot the unit label below the bar
-    bar_xt = sbx + length * 1000 / 2
-    bar_yt = y0 + (y1 - y0) * (location[1] / 4)
-    ax.text(bar_xt, bar_yt, 'km', transform=tmc, horizontalalignment='center',
-            verticalalignment='bottom', color=col)
+        if ndim > -1:
+            bar_xs[1] = bar_xs[1] + length * 1000 / bars
+        else:
+            bar_xs[1] = bar_xs[1] + length * 1000 / 10 ** ndim / bars
 
+    # Generate the x coordinate for the last number
+    if ndim > -1:
+        bar_xt = sbx + length * 1000
+    else:
+        bar_xt = sbx + length * 1000 / 10 ** ndim
+
+    # Plot the last scalebar label
+    if ndim > -1:
+        ax.text(bar_xt, sby, str(int(length)), transform=tmc,
+            horizontalalignment='center', verticalalignment='bottom', color=col)
+    else:
+        ax.text(bar_xt, sby, str(length / 10 ** ndim), transform=tmc,
+            horizontalalignment='center', verticalalignment='bottom', color=col)
+
+    # Plot the unit label below the bar
+    if ndim > -1: # units of km
+        bar_xt = sbx + length * 1000 / 10 ** ndim / 2
+        bar_yt = y0 + (y1 - y0) * (location[1] / 4)
+        ax.text(bar_xt, bar_yt, 'km', transform=tmc, horizontalalignment='center',
+                verticalalignment='bottom', color=col)
+    else: # units of m
+        bar_xt = sbx + length * 1000 / 10 ** ndim / 2
+        bar_yt = y0 + (y1 - y0) * (location[1] / 4)
+        ax.text(bar_xt, bar_yt, 'm', transform=tmc, horizontalalignment='center',
+                verticalalignment='bottom', color=col)
 
 # function to convert coordinates
 def convertXY(xy_source, inproj, outproj):
@@ -1392,6 +1418,6 @@ for f in mapfiles: print(f)
 
 # Zoom in even more
 nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
-                               id='map7', zoom=1/64, xoffset=round(-109800*0.25), yoffset=round(-109800*0.1))
+                               id='map8', zoom=1/256, xoffset=round(-109800*0.25), yoffset=round(-109800*0.1))
 print('Made map files:')
 for f in mapfiles: print(f)
