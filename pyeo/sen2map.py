@@ -194,7 +194,34 @@ def scale_bar_left(ax, bars=4, length=None, location=(0.1, 0.05), linewidth=3, c
     sby = y0 + (y1 - y0) * location[1]
 
     # Calculate a scale bar length if none has been given
-    if not length:
+
+    # TODO
+    '''
+    Shapefile projection:_EPSGProjection(27700)
+    mapextent    given    to    get    gridlines:    (620537.546875, 620966.453125, 5830212.546875, 5830641.453125)
+    Traceback(most    recent    call    last):
+    File    "/home/h/hb91/PycharmProjects/pyeo/pyeo/sen2map.py", line    1421, in < module >
+        id = 'map8', zoom = 1 / 256, xoffset = round(-109800 * 0.311), yoffset = round(-109800 * 0.134))
+    File    "/home/h/hb91/PycharmProjects/pyeo/pyeo/sen2map.py", line    1343, in geotif2maps
+        shapefile = shapefile, plotfile = plotfile, plottitle = title)
+    File    "/home/h/hb91/PycharmProjects/pyeo/pyeo/sen2map.py", line    831, in map_it
+        length = scale_number(length)
+    File    "/home/h/hb91/PycharmProjects/pyeo/pyeo/sen2map.py", line    829, in scale_number
+        return scale_number(x - 10 ** ndim)
+        
+    File     "/home/h/hb91/PycharmProjects/pyeo/pyeo/sen2map.py", line   829, in scale_number
+        return scale_number(x - 10 ** ndim)
+    File    "/home/h/hb91/PycharmProjects/pyeo/pyeo/sen2map.py", line    829, in scale_number
+        return scale_number(x - 10 ** ndim)    [Previous line repeated 991 more times]
+    File    "/home/h/hb91/PycharmProjects/pyeo/pyeo/sen2map.py", line    826, in scale_number
+        if str(x)[0] in ['1', '2', '5']:        RecursionError: maximum    recursion    depth    exceeded
+            while getting the str of an object
+    (eoenv)[hb91 @ node101~]$ cd / scratch / clcr / shared / py / plots_spacepark_osgb
+    (eoenv)[hb91 @ node101]$ ls - l
+    total    105666
+    '''
+
+if not length:
         length = (x1 - x0) / 5000  # in km
         ndim = int(np.floor(np.log10(length)))  # number of digits in number
         length = round(length, -ndim)  # round to 1sf
@@ -1418,6 +1445,6 @@ for f in mapfiles: print(f)
 
 # Zoom in even more
 nfiles, mapfiles = geotif2maps(tiffroot, shapedir + shapefile, plotdir, bands=[5, 4, 3],
-                               id='map8', zoom=1/256, xoffset=round(-109800*0.311), yoffset=round(-109800*0.134))
+                               id='map7', zoom=1/256, xoffset=round(-109800*0.311), yoffset=round(-109800*0.134))
 print('Made map files:')
 for f in mapfiles: print(f)
