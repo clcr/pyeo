@@ -17,7 +17,7 @@ Welcome to Pyeo's documentation!
    examples/advanced
    
  
-.. automodule:: pyeo
+.. automodule:: pyeo.core
    :members:
 
 
