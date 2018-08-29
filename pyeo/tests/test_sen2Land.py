@@ -12,5 +12,6 @@ def test_sen2cor_process_windows():
 
 
 def test_sen2cor_process():
-    conf=
+    pass
+
 

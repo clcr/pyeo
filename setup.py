@@ -11,8 +11,17 @@ setup(
     description='Modular processing chain from download to ard',
     long_description=open('README.md').read(),
     install_requires=[
-        'pyshp >= 1.2.12',
-        'sentinelsat >= 0.12.1'
-        'pytest >= 3.5.0'
+        'sentinelsat >= 0.12.1',
+        'sentinelhub',
+        'pytest >= 3.5.0',
+        'boto3 >= 1.7',
+        'gdal',
+        'numpy',
+        'scikit-learn',
+        'scipy',
+        'joblib',
+        'requests',
+        'tenacity',
+        'planet'
     ],
 )
