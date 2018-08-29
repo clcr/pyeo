@@ -39,6 +39,7 @@ Raster processing
   get_raster_bounds
   get_raster_size
   resample_image_in_place
+  mosaic_images
 
 Geometry processing
   get_combined_polygon
