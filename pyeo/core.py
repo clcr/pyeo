@@ -13,10 +13,9 @@ import numpy as np
 import numpy.ma as ma
 from tempfile import TemporaryDirectory
 import sklearn.ensemble as ens
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import cross_val_score
 import scipy.sparse as sp
 import joblib
-import boto3
 import logging
 import shutil
 import requests
