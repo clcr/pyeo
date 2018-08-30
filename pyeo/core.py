@@ -24,6 +24,7 @@ from planet import api as planet_api
 from multiprocessing.dummy import Pool
 import json
 
+
 class ForestSentinelException(Exception):
     pass
 
