@@ -123,7 +123,7 @@ def init_log(log_path):
     return log
 
 
-def create_file_structure(root: str):
+def create_file_structure(root):
     """Creates the file structure if it doesn't exist already"""
     os.chdir(root)
     dirs = [
@@ -939,14 +939,14 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, map_out_path, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2):
+def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2):
     """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
     with a ~15GB machine)"""
     log = logging.getLogger(__name__)
     log.info("Starting classification for {} with model {}".format(image_path, model_path))
     image = gdal.Open(image_path)
     model = joblib.load(model_path)
-    map_out_image = create_matching_dataset(image, map_out_path)
+    map_out_image = create_matching_dataset(image, class_out_dir)
     prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
@@ -982,7 +982,23 @@ def classify_image(image_path, model_path, map_out_path, prob_out_path, apply_ma
     prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
     map_out_image = None
     prob_out_image = None
-    return map_out_path, prob_out_path
+    return class_out_dir, prob_out_path
+
+
+def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
+                       apply_mask=False, out_type="GTiff", num_chunks=2):
+    """Classifies every image in_dir using model at model_path. Outputs are saved
+     in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively."""
+    log = logging.getLogger(__name__)
+    log.info("Classifying directory {}, output saved in {} and {}".format(in_dir, class_out_dir, prob_out_dir))
+    for image_path in os.listdir(in_dir):
+        image_name = os.path.basename(image_path).split('.')[0]
+        class_out_path = os.path.join(class_out_dir, image_name+"_class.tif")
+        prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
+        classify_image(image_path, model_path, class_out_path, prob_out_path,
+                       apply_mask, out_type, num_chunks)
+
+
 
 
 def reshape_raster_for_ml(image_array):

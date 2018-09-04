@@ -1,6 +1,6 @@
 """A simple change detection script that downloads, stacks and classifies an image"""
 
-import submodules.pyeo as pc
+import pyeo.core as pyeo
 import configparser
 import argparse
 import os
@@ -22,10 +22,11 @@ end_date = conf['forest_sentinel']['end_date']
 log_path = conf['forest_sentinel']['log_path']
 cloud_cover = conf['forest_sentinel']['cloud_cover']
 cloud_certainty_threshold = int(conf['forest_sentinel']['cloud_certainty_threshold'])
+model_path = conf['forest_sentinel']['model']
 sen2cor_path = conf['sen2cor']['path']
 
-pc.create_file_structure(project_root)
-log = pc.init_log(log_path)
+pyeo.create_file_structure(project_root)
+log = pyeo.init_log(log_path)
 
 
 l1_image_path = os.path.join(project_root, r"images/L1")
@@ -38,17 +39,24 @@ probability_image_path = os.path.join(project_root, r"output/probabilities")
 
 #Query and download
 log.info("Downloading")
-pc.sent2_query(sen_user, sen_pass, aoi_path, start_date, end_date, l1_image_path, )
+pyeo.sent2_query(sen_user, sen_pass, aoi_path, start_date, end_date, l1_image_path, )
 
 # Atmospheric correction
 log.info("Applying sen2cor")
-pc.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path)
+pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path)
 
 # Aggregating layers into single image
 log.info("Aggregating layers")
-pc.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
+pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
+# Stack layers
+log.info("Stacking before and after images")
+pyeo.create_new_stacks(merged_image_path, stacked_image_path)
 
+# Classify stacks
+log.info("Classifying images")
+for image in os.listdir(stacked_image_path):
+    pyeo.classify_image(image, model_path, )
 
 # 2.3 export to .tif
 
