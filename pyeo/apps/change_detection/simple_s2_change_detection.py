@@ -1,4 +1,5 @@
-"""A simple change detection script that downloads, stacks and classifies an image"""
+"""A simple change detection script that downloads, stacks and classifies a set of images.
+Produces two directories of un-mosaiced imagery; one of classified images and one of class probabilites"""
 
 import pyeo.core as pyeo
 import configparser
@@ -55,10 +56,9 @@ pyeo.create_new_stacks(merged_image_path, stacked_image_path)
 
 # Classify stacks
 log.info("Classifying images")
-for image in os.listdir(stacked_image_path):
-    pyeo.classify_image(image, model_path, )
+pyeo.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
+                        apply_mask=True)
 
-# 2.3 export to .tif
 
 # # ############################################################################################################
 # # ###### 3. Post processing                                                                  #################

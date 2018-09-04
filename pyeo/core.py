@@ -989,6 +989,7 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
                        apply_mask=False, out_type="GTiff", num_chunks=2):
     """Classifies every image in_dir using model at model_path. Outputs are saved
      in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively."""
+    # Needs test
     log = logging.getLogger(__name__)
     log.info("Classifying directory {}, output saved in {} and {}".format(in_dir, class_out_dir, prob_out_dir))
     for image_path in os.listdir(in_dir):
@@ -997,8 +998,6 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
         prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
         classify_image(image_path, model_path, class_out_path, prob_out_path,
                        apply_mask, out_type, num_chunks)
-
-
 
 
 def reshape_raster_for_ml(image_array):
