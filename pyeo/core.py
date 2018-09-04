@@ -112,7 +112,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
     return products_df, products
 
 
-def init_log(log_path: str):
+def init_log(log_path):
     logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
     log = logging.getLogger(__name__)
     log.setLevel(logging.DEBUG)
@@ -147,7 +147,7 @@ def create_file_structure(root: str):
             pass
 
 
-def read_aoi(aoi_path: str):
+def read_aoi(aoi_path):
     """Opens the geojson file for the aoi. If FeatureCollection, return the first feature."""
     with open(aoi_path ,'r') as aoi_fp:
         aoi_dict = json.load(aoi_fp)
@@ -156,7 +156,7 @@ def read_aoi(aoi_path: str):
         return aoi_dict
 
 
-def check_for_new_s2_data(aoi_path: str, aoi_image_dir: str, conf: configparser.ConfigParser):
+def check_for_new_s2_data(aoi_path, aoi_image_dir, conf):
     """Checks the S2 API for new data; if it's there, return the result"""
     # TODO: This isn't breaking properly on existing imagery
     # TODO: In fact, just clean this up completely, it's a bloody mess.
@@ -181,7 +181,7 @@ def check_for_new_s2_data(aoi_path: str, aoi_image_dir: str, conf: configparser.
         sys.exit(1)
 
 
-def download_new_s2_data(new_data: dict, aoi_image_dir: str):
+def download_new_s2_data(new_data, aoi_image_dir):
     """Downloads new imagery from AWS. new_data is a dict from Sentinel_2"""
     for image in new_data:
         download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
@@ -408,7 +408,7 @@ def create_matching_dataset(in_dataset, out_path,
     return out_dataset
 
 
-def create_new_stacks(image_dir: str, stack_dir: str, threshold: int = 100):
+def create_new_stacks(image_dir, stack_dir, threshold = 100):
     """Creates new stacks with from the newest image. Threshold; how small a part
     of latest_image will be before it's considered to be fully processed
      New_image_name must exist inside image_dir.
@@ -458,12 +458,12 @@ def sort_by_timestamp(strings):
     return strings
 
 
-def get_image_acquisition_time(image_name: str):
+def get_image_acquisition_time(image_name):
     """Gets the datetime object from a .safe filename of a planet image. No test."""
     return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
 
 
-def open_dataset_from_safe(safe_file_path: str, band: str, resolution: str = "10m"):
+def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     """Opens a dataset given a safe file. Give band as a string."""
     image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
     fp_glob = os.path.join(safe_file_path, image_glob)
@@ -492,7 +492,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     return out_image_path
 
 
-def stack_old_and_new_images(old_image_path, new_image_path, out_dir: str, create_combined_mask=True):
+def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
     """Stacks an old and new image, names the result with the two timestamps"""
     log = logging.getLogger(__name__)
     log.info("Stacking {} and {}".format(old_image_path, new_image_path))
@@ -508,15 +508,15 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir: str, creat
     return out_path + ".tif"
 
 
-def get_sen_2_image_timestamp(image_name: str):
+def get_sen_2_image_timestamp(image_name):
     """Returns the timestamps part of a Sentinel 2 image"""
     timestamp_re = r"\d{8}T\d{6}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
 
 
-def stack_images(raster_paths: list, out_raster_path: str,
-                 geometry_mode: str = "intersect", format: str = "GTiff", datatype: int=gdal.GDT_Int32):
+def stack_images(raster_paths, out_raster_path,
+                 geometry_mode = "intersect", format = "GTiff", datatype=gdal.GDT_Int32):
     """Stacks multiple images in image_paths together, using the information of the top image.
     geometry_mode can be "union" or "intersect" """
     log = logging.getLogger(__name__)
@@ -612,7 +612,7 @@ def get_combined_polygon(rasters, geometry_mode ="intersect"):
     return combined_polygons
 
 
-def multiple_union(polygons: list):
+def multiple_union(polygons):
     """Takes a list of polygons and returns a geometry representing the union of all of them"""
     # Note; I can see this maybe failing(or at least returning a multipolygon)
     # if two consecutive polygons do not overlap at all. Keep eye on.
@@ -622,7 +622,7 @@ def multiple_union(polygons: list):
     return running_union.Simplify(0)
 
 
-def pixel_bounds_from_polygon(raster: gdal.Dataset, polygon):
+def pixel_bounds_from_polygon(raster, polygon):
     """Returns the pixel coordinates of the bounds of the
      intersection between polygon and raster """
     raster_bounds = get_raster_bounds(raster)
@@ -861,7 +861,7 @@ def get_mask_path(image_path):
     return mask_path
 
 
-def combine_masks(mask_paths: list, out_path: str, combination_func: str = 'or', geometry_func ="intersect"):
+def combine_masks(mask_paths, out_path, combination_func = 'or', geometry_func ="intersect"):
     """ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
     Python true or false """
     # TODO Implement intersection and union
