@@ -1028,7 +1028,7 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
             learning_data = np.append(learning_data, this_training_data, 0)
             classes = np.append(classes, this_classes)
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
-                                     min_samples_split=16, n_estimators=100, n_jobs=4)
+                                     min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
     model.fit(learning_data, classes)
     scores = cross_val_score(model, learning_data, classes, cv=cross_val_repeats)
     return model, scores
