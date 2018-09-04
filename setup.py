@@ -12,7 +12,7 @@ setup(
     long_description=open('README.md').read(),
     install_requires=[
         'sentinelsat >= 0.12.1',
-        'sentinelhub',
+        'sentinelhub >= 2.4.2',
         'pytest >= 3.5.0',
         'boto3 >= 1.7',
         'gdal',
