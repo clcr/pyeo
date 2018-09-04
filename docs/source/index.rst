@@ -1,0 +1,119 @@
+.. Pyeo documentation master file, created by
+   sphinx-quickstart on Wed Aug 29 11:27:40 2018.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to Pyeo's documentation!
+================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+
+Introduction
+============
+
+Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying
+geospatial raster and vector data. It is intended to require a minimum of dependencies - most functions only require
+the basic GDAL/OGR/OSR stack.
+
+
+Installation
+============
+
+Run
+python setup.py install
+If you want to edit this code, run
+python setup.py devel
+
+Function reference
+==================
+
+
+## File structure and logging
+  init_log
+  create_file_structure
+  read_aoi
+
+## Sentinel 2 data acquisition
+  check_for_new_s2_data
+  download_new_s2_data
+  sent2_query (from geospatial_learn)
+
+## Planet data acquisition
+  planet_query
+  build_search_request
+  do_quick_search
+  do_saved_search
+  activate_and_dl_planet_item
+
+## Sentinel 2 preprocessing
+  apply_sen2cor
+  atmospheric_correction
+  sort_by_timestamp
+  get_image_acquisition_time
+  open_dataset_from_safe
+  aggregate_and_mask_10m_bands
+  stack_sentinel_2_bands
+  get_sen_2_image_timestamp
+
+## Raster processing
+  create_matching_dataset
+  create_new_stacks
+  stack_old_and_new_images
+  stack_images
+  get_raster_bounds
+  get_raster_size
+  resample_image_in_place
+
+## Geometry processing
+  get_combined_polygon
+  multiple_union
+  multiple_intersection
+  write_polygon
+  check_overlap
+  get_aoi_bounds
+  get_aoi_size
+  get_poly_size
+
+## Raster/Geometry interactions
+  pixel_bounds_from_polygon
+  point_to_pixel_coordinates
+  stack_and_trim_images
+  clip_raster
+  get_aoi_intersection
+  get_raster_intersection
+  get_poly_intersection
+  create_new_image_from_polygon
+  get_local_top_left
+
+## Masking functions
+  create_cloud_mask
+  create_mask_from_confidence_layer
+  get_mask_path
+  combine_masks
+  apply_array_image_mask
+
+## Machine learning functions
+  classify_image
+  reshape_raster_for_ml
+  reshape_ml_out_to_raster
+  reshape_prob_out_to_raster
+  create_trained_model
+  create_model_for_region
+  get_training_data
+
+Exception objects
+  ForestSentinelException
+  StackImageException
+  CreateNewStacksException
+  TooManyRequests

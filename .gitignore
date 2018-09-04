@@ -103,3 +103,5 @@ ENV/
 # Pycharm
 .idea/*
 /pyeo/conf.ini
+/pyeo/apps/change_detection/local_profile.ini
+!/docs/build/
