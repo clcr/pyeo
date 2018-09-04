@@ -11,3 +11,4 @@ CLCR.
 3. Fill out the blank spaces in conf.ini to specify your process
 
 
+Full documentation is in progress at https://clcr.github.io/pyeo/build/html/index.html
