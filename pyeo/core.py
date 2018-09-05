@@ -37,6 +37,10 @@ class CreateNewStacksException(ForestSentinelException):
     pass
 
 
+class StackImageException(ForestSentinelException):
+    pass
+
+
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
                 output_folder=None, api=True):
     """
