@@ -106,3 +106,4 @@ ENV/
 /pyeo/apps/change_detection/local_profile.ini
 !docs/build/
 !docs/build/html/
+!docs/build/html/static
