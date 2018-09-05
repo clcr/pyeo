@@ -117,6 +117,8 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
 
 
 def init_log(log_path):
+    """Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
+     Returns the log for the calling script"""
     logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
     log = logging.getLogger(__name__)
     log.setLevel(logging.DEBUG)
