@@ -1,4 +1,4 @@
-"""A simple change detection script that downloads, stacks and classifies a set of images.
+"""A change detection script that downloads, stacks and classifies a set of sentinel 2 images.
 Produces two directories of un-mosaiced imagery; one of classified images and one of class probabilites"""
 
 import pyeo.core as pyeo
@@ -6,7 +6,7 @@ import configparser
 import argparse
 import os
 
-#Reading in config file
+# Reading in config file
 parser = argparse.ArgumentParser(description='Automatically detect and report on change')
 parser.add_argument('--conf', dest='config_path', action='store', default=r'change_detection.ini',
                     help="Path to the .ini file specifying the job.")
@@ -38,7 +38,7 @@ stacked_image_path = os.path.join(project_root, r"images/stacked")
 catagorised_image_path = os.path.join(project_root, r"output/categories")
 probability_image_path = os.path.join(project_root, r"output/probabilities")
 
-#Query and download
+# Query and download
 log.info("Downloading")
 pyeo.sent2_query(sen_user, sen_pass, aoi_path, start_date, end_date, l1_image_path, )
 
