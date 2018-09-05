@@ -9,7 +9,7 @@
     <title>Welcome to Pyeo’s documentation! &#8212; Pyeo  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -28,6 +28,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="welcome-to-pyeo-s-documentation">
@@ -51,19 +53,21 @@ the basic GDAL/OGR/OSR stack.</p>
 </div>
 <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>Run
-python setup.py install
-If you want to edit this code, run
-python setup.py devel</p>
+<p>With Git installed, <cite>cd</cite> to an install location then run the following lines
+<code class="docutils literal notranslate"><span class="pre">`bash</span>
+<span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/clcr/pyeo.git</span>
+<span class="pre">cd</span> <span class="pre">pyeo</span>
+<span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span>
+<span class="pre">`</span></code></p>
+<p>If you want to edit this code, run
+<code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">devel</span>
+<span class="pre">`</span></code>
+instad of <cite>install</cite></p>
 </div>
 <div class="section" id="function-reference">
 <h1>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this headline">¶</a></h1>
 <dl class="docutils">
-<dt>## Exception objects</dt>
-<dd>ForestSentinelException
-StackImageException
-CreateNewStacksException
-TooManyRequests</dd>
 <dt>## File structure and logging</dt>
 <dd>init_log
 create_file_structure
@@ -128,11 +132,17 @@ reshape_prob_out_to_raster
 create_trained_model
 create_model_for_region
 get_training_data</dd>
+<dt>Exception objects</dt>
+<dd>ForestSentinelException
+StackImageException
+CreateNewStacksException
+TooManyRequests</dd>
 </dl>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -179,8 +189,8 @@ get_training_data</dd>
       &copy;2018, John Roberts.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
       <a href="_sources/index.rst.txt"
