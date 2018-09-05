@@ -14,7 +14,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(r"C:\projects\Pyeo"))
+sys.path.insert(0, os.path.abspath(__file__, '..'))
  
 
 
