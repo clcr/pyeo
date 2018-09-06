@@ -94,8 +94,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
                          cloudcoverpercentage="[0 TO " + cloud + "]")  # ,producttype="GRD")
     products_df = api.to_dataframe(products)
     if api and output_folder != None:
-
-        api.download_all(directory_path=output_folder)
+        api.download_all(products, directory_path=output_folder)
 
 
     else:
