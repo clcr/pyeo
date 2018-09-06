@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     # Query and download
     log.info("Downloading")
-    pyeo.sent2_query(sen_user, sen_pass, aoi_path, start_date, end_date, l1_image_path, )
+    pyeo.sent2_query(sen_user, sen_pass, aoi_path, start_date, end_date, cloud_cover ,l1_image_path)
 
     # Atmospheric correction
     log.info("Applying sen2cor")
