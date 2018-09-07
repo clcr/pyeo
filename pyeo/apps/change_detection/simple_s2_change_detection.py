@@ -53,12 +53,13 @@ if __name__ == "__main__":
     probability_image_path = os.path.join(project_root, r"output/probabilities")
 
     # Query and download
-    log.info("Downloading")
-    pyeo.sent2_query(sen_user, sen_pass, aoi_path, start_date, end_date, cloud_cover ,l1_image_path)
+#    products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
+#    log.info("Downloading")
+#    pyeo.download_new_s2_data(products, l1_image_path)
 
     # Atmospheric correction
-    log.info("Applying sen2cor")
-    pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path)
+    #log.info("Applying sen2cor")
+    #pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=True)
 
     # Aggregating layers into single image
     log.info("Aggregating layers")
