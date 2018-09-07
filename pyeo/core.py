@@ -381,7 +381,7 @@ def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
         raise
     log.info("sen2cor processing finished for {}".format(image_path))
     if delete_unprocessed_image:
-        os.rmdir(image_path)
+        shutil.rmtree(image_path)
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
@@ -494,7 +494,7 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60):
      and create a cloudmask from the sen2cor confidence layer"""
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
     for safe_dir in safe_file_path_list:
-        out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir+".tif"))
+        out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
 
@@ -943,7 +943,7 @@ def resample_image_in_place(image_path, new_res):
             xRes=new_res,
             yRes=new_res
         )
-        temp_image = os.path.join(td, "temp_image.gtif")
+        temp_image = os.path.join(td, "temp_image.tif")
         gdal.Warp(temp_image, image_path, options=args)
         shutil.move(temp_image, image_path)
 
@@ -1002,14 +1002,18 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_m
     return class_out_dir, prob_out_path
 
 
+def covert_image_format(image, format):
+    pass
+
+
 def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
                        apply_mask=False, out_type="GTiff", num_chunks=2):
-    """Classifies every image in_dir using model at model_path. Outputs are saved
+    """Classifies every .tif in in_dir using model at model_path. Outputs are saved
      in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively."""
     # Needs test
     log = logging.getLogger(__name__)
     log.info("Classifying directory {}, output saved in {} and {}".format(in_dir, class_out_dir, prob_out_dir))
-    for image_path in os.listdir(in_dir):
+    for image_path in glob.glob(in_dir+r"/*.tif"):
         image_name = os.path.basename(image_path).split('.')[0]
         class_out_path = os.path.join(class_out_dir, image_name+"_class.tif")
         prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")

@@ -58,21 +58,21 @@ if __name__ == "__main__":
 #    pyeo.download_new_s2_data(products, l1_image_path)
 
     # Atmospheric correction
-    #log.info("Applying sen2cor")
-    #pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=True)
+#     log.info("Applying sen2cor")
+#     pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=True)
 
     # Aggregating layers into single image
-    log.info("Aggregating layers")
-    pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
+#     log.info("Aggregating layers")
+#     pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
     # Stack layers
-    log.info("Stacking before and after images")
+#    log.info("Stacking before and after images")
     pyeo.create_new_stacks(merged_image_path, stacked_image_path)
 
     # Classify stacks
     log.info("Classifying images")
     pyeo.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
-                            apply_mask=True)
+                            apply_mask=False)
 
 
 # # ############################################################################################################
