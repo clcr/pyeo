@@ -186,6 +186,18 @@ def check_for_new_s2_data(aoi_path, aoi_image_dir, conf):
         sys.exit(1)
 
 
+def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
+    log = logging.getLogger(__name__)
+    log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
+    user = conf['sent_2']['user']
+    password = conf['sent_2']['pass']
+    start_timestamp = dt.datetime.strptime(start_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
+    end_timestamp = dt.datetime.strptime(end_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
+    result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp)
+    log.info("Search returned {} images".format(len(result[1])))
+    return result[1]
+
+
 def download_new_s2_data(new_data, aoi_image_dir):
     """Downloads new imagery from AWS. new_data is a dict from Sentinel_2"""
     for image in new_data:
@@ -430,7 +442,7 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
     #   c. If new_data_polygon drops having a total area less than threshold, stop.
     # Step 4: Stack new rasters for each image in new_data list.
     log = logging.getLogger(__name__)
-    safe_files = glob.glob(os.path.join(image_dir, "*.gtif"))
+    safe_files = glob.glob(os.path.join(image_dir, "*.tif"))
     if len(safe_files) == 0:
         raise CreateNewStacksException("image_dir is empty")
     safe_files = sort_by_timestamp(safe_files)
@@ -478,11 +490,11 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 
 
 def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60):
-    """For every folder in a directory, aggregates all 10m resolution bands into a single image
+    """For every folder in a directory, aggregates all 10m resolution bands into a single geotif
      and create a cloudmask from the sen2cor confidence layer"""
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
     for safe_dir in safe_file_path_list:
-        out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))
+        out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir+".tif"))
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
 
