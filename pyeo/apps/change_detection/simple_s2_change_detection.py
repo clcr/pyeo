@@ -13,7 +13,8 @@ $ python pyeo/apps/change_detection/simple_s2_change_detection.py
 Produces two directories of un-mosaiced imagery; one of classified images and one of class probabilites"""
 
 import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..','..', '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
+print(sys.path)
 import pyeo.core as pyeo
 import configparser
 import argparse
