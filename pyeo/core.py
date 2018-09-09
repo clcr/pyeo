@@ -521,7 +521,7 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         out_mask_path = out_path + ".msk"
         old_mask_path = get_mask_path(old_image_path)
         new_mask_path = get_mask_path(new_image_path)
-        combine_masks([old_mask_path, new_mask_path], out_mask_path)
+        combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect" )
     return out_path + ".tif"
 
 
@@ -878,7 +878,7 @@ def get_mask_path(image_path):
     return mask_path
 
 
-def combine_masks(mask_paths, out_path, combination_func = 'or', geometry_func ="intersect"):
+def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func ="intersect"):
     """ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
     Python true or false """
     # TODO Implement intersection and union
