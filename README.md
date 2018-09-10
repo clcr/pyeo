@@ -17,7 +17,7 @@ python setup.py install
 If you want to edit this code, run
 
 ```bash
-python setup.py devel
+python setup.py develop
 ```
 
 instead of install
