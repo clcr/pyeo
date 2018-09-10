@@ -22,7 +22,7 @@ import os
 
 if __name__ == "__main__":
 
-    do_all = False
+    do_all = True
 
     # Reading in config file
     parser = argparse.ArgumentParser(description='Automatically detect and report on change')
@@ -35,9 +35,9 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False)
     args = parser.parse_args()
 
-    # If all processing args are false, default to doing all of them
-    if (args.do_download and args.do_preprocess and args.do_merge and args.do_stack and args.do_classify) == False:
-        do_all = True
+    # If any processing step args are present, do not assume that we want to do all steps
+    if (args.do_download or args.do_preprocess or args.do_merge or args.do_stack or args.do_classify) == True:
+        do_all = False
 
     conf = configparser.ConfigParser()
     conf.read(args.config_path)
