@@ -1,7 +1,8 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import pyeo.core as pyeo
 import configparser
 import argparse
-import os
 
 if __name__ == "__main__":
 
