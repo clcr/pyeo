@@ -28,11 +28,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Automatically detect and report on change')
     parser.add_argument('--conf', dest='config_path', action='store', default=r'change_detection.ini',
                         help="Path to the .ini file specifying the job.")
-    parser.add_argument('-d', '--download', dest='do_download', action='store', type=bool, default=False)
-    parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store', type=bool, default=False)
-    parser.add_argument('-m', '--merge', dest='do_merge', action='store', type=bool, default=False)
-    parser.add_argument('-s', '--stack', dest='do_stack', action='store', type=bool, default=False)
-    parser.add_argument('-c', '--classify', dest='do_classify', action='store', type=bool, default=False)
+    parser.add_argument('-d', '--download', dest='do_download', action='store_true', type=bool, default=False)
+    parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true', type=bool, default=False)
+    parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', type=bool, default=False)
+    parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', type=bool, default=False)
+    parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', type=bool, default=False)
     args = parser.parse_args()
 
     # If all processing args are false, default to doing all of them
