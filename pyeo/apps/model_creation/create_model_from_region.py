@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     conf = configparser.ConfigParser()
 
-    log = pyeo.init_log(".")
+    log = pyeo.init_log("model.log")
 
     log.info("***MODEL CREATION START***")
 
