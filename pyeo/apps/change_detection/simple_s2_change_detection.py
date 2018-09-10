@@ -36,7 +36,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # If all processing args are false, default to doing all of them
-    if args.do_download and args.do_preprocess and args.do_merge and args.do_stack and args.do_classify is False:
+    if (args.do_download and args.do_preprocess and args.do_merge and args.do_stack and args.do_classify) == False:
         do_all = True
 
     conf = configparser.ConfigParser()
