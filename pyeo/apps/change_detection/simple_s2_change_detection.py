@@ -8,7 +8,7 @@ into pairs based on the algorithm in create_new_stacks and classify those images
 To use this script, fill out the [sent_2], [forest_sentinel] and [sen2cor] sections of the configuration file
 change_detection.ini, then run
 
-$ python pyeo/apps/change_detection/simple_s2_change_detection.py
+$ python pyeo/apps/change_detection/simple_s2_change_detection.py --conf /path/to/change_detection.ini
 
 Produces two directories of un-mosaiced imagery; one of classified images and one of class probabilites"""
 
