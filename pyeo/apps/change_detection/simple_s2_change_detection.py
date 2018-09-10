@@ -22,11 +22,22 @@ import os
 
 if __name__ == "__main__":
 
+    do_all = False
+
     # Reading in config file
     parser = argparse.ArgumentParser(description='Automatically detect and report on change')
     parser.add_argument('--conf', dest='config_path', action='store', default=r'change_detection.ini',
                         help="Path to the .ini file specifying the job.")
+    parser.add_argument('-d', '--download', dest='do_download', action='store', type=bool, default=False)
+    parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store', type=bool, default=False)
+    parser.add_argument('-m', '--merge', dest='do_merge', action='store', type=bool, default=False)
+    parser.add_argument('-s', '--stack', dest='do_stack', action='store', type=bool, default=False)
+    parser.add_argument('-c', '--classify', dest='do_classify', action='store', type=bool, default=False)
     args = parser.parse_args()
+
+    # If all processing args are false, default to doing all of them
+    if args.do_download and args.do_preprocess and args.do_merge and args.do_stack and args.do_classify == False:
+        do_all = True
 
     conf = configparser.ConfigParser()
     conf.read(args.config_path)
@@ -54,26 +65,31 @@ if __name__ == "__main__":
     probability_image_path = os.path.join(project_root, r"output/probabilities")
 
     # Query and download
-    products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
-    log.info("Downloading")
-    pyeo.download_new_s2_data(products, l1_image_path)
+    if args.do_dowload or do_all:
+        products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
+        log.info("Downloading")
+        pyeo.download_new_s2_data(products, l1_image_path)
 
     # Atmospheric correction
-    log.info("Applying sen2cor")
-    pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=True)
+    if args.do_preprocess or do_all:
+        log.info("Applying sen2cor")
+        pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=True)
 
     # Aggregating layers into single image
-    log.info("Aggregating layers")
-    pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
+    if args.do_merge or do_all:
+        log.info("Aggregating layers")
+        pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
     # Stack layers
-    log.info("Stacking before and after images")
-    pyeo.create_new_stacks(merged_image_path, stacked_image_path)
+    if args.do_stack or do_all:
+        log.info("Stacking before and after images")
+        pyeo.create_new_stacks(merged_image_path, stacked_image_path)
 
     # Classify stacks
-    log.info("Classifying images")
-    pyeo.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
-                            apply_mask=False)
+    if args.do_classify or do_all:
+        log.info("Classifying images")
+        pyeo.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
+                                apply_mask=False)
 
 
 # # ############################################################################################################
