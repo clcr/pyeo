@@ -12,6 +12,6 @@ if __name__ == "__main__":
 
     pyeo.core.init_log("sen2cor_{}.log".format(array_id))
 
-    file_list = os.path.join(args.l1_path, os.listdir(args.l1_path).sort().list)
+    file_list = os.path.join(args.l1_path, os.listdir(args.l1_path).sort())
 
     pyeo.core.apply_sen2cor(file_list[array_id], args.l2_path)
