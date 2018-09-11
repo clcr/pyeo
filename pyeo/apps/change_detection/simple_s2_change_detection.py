@@ -14,7 +14,6 @@ Produces two directories of un-mosaiced imagery; one of classified images and on
 
 import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-print(sys.path)
 import pyeo.core as pyeo
 import configparser
 import argparse
