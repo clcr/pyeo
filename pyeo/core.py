@@ -395,8 +395,8 @@ def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unpr
     for image in images:
         image_path = os.path.join(image_directory, image)
         image_timestamp = get_sen_2_image_timestamp(image)
-        if glob.glob(os.path.join(out_directory, r"*_{}_*".format(image_timestamp))):
-            log.warning("{} exists. Skipping.".format(image))
+        if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
+            log.warning("{} exists. Skipping.".format(image.replace("MSIL1C", "MSIL2A")))
             continue
         try:
             l2_path = apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=delete_unprocessed_image)
