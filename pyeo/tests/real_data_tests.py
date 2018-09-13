@@ -1,6 +1,7 @@
-import os
+import os, sys
 import shutil
-from .context import pyeo
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..')))
+import pyeo.core as pyeo
 
 
 def test_composite_images_with_mask():
