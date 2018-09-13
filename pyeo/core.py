@@ -637,6 +637,70 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     out_raster_array = None
 
 
+def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff"):
+    """Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
+    be a binary .msk file with the same path as their corresponding image. All images must have the same
+    number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
+    composite_out_path will be created. Takes projection, resolution, ect from first band of first raster in list."""
+
+    #TODO: Add code that updates an existing composite mask. Should be doable inside this function.
+
+    driver = gdal.GetDriverByName(format)
+    in_raster_list = [gdal.Open(raster) for raster in in_raster_path_list]
+    projection = in_raster_list[0].GetProjection()
+    in_gt = in_raster_list[0].GetGeoTransform()
+    x_res = in_gt[1]
+    y_res = in_gt[5] * -1
+    n_bands = in_raster_list[0].RasterCount
+    temp_band = in_raster_list[0].GetRasterBand(1)
+    datatype = temp_band.DataType
+    temp_band = None
+
+    # Creating output image + array
+    out_bounds = get_combined_polygon(in_raster_list, geometry_mode="union")
+    composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
+                                                    projection, format, datatype)
+    output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
+    if len(output_array.shape) == 2:
+        output_array = np.expand_dims(output_array, 0)
+
+    for i, in_raster in enumerate(in_raster_list):
+        # Get a view of in_raster according to output_array
+        in_bounds = get_raster_bounds(in_raster)
+        x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
+        output_view = output_array[:, y_min:y_max, x_min:x_max]
+
+        # Move every unmasked pixel in in_raster to output_view
+        mask_path = get_mask_path(in_raster_path_list[i])
+        in_masked = get_masked_array(in_raster, mask_path)
+        np.copyto(output_view, in_masked, np.logical_not(in_masked.mask))
+
+        #Deallocate
+        output_view = None
+        in_masked = None
+
+    output_array = None
+
+
+def get_masked_array(raster, mask_path, fill_value = -9999):
+    """Returns a numpy.mask masked array for the raster.
+    Masked pixels are TRUE in the mask array"""
+    mask = gdal.Open(mask_path)
+    mask_array = mask.GetVirtualMemArray()
+    raster_array = raster.GetVirtualMemArray()
+    #If the shapes do not match, assume single-band mask for multi-band raster
+    if len(mask_array.shape) == 2 and len(raster_array.shape) == 3:
+        mask_array = project_array(mask_array, raster_array.shape[0], 0)
+    return np.ma.array(raster_array, mask=mask_array)
+
+
+def project_array(array_in, depth, axis):
+    """Returns a new array with an extra dimension. Data is projected along that dimension to depth."""
+    array_in = np.expand_dims(array_in, axis)
+    array_in = np.repeat(array_in, depth, axis)
+    return array_in
+
+
 def get_combined_polygon(rasters, geometry_mode ="intersect"):
     """Calculates the overall polygon boundary for multiple rasters"""
     raster_bounds = []
