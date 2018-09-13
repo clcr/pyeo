@@ -408,20 +408,28 @@ def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unpr
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
 
-def clean_l2_data(l2_dir, resolution="10m", warning=True):
+def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
     If warning=True, prompts first."""
     log = logging.getLogger(__name__)
-    log.info("Scanning {} for incomplete {} L2 directories".format(l2_dir, resolution))
+    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
-    image_glob = os.path.join(l2_dir, granule_path)
+    image_glob = os.path.join(l2_SAFE_file, granule_path)
     if not glob.glob(image_glob):
-        if warning == True:
+        if warning:
             if not input("About to delete {}: Y/N?").upper().startswith("Y"):
                 return
         else:
-            log.warning("Removing {}".format(l2_dir))
-            shutil.rmtree(l2_dir)
+            log.warning("Removing {}".format(l2_SAFE_file))
+            shutil.rmtree(l2_SAFE_file)
+
+
+def clean_l2_dir(l2_dir, resolution="10m", warning=True):
+    """Calls clean_l2_data on every SAFE file in l2_dir"""
+    log = logging.getLogger(__name__)
+    log.info("Scanning {} for incomplete SAFE files".format(l2_dir))
+    for safe_file_path in [os.path.join(l2_dir, safe_file_name) for safe_file_name in os.listdir(l2_dir)]:
+        clean_l2_data(safe_file_path, resolution, warning)
 
 
 def create_matching_dataset(in_dataset, out_path,
