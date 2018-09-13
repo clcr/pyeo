@@ -9,7 +9,7 @@ if __name__ == "__main__":
     parser.add_argument("l2_dir", help="Path to the directory that needs cleaning")
     parser.add_argument("-d", "--disable_warning", dest="do_warning", action='store_false', default=True,
                         help="If present, do not prompt before removing files")
-    parser.add_argument("-r", "--resolution", dest="resolution", action=store, default="10m",
+    parser.add_argument("-r", "--resolution", dest="resolution", action="store", default="10m",
                         help="Resolution to check (10m, 20m or 60m")
     args = parser.parse_args()
 
