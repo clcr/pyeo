@@ -13,4 +13,6 @@ if __name__ == "__main__":
                         help="Resolution to check (10m, 20m or 60m")
     args = parser.parse_args()
 
+    pyeo.init_log("clean_log.log")
+
     pyeo.clean_l2_dir(args.l2_dir, args.resolution, args.do_warning)
