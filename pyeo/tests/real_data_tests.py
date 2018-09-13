@@ -6,7 +6,10 @@ import pyeo.core as pyeo
 
 def test_composite_images_with_mask():
     os.chdir(os.path.dirname(__file__))
-    os.remove(r"test_outputs/composite_test.tif")
+    try:
+        os.remove(r"test_outputs/composite_test.tif")
+    except FileNotFoundError:
+        pass
     test_data = [r"test_data/20180103T172709.tif",
                  r"test_data/20180319T172021.tif",
                  r"test_data/20180329T171921.tif"]
