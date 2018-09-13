@@ -15,3 +15,7 @@ def test_composite_images_with_mask():
                  r"test_data/20180329T171921.tif"]
     out_file = r"test_outputs/composite_test.tif"
     pyeo.composite_images_with_mask(test_data, out_file)
+
+
+if __name__ == "__main__":
+    test_composite_images_with_mask()
