@@ -408,6 +408,22 @@ def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unpr
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
 
+def clean_l2_data(l2_dir, resolution="10m", warning=True):
+    """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
+    If warning=True, prompts first."""
+    log = logging.getLogger(__name__)
+    log.info("Scanning {} for incomplete {} L2 directories".format(l2_dir, resolution))
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
+    image_glob = os.path.join(l2_dir, granule_path)
+    if not glob.glob(image_glob):
+        if warning == True:
+            if not input("About to delete {}: Y/N?").upper().startswith("Y"):
+                return
+        else:
+            log.warning("Removing {}".format(l2_dir))
+            shutil.rmtree(l2_dir)
+
+
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
     """Creates an empty gdal dataset with the same dimensions, projection and geotransform. Defaults to 1 band.
@@ -1080,7 +1096,7 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
         score_file.write(str(scores))
 
 
-def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id = 4326):
+def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326):
     """Given an image and a shapefile with categories, return x and y suitable
     for feeding into random_forest.fit.
     Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'
