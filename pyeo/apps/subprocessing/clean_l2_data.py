@@ -14,5 +14,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     pyeo.init_log("clean_log.log")
-
     pyeo.clean_l2_dir(args.l2_dir, args.resolution, args.do_warning)

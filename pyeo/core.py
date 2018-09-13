@@ -419,9 +419,8 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
         if warning:
             if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
                 return
-        else:
-            log.warning("Removing {}".format(l2_SAFE_file))
-            shutil.rmtree(l2_SAFE_file)
+        log.warning("Removing {}".format(l2_SAFE_file))
+        shutil.rmtree(l2_SAFE_file)
 
 
 def clean_l2_dir(l2_dir, resolution="10m", warning=True):
