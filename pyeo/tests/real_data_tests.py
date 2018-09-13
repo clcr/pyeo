@@ -1,0 +1,13 @@
+import os
+import shutil
+from .context import pyeo
+
+
+def test_composite_images_with_mask():
+    os.chdir(os.path.dirname(__file__))
+    os.remove(r"test_outputs/composite_test.tif")
+    test_data = [r"test_data/20180103T172709.tif",
+                 r"test_data/20180319T172021.tif",
+                 r"test_data/20180329T171921.tif"]
+    out_file = r"test_outputs/composite_test.tif"
+    pyeo.composite_images_with_mask(test_data, out_file)
