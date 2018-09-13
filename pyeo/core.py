@@ -417,7 +417,7 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     image_glob = os.path.join(l2_SAFE_file, granule_path)
     if not glob.glob(image_glob):
         if warning:
-            if not input("About to delete {}: Y/N?").upper().startswith("Y"):
+            if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
                 return
         else:
             log.warning("Removing {}".format(l2_SAFE_file))
