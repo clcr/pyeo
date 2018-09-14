@@ -673,13 +673,14 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         # Move every unmasked pixel in in_raster to output_view
         mask_path = get_mask_path(in_raster_path_list[i])
         in_masked = get_masked_array(in_raster, mask_path)
-        np.copyto(output_view, in_masked, np.logical_not(in_masked.mask))
+        np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
         #Deallocate
         output_view = None
         in_masked = None
 
     output_array = None
+    output_image = None
 
 
 def get_masked_array(raster, mask_path, fill_value = -9999):
