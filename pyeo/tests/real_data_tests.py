@@ -1,6 +1,6 @@
 import os, sys
 import shutil
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
 import pyeo.core as pyeo
 
 
@@ -18,4 +18,5 @@ def test_composite_images_with_mask():
 
 
 if __name__ == "__main__":
+    print(sys.path)
     test_composite_images_with_mask()
