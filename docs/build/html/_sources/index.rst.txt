@@ -134,6 +134,10 @@ Raster processing
 
  .. autofunction:: resample_image_in_place
 
+ .. autofunction:: composite_images_with_mask
+
+ .. autofunction:: composite_directory
+
 
 Geometry processing
 -------------------
@@ -231,3 +235,7 @@ simple_s2_change_detection.py
 create_model_from_shapefile_and_raster.py
 ------------------------------
  .. automodule:: pyeo.apps.model_creation.create_model_from_shapefile_and_raster
+
+composite_directory.py
+----------------------
+ .. automodule:: pyeo.apps.subprocessing.composite_directory

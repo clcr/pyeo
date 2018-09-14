@@ -214,8 +214,9 @@ Any identically-named imagery will be overwritten</dd>
 
 <dl class="function">
 <dt id="pyeo.core.sort_by_timestamp">
-<code class="descclassname">pyeo.core.</code><code class="descname">sort_by_timestamp</code><span class="sig-paren">(</span><em>strings</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted</p>
+<code class="descclassname">pyeo.core.</code><code class="descname">sort_by_timestamp</code><span class="sig-paren">(</span><em>strings</em>, <em>recent_first=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
+guarantee ordering of strings with the same timestamp.</p>
 </dd></dl>
 
 <dl class="function">
@@ -300,6 +301,21 @@ geometry_mode can be “union” or “intersect”</p>
 <dt id="pyeo.core.resample_image_in_place">
 <code class="descclassname">pyeo.core.</code><code class="descname">resample_image_in_place</code><span class="sig-paren">(</span><em>image_path</em>, <em>new_res</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.resample_image_in_place" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resamples an image in-place using gdalwarp to new_res in metres</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.composite_images_with_mask">
+<code class="descclassname">pyeo.core.</code><code class="descname">composite_images_with_mask</code><span class="sig-paren">(</span><em>in_raster_path_list</em>, <em>composite_out_path</em>, <em>format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.composite_images_with_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
+be a binary .msk file with the same path as their corresponding image. All images must have the same
+number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
+composite_out_path will be created. Takes projection, resolution, ect from first band of first raster in list.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.composite_directory">
+<code class="descclassname">pyeo.core.</code><code class="descname">composite_directory</code><span class="sig-paren">(</span><em>image_dir</em>, <em>composite_out_path</em>, <em>format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.composite_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Composites every image in image_dir, assumes all have associated masks.</p>
 </dd></dl>
 
 </div></blockquote>
@@ -576,6 +592,19 @@ to take the model as an augment, but these are not yet implemented.</p>
 <p>You can call this script from the command with a .ini file as an argument</p>
 </div></blockquote>
 </div>
+<div class="section" id="composite-directory-py">
+<h2>composite_directory.py<a class="headerlink" href="#composite-directory-py" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><span class="target" id="module-pyeo.apps.subprocessing.composite_directory"></span><p>Creates a composite of all imagery in the target directory. Assumes that each image name contains an S2-like
+timestamp (yyyymmddThhmmss), and the each .tif has an associated multiplicative mask file (where masked pixels
+are 0 and unmasked pixels are 1)</p>
+<p>Usage: python composite_directory.py /path/to/image/dir path/to/output.tif</p>
+<p>This script will sort in_dir from the earliest to the latest image based on S2 timestamps. It will iterate through
+this list, saving any unmasked pixels in each image into the image at out_path. Any pixels that are masked all
+the way through will be 0 at present (nodata to be implemented).</p>
+<p>Masks can either be single band images or n-band image (same at the corresponding .tif)</p>
+</div></blockquote>
+</div>
 </div>
 
 
@@ -607,6 +636,7 @@ to take the model as an augment, but these are not yet implemented.</p>
 <li><a class="reference internal" href="#example-scripts">Example scripts</a><ul>
 <li><a class="reference internal" href="#simple-s2-change-detection-py">simple_s2_change_detection.py</a></li>
 <li><a class="reference internal" href="#create-model-from-shapefile-and-raster-py">create_model_from_shapefile_and_raster.py</a></li>
+<li><a class="reference internal" href="#composite-directory-py">composite_directory.py</a></li>
 </ul>
 </li>
 </ul>
