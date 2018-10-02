@@ -4,11 +4,11 @@ import os
 import glob
 import numpy as np
 
-path_to_region = r"/home/ubuntu/caqueta/training_data"
+path_to_region = r"/rfs/Forest2020/Shared/TRAINING_DATA/Ana_Maria/Cartagena"
 
-image_glob = os.path.join(path_to_region, r"*.tif")
-image_list = glob.glob(image_glob)
-#image_list = [r"/home/ubuntu/caqueta/training_data/colombia_cartagena__20170302_20161222.tif"]
+#image_glob = os.path.join(path_to_region, r"*.tif")
+#image_list = glob.glob(image_glob)
+image_list = [r"/home/ubuntu/caqueta/training_data/colombia_cartagena_20180225_20170814.tif"]
 
 
 for training_image_file_path in image_list:
@@ -19,7 +19,7 @@ for training_image_file_path in image_list:
 
     sigs=np.vstack((this_classes, this_training_data.T))
 
-    sig_out_path = r"/home/ubuntu/caqueta/training_data/signatures/{}_signatures.csv".format(training_image_name)
+    sig_out_path = r"/rfs/Forest2020/Shared/TRAINING_DATA/Ana_Maria/Cartagena/signatures_v2/{}_signatures.csv".format(training_image_name)
 
     with open(sig_out_path, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
