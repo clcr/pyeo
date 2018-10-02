@@ -1,4 +1,6 @@
-import submodules as pc
+import os, sys
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
+import pyeo.core as pc
 import csv
 import os
 import glob
