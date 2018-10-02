@@ -685,14 +685,15 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
 def get_masked_array(raster, mask_path, fill_value = -9999):
     """Returns a numpy.mask masked array for the raster.
-    Masked pixels are TRUE in the mask array"""
+    Masked pixels are FALSE in the mask image (multiplicateive map),
+    but TRUE in the masked_array (nodata pixels)"""
     mask = gdal.Open(mask_path)
     mask_array = mask.GetVirtualMemArray()
     raster_array = raster.GetVirtualMemArray()
     #If the shapes do not match, assume single-band mask for multi-band raster
     if len(mask_array.shape) == 2 and len(raster_array.shape) == 3:
         mask_array = project_array(mask_array, raster_array.shape[0], 0)
-    return np.ma.array(raster_array, mask=mask_array)
+    return np.ma.array(raster_array, mask=np.logical_not(mask_array))
 
 
 def project_array(array_in, depth, axis):
