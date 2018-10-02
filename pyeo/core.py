@@ -492,9 +492,10 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
     return new_images
 
 
-def sort_by_timestamp(strings):
-    """Takes a list of strings that contain sen2 timestamps and returns them sorted"""
-    strings.sort(key=lambda x: get_image_acquisition_time(x), reverse=True)
+def sort_by_timestamp(strings, recent_first=True):
+    """Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
+    guarantee ordering of strings with the same timestamp."""
+    strings.sort(key=lambda x: get_image_acquisition_time(x), reverse=recent_first)
     return strings
 
 
@@ -645,6 +646,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
     #TODO: Add code that updates an existing composite mask. Should be doable inside this function.
 
+    log = logging.getLogger(__name__)
     driver = gdal.GetDriverByName(format)
     in_raster_list = [gdal.Open(raster) for raster in in_raster_path_list]
     projection = in_raster_list[0].GetProjection()
@@ -657,6 +659,9 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     temp_band = None
 
     # Creating output image + array
+    log.info("Creating composite at {}".format(composite_out_path))
+    log.info("Composite info: x_res: {}, y_res: {}, {} bands, datatype: {}, projection: {}"
+             .format(x_res, y_res, n_bands, datatype, projection))
     out_bounds = get_combined_polygon(in_raster_list, geometry_mode="union")
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
@@ -666,21 +671,34 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
     for i, in_raster in enumerate(in_raster_list):
         # Get a view of in_raster according to output_array
+        log.info("Adding {} to composite".format(in_raster_path_list[i]))
         in_bounds = get_raster_bounds(in_raster)
         x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
         output_view = output_array[:, y_min:y_max, x_min:x_max]
 
         # Move every unmasked pixel in in_raster to output_view
         mask_path = get_mask_path(in_raster_path_list[i])
+        log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_path))
         in_masked = get_masked_array(in_raster, mask_path)
         np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
-        #Deallocate
+        # Deallocate
         output_view = None
         in_masked = None
 
     output_array = None
     output_image = None
+    log.info("Composite done")
+
+
+def composite_directory(image_dir, composite_out_path, format="GTiff"):
+    """Composites every image in image_dir, assumes all have associated masks."""
+    log = logging.getLogger(__name__)
+    log.info("Compositing {}".format(image_dir))
+    sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
+                          in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
+                          if image_name.endswith(".tif")]
+    composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
 
 def get_masked_array(raster, mask_path, fill_value = -9999):
@@ -690,7 +708,7 @@ def get_masked_array(raster, mask_path, fill_value = -9999):
     mask = gdal.Open(mask_path)
     mask_array = mask.GetVirtualMemArray()
     raster_array = raster.GetVirtualMemArray()
-    #If the shapes do not match, assume single-band mask for multi-band raster
+    # If the shapes do not match, assume single-band mask for multi-band raster
     if len(mask_array.shape) == 2 and len(raster_array.shape) == 3:
         mask_array = project_array(mask_array, raster_array.shape[0], 0)
     return np.ma.array(raster_array, mask=np.logical_not(mask_array))
