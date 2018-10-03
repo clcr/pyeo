@@ -239,3 +239,7 @@ create_model_from_shapefile_and_raster.py
 composite_directory.py
 ----------------------
  .. automodule:: pyeo.apps.subprocessing.composite_directory
+
+extract_signatures.py
+---------------------
+ .. automodule:: pyeo.apps.subprocessing.extract_signatures
