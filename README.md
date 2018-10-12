@@ -11,7 +11,7 @@ With Git installed, `cd` to an install location then run the following lines
 ```bash
 git clone https://github.com/clcr/pyeo.git
 cd pyeo
-python setup.py install
+python setup.py install -user
 ```
 
 If you want to edit this code, run
