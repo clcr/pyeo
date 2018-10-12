@@ -367,18 +367,16 @@ def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
     sen2cor_proc = subprocess.Popen([L2A_path, '--resolution=10', image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
-    try:
-        while True:
-            nextline = sen2cor_proc.stdout.readline()
-            if nextline == '' and sen2cor_proc.poll() is not None:
-                break
-            if "CRITICAL" in nextline:
-                log.error(nextline)
-                break
-            log.info(nextline)
-    except subprocess.CalledProcessError:
-        log.error("Sen2Cor failed")
-        raise
+
+    while True:
+        nextline = sen2cor_proc.stdout.readline()
+        if nextline == '' and sen2cor_proc.poll() is not None:
+            break
+        if "CRITICAL" in nextline:
+            log.error(nextline)
+            break
+        log.info(nextline)
+
     log.info("sen2cor processing finished for {}".format(image_path))
     if delete_unprocessed_image:
         shutil.rmtree(image_path)
