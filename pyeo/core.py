@@ -701,6 +701,11 @@ def composite_directory(image_dir, composite_out_path, format="GTiff"):
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
 
+def stack_with_composite(image_dir, composite_dir, out_path):
+    """Stacks an image up with the cloud composite"""
+
+
+
 def get_masked_array(raster, mask_path, fill_value = -9999):
     """Returns a numpy.mask masked array for the raster.
     Masked pixels are FALSE in the mask image (multiplicateive map),
