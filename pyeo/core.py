@@ -964,9 +964,9 @@ def create_mask_from_model(image_path, model_path, model_clear = 0):
     with TemporaryDirectory() as td:
         log = logging.getLogger(__name__)
         log.info("Building cloud mask for {}".format(image_path))
-        temp_mask = os.path.join(td, "cat_mask.tif")
-        classify_image(image_path, model_path, temp_mask, r"/dev/null")
-        temp_mask = gdal.Open(temp_mask, gdal.GA_Update)
+        temp_mask_path = os.path.join(td, "cat_mask.tif")
+        classify_image(image_path, model_path, temp_mask_path)
+        temp_mask = gdal.Open(temp_mask_path, gdal.GA_Update)
         temp_mask_array = temp_mask.GetVirtualMemArray()
         mask_path = get_mask_path(image_path)
         mask = create_matching_dataset(temp_mask, mask_path, datatype=gdal.GDT_Byte)
