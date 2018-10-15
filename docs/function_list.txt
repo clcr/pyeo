@@ -63,7 +63,7 @@ Raster/Geometry interactions
   get_local_top_left
 
 Masking functions
-  create_cloud_mask
+  create_mask_from_model
   create_mask_from_confidence_layer
   get_mask_path
   combine_masks

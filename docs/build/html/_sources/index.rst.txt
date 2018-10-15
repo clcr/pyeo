@@ -184,7 +184,7 @@ Raster/Geometry interactions
 Masking functions
 -----------------
 
- .. autofunction:: create_cloud_mask
+ .. autofunction:: create_mask_from_model
 
  .. autofunction:: create_mask_from_confidence_layer
 
