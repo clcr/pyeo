@@ -1,3 +1,18 @@
+"""
+ Right, let's think this through.
+ Step -1: Create initial composite with last date (stored in filename?)
+ Step 0: Load composite
+ Step 1: Download images from last date in composite until present last date
+ Step 2: Preprocess each image
+ Step 3: Generate cloud mask for each image
+For each preprocessed image:
+    Step 4: Build stack with composite
+    Step 5: Classify stack
+    Step 6: Update composite with last cloud-free pixel based on cloud mask
+    Step 7: Update last_date of composite
+Step 8:
+ """
+
 import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import pyeo.core as pyeo
@@ -16,8 +31,11 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
     parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
+    parser.add_argument('-a', '--mask', dest='do_mask', action='store_true', default=False)
     parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False)
     parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False)
+    parser.add_argument('-d', '--delete', dest='do_delete', action='store_true', default=False)
+
     args = parser.parse_args()
 
     # If any processing step args are present, do not assume that we want to do all steps
@@ -66,7 +84,10 @@ if __name__ == "__main__":
         log.info("Aggregating layers")
         pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
-    # Stack layers
+    # Stack with
     if args.do_stack or do_all:
         log.info("Stacking before and after images")
         pyeo.create_new_stacks(merged_image_path, stacked_image_path)
+
+    #
+

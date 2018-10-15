@@ -23,6 +23,7 @@ import tenacity
 from planet import api as planet_api
 from multiprocessing.dummy import Pool
 import json
+import csv
 
 
 class ForestSentinelException(Exception):
@@ -511,14 +512,22 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     return out
 
 
-def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60):
+def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None):
     """For every folder in a directory, aggregates all 10m resolution bands into a single geotif
-     and create a cloudmask from the sen2cor confidence layer"""
+     and create a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
     for safe_dir in safe_file_path_list:
         out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
-        create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
+        if cloud_model_path:
+            with TemporaryDirectory() as td:
+                temp_model_mask_path = os.path.join(td, "temp_model.msk")
+                confidence_mask_path = create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
+                create_mask_from_model(out_path, cloud_model_path, temp_model_mask_path)
+                combine_masks((temp_model_mask_path, confidence_mask_path), get_mask_path(out_path),
+                              combination_func="or")
+        else:
+            create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
@@ -543,8 +552,9 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         out_mask_path = out_path + ".msk"
         old_mask_path = get_mask_path(old_image_path)
         new_mask_path = get_mask_path(new_image_path)
-        combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect" )
+        combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
     return out_path + ".tif"
+
 
 
 def get_sen_2_image_timestamp(image_name):
@@ -699,9 +709,12 @@ def composite_directory(image_dir, composite_out_path, format="GTiff"):
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
 
-def stack_with_composite(image_dir, composite_dir, out_path):
-    """Stacks an image up with the cloud composite"""
-
+def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path):
+    """Generates a change map comparing an image with a composite"""
+    with TemporaryDirectory() as td:
+        stacked_path = os.path.join(td, "comp_stack.tif")
+        stack_images((composite_path, image_path), stacked_path)
+        classify_image(stacked_path, model_path, class_out_path, prob_out_path)
 
 
 def get_masked_array(raster, mask_path, fill_value = -9999):
@@ -946,16 +959,25 @@ def get_poly_size(poly):
     return out
 
 
-def create_cloud_mask(image_path, model_path, mask_out_path, model_nodata = 1):
-    log = logging.getLogger(__name__)
-    log.info("Building cloud mask for {}".format(image_path))
-    mask_path = get_mask_path(image_path)
-    classify_image(image_path, model_path, mask_path, None)
-    mask = gdal.Open(mask_path, gdal.GA_Update)
-    mask.SetNoDataValue(model_nodata)
-    mask = None
-    log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
-    return mask_path
+def create_mask_from_model(image_path, model_path, model_clear = 0):
+    """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model."""
+    with TemporaryDirectory() as td:
+        log = logging.getLogger(__name__)
+        log.info("Building cloud mask for {}".format(image_path))
+        temp_mask = os.path.join(td, "cat_mask.tif")
+        classify_image(image_path, model_path, temp_mask, r"/dev/null")
+        temp_mask = gdal.Open(temp_mask, gdal.GA_Update)
+        temp_mask_array = temp_mask.GetVirtualMemArray()
+        mask_path = get_mask_path(image_path)
+        mask = create_matching_dataset(temp_mask, mask_path, datatype=gdal.GDT_Byte)
+        mask_array = mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
+        mask_array[:, :] = np.where(temp_mask_array != model_clear, 0, 1)
+        temp_mask_array = None
+        mask_array = None
+        temp_mask = None
+        mask = None
+        log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
+        return mask_path
 
 
 def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 30):
@@ -1066,7 +1088,7 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2):
+def classify_image(image_path, model_path, class_out_dir, prob_out_path=None, apply_mask = False, out_type="GTiff", num_chunks=2):
     """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
     with a ~15GB machine)"""
     log = logging.getLogger(__name__)
@@ -1074,7 +1096,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_m
     image = gdal.Open(image_path)
     model = joblib.load(model_path)
     map_out_image = create_matching_dataset(image, class_out_dir)
-    prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
+    if prob_out_path:
+        prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
     if apply_mask:
@@ -1088,7 +1111,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_m
     image_array = reshape_raster_for_ml(image_array)
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.int16)
-    probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
+    if prob_out_path:
+        probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
     chunk_size = int(n_samples / num_chunks)
@@ -1100,16 +1124,21 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_m
         out_view = classes[
             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
         ]
-        prob_view = probs[
-            chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
-        ]
         out_view[:] = model.predict(chunk_view)
-        prob_view[:, :] = model.predict_proba(chunk_view)
+        if prob_out_path:
+            prob_view = probs[
+                chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
+            ]
+            prob_view[:, :] = model.predict_proba(chunk_view)
     map_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
-    prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
+    if prob_out_path:
+        prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
     map_out_image = None
     prob_out_image = None
-    return class_out_dir, prob_out_path
+    if prob_out_path:
+        return class_out_dir, prob_out_path
+    else:
+        return class_out_dir
 
 
 def covert_image_format(image, format):
@@ -1188,6 +1217,14 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
     joblib.dump(model, model_out)
     with open(scores_out, 'w') as score_file:
         score_file.write(str(scores))
+
+
+def create_model_from_signatures(sig_csv_path, model_out):
+    model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
+                                     min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
+    data = np.loadtxt(sig_csv_path, delimiter=",")
+    model.fit(data[:, 1:], data[:, 0])
+    joblib.dump(model, model_out)
 
 
 def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326):
