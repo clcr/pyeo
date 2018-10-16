@@ -28,6 +28,8 @@ def test_ml_masking():
 
 if __name__ == "__main__":
     print(sys.path)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    log = pyeo.init_log("test_log.log")
     pyeo.create_model_from_signatures(r"test_data/cloud_training_outlier_removal.csv",
                                       r"test_data/cloud_model_v0.1.pkl")
     test_ml_masking()
