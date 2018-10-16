@@ -22,8 +22,8 @@ def test_ml_masking():
     pyeo.create_mask_from_model(
         r"test_data/20180103T172709.tif",
         r"test_data/cloud_model_v0.1.pkl",
-        r"test_outputs/ml_mask_test.tif"
     )
+    shutil.copy(r"test_data/20180103T172709.msk", r"test_outputs/model_mask.tif")
 
 
 if __name__ == "__main__":

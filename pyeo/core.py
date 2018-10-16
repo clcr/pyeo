@@ -965,7 +965,7 @@ def create_mask_from_model(image_path, model_path, model_clear = 0):
         log = logging.getLogger(__name__)
         log.info("Building cloud mask for {}".format(image_path))
         temp_mask_path = os.path.join(td, "cat_mask.tif")
-        classify_image(image_path, model_path, temp_mask_path)
+        classify_image(image_path, model_path, temp_mask_path, num_chunks=16)
         temp_mask = gdal.Open(temp_mask_path, gdal.GA_Update)
         temp_mask_array = temp_mask.GetVirtualMemArray()
         mask_path = get_mask_path(image_path)
@@ -1088,12 +1088,17 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, class_out_dir, prob_out_path=None, apply_mask = False, out_type="GTiff", num_chunks=2):
+def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
+                   apply_mask=False, out_type="GTiff", num_chunks=None):
     """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
     with a ~15GB machine)"""
     log = logging.getLogger(__name__)
     log.info("Starting classification for {} with model {}".format(image_path, model_path))
     image = gdal.Open(image_path)
+    if num_chunks == None:
+        log.info("No chunk size given, attempting autochunk.")
+        num_chunks = autochunk(image)
+        log.info("Autochunk to {} chunks".format(num_chunks))
     model = joblib.load(model_path)
     map_out_image = create_matching_dataset(image, class_out_dir)
     if prob_out_path:
@@ -1113,6 +1118,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None, ap
     classes = np.empty(n_samples, dtype=np.int16)
     if prob_out_path:
         probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
+
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
     chunk_size = int(n_samples / num_chunks)
@@ -1139,6 +1145,24 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None, ap
         return class_out_dir, prob_out_path
     else:
         return class_out_dir
+
+
+def autochunk(dataset, mem_limit=None):
+    """Calculates the number of chunks to break a dataset into without a memory error.
+    We want to break the dataset into as few chunks as possible without going over mem_limit.
+    mem_limit defaults to total amount of RAM available on machine if not specified"""
+    pixels = dataset.RasterXSize * dataset.RasterYSize
+    bytes_per_pixel = dataset.GetVirtualMemArray().dtype.itemsize*dataset.RasterCount
+    image_bytes = bytes_per_pixel*pixels
+    if not mem_limit:
+        mem_limit = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+    # if I went back now, I would fail basic programming here.
+    for num_chunks in range(1, pixels):
+        if pixels % num_chunks != 0:
+            continue
+        chunk_size_bytes = (pixels/num_chunks)*bytes_per_pixel
+        if chunk_size_bytes < mem_limit:
+            return num_chunks
 
 
 def covert_image_format(image, format):
@@ -1222,8 +1246,8 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
 def create_model_from_signatures(sig_csv_path, model_out):
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
-    data = np.loadtxt(sig_csv_path, delimiter=",")
-    model.fit(data[:, 1:], data[:, 0])
+    data = np.loadtxt(sig_csv_path, delimiter=",").T
+    model.fit(data[1:, :].T, data[0, :])
     joblib.dump(model, model_out)
 
 
