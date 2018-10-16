@@ -965,7 +965,7 @@ def create_mask_from_model(image_path, model_path, model_clear = 0):
         log = logging.getLogger(__name__)
         log.info("Building cloud mask for {}".format(image_path))
         temp_mask_path = os.path.join(td, "cat_mask.tif")
-        classify_image(image_path, model_path, temp_mask_path, num_chunks=16)
+        classify_image(image_path, model_path, temp_mask_path)
         temp_mask = gdal.Open(temp_mask_path, gdal.GA_Update)
         temp_mask_array = temp_mask.GetVirtualMemArray()
         mask_path = get_mask_path(image_path)
@@ -1155,7 +1155,9 @@ def autochunk(dataset, mem_limit=None):
     bytes_per_pixel = dataset.GetVirtualMemArray().dtype.itemsize*dataset.RasterCount
     image_bytes = bytes_per_pixel*pixels
     if not mem_limit:
-        mem_limit = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+        mem_limit = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_AVPHYS_PAGES')
+        # Lets assume that 20% of memory is being used for non-map bits
+        mem_limit = int(mem_limit*0.8)
     # if I went back now, I would fail basic programming here.
     for num_chunks in range(1, pixels):
         if pixels % num_chunks != 0:
@@ -1170,7 +1172,7 @@ def covert_image_format(image, format):
 
 
 def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
-                       apply_mask=False, out_type="GTiff", num_chunks=2):
+                       apply_mask=False, out_type="GTiff", num_chunks=None):
     """Classifies every .tif in in_dir using model at model_path. Outputs are saved
      in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively."""
     # Needs test
