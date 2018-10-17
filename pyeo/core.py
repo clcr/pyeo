@@ -699,13 +699,17 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Composite done")
 
 
-def composite_directory(image_dir, composite_out_path, format="GTiff"):
-    """Composites every image in image_dir, assumes all have associated masks."""
+def composite_directory(image_dir, composite_out_dir, format="GTiff"):
+    """Composites every image in image_dir, assumes all have associated masks.  Will
+     place a file named composite_[last image date].tif inside composite_out_dir"""
     log = logging.getLogger(__name__)
+
     log.info("Compositing {}".format(image_dir))
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
                           in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
                           if image_name.endswith(".tif")]
+    last_timestamp = get_image_acquisition_time(sorted_image_paths[-1])
+    composite_out_path = os.path.join(composite_out_dir, "composite_{}".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
 
@@ -1100,7 +1104,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
     model = joblib.load(model_path)
-    map_out_image = create_matching_dataset(image, class_out_dir)
+    map_out_image = create_matching_dataset(image, class_out_dir, format=out_type)
     if prob_out_path:
         prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
     model.n_cores = -1

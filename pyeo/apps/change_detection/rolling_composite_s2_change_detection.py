@@ -87,7 +87,7 @@ if __name__ == "__main__":
     # Stack with
     if args.do_stack or do_all:
         log.info("Stacking before and after images")
-        pyeo.create_new_stacks(merged_image_path, stacked_image_path)
+        pyeo.stack_old_and_new_images(args.composite_path, stacked_image_path)
 
     #
 

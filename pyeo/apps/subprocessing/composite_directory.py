@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser.add_argument('out_path', action='store', help="Output image path")
     parser.add_argument('-l', '--logpath', dest='logpath', action="store", default="composite.log",
                         help="Path to logfile (optional)")
+    parser.add_argument('-m', '--remask', dest='do_remask', action="store")
     args = parser.parse_args()
 
     pyeo.core.init_log(args.logpath)
