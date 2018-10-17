@@ -14,9 +14,12 @@ if __name__ == "__main__":
 
     log = pyeo.core.init_log("sen2cor_{}.log".format(array_id))
 
-    new_home = os.path.join((sen_2_cor_home), array_id)
-    os.mkdir(new_home)
+    new_home = os.path.join((sen_2_cor_home), str(array_id))
     log.info("Setting home to {}".format(new_home))
+    try:
+        os.mkdir(new_home)
+    except FileExistsError:
+        log.error("{} already exists, continuing.".format(new_home))
     os.putenv("SEN2COR_HOME", new_home)
 
     file_list = [os.path.join(args.l1_dir, l1_filename) for l1_filename in sorted(os.listdir(args.l1_dir))]
