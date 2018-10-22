@@ -64,7 +64,7 @@ if __name__ == "__main__":
     l2_image_path = os.path.join(project_root, r"images/L2")
     planet_image_path = os.path.join(project_root, r"images/planet")
     merged_image_path = os.path.join(project_root, r"images/merged")
-    stacked_image_path = os.path.join(project_root, r"images/stacked")
+    stacked_image_path = os.path.join(project_roo nmt, r"images/stacked")
     catagorised_image_path = os.path.join(project_root, r"output/categories")
     probability_image_path = os.path.join(project_root, r"output/probabilities")
 

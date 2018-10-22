@@ -1,4 +1,4 @@
-import Sen2Land
+from apps.proc_steps import Sen2Land
 import configparser
 import os
 
