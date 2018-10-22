@@ -28,7 +28,8 @@ if __name__ == "__main__":
                              'prior to compositing and stores them in the argument')
     parser.add_argument('-l', '--logpath', dest='logpath', action="store", default="composite.log",
                         help="Path to logfile (optional)")
-    parser.add_argument('-m', '--remask', dest='mask_path', action="store")
+    parser.add_argument('-r', '--remask', dest='mask_path', action="store",
+                        help="If present, remask the files using an image at model_path")
     args = parser.parse_args()
 
     comp_dir = args.in_dir
@@ -37,11 +38,11 @@ if __name__ == "__main__":
 
     if args.merge_path:
         comp_dir = args.merge_path
-        for safe_file in os.listdir(comp_dir):
-            pyeo.core.stack_sentinel_2_bands(args.in_dir, comp_dir)
+        for safe_file in [os.path.join(os.path.dirname(args.in_dir), file) for file in os.listdir(args.in_dir)]:
+            pyeo.core.stack_sentinel_2_bands(safe_file, comp_dir)
 
     if args.mask_path:
-        for image in os.listdir(comp_dir):
+        for image in [os.path.join(os.path.dirname(comp_dir), file) for file in os.listdir(comp_dir)]:
             pyeo.core.create_mask_from_model(image, args.mask_path)
 
     pyeo.core.composite_directory(comp_dir, args.out_path)
