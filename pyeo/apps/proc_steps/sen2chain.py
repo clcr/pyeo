@@ -1,5 +1,5 @@
 import configparser
-from Sen2Search import sen2_shp_query, sen2_json_query, save_query_output
+from apps.proc_steps.Sen2Search import sen2_shp_query, sen2_json_query, save_query_output
 
 # from Sen2Land import
 

@@ -30,4 +30,8 @@ if __name__ == "__main__":
 
     pyeo.core.init_log(args.logpath)
 
+    if args.do_remask:
+        for image in args.in_dir:
+            pyeo.core.create_mask_from_model()
+
     pyeo.core.composite_directory(args.in_dir, args.out_path)
