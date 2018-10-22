@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if args.merge_path:
         comp_dir = args.merge_path
         for safe_file in os.listdir(comp_dir):
-            pyeo.core.aggregate_and_mask_10m_bands(args.in_dir, comp_dir)
+            pyeo.core.stack_sentinel_2_bands(args.in_dir, comp_dir)
 
     if args.mask_path:
         for image in os.listdir(comp_dir):
