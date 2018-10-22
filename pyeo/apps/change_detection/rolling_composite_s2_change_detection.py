@@ -64,7 +64,7 @@ if __name__ == "__main__":
     l2_image_path = os.path.join(project_root, r"images/L2")
     planet_image_path = os.path.join(project_root, r"images/planet")
     merged_image_path = os.path.join(project_root, r"images/merged")
-    stacked_image_path = os.path.join(project_roo nmt, r"images/stacked")
+    stacked_image_path = os.path.join(project_root, r"images/stacked")
     catagorised_image_path = os.path.join(project_root, r"output/categories")
     probability_image_path = os.path.join(project_root, r"output/probabilities")
 
@@ -89,5 +89,5 @@ if __name__ == "__main__":
         log.info("Stacking before and after images")
         pyeo.stack_old_and_new_images(args.composite_path, stacked_image_path)
 
-    #
+
 

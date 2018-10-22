@@ -23,15 +23,25 @@ if __name__ == "__main__":
                                                  'latest cloud-free pixels.')
     parser.add_argument('in_dir', action='store', help="Path to the directory to be composited")
     parser.add_argument('out_path', action='store', help="Output image path")
+    parser.add_argument('-m', '--merge_bands', action="store", dest="merge_path",
+                        help='Treats the contents if in_dir as a L2 S2 directroy of .SAFE files; merges 10m images'
+                             'prior to compositing and stores them in the argument')
     parser.add_argument('-l', '--logpath', dest='logpath', action="store", default="composite.log",
                         help="Path to logfile (optional)")
-    parser.add_argument('-m', '--remask', dest='do_remask', action="store")
+    parser.add_argument('-m', '--remask', dest='mask_path', action="store")
     args = parser.parse_args()
+
+    comp_dir = args.in_dir
 
     pyeo.core.init_log(args.logpath)
 
-    if args.do_remask:
-        for image in args.in_dir:
-            pyeo.core.create_mask_from_model()
+    if args.merge_path:
+        comp_dir = args.merge_path
+        for safe_file in os.listdir(comp_dir):
+            pyeo.core.aggregate_and_mask_10m_bands(args.in_dir, comp_dir)
 
-    pyeo.core.composite_directory(args.in_dir, args.out_path)
+    if args.mask_path:
+        for image in os.listdir(comp_dir):
+            pyeo.core.create_mask_from_model(image, args.mask_path)
+
+    pyeo.core.composite_directory(comp_dir, args.out_path)
