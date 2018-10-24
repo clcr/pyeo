@@ -45,6 +45,8 @@ class StackImageException(ForestSentinelException):
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
                 output_folder=None, api=True):
     """
+
+
     From Geospatial Learn by Ciaran Robb, embedded here for portability.
 
     A convenience function that wraps sentinelsat query & download
@@ -739,6 +741,19 @@ def project_array(array_in, depth, axis):
     array_in = np.expand_dims(array_in, axis)
     array_in = np.repeat(array_in, depth, axis)
     return array_in
+
+
+def flatten_probability_image(prob_image, out_path):
+    """Produces a single-band raster containing the highest certainties in a input probablility raster"""
+    prob_raster = gdal.Open(prob_image)
+    out_raster = create_matching_dataset(prob_raster, out_path, bands=1)
+    prob_array = prob_raster.GetVirtualMemArray()
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    out_array[:, :] = prob_array.max(axis=0)
+    out_array = None
+    prob_array = None
+    out_raster = None
+    prob_raster = None
 
 
 def get_combined_polygon(rasters, geometry_mode ="intersect"):
