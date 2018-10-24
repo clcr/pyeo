@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--mask', dest='do_mask', action='store_true', default=False)
     parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False)
     parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False)
-    parser.add_argument('-d', '--delete', dest='do_delete', action='store_true', default=False)
+    parser.add_argument('-r', '--remove', dest='do_delete', action='store_true', default=False)
 
     args = parser.parse_args()
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     catagorised_image_path = os.path.join(project_root, r"output/categories")
     probability_image_path = os.path.join(project_root, r"output/probabilities")
 
-    # Query and download
+    # Query and download all images since last composite
     if args.do_download or do_all:
         products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
         log.info("Downloading")

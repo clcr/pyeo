@@ -30,7 +30,7 @@ if __name__ == "__main__":
     try:
         os.mkdir(new_home)
     except FileExistsError:
-        log.error("{} already exists, continuing.".format(new_home))
+        log.warning("{} already exists, continuing.".format(new_home))
     os.putenv("SEN2COR_HOME", new_home)
 
     file_list = [os.path.join(args.l1_dir, l1_filename) for l1_filename in sorted(os.listdir(args.l1_dir))]
