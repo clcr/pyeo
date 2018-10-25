@@ -2,8 +2,11 @@ import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import pyeo.core as pyeo
 import csv
+import gdal
+import numpy as np
+import boto3
 
-
+# Class, R, G, B, A, label
 DEFAULT_KEY = [
     ["1", "12", "193", "76", "255", "Stable Forest"],
     ["2", "229", "232", "23", "255", "Forest -> Veg"],
@@ -18,11 +21,29 @@ DEFAULT_KEY = [
 ]
 
 
-def create_report(class_path, certainty_path, out_dir, class_colour_key=DEFAULT_KEY):
-    create_report_layer(raster_path) # whoops dont actually need to do anything here
-    pyeo.flatten_probability_image(certainty_path, os.path.join(out_dir, ))
-    create_display_layer_(raster_path)
+def create_report(class_path, certainty_path, out_dir, class_color_key=DEFAULT_KEY):
+    if class_color_key != DEFAULT_KEY:
+        class_color_key = load_color_pallet(class_color_key)
+    pyeo.flatten_probability_image(certainty_path, os.path.join(out_dir, "prob.tif"))
+    create_display_layer(class_path, os.path.join(out_dir, "display.tif"), class_color_key)
 
-def create_display_layer(raster_path):
 
-    pyeo.create_matching_dataset(raster_path, out_path)
+def create_display_layer(class_path, out_path, class_color_key):
+    display_raster = pyeo.create_matching_dataset(class_path, out_path, bands=3)
+    display_array = display_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    class_raster = gdal.Open(class_path)
+    class_array = class_raster.GetVirtualMemArray()
+    for index, class_pixel in np.ndenumerate(class_array):
+        display_array[index[0], index[1], index[2]] =\
+            [class_row[1:4] for class_row in class_color_key if class_row[0] == str(class_pixel)]
+    display_array = None
+    class_array = None
+    display_raster = None
+    class_raster = None
+
+
+def load_color_pallet(pallet_path):
+    reader = csv.reader(pallet_path)
+    out = list(reader)
+    return out
+
