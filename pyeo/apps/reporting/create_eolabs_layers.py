@@ -37,7 +37,7 @@ def create_display_layer(class_path, out_path, class_color_key):
     class_array = class_raster.GetVirtualMemArray()
     for index, class_pixel in np.ndenumerate(class_array):
         display_array[:, index[0], index[1]] =\
-            [class_row[1:4] for class_row in class_color_key if class_row[0] == str(class_pixel)]
+            [class_row[1:4] for class_row in class_color_key if class_row[0] == str(class_pixel)][0]
     display_array = None
     class_array = None
     display_raster = None
