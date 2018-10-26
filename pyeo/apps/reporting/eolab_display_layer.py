@@ -34,8 +34,8 @@ def create_display_layer(class_path, out_path, class_color_key):
     class_raster = gdal.Open(class_path)
     class_array = class_raster.GetVirtualMemArray()
     for index, class_pixel in np.ndenumerate(class_array):
-        display_array[index[0], index[1], index[2]] =\
-            [class_row[1:4] for class_row in class_color_key if class_row[0] == str(class_pixel)]
+        display_array[:, index[0], index[1]] =\
+            [class_row[1:4] for class_row in class_color_key if class_row[0] == int(class_pixel)]
     display_array = None
     class_array = None
     display_raster = None
@@ -47,3 +47,11 @@ def load_color_pallet(pallet_path):
     out = list(reader)
     return out
 
+
+def write_color_pallet(pallet, pallet_path):
+    with open(pallet_path, "w") as f:
+        writer = csv.writer(f)
+        writer.write()
+
+
+if __name__ == "__main__":

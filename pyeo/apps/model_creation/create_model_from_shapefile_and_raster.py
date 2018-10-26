@@ -53,4 +53,3 @@ if __name__=="__main__":
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
     model.fit(learning_data, classes)
     joblib.dump(model, model_out_path)
-

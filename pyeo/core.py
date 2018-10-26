@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import datetime as dt
 import glob
 import re
@@ -16,14 +17,18 @@ import sklearn.ensemble as ens
 from sklearn.model_selection import cross_val_score
 import scipy.sparse as sp
 import joblib
-import logging
 import shutil
-import requests
-import tenacity
-from planet import api as planet_api
-from multiprocessing.dummy import Pool
+
 import json
 import csv
+
+try:
+    import requests
+    import tenacity
+    from planet import api as planet_api
+    from multiprocessing.dummy import Pool
+except ModuleNotFoundError:
+    print("Requests, Tenacity, Planet and Multiprocessing are required for Planet data downloading")
 
 
 class ForestSentinelException(Exception):
