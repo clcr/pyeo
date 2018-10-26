@@ -57,7 +57,12 @@ def write_color_pallet(pallet, pallet_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Produces a zip of products to upload to EOLabs")
-    parser.add_argument("Class path")
-    parser.add_argument("Certainty path")
-    parser.add_argument("Output folder")
-    parser.add_argument("-p" "--pallet")
+    parser.add_argument("Class path", dest="class_path")
+    parser.add_argument("Certainty path", dest="certainty_path")
+    parser.add_argument("Output folder", dest="output_folder")
+    parser.add_argument("-p" "--pallet", dest="pallet")
+    args = parser.parse_args()
+
+    create_report(args.class_path, args.certainty_path, args.output_folder)
+
+
