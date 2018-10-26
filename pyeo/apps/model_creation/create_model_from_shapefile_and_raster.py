@@ -21,7 +21,8 @@ At present, the model created is a balanced random forest classifier; there are 
 to take the model as an augment, but these are not yet implemented.
 
 You can call this script from the command with a .ini file as an argument"""
-
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import pyeo.core as pc
 import configparser
 import argparse

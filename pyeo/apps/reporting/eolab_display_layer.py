@@ -5,6 +5,7 @@ import csv
 import gdal
 import numpy as np
 import boto3
+import argparse
 
 # Class, R, G, B, A, label
 DEFAULT_KEY = [
@@ -55,3 +56,8 @@ def write_color_pallet(pallet, pallet_path):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Produces a zip of products to upload to EOLabs")
+    parser.add_argument("Class path")
+    parser.add_argument("Certainty path")
+    parser.add_argument("Output folder")
+    parser.add_argument("-p" "--pallet")
