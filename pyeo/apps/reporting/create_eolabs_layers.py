@@ -30,9 +30,10 @@ def create_report(class_path, certainty_path, out_dir, class_color_key=DEFAULT_K
 
 
 def create_display_layer(class_path, out_path, class_color_key):
-    display_raster = pyeo.create_matching_dataset(class_path, out_path, bands=3)
-    display_array = display_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     class_raster = gdal.Open(class_path)
+    display_raster = pyeo.create_matching_dataset(class_raster, out_path, bands=3)
+    display_array = display_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+
     class_array = class_raster.GetVirtualMemArray()
     for index, class_pixel in np.ndenumerate(class_array):
         display_array[:, index[0], index[1]] =\
