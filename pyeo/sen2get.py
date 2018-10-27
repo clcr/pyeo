@@ -24,7 +24,7 @@ import json
 #from geojson import Polygon
 
 # OPTIONS
-ndown = 20 # number of scenes to be downloaded (in order of least cloud cover)
+ndown = 2 # number of scenes to be downloaded (in order of least cloud cover)
 wd = '/home/heiko/linuxpy/spacepark/' # working directory on Virtualbox
 #wd = '/scratch/clcr/shared/py/' # working directory on ALICE
 #shapefile = 'Sitios_Poly.shp' # ESRI Shapefile of the study area
