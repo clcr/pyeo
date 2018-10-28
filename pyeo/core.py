@@ -208,6 +208,7 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
 
 def download_new_s2_data(new_data, aoi_image_dir):
     """Downloads new imagery from AWS. new_data is a dict from Sentinel_2"""
+    log = logging.getLogger(__name__)
     for image in new_data:
         download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
         # added by hb91
