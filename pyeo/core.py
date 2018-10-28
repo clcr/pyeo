@@ -399,9 +399,9 @@ def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unpr
     log = logging.getLogger(__name__)
     images = [image for image in os.listdir(image_directory)
               if image.startswith('MSIL1C', 4)]
-    log.info(images)
     # Opportunity for multithreading here
     for image in images:
+        log.info("Atmospheric correction of ".format(image))
         image_path = os.path.join(image_directory, image)
         image_timestamp = get_sen_2_image_timestamp(image)
         if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
