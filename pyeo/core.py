@@ -210,6 +210,7 @@ def download_new_s2_data(new_data, aoi_image_dir):
     """Downloads new imagery from AWS. new_data is a dict from Sentinel_2"""
     for image in new_data:
         download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
+        log.info("Downloading {}".format(new_data[image]['identifier']))
 
 
 def load_api_key(path_to_api):
@@ -524,6 +525,8 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
      and create a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
     for safe_dir in safe_file_path_list:
+        print("Hello World: Safe dir")
+        print(safe_dir)
         out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         if cloud_model_path:
@@ -541,7 +544,15 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(band)
     image_glob = os.path.join(safe_dir, granule_path)
+    print("Hello World: Granule path")
+    print(granule_path)
+    print("Hello World: Image glob")
+    print(image_glob)
     file_list = glob.glob(image_glob)
+    print("Hello World: File list")
+    for thisfile in file_list: 
+        print(thisfile)
+        print("\n")
     file_list.sort()   # Sorting alphabetically gives the right order for bands
     stack_images(file_list, out_image_path, geometry_mode="intersect")
     return out_image_path
