@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # Atmospheric correction
     if args.do_preprocess or do_all:
         log.info("Applying sen2cor")
-        pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=True)
+        pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
 
     # Aggregating layers into single image
     if args.do_merge or do_all:
