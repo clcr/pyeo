@@ -163,7 +163,7 @@ def check_for_new_s2_data(aoi_path, aoi_image_dir, conf):
         result = sent2_query(user, password, aoi_path,
                              last_date.isoformat(timespec='seconds')+'Z',
                              dt.datetime.today().isoformat(timespec='seconds')+'Z')
-        return result[1]
+        return result
     except ValueError:
         log.error("aoi_image_dir empty, please add a starting image")
         sys.exit(1)
@@ -177,8 +177,8 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
     start_timestamp = dt.datetime.strptime(start_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
     end_timestamp = dt.datetime.strptime(end_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
     result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp)
-    log.info("Search returned {} images".format(len(result[1])))
-    return result[1]
+    log.info("Search returned {} images".format(len(result)))
+    return result
 
 
 def download_new_s2_data(new_data, aoi_image_dir):
