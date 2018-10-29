@@ -90,37 +90,12 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
     """
     ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
     api = SentinelAPI(user, passwd)
-
-    # NOWT WRONG WITH API -
-    # TODO Maybe improve check of library so it doesn't use a global
-    #    if oldsat is True:
-    #        footprint = get_coordinates(geojsonfile)
-    #    else:
     footprint = geojson_to_wkt(read_geojson(geojsonfile))
     products = api.query(footprint,
                          ((start_date, end_date)), platformname="Sentinel-2",
-                         cloudcoverpercentage="[0 TO " + cloud + "]")  # ,producttype="GRD")
-    products_df = api.to_dataframe(products)
-    if api and output_folder != None:
-        api.download_all(products, directory_path=output_folder)
+                         cloudcoverpercentage="[0 TO " + cloud + "]")
+    return products
 
-
-    else:
-        prods = np.arange(len(products))
-        # the api was proving flaky whereas the cmd line always works hence this
-        # is alternate the download option
-        if output_folder != None:
-            #            procList = []
-            for prod in prods:
-                # os.chdir(output_folder)
-                sceneID = products[prod]['uuid']
-                cmd = ['sentinel', 'download', '-p', output_folder,
-                       user, passwd, sceneID]
-                print(sceneID + ' downloading')
-                subprocess.call(cmd)
-
-            # [p.wait() for p in procList]
-    return products_df, products
 
 
 def init_log(log_path):
