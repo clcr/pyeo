@@ -377,7 +377,8 @@ def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
     log = logging.getLogger(__name__)
     log.info("sen2cor L2A path {}".format(L2A_path))
     log.info("sen2cor image path {}".format(image_path))
-    sen2cor_proc = subprocess.Popen([L2A_path, '--resolution=10', image_path],
+    # added sen2cor_path by hb91
+    sen2cor_proc = subprocess.Popen([sen2cor_path, L2A_path, '--resolution=10', image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
 
@@ -418,8 +419,8 @@ def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unpr
             pass
         else:
             l2_name = os.path.basename(l2_path)
-            log.info("L2 path: {}".format(l2_path))
-            log.info("New name: {}".format(os.path.join(out_directory, l2_name)))
+            log.info("L2A path: {}".format(l2_path))
+            log.info("New path: {}".format(os.path.join(out_directory, l2_name)))
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
 
