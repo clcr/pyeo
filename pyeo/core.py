@@ -378,8 +378,8 @@ def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
     # added sen2cor_path by hb91
     log.info("sen2cor path {}".format(sen2cor_path))
     log.info("image path   {}".format(image_path))
-    log.info("calling subprocess: {}".format([sen2cor_path, '--resolution=10', image_path]))
-    sen2cor_proc = subprocess.Popen([sen2cor_path, '--resolution=10', image_path],
+    log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--resolution=10']))
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--resolution=10'],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
 
