@@ -391,6 +391,7 @@ def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
     log.info("sen2cor processing finished for {}".format(image_path))
     if delete_unprocessed_image:
         shutil.rmtree(image_path)
+    log.info("returning {}".format(image_path.replace("MSIL1C", "MSIL2A")))
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
