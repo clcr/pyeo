@@ -428,7 +428,7 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
     # edited by hb91
     # granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
-    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_{}.jp2".format(resolution)
+    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
     image_glob = os.path.join(l2_SAFE_file, granule_path)
     if not glob.glob(image_glob):
         if warning:
@@ -523,7 +523,7 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     """Opens a dataset given a safe file. Give band as a string."""
     #image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
     # edited by hb91
-    image_glob = r"GRANULE/*/IMG_DATA/*_{}_{}.jp2".format(band, resolution)
+    image_glob = r"GRANULE/*/IMG_DATA/*_{}.jp2".format(band)
     fp_glob = os.path.join(safe_file_path, image_glob)
     image_file_path = glob.glob(fp_glob)
     out = gdal.Open(image_file_path[0])
@@ -556,7 +556,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     log = logging.getLogger(__name__)
     # edited by hb91
     #granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band)
-    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_{}.jp2".format(band)
+    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
     image_glob = os.path.join(safe_dir, granule_path)
     # added by hb91
     log.info("Granule path: {}".format(granule_path))
