@@ -84,9 +84,10 @@ if __name__ == "__main__":
         log.info("Aggregating layers")
         pyeo.aggregate_and_mask_10m_bands(l2_image_dir, merged_image_dir, cloud_certainty_threshold)
 
-    for image in pyeo.sort_by_timestamp(os.listdir(merged_image_dir), recent_first=False):
+    images = [image for image in pyeo.sort_by_timestamp(os.listdir(merged_image_dir), recent_first=False)
+              if image.endswith(".tif")]
+    for image in images:
         log.info("Detecting change for {}".format(image))
-
         new_image_path = os.path.join(merged_image_dir, image)
 
         # Stack with composite

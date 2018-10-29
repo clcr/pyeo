@@ -494,12 +494,16 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     return out
 
 
-def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None):
+def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, force_reprocess=False):
     """For every folder in a directory, aggregates all 10m resolution bands into a single geotif
      and create a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
+    log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
     for safe_dir in safe_file_path_list:
         out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
+        if os.path.exists(out_path) and not force_reprocess:
+            log.info("{} exists, skipping".format(out_path))
+            continue
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         if cloud_model_path:
             with TemporaryDirectory() as td:
