@@ -401,7 +401,7 @@ def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unpr
               if image.startswith('MSIL1C', 4)]
     # Opportunity for multithreading here
     for image in images:
-        log.info("Atmospheric correction of ".format(image))
+        log.info("Atmospheric correction of {}".format(image))
         image_path = os.path.join(image_directory, image)
         image_timestamp = get_sen_2_image_timestamp(image)
         if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
@@ -414,6 +414,8 @@ def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unpr
             pass
         else:
             l2_name = os.path.basename(l2_path)
+            log.info("L2 path: {}".format(l2_path))
+            log.info("New name: {}".format(os.path.join(out_directory, l2_name)))
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
 
