@@ -368,17 +368,17 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
         log.info("Item {} download complete".format(item_id))
 
 
-def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
+def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
     """Applies sen2cor to the SAFE file at image_path. Returns the path to the new product."""
     # Here be OS magic. Since sen2cor runs in its own process, Python has to spin around and wait
     # for it; since it's doing that, it may as well be logging the output from sen2cor. This
     # approatch can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
     log = logging.getLogger(__name__)
-    log.info("sen2cor L2A path {}".format(L2A_path))
+    log.info("sen2cor path {}".format(sen2cor_path))
     log.info("sen2cor image path {}".format(image_path))
     # added sen2cor_path by hb91
-    sen2cor_proc = subprocess.Popen([sen2cor_path, L2A_path, '--resolution=10', image_path],
+    sen2cor_proc = subprocess.Popen([sen2cor_path, '--resolution=10', image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
 
@@ -399,27 +399,27 @@ def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unprocessed_image=False):
+def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
     """Applies Sen2cor cloud correction to level 1C images"""
     log = logging.getLogger(__name__)
-    images = [image for image in os.listdir(image_directory)
+    images = [image for image in os.listdir(in_directory)
               if image.startswith('MSIL1C', 4)]
     # Opportunity for multithreading here
     for image in images:
         log.info("Atmospheric correction of {}".format(image))
-        image_path = os.path.join(image_directory, image)
+        image_path = os.path.join(in_directory, image)
         image_timestamp = get_sen_2_image_timestamp(image)
         if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
             log.warning("{} exists. Skipping.".format(image.replace("MSIL1C", "MSIL2A")))
             continue
         try:
-            l2_path = apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=delete_unprocessed_image)
+            l2_path = apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=delete_unprocessed_image)
         except subprocess.CalledProcessError:
             log.error("Atmospheric correction failed for {}. Moving on to next image.".format(image))
             pass
         else:
             l2_name = os.path.basename(l2_path)
-            log.info("L2A path: {}".format(l2_path))
+            log.info("L2  path: {}".format(l2_path))
             log.info("New path: {}".format(os.path.join(out_directory, l2_name)))
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
