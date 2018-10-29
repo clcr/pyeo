@@ -375,9 +375,10 @@ def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
     # approatch can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
     log = logging.getLogger(__name__)
-    log.info("sen2cor path {}".format(sen2cor_path))
-    log.info("sen2cor image path {}".format(image_path))
     # added sen2cor_path by hb91
+    log.info("sen2cor path {}".format(sen2cor_path))
+    log.info("image path   {}".format(image_path))
+    log.info("calling subprocess: {}".format([sen2cor_path, '--resolution=10', image_path]))
     sen2cor_proc = subprocess.Popen([sen2cor_path, '--resolution=10', image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
