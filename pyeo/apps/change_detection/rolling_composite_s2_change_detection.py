@@ -96,7 +96,7 @@ if __name__ == "__main__":
         # Stack with composite
         if args.do_stack or do_all:
             log.info("Stacking images with composite")
-            new_stack_path = pyeo.stack_old_and_new_images(composite_dir, new_image_path, stacked_image_dir)
+            new_stack_path = pyeo.stack_old_and_new_images(latest_composite_path, new_image_path, stacked_image_dir)
 
         # Classify with composite
         if args.do_classify or do_all:
