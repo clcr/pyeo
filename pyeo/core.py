@@ -700,7 +700,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     output_image = None
     log.info("Composite done")
     log.info("Creating composite mask")
-    combine_masks(mask_paths, composite_out_path[-4:]+".msk")
+    combine_masks(mask_paths, composite_out_path[-4:]+".msk", combination_func='or')
     return composite_out_path
 
 
@@ -714,7 +714,7 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
                           in sort_by_s2_timestamp(os.listdir(image_dir), recent_first=False)
                           if image_name.endswith(".tif")]
     last_timestamp = get_s2_image_acquisition_time(sorted_image_paths[-1])
-    composite_out_path = os.path.join(composite_out_dir, "composite_{}".format(last_timestamp.strftime("%Y%m%dT%H%M%S")))
+    composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp.strftime("%Y%m%dT%H%M%S")))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
 
