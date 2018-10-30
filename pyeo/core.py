@@ -486,14 +486,13 @@ def sort_by_pyeo_timestamp(strings, recent_first=True):
     return strings
 
 
-
 def get_s2_image_acquisition_time(image_name):
     """Gets the datetime object from a .safe filename or a planet image. No test."""
     return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
 
 
 def get_pyeo_image_acquisition_time(image_name):
-    return dt.datetime.strptime(get_pyeo_timestamp(image_name)(0), '%Y%m%d%H%M%S')
+    return dt.datetime.strptime(get_pyeo_timestamp(image_name), '%Y%m%d%H%M%S')
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
@@ -564,11 +563,11 @@ def get_pyeo_timestamp(image_name):
     """Returns a list of all timestamps in a Pyeo image."""
     timestamp_re = r"\d{14}"
     ts_result = re.search(timestamp_re, image_name)
-    return ts_result.group
+    return ts_result.group(0)
 
 
 def stack_images(raster_paths, out_raster_path,
-                 geometry_mode = "intersect", format = "GTiff", datatype=gdal.GDT_Int32):
+                 geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32):
     """Stacks multiple images in image_paths together, using the information of the top image.
     geometry_mode can be "union" or "intersect" """
     log = logging.getLogger(__name__)
