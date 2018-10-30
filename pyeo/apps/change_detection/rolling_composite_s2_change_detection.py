@@ -34,6 +34,7 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--mask', dest='do_mask', action='store_true', default=False)
     parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False)
     parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False)
+    parser.add_argument('-u', '--update', dest='do_update', action='store_true', default=False)
     parser.add_argument('-r', '--remove', dest='do_delete', action='store_true', default=False)
 
     args = parser.parse_args()
@@ -103,7 +104,9 @@ if __name__ == "__main__":
         # Classify with composite
         if args.do_classify or do_all:
             log.info("Classifying with composite")
-            pyeo.classify_image(stacked_image_dir, model_path, catagorised_image_dir, probability_image_dir)
+            new_class_image = os.path.join(catagorised_image_dir, "class_{}.tif".format(os.path.basename(new_stack_path)))
+            new_prob_image = os.path.join(probability_image_dir, "prob_{}.tif".format(os.path.basename(new_stack_path)))
+            pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image)
 
         # Update composite
         if args.do_update or do_all:
