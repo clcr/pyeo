@@ -480,7 +480,7 @@ def sort_by_s2_timestamp(strings, recent_first=True):
     return strings
 
 
-def sort_by_pyeo_timestamp(strings, timestamp_spec, recent_first=True):
+def sort_by_pyeo_timestamp(strings, recent_first=True):
     """Takes a list of strings and a timestamp spec as specifications and sorts list by timestamp"""
     strings.sort(key=lambda x: get_pyeo_image_acquisition_time(x), reverse=recent_first)
     return strings
@@ -700,6 +700,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     output_array = None
     output_image = None
     log.info("Composite done")
+    return composite_out_path
 
 
 def composite_directory(image_dir, composite_out_dir, format="GTiff"):

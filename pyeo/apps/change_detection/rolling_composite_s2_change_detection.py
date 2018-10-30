@@ -54,7 +54,7 @@ if __name__ == "__main__":
     cloud_cover = conf['forest_sentinel']['cloud_cover']
     cloud_certainty_threshold = int(conf['forest_sentinel']['cloud_certainty_threshold'])
     model_path = conf['forest_sentinel']['model']
-    composite_path = conf['forest_sentinel']['composite']
+    composite_dir = conf['forest_sentinel']['composite']
     sen2cor_path = conf['sen2cor']['path']
 
     pyeo.create_file_structure(project_root)
@@ -84,6 +84,9 @@ if __name__ == "__main__":
         log.info("Aggregating layers")
         pyeo.aggregate_and_mask_10m_bands(l2_image_dir, merged_image_dir, cloud_certainty_threshold)
 
+    latest_composite_path = \
+        [image for image in pyeo.sort_by_pyeo_timestamp(os.listdir(composite_dir), recent_first=True)][0]
+
     images = [image for image in pyeo.sort_by_pyeo_timestamp(os.listdir(merged_image_dir), recent_first=False)
               if image.endswith(".tif")]
     for image in images:
@@ -93,7 +96,7 @@ if __name__ == "__main__":
         # Stack with composite
         if args.do_stack or do_all:
             log.info("Stacking images with composite")
-            new_stack_path = pyeo.stack_old_and_new_images(composite_path, new_image_path, stacked_image_dir)
+            new_stack_path = pyeo.stack_old_and_new_images(composite_dir, new_image_path, stacked_image_dir)
 
         # Classify with composite
         if args.do_classify or do_all:
@@ -103,6 +106,7 @@ if __name__ == "__main__":
         # Update composite
         if args.do_update or do_all:
             log.info("Updating composite")
-            pyeo.composite_images_with_mask((composite_path, new_image_path), composite_path)
+            latest_composite_path = \
+                pyeo.composite_images_with_mask((latest_composite_path, new_image_path), composite_dir)
 
     log.info("***PROCESSING END***")
