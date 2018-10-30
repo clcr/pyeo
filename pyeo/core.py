@@ -372,7 +372,7 @@ def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
     """Applies sen2cor to the SAFE file at image_path. Returns the path to the new product."""
     # Here be OS magic. Since sen2cor runs in its own process, Python has to spin around and wait
     # for it; since it's doing that, it may as well be logging the output from sen2cor. This
-    # approatch can be multithreaded in future to process multiple image (1 per core) but that
+    # approach can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
     log = logging.getLogger(__name__)
     # added sen2cor_path by hb91
@@ -385,12 +385,12 @@ def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
 
     while True:
         nextline = sen2cor_proc.stdout.readline()
+        log.info(nextline)
         if nextline == '' and sen2cor_proc.poll() is not None:
             break
         if "CRITICAL" in nextline:
             log.error(nextline)
             break
-        log.info(nextline)
 
     log.info("sen2cor processing finished for {}".format(image_path))
     if delete_unprocessed_image:
