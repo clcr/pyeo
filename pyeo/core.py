@@ -654,8 +654,6 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
     composite_out_path will be created. Takes projection, resolution, ect from first band of first raster in list."""
 
-    #TODO: Add code that updates an existing composite mask. Should be doable inside this function.
-
     log = logging.getLogger(__name__)
     driver = gdal.GetDriverByName(format)
     in_raster_list = [gdal.Open(raster) for raster in in_raster_path_list]
@@ -679,6 +677,8 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     if len(output_array.shape) == 2:
         output_array = np.expand_dims(output_array, 0)
 
+    mask_paths = []
+
     for i, in_raster in enumerate(in_raster_list):
         # Get a view of in_raster according to output_array
         log.info("Adding {} to composite".format(in_raster_path_list[i]))
@@ -687,9 +687,9 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         output_view = output_array[:, y_min:y_max, x_min:x_max]
 
         # Move every unmasked pixel in in_raster to output_view
-        mask_path = get_mask_path(in_raster_path_list[i])
-        log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_path))
-        in_masked = get_masked_array(in_raster, mask_path)
+        mask_paths.append(get_mask_path(in_raster_path_list[i]))
+        log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
+        in_masked = get_masked_array(in_raster, mask_paths[i])
         np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
         # Deallocate
@@ -699,6 +699,8 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     output_array = None
     output_image = None
     log.info("Composite done")
+    log.info("Creating composite mask")
+    combine_masks(mask_paths, composite_out_path[-4:]+".msk")
     return composite_out_path
 
 
