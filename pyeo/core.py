@@ -376,8 +376,6 @@ def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
     # will take some work to make sure they all finish before the program moves on.
     log = logging.getLogger(__name__)
     # added sen2cor_path by hb91
-    log.info("sen2cor path {}".format(sen2cor_path))
-    log.info("image path   {}".format(image_path))
     log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--resolution=10']))
     sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--resolution=10'],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -385,7 +383,8 @@ def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
 
     while True:
         nextline = sen2cor_proc.stdout.readline()
-        log.info(nextline)
+        if len(nextline) > 0:
+            log.info(nextline)
         if nextline == '' and sen2cor_proc.poll() is not None:
             break
         if "CRITICAL" in nextline:
@@ -396,7 +395,6 @@ def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
     if delete_unprocessed_image:
         log.info("removing {}".format(image_path))
         shutil.rmtree(image_path)
-    #log.info("returning {}".format(image_path.replace("MSIL1C", "MSIL2A")))
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
@@ -430,9 +428,9 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     If warning=True, prompts first."""
     log = logging.getLogger(__name__)
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
     # edited by hb91
-    # granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
-    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
+    #granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
     image_glob = os.path.join(l2_SAFE_file, granule_path)
     if not glob.glob(image_glob):
         if warning:
@@ -525,9 +523,9 @@ def get_image_acquisition_time(image_name):
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     """Opens a dataset given a safe file. Give band as a string."""
-    #image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
+    image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
     # edited by hb91
-    image_glob = r"GRANULE/*/IMG_DATA/*_{}.jp2".format(band)
+    #image_glob = r"GRANULE/*/IMG_DATA/*_{}.jp2".format(band)
     fp_glob = os.path.join(safe_file_path, image_glob)
     image_file_path = glob.glob(fp_glob)
     out = gdal.Open(image_file_path[0])
@@ -541,7 +539,7 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
     for safe_dir in safe_file_path_list:
         # added by hb91
-        log.info("Safe dir: {}".format(safe_dir))
+        log.info("SAFE dir: {}".format(safe_dir))
         out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         if cloud_model_path:
@@ -558,9 +556,9 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     log = logging.getLogger(__name__)
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
     # edited by hb91
-    #granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band)
-    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
+    #granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
     image_glob = os.path.join(safe_dir, granule_path)
     # added by hb91
     log.info("Granule path: {}".format(granule_path))
@@ -568,10 +566,13 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
     # added by hb91
-    log.info("Ordered file list for stacking:")
-    for thisfile in file_list:
-        log.info("Band: {}".format(thisfile))
-    stack_images(file_list, out_image_path, geometry_mode="intersect")
+    if file_list == "":
+        log.error("File list for stacking is empty.")
+    else
+        log.info("Ordered file list for stacking:")
+        for thisfile in file_list:
+            log.info("Band: {}".format(thisfile))
+        stack_images(file_list, out_image_path, geometry_mode="intersect")
     return out_image_path
 
 
@@ -589,7 +590,6 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         new_mask_path = get_mask_path(new_image_path)
         combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
     return out_path + ".tif"
-
 
 
 def get_sen_2_image_timestamp(image_name):
@@ -610,7 +610,7 @@ def stack_images(raster_paths, out_raster_path,
         log.info("Raster: {}".format(thisfile))
     #log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
-        raise StackImagesException("stack_images requires at least two input images")
+        raise StackImagesException("stack_images requires at least two input images.")
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
     total_layers = sum(raster.RasterCount for raster in rasters)
     projection = rasters[0].GetProjection()
