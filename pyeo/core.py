@@ -1051,14 +1051,14 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     out_mask_array = out_mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
     for in_mask in masks:
         in_mask_array = in_mask.GetVirtualMemArray()
-        if geometry_func == "intersection":
+        if geometry_func == "intersect":
             out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_mask, combined_polygon)
             in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_mask, combined_polygon)
         elif geometry_func == "union":
             out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_mask, get_raster_bounds(in_mask))
             in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_mask, get_raster_bounds(in_mask))
         else:
-            raise Exception("Invalid geometry_func; can be 'intersection' or 'union'")
+            raise Exception("Invalid geometry_func; can be 'intersect' or 'union'")
         out_mask_view = out_mask_array[out_y_min: out_y_max, out_x_min: out_x_max]
         in_mask_view = in_mask_array[in_y_min: in_y_max, in_x_min: in_x_max]
         if combination_func is 'or':
