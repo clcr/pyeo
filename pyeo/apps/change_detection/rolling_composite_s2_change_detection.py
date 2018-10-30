@@ -106,7 +106,7 @@ if __name__ == "__main__":
             log.info("Classifying with composite")
             new_class_image = os.path.join(catagorised_image_dir, "class_{}.tif".format(os.path.basename(new_stack_path)))
             new_prob_image = os.path.join(probability_image_dir, "prob_{}.tif".format(os.path.basename(new_stack_path)))
-            pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image)
+            pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=2)
 
         # Update composite
         if args.do_update or do_all:
