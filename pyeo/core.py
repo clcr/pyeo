@@ -568,7 +568,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     # added by hb91
     if file_list == "":
         log.error("File list for stacking is empty.")
-    else
+    else:
         log.info("Ordered file list for stacking:")
         for thisfile in file_list:
             log.info("Band: {}".format(thisfile))
