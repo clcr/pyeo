@@ -184,5 +184,5 @@ def test_sort_by_timestamp():
         image_1 = os.path.join(td, r"S2A_MSIL1C_20180703T073611_N0206_R092_T37NBA_20180703T094637.SAFE")
         input = [image_2, image_3, image_4, image_1]
         target = [image_1, image_2, image_3, image_4]
-        out_paths = pyeo.sort_by_timestamp(input)
+        out_paths = pyeo.sort_by_s2_timestamp(input)
         assert out_paths == target

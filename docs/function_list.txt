@@ -24,8 +24,8 @@ Planet data acquisition
 Sentinel 2 preprocessing
   apply_sen2cor
   atmospheric_correction
-  sort_by_timestamp
-  get_image_acquisition_time
+  sort_by_s2_timestamp
+  get_s2_image_acquisition_time
   open_dataset_from_safe
   aggregate_and_mask_10m_bands
   stack_sentinel_2_bands

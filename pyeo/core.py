@@ -449,7 +449,7 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
     safe_files = glob.glob(os.path.join(image_dir, "*.tif"))
     if len(safe_files) == 0:
         raise CreateNewStacksException("image_dir is empty")
-    safe_files = sort_by_timestamp(safe_files)
+    safe_files = sort_by_s2_timestamp(safe_files)
     latest_image_path = safe_files[0]
     latest_image = gdal.Open(latest_image_path)
     new_data_poly = get_raster_bounds(latest_image)
@@ -473,16 +473,27 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
     return new_images
 
 
-def sort_by_timestamp(strings, recent_first=True):
+def sort_by_s2_timestamp(strings, recent_first=True):
     """Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
     guarantee ordering of strings with the same timestamp."""
-    strings.sort(key=lambda x: get_image_acquisition_time(x), reverse=recent_first)
+    strings.sort(key=lambda x: get_s2_image_acquisition_time(x), reverse=recent_first)
     return strings
 
 
-def get_image_acquisition_time(image_name):
-    """Gets the datetime object from a .safe filename of a planet image. No test."""
+def sort_by_pyeo_timestamp(strings, timestamp_spec, recent_first=True):
+    """Takes a list of strings and a timestamp spec as specifications and sorts list by timestamp"""
+    strings.sort(key=lambda x: get_pyeo_image_acquisition_time(x), reverse=recent_first)
+    return strings
+
+
+
+def get_s2_image_acquisition_time(image_name):
+    """Gets the datetime object from a .safe filename or a planet image. No test."""
     return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
+
+
+def get_pyeo_image_acquisition_time(image_name):
+    return dt.datetime.strptime(get_pyeo_timestamp(image_name)(0), '%Y%m%d%H%M%S')
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
@@ -542,12 +553,18 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
     return out_path + ".tif"
 
 
-
 def get_sen_2_image_timestamp(image_name):
     """Returns the timestamps part of a Sentinel 2 image"""
     timestamp_re = r"\d{8}T\d{6}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
+
+
+def get_pyeo_timestamp(image_name):
+    """Returns a list of all timestamps in a Pyeo image."""
+    timestamp_re = r"\d{14}"
+    ts_result = re.search(timestamp_re, image_name)
+    return ts_result.group
 
 
 def stack_images(raster_paths, out_raster_path,
@@ -692,9 +709,9 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
 
     log.info("Compositing {}".format(image_dir))
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
-                          in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
+                          in sort_by_s2_timestamp(os.listdir(image_dir), recent_first=False)
                           if image_name.endswith(".tif")]
-    last_timestamp = get_image_acquisition_time(sorted_image_paths[-1])
+    last_timestamp = get_s2_image_acquisition_time(sorted_image_paths[-1])
     composite_out_path = os.path.join(composite_out_dir, "composite_{}".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
