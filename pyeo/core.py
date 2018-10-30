@@ -699,8 +699,8 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     output_array = None
     output_image = None
     log.info("Composite done")
-    log.info("Creating composite mask")
-    combine_masks(mask_paths, composite_out_path[-4:]+".msk", combination_func='or')
+    log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
+    combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or')
     return composite_out_path
 
 
