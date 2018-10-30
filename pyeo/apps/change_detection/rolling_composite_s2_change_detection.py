@@ -85,7 +85,7 @@ if __name__ == "__main__":
         pyeo.aggregate_and_mask_10m_bands(l2_image_dir, merged_image_dir, cloud_certainty_threshold)
 
     latest_composite_path = \
-        [image for image in pyeo.sort_by_pyeo_timestamp(os.listdir(composite_dir), recent_first=True)][0]
+        [image for image in pyeo.sort_by_s2_timestamp(os.listdir(composite_dir), recent_first=True)][0]
 
     images = [image for image in pyeo.sort_by_pyeo_timestamp(os.listdir(merged_image_dir), recent_first=False)
               if image.endswith(".tif")]
