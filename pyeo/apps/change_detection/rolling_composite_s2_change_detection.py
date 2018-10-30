@@ -111,7 +111,8 @@ if __name__ == "__main__":
         # Update composite
         if args.do_update or do_all:
             log.info("Updating composite")
+            new_composite_path = os.path.join(composite_dir, os.path.basename(image))
             latest_composite_path = \
-                pyeo.composite_images_with_mask((latest_composite_path, new_image_path), composite_dir)
+                pyeo.composite_images_with_mask((latest_composite_path, new_image_path), new_composite_path)
 
     log.info("***PROCESSING END***")
