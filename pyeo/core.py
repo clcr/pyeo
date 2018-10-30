@@ -700,7 +700,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     output_image = None
     log.info("Composite done")
     log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
-    combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
+    combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='and', geometry_func="union")
     return composite_out_path
 
 
@@ -1065,6 +1065,8 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
             out_mask_view = np.bitwise_or(out_mask_view, in_mask_view)
         elif combination_func is 'and':
             out_mask_view = np.bitwise_and(out_mask_view, in_mask_view)
+        elif combination_func is 'nor':
+            out_mask_view = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view))
         else:
             raise Exception("Invalid combination_func; valid values are 'or' or 'and'")
         in_mask_view = None
