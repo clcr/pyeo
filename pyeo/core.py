@@ -368,7 +368,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
         log.info("Item {} download complete".format(item_id))
 
 
-def apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=False):
+def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     """Applies sen2cor to the SAFE file at image_path. Returns the path to the new product."""
     # Here be OS magic. Since sen2cor runs in its own process, Python has to spin around and wait
     # for it; since it's doing that, it may as well be logging the output from sen2cor. This
@@ -412,7 +412,7 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
             log.warning("{} exists. Skipping.".format(image.replace("MSIL1C", "MSIL2A")))
             continue
         try:
-            l2_path = apply_sen2cor(sen2cor_path, image_path, delete_unprocessed_image=delete_unprocessed_image)
+            l2_path = apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=delete_unprocessed_image)
         except subprocess.CalledProcessError:
             log.error("Atmospheric correction failed for {}. Moving on to next image.".format(image))
             pass
