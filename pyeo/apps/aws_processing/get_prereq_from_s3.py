@@ -10,7 +10,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     s3_service = boto3.resource("s3")
-    s3_service.meta.download_file("forestsentinelconfig", args.config_file, "/home/ubuntu/config/cd_config.ini")
-    s3_service.meta.download_file("forestsentinelconfig", args.model, "/home/ubuntu/config/model.pkl")
-    s3_service.meta.download_file("forestsentinelconfig", args.aoi, "/home/ubuntu/config/aoi.json")
+    s3_service.meta.client.download_file("forestsentinelconfig", args.config_file, "/home/ubuntu/config/cd_config.ini")
+    s3_service.meta.client.download_file("forestsentinelconfig", args.model, "/home/ubuntu/config/model.pkl")
+    s3_service.meta.client.download_file("forestsentinelconfig", args.aoi, "/home/ubuntu/config/aoi.json")
 
