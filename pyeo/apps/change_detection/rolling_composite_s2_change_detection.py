@@ -30,6 +30,7 @@ if __name__ == "__main__":
                         help="Path to the .ini file specifying the job.")
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
+    parser.add_argument('-b', '--build_composite', dest='build_composite', action='store_true', default=False)
     parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
     parser.add_argument('-a', '--mask', dest='do_mask', action='store_true', default=False)
     parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False)
@@ -55,8 +56,9 @@ if __name__ == "__main__":
     cloud_cover = conf['forest_sentinel']['cloud_cover']
     cloud_certainty_threshold = int(conf['forest_sentinel']['cloud_certainty_threshold'])
     model_path = conf['forest_sentinel']['model']
-    composite_dir = conf['forest_sentinel']['composite']
     sen2cor_path = conf['sen2cor']['path']
+    composite_start_date = conf['forest_sentinel']['composite_start_date']
+    composite_end_date = conf['forest_sentinel']['composite_end_date']
 
     pyeo.create_file_structure(project_root)
     log = pyeo.init_log(log_path)
@@ -68,6 +70,23 @@ if __name__ == "__main__":
     stacked_image_dir = os.path.join(project_root, r"images/stacked")
     catagorised_image_dir = os.path.join(project_root, r"output/categories")
     probability_image_dir = os.path.join(project_root, r"output/probabilities")
+    composite_dir = os.path.join(project_root, r"/composite")
+    composite_l1_image_dir = os.path.join(project_root, r"/composite/L1")
+    composite_l2_image_dir = os.path.join(project_root, r"/composite/L2")
+    composite_merged_dir = os.path.join(project_root, r"/composite/merged")
+
+    # Download and build the initial composite. Does not do by default
+    if args.build_composite:
+        log.info("Downloading for initial composite between {} and {}".format(composite_start_date, composite_end_date))
+        composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date, conf)
+        pyeo.download_new_s2_data(composite_products, composite_l1_image_dir)
+        log.info("Preprocessing composite products")
+        pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
+                                    delete_unprocessed_image=True)
+        log.info("Aggregating composite layers")
+        pyeo.aggregate_and_mask_10m_bands(composite_l2_image_dir, composite_merged_dir, cloud_certainty_threshold)
+        log.info("Building initial cloud-free composite")
+        pyeo.composite_directory(composite_merged_dir, composite_dir)
 
     # Query and download all images since last composite
     if args.do_download or do_all:
@@ -92,6 +111,7 @@ if __name__ == "__main__":
 
     images = [image for image in pyeo.sort_by_s2_timestamp(os.listdir(merged_image_dir), recent_first=False)
               if image.endswith(".tif")]
+
     for image in images:
         log.info("Detecting change for {}".format(image))
         new_image_path = os.path.join(merged_image_dir, image)
