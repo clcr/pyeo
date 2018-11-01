@@ -13,4 +13,3 @@ if __name__ == "__main__":
     s3_service.meta.client.download_file("forestsentinelconfig", args.config_file, "/home/ubuntu/config/cd_config.ini")
     s3_service.meta.client.download_file("forestsentinelconfig", args.model, "/home/ubuntu/config/model.pkl")
     s3_service.meta.client.download_file("forestsentinelconfig", args.aoi, "/home/ubuntu/config/aoi.json")
-

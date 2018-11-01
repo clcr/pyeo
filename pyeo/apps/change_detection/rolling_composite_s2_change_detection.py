@@ -57,8 +57,8 @@ if __name__ == "__main__":
     cloud_certainty_threshold = int(conf['forest_sentinel']['cloud_certainty_threshold'])
     model_path = conf['forest_sentinel']['model']
     sen2cor_path = conf['sen2cor']['path']
-    composite_start_date = conf['forest_sentinel']['composite_start_date']
-    composite_end_date = conf['forest_sentinel']['composite_end_date']
+    composite_start_date = conf['forest_sentinel']['composite_start']
+    composite_end_date = conf['forest_sentinel']['composite_end']
 
     pyeo.create_file_structure(project_root)
     log = pyeo.init_log(log_path)
