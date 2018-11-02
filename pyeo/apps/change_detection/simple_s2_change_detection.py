@@ -76,6 +76,8 @@ if __name__ == "__main__":
 
     # Aggregating layers into single image
     if args.do_merge or do_all:
+        log.info("Cleaning L2A directory")
+        pyeo.clean_l2_dir(l2_image_path, resolution="10m", warning=True)
         log.info("Aggregating layers")
         pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
