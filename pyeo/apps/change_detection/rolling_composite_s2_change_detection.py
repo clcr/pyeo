@@ -70,10 +70,10 @@ if __name__ == "__main__":
     stacked_image_dir = os.path.join(project_root, r"images/stacked")
     catagorised_image_dir = os.path.join(project_root, r"output/categories")
     probability_image_dir = os.path.join(project_root, r"output/probabilities")
-    composite_dir = os.path.join(project_root, r"/composite")
-    composite_l1_image_dir = os.path.join(project_root, r"/composite/L1")
-    composite_l2_image_dir = os.path.join(project_root, r"/composite/L2")
-    composite_merged_dir = os.path.join(project_root, r"/composite/merged")
+    composite_dir = os.path.join(project_root, r"composite")
+    composite_l1_image_dir = os.path.join(project_root, r"composite/L1")
+    composite_l2_image_dir = os.path.join(project_root, r"composite/L2")
+    composite_merged_dir = os.path.join(project_root, r"composite/merged")
 
     # Download and build the initial composite. Does not do by default
     if args.build_composite:
