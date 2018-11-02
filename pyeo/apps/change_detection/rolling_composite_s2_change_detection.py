@@ -106,13 +106,19 @@ if __name__ == "__main__":
         log.info("Aggregating layers")
         pyeo.aggregate_and_mask_10m_bands(l2_image_dir, merged_image_dir, cloud_certainty_threshold)
 
+    log.info("Finding most recent composite")
     latest_composite_name = \
-        [image for image in pyeo.sort_by_s2_timestamp(os.listdir(composite_dir), recent_first=True)
-         if image.endswith(".tif")][0]
+        pyeo.sort_by_s2_timestamp(
+            [image_name for image_name in os.listdir(composite_dir) if image_name.endswith(".tif")],
+            recent_first=True
+        )
     latest_composite_path = os.path.join(composite_dir, latest_composite_name)
+    log.info("Most recent composite at {}".format(latest_composite_path))
 
+    log.info("Sorting image list")
     images = [image for image in pyeo.sort_by_s2_timestamp(os.listdir(merged_image_dir), recent_first=False)
               if image.endswith(".tif")]
+    log.info("Images to process: {}".format(images))
 
     for image in images:
         log.info("Detecting change for {}".format(image))

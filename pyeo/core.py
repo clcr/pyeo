@@ -416,6 +416,31 @@ def clean_l2_dir(l2_dir, resolution="10m", warning=True):
         clean_l2_data(safe_file_path, resolution, warning)
 
 
+def clean_aoi(aoi_dir, images_to_keep = 4, warning=True):
+    """Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
+    composite directories. Will not affect the output folder."""
+    l1_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1")), recent_first=True)
+    l2_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2")), recent_first=True)
+    comp_l1_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
+    comp_l2_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
+    merged_list = sort_by_s2_timestamp(
+        [image for image in os.listdir(os.path.join(aoi_dir, "images/merged")) if image.endswith(".tif")],
+        recent_first=True)
+    stacked_list = sort_by_s2_timestamp(
+        [image for image in os.listdir(os.path.join(aoi_dir, "images/stacked")) if image.endswith(".tif")],
+        recent_first=True)
+    comp_merged_list = sort_by_s2_timestamp(
+        [image for image in os.listdir(os.path.join(aoi_dir, "composite/merged")) if image.endswith(".tif")],
+        recent_first=True)
+    for image_list in (l1_list, l2_list, comp_l1_list, comp_l2_list):
+        for safe_file in image_list[images_to_keep:]:
+            os.rmdir(safe_file)
+    for image_list in (merged_list, stacked_list, comp_merged_list):
+        for image in image_list[images_to_keep:]:
+            os.remove(image)
+            os.remove(image.rsplit('.')(0)+".msk")
+
+
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
     """Creates an empty gdal dataset with the same dimensions, projection and geotransform. Defaults to 1 band.
