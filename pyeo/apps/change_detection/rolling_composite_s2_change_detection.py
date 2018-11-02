@@ -19,6 +19,90 @@ import pyeo.core as pyeo
 import configparser
 import argparse
 import os
+import gdal
+import logging
+import datetime as dt
+
+
+def send_email(address_list, subject, message):
+    """Sends an email from my email address to everyone in address_list with the given message and subject"""
+    log = logging.getLogger(__name__)
+    client = boto3.client('ses', region_name="eu-west-1")  # EU central (frankfurt) doesn't supply ses
+    for address in address_list:
+        try:
+            output = client.send_email(
+                Source="jfr10@le.ac.uk",
+                Destination={
+                    "ToAddresses": [
+                        address
+                    ]
+                },
+                Message={
+                    'Subject': {
+                        "Data": subject
+                    },
+                    "Body": {
+                        "Text": {
+                            "Data": message
+                        }
+                    }
+                }
+            )
+        except client.exceptions.MessageRejected:
+            log.warning("{} is not verified".format(address))
+            continue
+
+
+def send_email_report(address_list, image_list, s3_paths):
+    """Composes and sends an email report based on a list of classified images"""
+    # There's probably a better way to do this with formatted emails, but later.
+    report = get_digest_data(image_list, s3_paths)
+    message = "+++ Images processed: +++\n"
+    for image in report["images"]:
+        message = message + "Image ID: {}\n".format(image["index"])
+        message = message + "Bounding polygon: {}\n".format(image["area"])
+        message = message + "Deforested pixels: {}\n".format(image["deforested_pixels"])
+        message = message + "S3 address: https://s3.eu-central-1.amazonaws.com/forestsentinel/{}\n".format(image["s3_bucket"])
+        message = message + "+++++++\n"
+    subject = "Automated change report for: {}".format(str(dt.date.today()))
+    send_email(address_list, subject, message)
+
+
+def get_digest_data(image_paths, s3_paths):
+    """Produces a dictionary of useful data from a list of classified images"""
+    out = {
+        "images": []
+    }
+    for index, image_path in enumerate(image_paths):
+        image = gdal.Open(image_path)
+        image_array = image.GetVirtualMemArray()
+        image_report = {
+            "index": index,
+            "area": pyeo.get_raster_bounds(image),
+            "deforested_pixels": (image_array == 3).sum(),
+            "s3_bucket": s3_paths[index]
+        }
+        out["images"].append(image_report)
+        image_array = None
+        image = None
+    return out
+
+
+def verify_emails(address_list):
+    """Sends a verification email to all unverified emails in address list"""
+    client = boto3.client('ses', region_name="eu-west-1")
+    verified_addresses = client.list_verified_email_addresses()['VerifiedEmailAddresses']
+    for address in address_list:
+        if not verified_addresses.count(address):
+            client.verify_email_identity(EmailAddress=address)
+
+
+def get_email_list(list_path):
+    """Returns a list of emails from a text file"""
+    with open(list_path, 'r') as list_file:
+        list = [address.strip() for address in list_file.readlines()]
+    return list
+
 
 if __name__ == "__main__":
 
@@ -37,6 +121,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False)
     parser.add_argument('-u', '--update', dest='do_update', action='store_true', default=False)
     parser.add_argument('-r', '--remove', dest='do_delete', action='store_true', default=False)
+    parser.add_argument('-n', '--notify', dest='mail_list', action='store')
 
     args = parser.parse_args()
 
@@ -74,6 +159,15 @@ if __name__ == "__main__":
     composite_l1_image_dir = os.path.join(project_root, r"composite/L1")
     composite_l2_image_dir = os.path.join(project_root, r"composite/L2")
     composite_merged_dir = os.path.join(project_root, r"composite/merged")
+
+    # Check for boto3 and load mailing list
+    if args.mail_list:
+        try:
+            import boto3
+
+        except ImportError:
+            print("boto3 must be installed and configured for email notifications")
+            mail_list = None
 
     # Download and build the initial composite. Does not do by default
     if args.build_composite:
