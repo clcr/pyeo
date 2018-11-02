@@ -111,7 +111,7 @@ if __name__ == "__main__":
         pyeo.sort_by_s2_timestamp(
             [image_name for image_name in os.listdir(composite_dir) if image_name.endswith(".tif")],
             recent_first=True
-        )
+        )[0]
     latest_composite_path = os.path.join(composite_dir, latest_composite_name)
     log.info("Most recent composite at {}".format(latest_composite_path))
 
