@@ -74,7 +74,7 @@ if __name__ == "__main__":
         log.info("Applying sen2cor")
         pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
 
-    # Aggregating layers into single image
+    # Merging / Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Cleaning L2A directory")
         pyeo.clean_l2_dir(l2_image_path, resolution="10m", warning=False)

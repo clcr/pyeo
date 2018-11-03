@@ -534,12 +534,12 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 
 def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None):
     """For every folder in a directory, aggregates all 10m resolution bands into a single geotif
-     and create a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
+     and creates a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
     for safe_dir in safe_file_path_list:
         # added by hb91
-        log.info("SAFE dir: {}".format(safe_dir))
+        log.info("Merging 10m bands in SAFE dir: {}".format(safe_dir))
         out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         if cloud_model_path:
@@ -557,19 +557,14 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     log = logging.getLogger(__name__)
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
-    # edited by hb91
-    #granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
     image_glob = os.path.join(safe_dir, granule_path)
-    # added by hb91
-    log.info("Granule path: {}".format(granule_path))
-    log.info("Image glob: {}".format(image_glob))
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
     # added by hb91
     if file_list == "":
         log.error("File list for stacking is empty.")
     else:
-        log.info("Ordered file list for stacking:")
+        log.info("Ordered band file list for stacking:")
         for thisfile in file_list:
             log.info("Band: {}".format(thisfile))
         stack_images(file_list, out_image_path, geometry_mode="intersect")
@@ -604,11 +599,9 @@ def stack_images(raster_paths, out_raster_path,
     """Stacks multiple images in image_paths together, using the information of the top image.
     geometry_mode can be "union" or "intersect" """
     log = logging.getLogger(__name__)
-    # added by hb91
-    log.info("Stacking rasters:")
+    log.info("Stacking band raster images:")
     for thisfile in raster_paths:
         log.info("Raster: {}".format(thisfile))
-    #log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images.")
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
@@ -627,7 +620,7 @@ def stack_images(raster_paths, out_raster_path,
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
     for i, in_raster in enumerate(rasters):
-        log.info("Stacking image {}".format(i))
+        log.info("Stacking image file {}".format(i))
         in_raster_array = in_raster.GetVirtualMemArray()
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
         in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
