@@ -560,7 +560,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     image_glob = os.path.join(safe_dir, granule_path)
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
-    # added by hb91
+
     if file_list == "":
         log.error("File list for stacking is empty.")
     else:
@@ -592,7 +592,6 @@ def get_sen_2_image_timestamp(image_name):
     timestamp_re = r"\d{8}T\d{6}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
-
 
 def stack_images(raster_paths, out_raster_path,
                  geometry_mode = "intersect", format = "GTiff", datatype=gdal.GDT_Int32):
@@ -641,6 +640,7 @@ def stack_images(raster_paths, out_raster_path,
         out_raster_view = None
         in_raster_view = None
         present_layer += in_raster.RasterCount
+    log.info("Finished stacking {} image bands into file: {}".format(len(raster_paths), out_raster_view))
     out_raster_array = None
     out_raster = None
 
