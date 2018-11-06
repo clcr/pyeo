@@ -19,6 +19,7 @@ import pyeo.core as pyeo
 import configparser
 import argparse
 import os
+import datetime as dt
 
 
 if __name__ == "__main__":
@@ -29,9 +30,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Automatically detect and report on change')
     parser.add_argument('--conf', dest='config_path', action='store', default=r'change_detection.ini',
                         help="Path to the .ini file specifying the job.")
+    parser.add_argument('--start_date', dest='start_date', help="Overrides the start date in the config file. Set to "
+                                                                "LATEST to get the date of the last merged accquistion")
+    parser.add_argument('--end_date', dest='end_date', help="Overrides the end date in the config file. Set to TODAY"
+                                                            "to get today's date")
+    parser.add_argument('-b', '--build_composite', dest='build_composite', action='store_true', default=False)
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
-    parser.add_argument('-b', '--build_composite', dest='build_composite', action='store_true', default=False)
     parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
     parser.add_argument('-a', '--mask', dest='do_mask', action='store_true', default=False)
     parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False)
@@ -76,6 +81,18 @@ if __name__ == "__main__":
     composite_l2_image_dir = os.path.join(project_root, r"composite/L2")
     composite_merged_dir = os.path.join(project_root, r"composite/merged")
 
+    if args.start_date == "LATEST":
+        # This isn't nice, but returns the yyyymmdd string of the latest merged image
+        start_date = pyeo.get_s2_image_acquisition_time(pyeo.sort_by_s2_timestamp(
+            [image_name for image_name in os.listdir(stacked_image_dir) if image_name.endswith(".tif")],
+            recent_first=True
+        )[0]).strftime("%Y%m%d")
+    elif args.start_date:
+        start_date = args.start_date
+    if args.end_date == "TODAY":
+        end_date = dt.date.today().strftime("%Y%m%d")
+    elif args.end_date:
+        end_date = args.end_date
 
     # Download and build the initial composite. Does not do by default
     if args.build_composite:
