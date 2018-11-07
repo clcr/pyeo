@@ -558,7 +558,7 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     log = logging.getLogger(__name__)
-#    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
     image_glob = os.path.join(safe_dir, granule_path)
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
