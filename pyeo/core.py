@@ -640,7 +640,7 @@ def stack_images(raster_paths, out_raster_path,
         out_raster_view = None
         in_raster_view = None
         present_layer += in_raster.RasterCount
-    log.info("Finished stacking {} image bands into file: {}".format(len(raster_paths), out_raster_view))
+#    log.info("Finished stacking image bands into file: {}".format("to do"))
     out_raster_array = None
     out_raster = None
 
