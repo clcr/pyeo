@@ -407,7 +407,7 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
     for image in images:
         log.info("Atmospheric correction of {}".format(image))
         image_path = os.path.join(in_directory, image)
-        image_timestamp = get_sen_2_image_timestamp(image)
+        #image_timestamp = get_sen_2_image_timestamp(image)
         if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
             log.warning("{} exists. Skipping.".format(image.replace("MSIL1C", "MSIL2A")))
             continue
@@ -541,7 +541,8 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
     for safe_dir in safe_file_path_list:
         log.info("----------------------------------------------------")
         log.info("Merging 10m bands in SAFE dir: {}".format(safe_dir))
-        out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
+        #OLD: out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
+        out_path = os.path.join(out_dir, get_sen_2_granule_id(safe_dir)) + ".tif"
         log.info("Output file: {}".format(out_path))
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         if cloud_model_path:
@@ -594,6 +595,13 @@ def get_sen_2_image_timestamp(image_name):
     timestamp_re = r"\d{8}T\d{6}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
+
+def get_sen_2_granule_id(safe_dir):
+    """Returns the unique ID of a Sentinel 2 granule from a SAFE directory path"""
+    """At present, only works for LINUX"""
+    tmp = safe_dir.split("/")[-1] # removes path to SAFE directory
+    id  = tmp.split(".")[0] # removes ".SAFE" from the ID name
+    return id
 
 def stack_images(raster_paths, out_raster_path,
                  geometry_mode = "intersect", format = "GTiff", datatype=gdal.GDT_Int32):
