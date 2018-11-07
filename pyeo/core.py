@@ -537,10 +537,12 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
      and creates a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
+    log.info("SAFE dfile path list: {}".format(safe_file_path_list))
     for safe_dir in safe_file_path_list:
-        # added by hb91
+        log.info("----------------------------------------------------")
         log.info("Merging 10m bands in SAFE dir: {}".format(safe_dir))
         out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
+        log.info("Output file: {}".format(out_path))
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         if cloud_model_path:
             with TemporaryDirectory() as td:
@@ -556,11 +558,10 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     log = logging.getLogger(__name__)
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
+#    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
     image_glob = os.path.join(safe_dir, granule_path)
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
-
     if file_list == "":
         log.error("File list for stacking is empty.")
     else:
@@ -568,6 +569,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
         for thisfile in file_list:
             log.info("Band: {}".format(thisfile))
         stack_images(file_list, out_image_path, geometry_mode="intersect")
+        log.info("Finished stacking image bands into file: {}".format(out_image_path))
     return out_image_path
 
 
@@ -640,7 +642,6 @@ def stack_images(raster_paths, out_raster_path,
         out_raster_view = None
         in_raster_view = None
         present_layer += in_raster.RasterCount
-#    log.info("Finished stacking image bands into file: {}".format("to do"))
     out_raster_array = None
     out_raster = None
 
