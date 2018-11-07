@@ -565,9 +565,9 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     if file_list == "":
         log.error("File list for stacking is empty.")
     else:
-        log.info("Ordered band file list for stacking:")
-        for thisfile in file_list:
-            log.info("Band: {}".format(thisfile))
+#        log.info("Ordered band file list for stacking:")
+#        for thisfile in file_list:
+#            log.info("Band: {}".format(thisfile))
         stack_images(file_list, out_image_path, geometry_mode="intersect")
         log.info("Finished stacking image bands into file: {}".format(out_image_path))
     return out_image_path
@@ -600,9 +600,9 @@ def stack_images(raster_paths, out_raster_path,
     """Stacks multiple images in image_paths together, using the information of the top image.
     geometry_mode can be "union" or "intersect" """
     log = logging.getLogger(__name__)
-    log.info("Stacking band raster images:")
-    for thisfile in raster_paths:
-        log.info("Raster: {}".format(thisfile))
+#    log.info("Stacking band raster images:")
+#    for thisfile in raster_paths:
+#        log.info("Raster: {}".format(thisfile))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images.")
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
@@ -621,7 +621,7 @@ def stack_images(raster_paths, out_raster_path,
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
     for i, in_raster in enumerate(rasters):
-        log.info("Stacking image file {}".format(i))
+        log.info("Stacking raster band file {}".format(in_raster))
         in_raster_array = in_raster.GetVirtualMemArray()
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
         in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
