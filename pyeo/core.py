@@ -497,7 +497,7 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             safe_files = sort_by_timestamp(safe_files)
             log.info("Image file list for stacking:")
             for i in safe_files:
-                log.info("   {}".format(safe_files[i]))
+                log.info("   {}".format(i))
         latest_image_path = safe_files[0]
         log.info("Most recent image: {}".format(latest_image_path))
         latest_image = gdal.Open(latest_image_path)
