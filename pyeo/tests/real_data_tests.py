@@ -28,7 +28,7 @@ def test_ml_masking():
 
 def test_mask_combination():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    masks = [mask for mask in os.listdir("test_data") if mask.endswith(".msk")]
+    masks = [r"test_data/"+mask for mask in os.listdir("test_data") if mask.endswith(".msk")]
     if os.path.exists("test_outputs/union_or_combination.tif"):
         os.remove("test_outputs/union_or_combination.tif")
     if os.path.exists("test_outputs/intersection_and_combination.tif"):
