@@ -701,9 +701,20 @@ def stack_images(raster_paths, out_raster_path,
 
 
 def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.GDT_Int32, nodata = 0):
-    """Mosaics multiple images with the same number of layers into one single image. Overwrites
+    """
+    Mosaics multiple images with the same number of layers into one single image. Overwrites
     overlapping pixels with the value furthest down raster_paths. Takes projection ect from the first
-    raster."""
+    raster.
+
+    TODO: consider using GDAL:
+
+    gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
+              [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]
+              [-ul_lr ulx uly lrx lry] [-init "value [value...]"]
+              [-n nodata_value] [-a_nodata output_nodata_value]
+              [-ot datatype] [-createonly] input_files
+    """
+
     # This, again, is very similar to stack_rasters
     log = logging.getLogger(__name__)
     log.info("Beginning mosaic")
