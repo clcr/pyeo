@@ -488,18 +488,17 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
     log = logging.getLogger(__name__)
     orbtiles = get_sen_2_orbits_and_tiles(image_dir) # gets the list of orbits and tiles present in the directory
     n_orbtiles = len(orbtiles)
-    log.info("Orbit and tile ID for stacking:")
     for orbtile in orbtiles:
-        log.info("{}".format(orbtiles[i]))
+        log.info("Orbit and tile ID for stacking: {}".format(orbtile))
         safe_files = glob.glob(os.path.join(image_dir, orbtile + "*.tif"))
             # choose all files with that orbit and tile ID
         if len(safe_files) == 0:
             raise CreateNewStacksException("Image_dir is empty")
         else:
             safe_files = sort_by_timestamp(safe_files)
-            log.info("Image file list with orbit and tile {} for stacking:".format(orbtile))
+            log.info("Image file list for stacking:")
             for i in safe_files:
-                log.info("{}".format(safe_files[i]))
+                log.info("   {}".format(safe_files[i]))
         latest_image_path = safe_files[0]
         log.info("Most recent image: {}".format(latest_image_path))
         latest_image = gdal.Open(latest_image_path)
