@@ -495,11 +495,11 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             raise CreateNewStacksException("Image_dir is empty: {}".format(os.path.join(image_dir, tile + "*.tif")))
         else:
             safe_files = sort_by_timestamp(safe_files)
-            log.info("Image file list for stacking this tile:")
-            for i in safe_files:
-                log.info("   {}".format(i))
+            log.info("Image file list for pairwise stacking for this tile:")
+            for file in safe_files:
+                log.info("   {}".format(file))
             latest_image_path = safe_files[0]
-            log.info("Most recent image: {}".format(latest_image_path))
+            #log.info("Most recent image: {}".format(latest_image_path))
             latest_image = gdal.Open(latest_image_path)
             new_data_poly = get_raster_bounds(latest_image)
             to_be_stacked = []
@@ -513,6 +513,9 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
                         image = None
                         break
                 image = None
+            log.info("To be stacked:")
+            for file in to_be_stacked:
+                log.info("   {}".format(file))
             new_images = []
             for image in to_be_stacked:
                 if image in os.listdir(stack_dir):
@@ -604,7 +607,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
     """
-    Stacks an old and new image with the same tile
+    Stacks two images with the same tile
     Names the result with the two timestamps.
     First, decompose the granule ID into its components:
     e.g. S2A, MSIL2A, 20180301, T162211, N0206, R040, T15PXT, 20180301, T194348
@@ -616,11 +619,12 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
     tile_old = get_sen_2_image_tile(old_image_path)
     tile_new = get_sen_2_image_tile(new_image_path)
     if (tile_old == tile_new):
-        log.info("Stacking {} and {}".format(old_image_path, new_image_path))
+        log.info("Stacking {} and".format(old_image_path))
+        log.info("         {}".format(new_image_path))
         old_timestamp = get_sen_2_image_timestamp(os.path.basename(old_image_path))
         new_timestamp = get_sen_2_image_timestamp(os.path.basename(new_image_path))
         out_path = os.path.join(out_dir, tile_new + '_' + old_timestamp + '_' + new_timestamp)
-        log.info("Output stack: {}".format(out_path + ".tif"))
+        log.info("Output stacked file: {}".format(out_path + ".tif"))
         stack_images([old_image_path, new_image_path], out_path + ".tif")
         if create_combined_mask:
             out_mask_path = out_path + ".msk"
