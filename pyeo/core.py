@@ -532,7 +532,7 @@ def get_sen_2_orbits_and_tiles(image_dir):
     if len(image_files) == 0:
         raise CreateNewStacksException("Image_dir is empty")
     else:
-        orbtiles = ''
+        orbtiles = []
         for image_file in image_files:
             orb = get_sen_2_image_orbit(image_file)
             tile = get_sen_2_image_tile(image_file)
