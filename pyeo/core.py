@@ -466,27 +466,42 @@ def create_matching_dataset(in_dataset, out_path,
 
 
 def create_new_stacks(image_dir, stack_dir, threshold = 100):
-    """Creates new stacks with from the newest image. Threshold; how small a part
-    of latest_image will be before it's considered to be fully processed
-     New_image_name must exist inside image_dir.
-    TODO: Write up algorithm properly"""
-    # OK, here's the plan. Step 1: REMOVED. Not actually needed.
-    # Step 2: Sort directory by timestamp, *newest first*, discarding any newer
-    # than new_image_name
-    # Step 3: new_data_polygon = bounds(new_image_name)
-    # Step 4: for each image backwards in time:
-    #    a. Check if it intersects new_data_polygon
-    #    b. If it does
-    #       - add to a to_be_stacked list,
-    #       -subtract it's bounding box from new_data_polygon.
-    #   c. If new_data_polygon drops having a total area less than threshold, stop.
-    # Step 4: Stack new rasters for each image in new_data list.
+    """
+    Creates new stacks with from the newest image. Threshold; how small a part
+    of the latest_image will be before it's considered to be fully processed
+    New_image_name must exist inside image_dir.
+
+    TODO: Write up algorithm properly
+
+    Step 1: Sort directory as follows:
+            Relative Orbit number (RO4O), then Tile Number (T15PXT), then
+            Datatake sensing start date (YYYYMMDD) and time(THHMMSS).
+            newest first.
+    Step 2: For each orbit and tile number combination:
+            new_data_polygon = bounds(new_image_name)
+    Step 3: For each tiff image of that combination, work backwards in time:
+            a. Check if it intersects new_data_polygon
+            b. If it does
+               - add to a to_be_stacked list,
+               - subtract it's bounding box from new_data_polygon.
+            c. If new_data_polygon drops having a total area less than threshold, stop.
+    Step 4: Stack new rasters for each image in new_data list.
+    """
     log = logging.getLogger(__name__)
     safe_files = glob.glob(os.path.join(image_dir, "*.tif"))
     if len(safe_files) == 0:
-        raise CreateNewStacksException("image_dir is empty")
-    safe_files = sort_by_timestamp(safe_files)
+        raise CreateNewStacksException("Image_dir is empty")
+    else:
+        safe_files = sort_by_timestamp(safe_files)
+        log.info("Image file list for stacking:")
+        for i in safe_files:
+            log.info("{}".format(safe_files[i]))
     latest_image_path = safe_files[0]
+    log.info("Most recent image: {}".format(latest_image_path))
+    orb_old = get_sen_2_image_orbit(old_image_path)
+    orb_new = get_sen_2_image_orbit(new_image_path)
+    tile_old = get_sen_2_image_tile(old_image_path)
+    tile_new = get_sen_2_image_tile(new_image_path)
     latest_image = gdal.Open(latest_image_path)
     new_data_poly = get_raster_bounds(latest_image)
     to_be_stacked = []
