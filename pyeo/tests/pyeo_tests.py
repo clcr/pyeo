@@ -186,3 +186,7 @@ def test_sort_by_timestamp():
         target = [image_1, image_2, image_3, image_4]
         out_paths = pyeo.sort_by_s2_timestamp(input)
         assert out_paths == target
+
+
+def test_combine_masks_or():
+    with Tempor

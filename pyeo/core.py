@@ -1097,7 +1097,7 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
         elif combination_func is 'nor':
             out_mask_view = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view))
         else:
-            raise Exception("Invalid combination_func; valid values are 'or' or 'and'")
+            raise Exception("Invalid combination_func; valid values are 'or', 'and', and 'nor'")
         in_mask_view = None
         out_mask_view = None
         in_mask_array = None
