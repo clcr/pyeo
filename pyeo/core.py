@@ -467,7 +467,7 @@ def create_matching_dataset(in_dataset, out_path,
 
 def create_new_stacks(image_dir, stack_dir, threshold = 100):
     """
-    Creates new stacks with from the newest image. Threshold; how small a part
+    Creates new stacks with with adjacent image acquisition dates. Threshold; how small a part
     of the latest_image will be before it's considered to be fully processed.
     New_image_name must exist inside image_dir.
 
@@ -477,7 +477,7 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             newest first.
     Step 2: For each tile number:
             new_data_polygon = bounds(new_image_name)
-    Step 3: For each tiff image of that tile, work backwards in time:
+    Step 3: For each tiff image coverring that tile, work backwards in time:
             a. Check if it intersects new_data_polygon
             b. If it does
                - add to a to_be_stacked list,
@@ -495,30 +495,30 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             raise CreateNewStacksException("Image_dir is empty: {}".format(os.path.join(image_dir, tile + "*.tif")))
         else:
             safe_files = sort_by_timestamp(safe_files)
-            log.info("Image file list for stacking:")
+            log.info("Image file list for stacking this tile:")
             for i in safe_files:
                 log.info("   {}".format(i))
-        latest_image_path = safe_files[0]
-        log.info("Most recent image: {}".format(latest_image_path))
-        latest_image = gdal.Open(latest_image_path)
-        new_data_poly = get_raster_bounds(latest_image)
-        to_be_stacked = []
-        for file in safe_files[1:]:
-            image = gdal.Open(file)
-            image_poly = get_raster_bounds(image)
-            if image_poly.Intersection(new_data_poly):
-                to_be_stacked.append(file)
-                new_data_poly = new_data_poly.Difference(image_poly)
-                if new_data_poly.GetArea() < threshold:
-                    image = None
+            latest_image_path = safe_files[0]
+            log.info("Most recent image: {}".format(latest_image_path))
+            latest_image = gdal.Open(latest_image_path)
+            new_data_poly = get_raster_bounds(latest_image)
+            to_be_stacked = []
+            for file in safe_files[1:]:
+                image = gdal.Open(file)
+                image_poly = get_raster_bounds(image)
+                if image_poly.Intersection(new_data_poly):
+                    to_be_stacked.append(file)
+                    new_data_poly = new_data_poly.Difference(image_poly)
+                    if new_data_poly.GetArea() < threshold:
+                        image = None
+                        break
+                image = None
+            new_images = []
+            for image in to_be_stacked:
+                if image in os.listdir(stack_dir):
+                    log.warning(r"{} exists, skipping.".format(image))
                     break
-            image = None
-        new_images = []
-        for image in to_be_stacked:
-            if image in os.listdir(stack_dir):
-                log.warning(r"{} exists, skipping.".format(image))
-                break
-            new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
+                new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
     return new_images
 
 
@@ -675,6 +675,7 @@ def stack_images(raster_paths, out_raster_path,
         raise StackImagesException("stack_images requires at least two input images.")
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
     total_layers = sum(raster.RasterCount for raster in rasters)
+    log.info("   stack_images total layers: {}".format(total_layers))
     projection = rasters[0].GetProjection()
     in_gt = rasters[0].GetGeoTransform()
     x_res = in_gt[1]
