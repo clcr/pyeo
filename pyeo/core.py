@@ -612,12 +612,14 @@ def get_sen_2_image_timestamp(image_name):
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
 
+
 def get_sen_2_image_orbit(image_name):
     """Returns the relative orbit number of a Sentinel 2 image"""
     tmp1 = image_name.split("/")[-1]  # remove path
     tmp2 = tmp1.split(".")[0] # remove file extension
     comps = tmp2.split("_") # decompose
     return comps[5]
+
 
 def get_sen_2_image_tile(image_name):
     """Returns the tile number of a Sentinel 2 image"""
@@ -626,12 +628,14 @@ def get_sen_2_image_tile(image_name):
     comps = tmp2.split("_") # decompose
     return comps[6]
 
+
 def get_sen_2_granule_id(safe_dir):
     """Returns the unique ID of a Sentinel 2 granule from a SAFE directory path"""
     """At present, only works for LINUX"""
     tmp = safe_dir.split("/")[-1] # removes path to SAFE directory
     id  = tmp.split(".")[0] # removes ".SAFE" from the ID name
     return id
+
 
 def stack_images(raster_paths, out_raster_path,
                  geometry_mode = "intersect", format = "GTiff", datatype=gdal.GDT_Int32):
@@ -659,7 +663,7 @@ def stack_images(raster_paths, out_raster_path,
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
     for i, in_raster in enumerate(rasters):
-        log.info("Stacking raster band file {}".format(in_raster))
+        #log.info("Stacking raster band file {}".format(i))
         in_raster_array = in_raster.GetVirtualMemArray()
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
         in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
