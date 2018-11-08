@@ -575,19 +575,35 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
 
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
-    """Stacks an old and new image, names the result with the two timestamps"""
+    """
+    Stacks an old and new image with the same tile and relative orbit.
+    Names the result with the two timestamps.
+    First, decompose the granule ID into its components:
+    e.g. S2A, MSIL2A, 20180301, T162211, N0206, R040, T15PXT, 20180301, T194348
+    are the mission ID(S2A/S2B), product level(L2A), datatake sensing start date (YYYYMMDD) and time(THHMMSS),
+    the Processing Baseline number (N0206), Relative Orbit number (RO4O), Tile Number field (T15PXT),
+    followed by processing run date and then time
+    """
     log = logging.getLogger(__name__)
-    log.info("Stacking {} and {}".format(old_image_path, new_image_path))
-    old_timestamp = get_sen_2_image_timestamp(os.path.basename(old_image_path))
-    new_timestamp = get_sen_2_image_timestamp(os.path.basename(new_image_path))
-    out_path = os.path.join(out_dir, old_timestamp + '_' + new_timestamp)
-    stack_images([old_image_path, new_image_path], out_path + ".tif")
-    if create_combined_mask:
-        out_mask_path = out_path + ".msk"
-        old_mask_path = get_mask_path(old_image_path)
-        new_mask_path = get_mask_path(new_image_path)
-        combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
-    return out_path + ".tif"
+    orb_old = get_sen_2_image_orbit(old_image_path)
+    orb_new = get_sen_2_image_orbit(new_image_path)
+    tile_old = get_sen_2_image_tile(old_image_path)
+    tile_new = get_sen_2_image_tile(new_image_path)
+    if (orb_old == orb_new & tile_old == tile_new):
+        log.info("Stacking {} and {}".format(old_image_path, new_image_path))
+        old_timestamp = get_sen_2_image_timestamp(os.path.basename(old_image_path))
+        new_timestamp = get_sen_2_image_timestamp(os.path.basename(new_image_path))
+        out_path = os.path.join(out_dir,orb_new + '_' + tile_new + '_' + old_timestamp + '_' + new_timestamp)
+        log.info("Output stack: {}".format(out_path + ".tif"))
+        stack_images([old_image_path, new_image_path], out_path + ".tif")
+        if create_combined_mask:
+            out_mask_path = out_path + ".msk"
+            old_mask_path = get_mask_path(old_image_path)
+            new_mask_path = get_mask_path(new_image_path)
+            combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
+        return out_path + ".tif"
+    else:
+        log.error("Tile and/or relative orbit of the two images do not match. Aborted.")
 
 
 def get_sen_2_image_timestamp(image_name):
@@ -595,6 +611,20 @@ def get_sen_2_image_timestamp(image_name):
     timestamp_re = r"\d{8}T\d{6}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
+
+def get_sen_2_image_orbit(image_name):
+    """Returns the relative orbit number of a Sentinel 2 image"""
+    tmp1 = image_name.split("/")[-1]  # remove path
+    tmp2 = tmp1.split(".")[0] # remove file extension
+    comps = tmp2.split("_") # decompose
+    return comps[5]
+
+def get_sen_2_image_tile(image_name):
+    """Returns the tile number of a Sentinel 2 image"""
+    tmp1 = image_name.split("/")[-1]  # remove path
+    tmp2 = tmp1.split(".")[0] # remove file extension
+    comps = tmp2.split("_") # decompose
+    return comps[6]
 
 def get_sen_2_granule_id(safe_dir):
     """Returns the unique ID of a Sentinel 2 granule from a SAFE directory path"""
@@ -744,7 +774,6 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
     """Composites every image in image_dir, assumes all have associated masks.  Will
      place a file named composite_[last image date].tif inside composite_out_dir"""
     log = logging.getLogger(__name__)
-
     log.info("Compositing {}".format(image_dir))
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
                           in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
