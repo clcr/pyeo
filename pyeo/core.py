@@ -536,7 +536,7 @@ def get_sen_2_orbits_and_tiles(image_dir):
         for image_file in image_files:
             orb = get_sen_2_image_orbit(image_file)
             tile = get_sen_2_image_tile(image_file)
-            orbtile = orb + tile
+            orbtile = orb + "_" + tile
             orbtiles.append(orbtile)
     return orbtiles
 
