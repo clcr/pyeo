@@ -660,7 +660,7 @@ def stack_images(raster_paths, out_raster_path,
         raise StackImagesException("stack_images requires at least two input images.")
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
     total_layers = sum(raster.RasterCount for raster in rasters)
-    log.info("   stack_images total layers: {}".format(total_layers))
+#    log.info("   stack_images total layers: {}".format(total_layers))
     projection = rasters[0].GetProjection()
     in_gt = rasters[0].GetGeoTransform()
     x_res = in_gt[1]
