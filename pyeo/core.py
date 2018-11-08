@@ -468,10 +468,8 @@ def create_matching_dataset(in_dataset, out_path,
 def create_new_stacks(image_dir, stack_dir, threshold = 100):
     """
     Creates new stacks with from the newest image. Threshold; how small a part
-    of the latest_image will be before it's considered to be fully processed
+    of the latest_image will be before it's considered to be fully processed.
     New_image_name must exist inside image_dir.
-
-    TODO: Write up algorithm properly
 
     Step 1: Sort directory as follows:
             Relative Orbit number (RO4O), then Tile Number (T15PXT), then
@@ -489,39 +487,40 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
     """
     log = logging.getLogger(__name__)
     orbtiles = get_sen_2_orbits_and_tiles(image_dir) # gets the list of orbits and tiles present in the directory
-    log.info("Orbit and tile list for stacking:")
-    for i in orbtiles:
+    n_orbtiles = len(orbtiles)
+    log.info("Orbit and tile ID for stacking:")
+    for orbtile in orbtiles:
         log.info("{}".format(orbtiles[i]))
-
-    safe_files = glob.glob(os.path.join(image_dir, "*.tif"))
-    if len(safe_files) == 0:
-        raise CreateNewStacksException("Image_dir is empty")
-    else:
-        safe_files = sort_by_timestamp(safe_files)
-        log.info("Image file list for stacking:")
-        for i in safe_files:
-            log.info("{}".format(safe_files[i]))
-    latest_image_path = safe_files[0]
-    log.info("Most recent image: {}".format(latest_image_path))
-    latest_image = gdal.Open(latest_image_path)
-    new_data_poly = get_raster_bounds(latest_image)
-    to_be_stacked = []
-    for file in safe_files[1:]:
-        image = gdal.Open(file)
-        image_poly = get_raster_bounds(image)
-        if image_poly.Intersection(new_data_poly):
-            to_be_stacked.append(file)
-            new_data_poly = new_data_poly.Difference(image_poly)
-            if new_data_poly.GetArea() < threshold:
-                image = None
+        safe_files = glob.glob(os.path.join(image_dir, orbtile + "*.tif"))
+            # choose all files with that orbit and tile ID
+        if len(safe_files) == 0:
+            raise CreateNewStacksException("Image_dir is empty")
+        else:
+            safe_files = sort_by_timestamp(safe_files)
+            log.info("Image file list with orbit and tile {} for stacking:".format(orbtile))
+            for i in safe_files:
+                log.info("{}".format(safe_files[i]))
+        latest_image_path = safe_files[0]
+        log.info("Most recent image: {}".format(latest_image_path))
+        latest_image = gdal.Open(latest_image_path)
+        new_data_poly = get_raster_bounds(latest_image)
+        to_be_stacked = []
+        for file in safe_files[1:]:
+            image = gdal.Open(file)
+            image_poly = get_raster_bounds(image)
+            if image_poly.Intersection(new_data_poly):
+                to_be_stacked.append(file)
+                new_data_poly = new_data_poly.Difference(image_poly)
+                if new_data_poly.GetArea() < threshold:
+                    image = None
+                    break
+            image = None
+        new_images = []
+        for image in to_be_stacked:
+            if image in os.listdir(stack_dir):
+                log.warning(r"{} exists, skipping.".format(image))
                 break
-        image = None
-    new_images = []
-    for image in to_be_stacked:
-        if image in os.listdir(stack_dir):
-            log.warning(r"{} exists, skipping.".format(image))
-            break
-        new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
+            new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
     return new_images
 
 
