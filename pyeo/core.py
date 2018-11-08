@@ -475,23 +475,22 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             Relative Orbit number (RO4O), then Tile Number (T15PXT), then
             Datatake sensing start date (YYYYMMDD) and time(THHMMSS).
             newest first.
-    Step 2: For each orbit and tile number combination:
+    Step 2: For each tile number:
             new_data_polygon = bounds(new_image_name)
-    Step 3: For each tiff image of that combination, work backwards in time:
+    Step 3: For each tiff image of that tile, work backwards in time:
             a. Check if it intersects new_data_polygon
             b. If it does
                - add to a to_be_stacked list,
                - subtract it's bounding box from new_data_polygon.
             c. If new_data_polygon drops having a total area less than threshold, stop.
-    Step 4: Stack new rasters for each orbit and tile combination in new_data list.
+    Step 4: Stack new rasters for each tile in new_data list.
     """
     log = logging.getLogger(__name__)
-    orbtiles = get_sen_2_orbits_and_tiles(image_dir) # gets the list of orbits and tiles present in the directory
-    n_orbtiles = len(orbtiles)
-    for orbtile in orbtiles:
-        log.info("Orbit and tile ID for stacking: {}".format(orbtile))
-        safe_files = glob.glob(os.path.join(image_dir, orbtile + "*.tif"))
-            # choose all files with that orbit and tile ID
+    tiles = get_sen_2_tiles(image_dir)
+    n_tiles = len(tiles)
+    for tile in tiles:
+        log.info("Tile ID for stacking: {}".format(tile))
+        safe_files = glob.glob(os.path.join(image_dir, tile + "*.tif")) # choose all files with that tile ID
         if len(safe_files) == 0:
             raise CreateNewStacksException("Image_dir is empty")
         else:
@@ -523,21 +522,19 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
     return new_images
 
 
-def get_sen_2_orbits_and_tiles(image_dir):
+def get_sen_2_tiles(image_dir):
     """
-    gets the list of orbits and tiles present in the directory
+    gets the list of tiles present in the directory
     """
     image_files = glob.glob(os.path.join(image_dir, "*.tif"))
     if len(image_files) == 0:
         raise CreateNewStacksException("Image_dir is empty")
     else:
-        orbtiles = []
+        tiles = []
         for image_file in image_files:
-            orb = get_sen_2_image_orbit(image_file)
             tile = get_sen_2_image_tile(image_file)
-            orbtile = orb + "_" + tile
-            orbtiles.append(orbtile)
-    return orbtiles
+            tiles.append(tile)
+    return tiles
 
 
 def sort_by_timestamp(strings, recent_first=True):
@@ -607,7 +604,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
     """
-    Stacks an old and new image with the same tile and relative orbit.
+    Stacks an old and new image with the same tile
     Names the result with the two timestamps.
     First, decompose the granule ID into its components:
     e.g. S2A, MSIL2A, 20180301, T162211, N0206, R040, T15PXT, 20180301, T194348
@@ -616,15 +613,13 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
     followed by processing run date and then time
     """
     log = logging.getLogger(__name__)
-    orb_old = get_sen_2_image_orbit(old_image_path)
-    orb_new = get_sen_2_image_orbit(new_image_path)
     tile_old = get_sen_2_image_tile(old_image_path)
     tile_new = get_sen_2_image_tile(new_image_path)
-    if (orb_old == orb_new & tile_old == tile_new):
+    if (tile_old == tile_new):
         log.info("Stacking {} and {}".format(old_image_path, new_image_path))
         old_timestamp = get_sen_2_image_timestamp(os.path.basename(old_image_path))
         new_timestamp = get_sen_2_image_timestamp(os.path.basename(new_image_path))
-        out_path = os.path.join(out_dir,orb_new + '_' + tile_new + '_' + old_timestamp + '_' + new_timestamp)
+        out_path = os.path.join(out_dir, tile_new + '_' + old_timestamp + '_' + new_timestamp)
         log.info("Output stack: {}".format(out_path + ".tif"))
         stack_images([old_image_path, new_image_path], out_path + ".tif")
         if create_combined_mask:
@@ -634,7 +629,7 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
             combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
         return out_path + ".tif"
     else:
-        log.error("Tile and/or relative orbit of the two images do not match. Aborted.")
+        log.error("Tiles  of the two images do not match. Aborted.")
 
 
 def get_sen_2_image_timestamp(image_name):
