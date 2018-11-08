@@ -36,7 +36,7 @@ def test_mask_combination():
     pyeo.combine_masks(masks, "test_outputs/union_or_combination.tif",
                        geometry_func="union", combination_func="or")
     pyeo.combine_masks(masks, "test_outputs/intersection_and_combination.tif",
-                       geometry_func="intersection", combination_func="and")
+                       geometry_func="intersect", combination_func="and")
 
 
 if __name__ == "__main__":
