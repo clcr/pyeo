@@ -649,7 +649,7 @@ def get_sen_2_image_orbit(image_name):
     tmp1 = image_name.split("/")[-1]  # remove path
     tmp2 = tmp1.split(".")[0] # remove file extension
     comps = tmp2.split("_") # decompose
-    return comps[5]
+    return comps[4]
 
 
 def get_sen_2_image_tile(image_name):
@@ -657,7 +657,7 @@ def get_sen_2_image_tile(image_name):
     tmp1 = image_name.split("/")[-1]  # remove path
     tmp2 = tmp1.split(".")[0] # remove file extension
     comps = tmp2.split("_") # decompose
-    return comps[6]
+    return comps[5]
 
 
 def get_sen_2_granule_id(safe_dir):
