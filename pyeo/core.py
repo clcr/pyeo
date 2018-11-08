@@ -492,7 +492,7 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
         log.info("Tile ID for stacking: {}".format(tile))
         safe_files = glob.glob(os.path.join(image_dir, tile + "*.tif")) # choose all files with that tile ID
         if len(safe_files) == 0:
-            raise CreateNewStacksException("Image_dir is empty")
+            raise CreateNewStacksException("Image_dir is empty: {}".format(os.path.join(image_dir, tile + "*.tif")))
         else:
             safe_files = sort_by_timestamp(safe_files)
             log.info("Image file list for stacking:")
