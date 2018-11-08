@@ -1193,8 +1193,10 @@ def apply_array_image_mask(array, mask):
 
 def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
                    apply_mask=False, out_type="GTiff", num_chunks=None):
-    """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
-    with a ~15GB machine)"""
+    """
+    Classifies change between two stacked images.
+    Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
+    """
     log = logging.getLogger(__name__)
     log.info("Starting classification for {} with model {}".format(image_path, model_path))
     image = gdal.Open(image_path)
@@ -1276,12 +1278,16 @@ def covert_image_format(image, format):
 
 def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
                        apply_mask=False, out_type="GTiff", num_chunks=None):
-    """Classifies every .tif in in_dir using model at model_path. Outputs are saved
-     in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively."""
-    # Needs test
+    """
+    Classifies every .tif in in_dir using model at model_path. Outputs are saved
+    in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.
+    """
     log = logging.getLogger(__name__)
-    log.info("Classifying directory {}, output saved in {} and {}".format(in_dir, class_out_dir, prob_out_dir))
+    log.info("Classifying files in {}".format(in_dir))
+    log.info("Class files saved in {}".format(class_out_dir))
+    log.info("Prob. files saved in {}".format(prob_out_dir))
     for image_path in glob.glob(in_dir+r"/*.tif"):
+        log.info("   Processing {}".format(image_path))
         image_name = os.path.basename(image_path).split('.')[0]
         class_out_path = os.path.join(class_out_dir, image_name+"_class.tif")
         prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
