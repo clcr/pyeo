@@ -499,17 +499,19 @@ def create_new_stacks(image_dir, stack_dir, threshold = 50):
             for file in safe_files:
                 log.info("   {}".format(file))
             latest_image_path = safe_files[0]
-            #log.info("Most recent image: {}".format(latest_image_path))
             latest_image = gdal.Open(latest_image_path)
-            new_data_poly = get_raster_bounds(latest_image)
+            latest_image_poly = get_raster_bounds(latest_image)
             to_be_stacked = []
             for file in safe_files[1:]:
+                log.info("   Processing from safe_file list: {}".format(file))
                 image = gdal.Open(file)
                 image_poly = get_raster_bounds(image)
-                if image_poly.Intersection(new_data_poly):
+                if image_poly.Intersection(latest_image_poly):
+                    log.info("   Appending file to be stacked: {}".format(file))
                     to_be_stacked.append(file)
-                    new_data_poly = new_data_poly.Difference(image_poly)
-                    if new_data_poly.GetArea() < threshold:
+                    latest_image_poly = latest_image_poly.Difference(image_poly)
+                    if latest_image_poly.GetArea() < threshold:
+                        log.warning("Too little overlap of scenes.")
                         image = None
                         break
                 image = None
