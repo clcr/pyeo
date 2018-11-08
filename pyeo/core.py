@@ -465,7 +465,7 @@ def create_matching_dataset(in_dataset, out_path,
     return out_dataset
 
 
-def create_new_stacks(image_dir, stack_dir, threshold = 50):
+def create_new_stacks(image_dir, stack_dir):
     """
     Creates new stacks with with adjacent image acquisition dates. Threshold; how small a part
     of the latest_image will be before it's considered to be fully processed.
