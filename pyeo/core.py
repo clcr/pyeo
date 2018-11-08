@@ -569,7 +569,7 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
      and creates a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
-    log.info("SAFE dfile path list: {}".format(safe_file_path_list))
+    #log.info("SAFE dfile path list: {}".format(safe_file_path_list))
     for safe_dir in safe_file_path_list:
         log.info("----------------------------------------------------")
         log.info("Merging 10m bands in SAFE dir: {}".format(safe_dir))
