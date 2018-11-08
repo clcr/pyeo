@@ -485,9 +485,14 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
                - add to a to_be_stacked list,
                - subtract it's bounding box from new_data_polygon.
             c. If new_data_polygon drops having a total area less than threshold, stop.
-    Step 4: Stack new rasters for each image in new_data list.
+    Step 4: Stack new rasters for each orbit and tile combination in new_data list.
     """
     log = logging.getLogger(__name__)
+    orbtiles = get_sen_2_orbits_and_tiles(image_dir) # gets the list of orbits and tiles present in the directory
+    log.info("Orbit and tile list for stacking:")
+    for i in orbtiles:
+        log.info("{}".format(orbtiles[i]))
+
     safe_files = glob.glob(os.path.join(image_dir, "*.tif"))
     if len(safe_files) == 0:
         raise CreateNewStacksException("Image_dir is empty")
@@ -498,10 +503,6 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             log.info("{}".format(safe_files[i]))
     latest_image_path = safe_files[0]
     log.info("Most recent image: {}".format(latest_image_path))
-    orb_old = get_sen_2_image_orbit(old_image_path)
-    orb_new = get_sen_2_image_orbit(new_image_path)
-    tile_old = get_sen_2_image_tile(old_image_path)
-    tile_new = get_sen_2_image_tile(new_image_path)
     latest_image = gdal.Open(latest_image_path)
     new_data_poly = get_raster_bounds(latest_image)
     to_be_stacked = []
@@ -522,6 +523,23 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             break
         new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
     return new_images
+
+
+def get_sen_2_orbits_and_tiles(image_dir):
+    """
+    gets the list of orbits and tiles present in the directory
+    """
+    image_files = glob.glob(os.path.join(image_dir, "*.tif"))
+    if len(image_files) == 0:
+        raise CreateNewStacksException("Image_dir is empty")
+    else:
+        orbtiles = ''
+        for image_file in image_files:
+            orb = get_sen_2_image_orbit(image_file)
+            tile = get_sen_2_image_tile(image_file)
+            orbtile = orb + tile
+            orbtiles.append(orbtile)
+    return orbtiles
 
 
 def sort_by_timestamp(strings, recent_first=True):
