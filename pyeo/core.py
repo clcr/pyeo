@@ -502,6 +502,8 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
             #log.info("Most recent image: {}".format(latest_image_path))
             latest_image = gdal.Open(latest_image_path)
             new_data_poly = get_raster_bounds(latest_image)
+            to_be_stacked = safe_files
+            '''
             to_be_stacked = []
             for file in safe_files[1:]:
                 image = gdal.Open(file)
@@ -513,6 +515,7 @@ def create_new_stacks(image_dir, stack_dir, threshold = 100):
                         image = None
                         break
                 image = None
+            '''
             log.info("To be stacked:")
             for file in to_be_stacked:
                 log.info("   {}".format(file))
