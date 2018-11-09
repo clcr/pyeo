@@ -1226,6 +1226,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         log.info("Created probability image file: {}".format(prob_out_dir))
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
+
     if apply_mask:
         mask_path = get_mask_path(image_path)
         log.info("Applying mask at {}".format(mask_path))
@@ -1234,6 +1235,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         image_array = apply_array_image_mask(image_array, mask_array)
         mask_array = None
         mask = None
+
     image_array = reshape_raster_for_ml(image_array)
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.ubyte)
@@ -1257,11 +1259,14 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
                 chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
             ]
             prob_view[:, :] = model.predict_proba(chunk_view)
+
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
+
     if prob_out_dir:
         prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
             reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
+
     class_out_image = None
     prob_out_image = None
     if prob_out_dir:
