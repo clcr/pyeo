@@ -448,8 +448,7 @@ def clean_l2_dir(l2_dir, resolution="10m", warning=True):
         clean_l2_data(safe_file_path, resolution, warning)
 
 
-def create_matching_dataset(in_dataset, out_path,
-                            format="GTiff", bands=1, datatype = None):
+def create_matching_dataset(in_dataset, out_path, format="GTiff", bands=1, datatype=None):
     """Creates an empty gdal dataset with the same dimensions, projection and geotransform. Defaults to 1 band.
     Datatype is set from the first layer of in_dataset if unspecified"""
     driver = gdal.GetDriverByName(format)
@@ -1220,9 +1219,11 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
     model = joblib.load(model_path)
-    map_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
+    class_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
+    log.info("Created classification image file: {}".format(class_out_dir))
     if prob_out_path:
         prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes, datatype=gdal.GDT_Float32)
+        log.info("Created probability image file: {}".format(prob_out_dir))
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
     if apply_mask:
@@ -1235,7 +1236,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
         mask = None
     image_array = reshape_raster_for_ml(image_array)
     n_samples = image_array.shape[0]
-    classes = np.empty(n_samples, dtype=np.int16)
+    classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_path:
         probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
 
@@ -1256,10 +1257,12 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
                 chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
             ]
             prob_view[:, :] = model.predict_proba(chunk_view)
-    map_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
+    class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
+        reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
     if prob_out_path:
-        prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
-    map_out_image = None
+        prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
+            reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
+    class_out_image = None
     prob_out_image = None
     if prob_out_path:
         return class_out_dir, prob_out_path
