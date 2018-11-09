@@ -1222,8 +1222,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     class_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_dir))
     if prob_out_dir:
-        log.info("Model: {}".format(model))
-        log.info("n classes: {}".format(model.n_classes_))
+        log.info("n classes in the model: {}".format(model.n_classes_))
         prob_out_image = create_matching_dataset(image, prob_out_dir, bands=model.n_classes_, datatype=gdal.GDT_Float32)
         log.info("Created probability image file: {}".format(prob_out_dir))
     model.n_cores = -1
@@ -1242,7 +1241,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
-        probs = np.empty((n_samples, model.n_classes), dtype=np.float32)
+        probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
 
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
