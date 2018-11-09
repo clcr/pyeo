@@ -488,8 +488,9 @@ def create_new_stacks(image_dir, stack_dir):
     log = logging.getLogger(__name__)
     new_images = []
     tiles = get_sen_2_tiles(image_dir)
+    tiles = list(set(tiles)) # eliminate duplicates
     n_tiles = len(tiles)
-    log.info("Found {} tile IDs for stacking:".format(n_tiles))
+    log.info("Found {} unique tile IDs for stacking:".format(n_tiles))
     for tile in tiles:
         log.info("   {}".format(tile))
     for tile in tiles:
