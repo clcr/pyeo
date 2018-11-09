@@ -1205,7 +1205,7 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
+def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
                    apply_mask=False, out_type="GTiff", num_chunks=None):
     """
     Classifies change between two stacked images.
@@ -1221,8 +1221,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
     model = joblib.load(model_path)
     class_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_dir))
-    if prob_out_path:
-        prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes, datatype=gdal.GDT_Float32)
+    if prob_out_dir:
+        prob_out_image = create_matching_dataset(image, prob_out_dir, bands=model.n_classes, datatype=gdal.GDT_Float32)
         log.info("Created probability image file: {}".format(prob_out_dir))
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
@@ -1237,8 +1237,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
     image_array = reshape_raster_for_ml(image_array)
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.ubyte)
-    if prob_out_path:
-        probs = np.empty(n_samples, model.n_classes, dtype=np.float32)
+    if prob_out_dir:
+        probs = np.empty((n_samples, model.n_classes), dtype=np.float32)
 
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
@@ -1252,20 +1252,20 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
         ]
         out_view[:] = model.predict(chunk_view)
-        if prob_out_path:
+        if prob_out_dir:
             prob_view = probs[
                 chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
             ]
             prob_view[:, :] = model.predict_proba(chunk_view)
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
-    if prob_out_path:
+    if prob_out_dir:
         prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
             reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
     class_out_image = None
     prob_out_image = None
-    if prob_out_path:
-        return class_out_dir, prob_out_path
+    if prob_out_dir:
+        return class_out_dir, prob_out_dir
     else:
         return class_out_dir
 
