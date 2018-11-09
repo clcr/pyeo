@@ -1220,9 +1220,9 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
     model = joblib.load(model_path)
-    map_out_image = create_matching_dataset(image, class_out_dir, format=out_type)
+    map_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
     if prob_out_path:
-        prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
+        prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes, datatype=gdal.GDT_Float32)
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
     if apply_mask:
