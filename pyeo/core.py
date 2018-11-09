@@ -1238,7 +1238,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_path:
-        probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
+        probs = np.empty((n_samples, model.n_classes), dtype=np.float32)
 
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
