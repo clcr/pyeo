@@ -147,7 +147,7 @@ def create_file_structure(root):
         "images/stacked/",
         "images/planet/",
         "output/",
-        "output/categories",
+        "output/classified",
         "output/probabilities",
         "output/report_image",
         "output/display_images",
