@@ -489,6 +489,9 @@ def create_new_stacks(image_dir, stack_dir):
     new_images = []
     tiles = get_sen_2_tiles(image_dir)
     n_tiles = len(tiles)
+    log.info("Found {} tile IDs for stacking:".format(n_tiles))
+    for tile in tiles:
+        log.info("   {}".format(tile))
     for tile in tiles:
         log.info("Tile ID for stacking: {}".format(tile))
         safe_files = glob.glob(os.path.join(image_dir, "*" + tile + "*.tif")) # choose all files with that tile ID
