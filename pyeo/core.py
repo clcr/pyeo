@@ -1206,13 +1206,14 @@ def apply_array_image_mask(array, mask):
 
 
 def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
-                   apply_mask=False, out_type="GTiff", num_chunks=None):
+                   apply_mask=False, out_type="GTiff", num_chunks=2):
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     """
     log = logging.getLogger(__name__)
-    log.info("Starting classification for {} with model {}".format(image_path, model_path))
+    log.info("Classifying file: {}".format(image_path))
+    log.info("Saved model     : {}".format(model_path))
     image = gdal.Open(image_path)
     if num_chunks == None:
         log.info("No chunk size given, attempting autochunk.")
@@ -1245,9 +1246,10 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
+
     chunk_size = int(n_samples / num_chunks)
     for chunk_id in range(num_chunks):
-        log.info("Processing chunk {}".format(chunk_id))
+        log.info("   Processing chunk {}".format(chunk_id))
         chunk_view = image_array[
             chunk_id*chunk_size: chunk_id * chunk_size + chunk_size, :
         ]
