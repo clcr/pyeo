@@ -1313,7 +1313,6 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
     log.info("Class files saved in {}".format(class_out_dir))
     log.info("Prob. files saved in {}".format(prob_out_dir))
     for image_path in glob.glob(in_dir+r"/*.tif"):
-        log.info("   Processing {}".format(image_path))
         image_name = os.path.basename(image_path).split('.')[0]
         class_out_path = os.path.join(class_out_dir, image_name+"_class.tif")
         prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
