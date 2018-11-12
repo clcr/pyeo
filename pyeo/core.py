@@ -1239,38 +1239,55 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         mask_array = None
         mask = None
 
-    # at this point, image_array has dimensions [band, y, x], so reshape it:
+    # Mask out missing values from the classification
+    # at this point, image_array has dimensions [band, y, x]
     image_array = reshape_raster_for_ml(image_array)
-    n_samples = image_array.shape[0]
+    # Now it has dimensions [x * y, band] as needed for Scikit-Learn
+
+    # Determine where in the image array there are no missing values in any of the bands (axis 1)
+    np.any(image_array==nodata, axis=1, out=goodpixels)
+
+    #n_samples = image_array.shape[0]
+    n_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
         probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
+
+"""
+Don't need this now we have chunk_resid
 
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
 
     if n_samples % 8 != 0:
         raise ForestSentinelException("Warning: chunk size is not compatible with 8 stack image bands")
+"""
 
     chunk_size = int(n_samples / num_chunks)
+    chunk_resid = n_samples - chunk_size * num_chunks
     for chunk_id in range(num_chunks):
         log.info("   Processing chunk {}".format(chunk_id))
+        # process the residual pixels with the last chunk
+        if chunk_id == num_chunks - 1:
+            chunk_size = chunk_size + chunk_resid
+
         chunk_view = image_array[
-            chunk_id*chunk_size: chunk_id * chunk_size + chunk_size, :
-        ]
-
-        # TODO mask out missing value image areas
-
-
+                     chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
+                     ]
+        goodpixels_view = goodpixels[
+             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
+             ]
         out_view = classes[
             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
-        ]
-        out_view[:] = model.predict(chunk_view)
+            ]
+        out_view[:] = model.predict(chunk_view[goodpixels_view,])
         if prob_out_dir:
             prob_view = probs[
                 chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
             ]
-            prob_view[:, :] = model.predict_proba(chunk_view)
+            prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view,])
+
+    # TODO put class values in the right pixel position again
 
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
