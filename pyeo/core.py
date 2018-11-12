@@ -1240,11 +1240,6 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         mask = None
 
     image_array = reshape_raster_for_ml(image_array)
-
-    # TODO mask out missing value image areas
-    #where image_array == nodata\
-    #    image_array = nodata
-
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
@@ -1259,6 +1254,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         chunk_view = image_array[
             chunk_id*chunk_size: chunk_id * chunk_size + chunk_size, :
         ]
+        # TODO mask out missing value image areas
+        # chunk_view[chunk_view == nodata] = nodata
         out_view = classes[
             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
         ]
