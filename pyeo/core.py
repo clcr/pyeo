@@ -706,7 +706,7 @@ def stack_images(raster_paths, out_raster_path,
 def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.GDT_Int32, nodata = 0):
     """
     Mosaics multiple images with the same number of layers into one single image. Overwrites
-    overlapping pixels with the value furthest down raster_paths. Takes projection ect from the first
+    overlapping pixels with the value furthest down raster_paths. Takes projection from the first
     raster.
 
     TODO: consider using GDAL:
