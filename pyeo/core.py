@@ -1245,10 +1245,10 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     # Now it has dimensions [x * y, band] as needed for Scikit-Learn
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
-    np.any(image_array==nodata, axis=1, out=goodpixels)
+    np.any(image_array != nodata, axis=1, out=goodpixels)
 
-    #n_samples = image_array.shape[0]
-    n_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
+    n_samples = image_array.shape[0] # gives x * y dimension of the whole image
+    n_good_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
         probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
@@ -1263,8 +1263,8 @@ Don't need this now we have chunk_resid
         raise ForestSentinelException("Warning: chunk size is not compatible with 8 stack image bands")
 """
 
-    chunk_size = int(n_samples / num_chunks)
-    chunk_resid = n_samples - chunk_size * num_chunks
+    chunk_size = int(n_good_samples / num_chunks)
+    chunk_resid = n_good_samples - chunk_size * num_chunks
     for chunk_id in range(num_chunks):
         log.info("   Processing chunk {}".format(chunk_id))
         # process the residual pixels with the last chunk
@@ -1281,13 +1281,16 @@ Don't need this now we have chunk_resid
             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
             ]
         out_view[:] = model.predict(chunk_view[goodpixels_view,])
+        # put class values in the right pixel position again
+        np.copyto(chunk_view, out_view, where=goodpixels_view)
+
         if prob_out_dir:
             prob_view = probs[
                 chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
             ]
             prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view,])
-
-    # TODO put class values in the right pixel position again
+            # put prob values in the right pixel position again
+            np.copyto(prob_view, out_view, where=goodpixels_view)
 
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
