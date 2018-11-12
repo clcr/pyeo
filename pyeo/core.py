@@ -733,7 +733,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     log.info("New empty image created at {}".format(out_raster_file))
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     for i, raster in enumerate(rasters):
-        log.info("Now mosaicing raster no. {}".format(i))
+        log.info("Now mosaicking raster no. {}".format(i))
         in_raster_array = raster.GetVirtualMemArray()
         if len(in_raster_array.shape) == 2:
             in_raster_array = np.expand_dims(in_raster_array, 0)
@@ -743,7 +743,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
         np.copyto(out_raster_view, in_raster_array, where=in_raster_array != nodata)
         in_raster_array = None
         out_raster_view = None
-    log.info("Raster mosaicing done")
+    log.info("Raster mosaicking done")
     out_raster_array = None
 
 
