@@ -1210,6 +1210,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
+    TODO: Ignore areas where one image has missing values
     """
     log = logging.getLogger(__name__)
     log.info("Classifying file: {}".format(image_path))
@@ -1239,6 +1240,11 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         mask = None
 
     image_array = reshape_raster_for_ml(image_array)
+
+    # TODO mask out missing value image areas
+    #where image_array == nodata\
+    #    image_array = nodata
+
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
