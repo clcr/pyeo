@@ -1239,6 +1239,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         mask_array = None
         mask = None
 
+    # at this point, image_array has dimensions [band, y, x], so reshape it:
     image_array = reshape_raster_for_ml(image_array)
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.ubyte)
@@ -1248,14 +1249,19 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
 
+    if n_samples % 8 != 0:
+        raise ForestSentinelException("Warning: chunk size is not compatible with 8 stack image bands")
+
     chunk_size = int(n_samples / num_chunks)
     for chunk_id in range(num_chunks):
         log.info("   Processing chunk {}".format(chunk_id))
         chunk_view = image_array[
             chunk_id*chunk_size: chunk_id * chunk_size + chunk_size, :
         ]
+
         # TODO mask out missing value image areas
-        # chunk_view[chunk_view == nodata] = nodata
+
+
         out_view = classes[
             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
         ]
