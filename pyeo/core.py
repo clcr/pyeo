@@ -1078,6 +1078,7 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     # This bit here is similar to stack_raster, but different enough to not be worth spinning into a combination_func
     # I might reconsider this later, but I think it'll overcomplicate things.
     out_mask_array = out_mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    out_mask_array[:, :] = 1
     for in_mask in masks:
         in_mask_array = in_mask.GetVirtualMemArray()
         if geometry_func == "intersect":

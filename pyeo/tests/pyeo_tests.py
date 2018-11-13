@@ -1,8 +1,9 @@
-import os
+import os, sys
 from tempfile import TemporaryDirectory
 import numpy as np
 import gdal, ogr
-from .context import pyeo
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
+import pyeo.core as pyeo
 
 
 # see conftest.py for definition of managed_multiple_geotiff_dir
@@ -188,5 +189,5 @@ def test_sort_by_timestamp():
         assert out_paths == target
 
 
-def test_combine_masks_or():
-    with Tempor
+#def test_combine_masks_or():
+#    with Tempor

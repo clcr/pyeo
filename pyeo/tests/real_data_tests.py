@@ -2,6 +2,7 @@ import os, sys
 import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
 import pyeo.core as pyeo
+import gdal
 
 
 def test_composite_images_with_mask():
@@ -37,6 +38,8 @@ def test_mask_combination():
                        geometry_func="union", combination_func="or")
     pyeo.combine_masks(masks, "test_outputs/intersection_and_combination.tif",
                        geometry_func="intersect", combination_func="and")
+    mask_1 = gdal.Open("test_outputs/union_or_combination.tif")
+    assert not mask_1.GetVirtualMemArray().all == False
 
 
 if __name__ == "__main__":
