@@ -1266,27 +1266,21 @@ Don't need this now we have chunk_resid
     chunk_size = int(n_good_samples / num_chunks)
     chunk_resid = n_good_samples - chunk_size * num_chunks
     for chunk_id in range(num_chunks):
-        log.info("   Processing chunk {}".format(chunk_id))
+        offset = chunk_id * chunk_size
         # process the residual pixels with the last chunk
         if chunk_id == num_chunks - 1:
             chunk_size = chunk_size + chunk_resid
-
-        chunk_view = image_array[
-                     chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
-                     ]
-        goodpixels_view = goodpixels[
-             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
-             ]
-        out_view = classes[
-            chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
-            ]
+        log.info("   Classifying chunk {} of size {}".format(chunk_id, chunk_size))
+        chunk_view = image_array[offset : offset + chunk_size, :]
+        goodpixels_view = goodpixels[offset : offset + chunk_size]
+        out_view = classes[offset : offset + chunk_size]
         out_view[:] = model.predict(chunk_view[goodpixels_view,])
         # put class values in the right pixel position again
         np.copyto(chunk_view, out_view, where=goodpixels_view)
 
         if prob_out_dir:
             prob_view = probs[
-                chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
+                offset : offset + chunk_size, :
             ]
             prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view,])
             # put prob values in the right pixel position again
