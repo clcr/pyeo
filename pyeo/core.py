@@ -1206,7 +1206,7 @@ def apply_array_image_mask(array, mask):
 
 
 def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
-                   apply_mask=False, out_type="GTiff", num_chunks=2):
+                   apply_mask=False, out_type="GTiff", num_chunks=2, nodata=0):
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
