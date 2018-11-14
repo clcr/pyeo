@@ -104,9 +104,9 @@ Sentinel 2 preprocessing
 
  .. autofunction:: atmospheric_correction
 
- .. autofunction:: sort_by_s2_timestamp
+ .. autofunction:: sort_by_timestamp
 
- .. autofunction:: get_s2_image_acquisition_time
+ .. autofunction:: get_image_acquisition_time
 
  .. autofunction:: open_dataset_from_safe
 

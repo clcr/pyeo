@@ -31,11 +31,12 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
     parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
     parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False)
+    parser.add_argument('-o', '--mosaic', dest='do_mosaic', action='store_true', default=False)
     parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False)
     args = parser.parse_args()
 
     # If any processing step args are present, do not assume that we want to do all steps
-    if (args.do_download or args.do_preprocess or args.do_merge or args.do_stack or args.do_classify) == True:
+    if (args.do_download or args.do_preprocess or args.do_merge or args.do_stack or args.do_mosaic or args.do_classify):
         do_all = False
 
     conf = configparser.ConfigParser()
@@ -60,7 +61,8 @@ if __name__ == "__main__":
     planet_image_path = os.path.join(project_root, r"images/planet")
     merged_image_path = os.path.join(project_root, r"images/merged")
     stacked_image_path = os.path.join(project_root, r"images/stacked")
-    catagorised_image_path = os.path.join(project_root, r"output/categories")
+    mosaic_image_path = os.path.join(project_root, r"images/mosaic")
+    catagorised_image_path = os.path.join(project_root, r"output/classified")
     probability_image_path = os.path.join(project_root, r"output/probabilities")
 
     # Query and download
@@ -72,10 +74,12 @@ if __name__ == "__main__":
     # Atmospheric correction
     if args.do_preprocess or do_all:
         log.info("Applying sen2cor")
-        pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=True)
+        pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
 
-    # Aggregating layers into single image
+    # Merging / Aggregating layers into single image
     if args.do_merge or do_all:
+        log.info("Cleaning L2A directory")
+        pyeo.clean_l2_dir(l2_image_path, resolution="10m", warning=False)
         log.info("Aggregating layers")
         pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
@@ -84,11 +88,16 @@ if __name__ == "__main__":
         log.info("Stacking before and after images")
         pyeo.create_new_stacks(merged_image_path, stacked_image_path)
 
+    # Mosaic stacked layers
+    if args.do_stack or do_all:
+        log.info("Mosaicking stacked multitemporal images across tiles")
+        pyeo.mosaic_images(stacked_image_path, mosaic_image_path, format="GTiff", datatype=gdal.GDT_Int32, nodata = 0)
+
     # Classify stacks
     if args.do_classify or do_all:
         log.info("Classifying images")
         pyeo.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
-                                apply_mask=False)
+                                num_chunks=2, apply_mask=False)
 
 
 # # ############################################################################################################
