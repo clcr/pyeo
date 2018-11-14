@@ -409,8 +409,6 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     log = logging.getLogger(__name__)
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
-    # edited by hb91
-    #granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2].jp2"
     image_glob = os.path.join(l2_SAFE_file, granule_path)
     if not glob.glob(image_glob):
         if warning:
@@ -1277,16 +1275,6 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
         probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
-
-"""
-Don't need this now we have chunk_resid
-
-    if n_samples % num_chunks != 0:
-        raise ForestSentinelException("Please pick a chunk size that divides evenly")
-
-    if n_samples % 8 != 0:
-        raise ForestSentinelException("Warning: chunk size is not compatible with 8 stack image bands")
-"""
 
     chunk_size = int(n_good_samples / num_chunks)
     chunk_resid = n_good_samples - chunk_size * num_chunks
