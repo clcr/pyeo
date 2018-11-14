@@ -174,7 +174,7 @@ def test_get_training_data(managed_ml_geotiff_dir):
     training_image = os.path.join(test_dir.path, "training_image")
     training_shapes = os.path.join(test_dir.path, "training_shape/geometry.shp")
     out = pyeo.get_training_data(training_image, training_shapes)
-    assert out.shape == (2, 100)
+    assert out[0].shape == (2, 100)
 
 
 def test_sort_by_timestamp():
