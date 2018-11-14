@@ -1253,16 +1253,6 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     if prob_out_dir:
         probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
 
-"""
-Don't need this now we have chunk_resid
-
-    if n_samples % num_chunks != 0:
-        raise ForestSentinelException("Please pick a chunk size that divides evenly")
-
-    if n_samples % 8 != 0:
-        raise ForestSentinelException("Warning: chunk size is not compatible with 8 stack image bands")
-"""
-
     chunk_size = int(n_good_samples / num_chunks)
     chunk_resid = n_good_samples - chunk_size * num_chunks
     for chunk_id in range(num_chunks):
