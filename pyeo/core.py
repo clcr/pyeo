@@ -102,10 +102,12 @@ def init_log(log_path):
     """Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
      Returns the log for the calling script"""
     logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
+    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     log = logging.getLogger(__name__)
     log.setLevel(logging.DEBUG)
     file_handler = logging.FileHandler(log_path)
     file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
     log.addHandler(file_handler)
     log.info("****PROCESSING START****")
     return log
