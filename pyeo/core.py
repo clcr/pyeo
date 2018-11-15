@@ -540,6 +540,7 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
      and create a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
+    log.info("Aggregating tile following files: {}".format(safe_file_path_list))
     for safe_dir in safe_file_path_list:
         out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
         if os.path.exists(out_path) and not force_reprocess:

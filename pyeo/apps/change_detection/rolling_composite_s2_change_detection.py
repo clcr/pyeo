@@ -82,7 +82,7 @@ if __name__ == "__main__":
     composite_merged_dir = os.path.join(project_root, r"composite/merged")
 
     if args.start_date == "LATEST":
-        # This isn't nice, but returns the yyyymmdd string of the latest merged image
+        # This isn't nice, but returns the yyyymmdd string of the latest stacked image
         start_date = pyeo.get_s2_image_acquisition_time(pyeo.sort_by_s2_timestamp(
             [image_name for image_name in os.listdir(stacked_image_dir) if image_name.endswith(".tif")],
             recent_first=True
