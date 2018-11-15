@@ -96,7 +96,8 @@ if __name__ == "__main__":
 
     # Download and build the initial composite. Does not do by default
     if args.build_composite:
-        log.info("Downloading for initial composite between {} and {}".format(composite_start_date, composite_end_date))
+        log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
+            composite_start_date, composite_end_date, cloud_cover))
         composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date, conf)
         pyeo.download_new_s2_data(composite_products, composite_l1_image_dir)
         log.info("Preprocessing composite products")
