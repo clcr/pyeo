@@ -47,6 +47,10 @@ class StackImageException(ForestSentinelException):
     pass
 
 
+class BadS2Exception(ForestSentinelException):
+    pass
+
+
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
                 output_folder=None, api=True):
     """
@@ -546,7 +550,11 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
         if os.path.exists(out_path) and not force_reprocess:
             log.info("{} exists, skipping".format(out_path))
             continue
-        stack_sentinel_2_bands(safe_dir, out_path, band='10m')
+        try:
+            stack_sentinel_2_bands(safe_dir, out_path, band='10m')
+        except BadS2Exception:
+            log.error("{} in incorrectly processed, continuing.".format(safe_dir))
+            continue
         if cloud_model_path:
             with TemporaryDirectory() as td:
                 temp_model_mask_path = os.path.join(td, "temp_model.msk")
@@ -560,10 +568,14 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
+    log = logging.getLogger(__name__)
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(band)
     image_glob = os.path.join(safe_dir, granule_path)
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
+    if not file_list:
+        log.error("No 10m imagery present in {}".format(safe_dir))
+        raise BadS2Exception
     stack_images(file_list, out_image_path, geometry_mode="intersect")
     return out_image_path
 
