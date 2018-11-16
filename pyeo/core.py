@@ -1249,7 +1249,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     #log.info("   Good pixels: {}".format(goodpixels))
 
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
-    n_good_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
+    n_good_samples = np.sum(goodpixels) # gives the number of pixels with no missing values in any band
     log.info("   Good samples: {}".format(n_good_samples))
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
