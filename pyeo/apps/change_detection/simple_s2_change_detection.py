@@ -97,7 +97,7 @@ if __name__ == "__main__":
     if args.do_classify or do_all:
         log.info("Classifying images")
         pyeo.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
-                                num_chunks=2, apply_mask=False)
+                                num_chunks=4, apply_mask=False)
 
 
 # # ############################################################################################################
