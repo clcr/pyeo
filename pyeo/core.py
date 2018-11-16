@@ -1246,6 +1246,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
     goodpixels = np.any(image_array != nodata, axis=1)
+    log.info("   Good pixels: {}".format(goodpixels))
 
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
     n_good_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
