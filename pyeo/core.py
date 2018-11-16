@@ -1246,7 +1246,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
     goodpixels = np.any(image_array != nodata, axis=1)
-    log.info("   Good pixels: {}".format(goodpixels))
+    #log.info("   Good pixels: {}".format(goodpixels))
 
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
     n_good_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
@@ -1256,6 +1256,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     chunk_size = int(n_good_samples / num_chunks)
     chunk_resid = n_good_samples - chunk_size * num_chunks
+    log.info("   Chunk size {} Chunk residual {}".format(chunk_size, chunk_resid))
     for chunk_id in range(num_chunks):
         offset = chunk_id * chunk_size
         # process the residual pixels with the last chunk
