@@ -1258,17 +1258,18 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     chunk_size = int(n_good_samples / num_chunks)
     chunk_resid = n_good_samples - chunk_size * num_chunks
     log.info("   Number of chunks {} Chunk size {} Chunk residual {}".format(num_chunks, chunk_size, chunk_resid))
+    # The chunks iterate over all values in the array [x * y, bands] always with 8 bands per chunk
     for chunk_id in range(num_chunks):
         offset = chunk_id * chunk_size
         # process the residual pixels with the last chunk
         if chunk_id == num_chunks - 1:
             chunk_size = chunk_size + chunk_resid
         log.info("   Classifying chunk {} of size {}".format(chunk_id, chunk_size))
-        chunk_view = image_array[offset : offset + chunk_size, :]
-        goodpixels_view = goodpixels[offset : offset + chunk_size]
+        chunk_view = image_array[offset : offset + chunk_size, :] # dimensions [chunk_size, bands]
+        goodpixels_view = goodpixels[offset : offset + chunk_size]  # dimensions [chunk_size]
         n_good_samples_view = np.sum(goodpixels_view)
         log.info("   Good samples in chunk: {}".format(n_good_samples_view))
-        out_view = classes[offset : offset + chunk_size]
+        out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view[goodpixels_view]) # removed , before ])
         # put class values in the right pixel position again
         log.info("   Moving chunk from {} to {}".format(chunk_view, out_view))
