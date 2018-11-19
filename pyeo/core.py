@@ -1246,7 +1246,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
     goodpixels = np.any(image_array != nodata, axis=1)
-    #log.info("   Good pixels: {}".format(goodpixels))
+    log.info("   Good pixels: {}".format(goodpixels))
 
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
     n_good_samples = np.sum(goodpixels) # gives the number of pixels with no missing values in any band
@@ -1266,6 +1266,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         log.info("   Classifying chunk {} of size {}".format(chunk_id, chunk_size))
         chunk_view = image_array[offset : offset + chunk_size, :]
         goodpixels_view = goodpixels[offset : offset + chunk_size]
+        n_good_samples_view = np.sum(goodpixels_view)
+        log.info("   Good samples in chunk: {}".format(n_good_samples_view))
         out_view = classes[offset : offset + chunk_size]
         out_view[:] = model.predict(chunk_view[goodpixels_view,])
         # put class values in the right pixel position again
