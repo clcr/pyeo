@@ -1245,7 +1245,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     # Now it has dimensions [x * y, band] as needed for Scikit-Learn
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
-    goodpixels = np.any(image_array != nodata, axis=1) # Should have dimensions [x * y] as it aggregates over all bands
+    goodpixels = np.any(image_array != nodata, axis=1) # Boolean, should have dimensions [x * y],
+        # as it aggregates over all bands in axis 1
     log.info("   Good pixels: {}".format(goodpixels))
     log.info("   Good pixels shape: {}".format(goodpixels.shape[0]))
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
@@ -1272,8 +1273,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view[goodpixels_view]) # removed , before ])
         # put class values in the right pixel position again
-        log.info("   Moving chunk from {} to {}".format(chunk_view, out_view))
-        np.copyto(chunk_view, out_view, where=goodpixels_view)
+        log.info("   Moving chunk from {} to {}".format(out_view, classes[offset : offset + chunk_size]))
+        np.copyto(classes[offset : offset + chunk_size], out_view, where=goodpixels_view)
 
         if prob_out_dir:
             prob_view = probs[
