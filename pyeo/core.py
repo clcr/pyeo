@@ -1270,14 +1270,14 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         n_good_samples_view = np.sum(goodpixels_view)
         log.info("   Good samples in chunk: {}".format(n_good_samples_view))
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
-        out_view[:] = model.predict(chunk_view, :)
+        out_view[:] = model.predict(chunk_view)
         # put class values in the right pixel position again
         log.info("   Moving chunk from {} to {}".format(out_view, classes[offset : offset + chunk_size]))
         np.copyto(classes[goodpixels[offset : offset + chunk_size], :], out_view)
 
         if prob_out_dir:
             prob_view = probs[offset : offset + chunk_size, :]
-            prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view, :])
+            prob_view[:, :] = model.predict_proba(chunk_view)
             # put prob values in the right pixel position again
             log.info("   Moving chunk from {} to {}".format(out_view, prob_view))
             np.copyto(probs[:,:], out_view, where=goodpixels_view)
