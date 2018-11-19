@@ -1245,12 +1245,11 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     # Now it has dimensions [x * y, band] as needed for Scikit-Learn
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
-    goodpixels = np.any(image_array != nodata, axis=1) # Boolean, should have dimensions [x * y],
-        # as it aggregates over all bands in axis 1
+    goodpixels = np.argwhere(image_array != nodata) # Dimensions [x * y, bands], contains indices
     log.info("   Good pixels: {}".format(goodpixels))
     log.info("   Good pixels shape: {}".format(goodpixels.shape[0]))
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
-    n_good_samples = np.sum(goodpixels) # gives the number of pixels with no missing values in any band
+    n_good_samples = goodpixels.shape[0]
     log.info("   Good samples: {}".format(n_good_samples))
     classes = np.empty(n_samples, dtype=np.ubyte)
     if prob_out_dir:
@@ -1271,19 +1270,17 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         n_good_samples_view = np.sum(goodpixels_view)
         log.info("   Good samples in chunk: {}".format(n_good_samples_view))
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
-        out_view[:] = model.predict(chunk_view[goodpixels_view]) # removed , before ])
+        out_view[:] = model.predict(chunk_view, :)
         # put class values in the right pixel position again
         log.info("   Moving chunk from {} to {}".format(out_view, classes[offset : offset + chunk_size]))
-        np.copyto(classes[offset : offset + chunk_size], out_view, where=goodpixels_view)
+        np.copyto(classes[goodpixels[offset : offset + chunk_size], :], out_view)
 
         if prob_out_dir:
-            prob_view = probs[
-                offset : offset + chunk_size, :
-            ]
-            prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view,])
+            prob_view = probs[offset : offset + chunk_size, :]
+            prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view, :])
             # put prob values in the right pixel position again
-            log.info("   Moving chunk from {} to {}".format(chunk_view, out_view))
-            np.copyto(prob_view, out_view, where=goodpixels_view)
+            log.info("   Moving chunk from {} to {}".format(out_view, prob_view))
+            np.copyto(probs[:,:], out_view, where=goodpixels_view)
 
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
