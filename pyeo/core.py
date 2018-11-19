@@ -1269,6 +1269,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         out_view = classes[offset : offset + chunk_size]
         out_view[:] = model.predict(chunk_view[goodpixels_view,])
         # put class values in the right pixel position again
+        log.info("   Moving chunk from {} to {}".format(chunk_view, out_view))
         np.copyto(chunk_view, out_view, where=goodpixels_view)
 
         if prob_out_dir:
@@ -1277,6 +1278,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
             ]
             prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view,])
             # put prob values in the right pixel position again
+            log.info("   Moving chunk from {} to {}".format(chunk_view, out_view))
             np.copyto(prob_view, out_view, where=goodpixels_view)
 
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
