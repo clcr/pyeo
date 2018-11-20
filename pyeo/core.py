@@ -93,10 +93,13 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
 
     """
     ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
+    log = logging.getLogger(__name__)
     api = SentinelAPI(user, passwd)
     footprint = geojson_to_wkt(read_geojson(geojsonfile))
+    log.info("Sending query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
+        footprint, start_date, end_date, cloud))
     products = api.query(footprint,
-                         ((start_date, end_date)), platformname="Sentinel-2",
+                         (start_date, end_date), platformname="Sentinel-2",
                          cloudcoverpercentage="[0 TO " + cloud + "]")
     return products
 
