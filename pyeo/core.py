@@ -1281,7 +1281,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
             #log.info("   Moving chunk from {} to {}".format(out_view, prob_view))
             np.copyto(probs[offset : offset + chunk_size, :], prob_view)
 
-    class_out_array = np.fill(n_samples, nodata)
+    class_out_array.fill(nodata)
     for i, class_val in zip(good_indices, classes):
         class_out_array[i] = class_val
 
