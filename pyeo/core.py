@@ -1372,6 +1372,7 @@ def reshape_ml_out_to_raster(classes, width, height):
 
 def reshape_prob_out_to_raster(probs, width, height):
     """reshapes an output of shape [x*y, classes] to gdal order [classes, y, x]"""
+    log = logging.getLogger(__name__)
     log.info("n_classes")
     n_classes = probs.shape[1]
     log.info("transpose")
