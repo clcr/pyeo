@@ -15,6 +15,7 @@ import numpy.ma as ma
 from tempfile import TemporaryDirectory
 import sklearn.ensemble as ens
 from sklearn.model_selection import cross_val_score
+from skimage import morphology as morph
 import scipy.sparse as sp
 import joblib
 import shutil
@@ -1049,9 +1050,10 @@ def create_mask_from_model(image_path, model_path, model_clear = 0):
         return mask_path
 
 
-def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 30):
-    """Creates a binary mask where pixels under the cloud confidence threshold are TRUE"""
+def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 30, buffer_size = 0):
+    """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1"""
     log = logging.getLogger(__name__)
+    log.info("Creating mask for {} with {} confidence threshold".format(image_path, cloud_conf_threshold))
     cloud_glob = "GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2"
     cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
     cloud_image = gdal.Open(cloud_path)
@@ -1067,6 +1069,10 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
     cloud_image = None
     mask_image = None
     resample_image_in_place(mask_path, 10)
+    if buffer_size:
+        log.info("Buffering {} with buffer size {}".format(buffer_size))
+        buffer_mask_in_place(mask_path, buffer_size)
+    log.info("Mask created at {}".format(mask_path))
     return mask_path
 
 
@@ -1156,6 +1162,16 @@ def resample_image_in_place(image_path, new_res):
         temp_image = os.path.join(td, "temp_image.tif")
         gdal.Warp(temp_image, image_path, options=args)
         shutil.move(temp_image, image_path)
+
+
+def buffer_mask_in_place(mask_path, buffer_size):
+    """Expands a mask in-place, overwriting the previous mask"""
+    mask = gdal.Open(mask_path, gdal.GA_Update)
+    mask_array = mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    cache = morph.binary_erosion(mask_array, selem=morph.disk(buffer_size))
+    np.copyto(mask_array, cache)
+    mask_array = None
+    mask = None
 
 
 def apply_array_image_mask(array, mask):

@@ -157,6 +157,7 @@ if __name__ == "__main__":
             new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
             pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10)
 
+
         # Update composite
         if args.do_update or do_all:
             log.info("Updating composite")
