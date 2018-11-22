@@ -1249,10 +1249,11 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
     log.info("Finding good pixels without missing values")
-    goodpixels = {i: row for i, row in enumerate(image_array) if not np.any(np.isin(row, nodata))}
-    log.info("Creating keys and values lists")
-    good_indices = list(goodpixels.keys())
-    good_samples = list(goodpixels.values())
+    good_samples = [i for i in image_array if i != nodata]
+    good_indices = [i for (i,j) in enumerate(image_array) if j != nodata]
+    #goodpixels = {i: row for i, row in enumerate(image_array) if not np.any(np.isin(row, nodata))}
+    #good_indices = list(goodpixels.keys())
+    #good_samples = list(goodpixels.values())
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
     n_good_samples = len(good_samples)
     log.info("   All  samples: {}".format(n_samples))
