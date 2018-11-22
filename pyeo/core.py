@@ -1029,13 +1029,13 @@ def get_poly_size(poly):
     return out
 
 
-def create_mask_from_model(image_path, model_path, model_clear = 0):
-    """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model."""
+def create_mask_from_model(image_path, model_path, model_clear=0):
+    """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path."""
     with TemporaryDirectory() as td:
         log = logging.getLogger(__name__)
-        log.info("Building cloud mask for {}".format(image_path))
+        log.info("Building cloud mask for {} with model {}".format(image_path, model_path))
         temp_mask_path = os.path.join(td, "cat_mask.tif")
-        classify_image(image_path, model_path, temp_mask_path)
+        classify_image(image_path, model_path, temp_mask_path, num_chunks=10)
         temp_mask = gdal.Open(temp_mask_path, gdal.GA_Update)
         temp_mask_array = temp_mask.GetVirtualMemArray()
         mask_path = get_mask_path(image_path)
