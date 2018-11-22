@@ -1380,7 +1380,7 @@ def reshape_prob_out_to_raster(probs, width, height):
     log.info("transpose")
     image_array = np.transpose(probs, (1, 0))
     log.info("reshape")
-    image_array = np.reshape(image_array, (n_classes, height, width))
+    image_array = np.reshape(probs, (n_classes, height, width))
     return image_array
 
 
