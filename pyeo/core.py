@@ -1254,9 +1254,9 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     good_indices = list(goodpixels.keys())
     good_samples = list(goodpixels.values())
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
-    n_good_samples = len(goodpixels)
+    n_good_samples = len(good_samples)
     log.info("   Good samples: {}".format(n_good_samples))
-    classes = np.empty(n_good_samples, dtype=np.ubyte)
+    classes = np.full(n_good_samples, nodata, dtype=np.ubyte)
     if prob_out_dir:
         probs = np.full((n_good_samples, model.n_classes_), nodata, dtype=np.float32)
 
