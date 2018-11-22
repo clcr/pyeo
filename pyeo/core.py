@@ -1271,30 +1271,33 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
         # put class values in the right pixel position again
-        #log.info("   Moving chunk from {} to {}".format(out_view, classes[offset : offset + chunk_size]))
+        log.info("   Moving class chunk from {} to {}".format(out_view, classes[offset : offset + chunk_size]))
         np.copyto(classes[offset : offset + chunk_size], out_view)
 
         if prob_out_dir:
             prob_view = probs[offset : offset + chunk_size, :]
             prob_view[:, :] = model.predict_proba(chunk_view)
             # put prob values in the right pixel position again
-            #log.info("   Moving chunk from {} to {}".format(out_view, prob_view))
+            log.info("   Moving probability chunk from {} to {}".format(out_view, prob_view))
             np.copyto(probs[offset : offset + chunk_size, :], prob_view)
 
+    log.info("   Creating class array of size {}".format(n_samples))
     class_out_array = np.full((n_samples), nodata)
     for i, class_val in zip(good_indices, classes):
         class_out_array[i] = class_val
 
-
+    log.info("   Creating GDAL class image")
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(class_out_array, image.RasterXSize, image.RasterYSize)
 
     if prob_out_dir:
+        log.info("   Creating probability array of size {}".format(n_samples * model.n_classes_))
         prob_out_array = np.full((n_samples, model.n_classes_), nodata)
         for i, prob_val in zip(good_indices, probs):
             prob_out_array[i] = prob_val
-            prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
-                reshape_prob_out_to_raster(prob_out_array, image.RasterXSize, image.RasterYSize)
+        log.info("   Creating GDAL probability image")
+        prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
+            reshape_prob_out_to_raster(prob_out_array, image.RasterXSize, image.RasterYSize)
 
     class_out_image = None
     prob_out_image = None
