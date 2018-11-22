@@ -1270,7 +1270,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
             chunk_size = chunk_size + chunk_resid
         log.info("   Classifying chunk {} of size {}".format(chunk_id, chunk_size))
         chunk_view = good_samples[offset : offset + chunk_size]
-        indices_view = good_indices[offset : offset + chunk_size]
+        #indices_view = good_indices[offset : offset + chunk_size]
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
         # put class values in the right pixel position again
