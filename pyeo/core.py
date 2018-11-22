@@ -1249,8 +1249,8 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
     log.info("Finding good pixels without missing values")
-    good_samples = [i for i in image_array if i != nodata]
-    good_indices = [i for (i,j) in enumerate(image_array) if j != nodata]
+    good_samples = [i for i in image_array[, :] if np.all(i != nodata, axis = 1)]
+    good_indices = [i for (i,j) in enumerate(image_array) if np.all(j != nodata, axis = 1)]
     #goodpixels = {i: row for i, row in enumerate(image_array) if not np.any(np.isin(row, nodata))}
     #good_indices = list(goodpixels.keys())
     #good_samples = list(goodpixels.values())
@@ -1380,7 +1380,7 @@ def reshape_prob_out_to_raster(probs, width, height):
     log.info("transpose")
     image_array = np.transpose(probs, (1, 0))
     log.info("reshape")
-    image_array = np.reshape(probs, (n_classes, height, width))
+    image_array = np.reshape(image_array, (n_classes, height, width))
     return image_array
 
 
