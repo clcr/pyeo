@@ -1290,7 +1290,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         reshape_ml_out_to_raster(class_out_array, image.RasterXSize, image.RasterYSize)
 
     if prob_out_dir:
-        prob_out_array =  = np.full((n_samples, model.n_classes_), nodata)
+        prob_out_array = np.full((n_samples, model.n_classes_), nodata)
         for i, prob_val in zip(good_indices, probs):
             prob_out_array[i] = prob_val
             prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
