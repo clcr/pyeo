@@ -1369,9 +1369,12 @@ def reshape_ml_out_to_raster(classes, width, height):
 
 def reshape_prob_out_to_raster(probs, width, height):
     """reshapes an output of shape [x*y, classes] to gdal order [classes, y, x]"""
-    classes = probs.shape[1]
+    log.info("n_classes")
+    n_classes = probs.shape[1]
+    log.info("transpose")
     image_array = np.transpose(probs, (1, 0))
-    image_array = np.reshape(image_array, (classes, height, width))
+    log.info("reshape")
+    image_array = np.reshape(image_array, (n_classes, height, width))
     return image_array
 
 
