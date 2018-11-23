@@ -1276,16 +1276,20 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         #indices_view = good_indices[offset : offset + chunk_size]
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
+        ### I don't think we need this, assuming that altering outview also alters the values of classes
         # put class values in the right pixel position again
-        log.info("   Moving class chunk from {} to {}".format(out_view, classes[offset : offset + chunk_size]))
-        np.copyto(classes[offset : offset + chunk_size], out_view)
+        #log.info("   Moving class chunk from {} to {}".format(out_view, classes[offset : offset + chunk_size]))
+        #np.copyto(classes[offset : offset + chunk_size], out_view)
+        ###
 
         if prob_out_dir:
             prob_view = probs[offset : offset + chunk_size, :]
             prob_view[:, :] = model.predict_proba(chunk_view)
+            ### I don't think we need this, assuming that altering outview also alters the values of classes
             # put prob values in the right pixel position again
-            log.info("   Moving probability chunk from {} to {}".format(prob_view, probs[offset : offset + chunk_size, :]))
-            np.copyto(probs[offset : offset + chunk_size, :], prob_view)
+            #log.info("   Moving probability chunk from {} to {}".format(prob_view, probs[offset : offset + chunk_size, :]))
+            #np.copyto(probs[offset : offset + chunk_size, :], prob_view)
+            ###
 
     log.info("   Creating class array of size {}".format(n_samples))
     class_out_array = np.full((n_samples), nodata)
