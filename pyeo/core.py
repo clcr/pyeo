@@ -1378,9 +1378,9 @@ def reshape_prob_out_to_raster(probs, width, height):
     log = logging.getLogger(__name__)
     log.info("n_classes")
     n_classes = probs.shape[1]
-    log.info("transpose")
+    log.info("transpose, n_classes = {}".format(n_classes))
     image_array = np.transpose(probs, (1, 0))
-    log.info("reshape")
+    log.info("reshape, image_array shape = {}".format(image_array.shape))
     image_array = np.reshape(image_array, (n_classes, height, width))
     return image_array
 
