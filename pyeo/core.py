@@ -1305,7 +1305,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         log.info("   N Classes = {}".format(prob_out_array.shape[1]))
         log.info("   Image X size = {}".format(image.RasterXSize))
         log.info("   Image Y size = {}".format(image.RasterYSize))
-        prob_out_image.GetVirmoretualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
+        prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
             reshape_prob_out_to_raster(prob_out_array, image.RasterXSize, image.RasterYSize)
 
     class_out_image = None
