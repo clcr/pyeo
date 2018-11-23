@@ -543,7 +543,8 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     return out
 
 
-def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, force_reprocess=False):
+def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, force_reprocess=False,
+                                 buffer_size = 20):
     """For every folder in a directory, aggregates all 10m resolution bands into a single geotif
      and create a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)
@@ -563,11 +564,11 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
             with TemporaryDirectory() as td:
                 temp_model_mask_path = os.path.join(td, "temp_model.msk")
                 confidence_mask_path = create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
-                create_mask_from_model(out_path, cloud_model_path, temp_model_mask_path)
+                create_mask_from_model(out_path, cloud_model_path, temp_model_mask_path, buffer_size=10)
                 combine_masks((temp_model_mask_path, confidence_mask_path), get_mask_path(out_path),
                               combination_func="or")
         else:
-            create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
+            create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold, buffer_size)
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
@@ -1029,7 +1030,7 @@ def get_poly_size(poly):
     return out
 
 
-def create_mask_from_model(image_path, model_path, model_clear=0):
+def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10, buffer_size=0):
     """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path."""
     with TemporaryDirectory() as td:
         log = logging.getLogger(__name__)
@@ -1046,6 +1047,8 @@ def create_mask_from_model(image_path, model_path, model_clear=0):
         mask_array = None
         temp_mask = None
         mask = None
+        if buffer_size:
+            buffer_mask_in_place(mask_path, buffer_size)
         log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
         return mask_path
 
@@ -1070,7 +1073,6 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
     mask_image = None
     resample_image_in_place(mask_path, 10)
     if buffer_size:
-        log.info("Buffering {} with buffer size {}".format(buffer_size))
         buffer_mask_in_place(mask_path, buffer_size)
     log.info("Mask created at {}".format(mask_path))
     return mask_path
@@ -1131,6 +1133,18 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     return out_path
 
 
+def buffer_mask_in_place(mask_path, buffer_size):
+    """Expands a mask in-place, overwriting the previous mask"""
+    log = logging.getLogger(__name__)
+    log.info("Buffering {} with buffer size {}".format(mask_path, buffer_size))
+    mask = gdal.Open(mask_path, gdal.GA_Update)
+    mask_array = mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    cache = morph.binary_erosion(mask_array, selem=morph.disk(buffer_size))
+    np.copyto(mask_array, cache)
+    mask_array = None
+    mask = None
+
+
 def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
                            projection, format="GTiff", datatype = gdal.GDT_Int32, nodata = -9999):
     """Returns an empty image of the extent of input polygon"""
@@ -1164,14 +1178,7 @@ def resample_image_in_place(image_path, new_res):
         shutil.move(temp_image, image_path)
 
 
-def buffer_mask_in_place(mask_path, buffer_size):
-    """Expands a mask in-place, overwriting the previous mask"""
-    mask = gdal.Open(mask_path, gdal.GA_Update)
-    mask_array = mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
-    cache = morph.binary_erosion(mask_array, selem=morph.disk(buffer_size))
-    np.copyto(mask_array, cache)
-    mask_array = None
-    mask = None
+
 
 
 def apply_array_image_mask(array, mask):

@@ -28,7 +28,6 @@ def test_composite_with_buffered_mask():
     test_data = [r"test_data/20180103T172709.tif",
                  r"test_data/20180319T172021.tif",
                  r"test_data/20180329T171921.tif"]
-    masks=
     out_file = r"test_outputs/composite_test.tif"
     pyeo.composite_images_with_mask(test_data, out_file)
 
@@ -36,11 +35,40 @@ def test_composite_with_buffered_mask():
 
 def test_ml_masking():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/ml_mask_test.tif")
+        os.remove("test_outputs/ml_mask_test.msk")
+    except FileNotFoundError:
+        pass
+    shutil.copy(r"test_data/20180103T172709.tif", r"test_outputs/ml_mask_test.tif")
     pyeo.create_mask_from_model(
-        r"test_data/20180103T172709.tif",
+        r"test_outputs/ml_mask_test.tif",
         r"test_data/cloud_model_v0.1.pkl",
+        1000
     )
-    shutil.copy(r"test_data/20180103T172709.msk", r"test_outputs/model_mask.tif")
+
+
+def test_classification():
+    #TODO: Implement
+
+    pass
+
+
+def test_merging():
+    #TODO: Implement
+    pass
+
+
+def test_stacking():
+    pass
+
+
+def test_downloading():
+    pass
+
+
+def test_preprocessing():
+    pass
 
 
 def test_mask_combination():
