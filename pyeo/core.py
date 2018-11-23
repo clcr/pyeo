@@ -1283,6 +1283,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         ###
 
         if prob_out_dir:
+            log.info("   Calculating probabilities")
             prob_view = probs[offset : offset + chunk_size, :]
             prob_view[:, :] = model.predict_proba(chunk_view)
             ### I don't think we need this, assuming that altering outview also alters the values of classes
