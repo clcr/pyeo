@@ -1,8 +1,29 @@
+"""A set of tests using the data in real_data. This is designed to run slow and keep the test outputs after running.
+Notes:
+    - Anything in test_data should not be touched and will remain as constant input for inputs
+"""
 import os, sys
 import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
 import pyeo.core as pyeo
 import gdal
+import numpy as np
+
+
+def test_mask_buffering():
+    """This is a bad test, but never mind"""
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_masks = [r"test_data/buffered_masks/20180103T172709.msk",
+                  r"test_data/buffered_masks/20180319T172021.msk",
+                  r"test_data/buffered_masks/20180329T171921.msk"]
+    try:
+        [os.remove(mask) for mask in test_masks]
+    except FileNotFoundError:
+        pass
+    [shutil.copy(mask, "test_data/buffered_masks/") for mask in
+     ["test_data/20180103T172709.msk", "test_data/20180319T172021.msk", r"test_data/20180329T171921.msk"]]
+    [pyeo.buffer_mask_in_place(mask, 20) for mask in test_masks]
+    assert [os.path.exists(mask) for mask in test_masks]
 
 
 def test_composite_images_with_mask():
@@ -18,19 +39,17 @@ def test_composite_images_with_mask():
     pyeo.composite_images_with_mask(test_data, out_file)
 
 
-def test_composite_with_buffered_mask():
-    """This is a bad test, but never mind"""
+def test_buffered_composite():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:
-        os.remove(r"test_outputs/composite_test.tif")
+        os.remove(r"test_outputs/buffered_composite_test.tif")
     except FileNotFoundError:
         pass
-    test_data = [r"test_data/20180103T172709.tif",
-                 r"test_data/20180319T172021.tif",
-                 r"test_data/20180329T171921.tif"]
-    out_file = r"test_outputs/composite_test.tif"
+    test_data = [r"test_data/buffered_masks/20180103T172709.tif",
+                 r"test_data/buffered_masks/20180319T172021.tif",
+                 r"test_data/buffered_masks/20180329T171921.tif"]
+    out_file = r"test_outputs/buffered_composite_test.tif"
     pyeo.composite_images_with_mask(test_data, out_file)
-
 
 
 def test_ml_masking():
@@ -44,26 +63,11 @@ def test_ml_masking():
     pyeo.create_mask_from_model(
         r"test_outputs/ml_mask_test.tif",
         r"test_data/cloud_model_v0.1.pkl",
-        1000
+        buffer_size=1000
     )
 
 
-def test_classification():
-    #TODO: Implement
-
-    pass
-
-
-def test_merging():
-    #TODO: Implement
-    pass
-
-
-def test_stacking():
-    pass
-
-
-def test_downloading():
+def test_preprocessing():
     pass
 
 
@@ -71,13 +75,46 @@ def test_preprocessing():
     pass
 
 
+def test_merging():
+    #TODO: Implement
+
+    pass
+
+
+def test_stacking():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/20180103T172709_20180319T172021.tif")
+        os.remove("test_outputs/20180103T172709_20180319T172021.msk")
+    except FileNotFoundError:
+        pass
+    pyeo.stack_old_and_new_images(r"test_data/20180103T172709.tif", r"test_data/20180319T172021.tif", r"test_outputs")
+    assert os.path.exists(r"test_outputs/20180103T172709_20180319T172021.tif")
+    image = gdal.Open(r"test_outputs/20180103T172709_20180319T172021.tif")
+    assert not np.all(image.GetVirtualMemArray() == 0)
+
+
+def test_classification():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/class_20180103T172709_20180319T172021.tif")
+    except FileNotFoundError:
+        pass
+    pyeo.classify_image("test_data/20180103T172709_20180319T172021.tif", "test_data/cloud_model_v0.1.pkl",
+                        "test_outputs/class_20180103T172709_20180319T172021.tif")
+    assert os.path.exists("test_outputs/class_20180103T172709_20180319T172021.tif")
+    image = gdal.Open("test_outputs/class_20180103T172709_20180319T172021.tif")
+    assert not np.all(image.GetVirtualMemArray() == 0)
+
+
 def test_mask_combination():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     masks = [r"test_data/"+mask for mask in os.listdir("test_data") if mask.endswith(".msk")]
-    if os.path.exists("test_outputs/union_or_combination.tif"):
+    try:
         os.remove("test_outputs/union_or_combination.tif")
-    if os.path.exists("test_outputs/intersection_and_combination.tif"):
         os.remove("test_outputs/intersection_and_combination.tif")
+    except FileNotFoundError:
+        pass
     pyeo.combine_masks(masks, "test_outputs/union_or_combination.tif",
                        geometry_func="union", combination_func="or")
     pyeo.combine_masks(masks, "test_outputs/intersection_and_combination.tif",
