@@ -1,6 +1,7 @@
 import configparser
-from Sen2Search import sen2_shp_query, sen2_json_query, save_query_output
-from Sen2Get import sen2_download
+from apps.proc_steps.Sen2Search import sen2_shp_query, sen2_json_query, save_query_output
+
+# from Sen2Land import
 
 
 def main():
@@ -21,7 +22,7 @@ def main():
                                   end_date=query['end_date'],
                                   conf=config)
     save_query_output(products)
-    sen2_download(products, config["data"]["out_folder"])
+    # sen2_download(products, config)
 
 
 if __name__ == "__main__":

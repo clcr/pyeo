@@ -16,6 +16,7 @@ Created on Thu Mar 16 14:26:46 2017
 from collections import OrderedDict
 from osgeo import ogr
 import os
+import sys
 from os import listdir
 from os.path import isfile, join
 from sentinelsat.sentinel import SentinelAPI, read_geojson, geojson_to_wkt
@@ -24,15 +25,19 @@ import json
 #from geojson import Polygon
 
 # OPTIONS
-ndown = 2 # number of scenes to be downloaded (in order of least cloud cover)
-wd = '/home/heiko/linuxpy/spacepark/' # working directory on Virtualbox
-#wd = '/scratch/clcr/shared/py/' # working directory on ALICE
-#shapefile = 'Sitios_Poly.shp' # ESRI Shapefile of the study area
-shapefile = 'spacepark.shp' # ESRI Shapefile of the study area
+ndown = 99 # number of scenes to be downloaded (in order of least cloud cover)
+#wd = '/home/heiko/linuxpy/mexico/' # working directory on Virtualbox
+#wd = '/scratch/clcr/shared/sen2demo/' # working directory on ALICE
+wd = '/scratch/clcr/shared/py/' # working directory on ALICE
+shapedir = '/scratch/clcr/shared/py/'  # directory where shapefile is located
+# shapedir = '/rfs/Landscape/hb91/hpcdata/spacepark/' # pointer to R drive from login node only
+shapefile = 'spacepark_osgb.shp' # ESRI Shapefile of the study area
 datefrom = '20180101' # start date for imagery search
 dateto   = '20181231' # end date for imagery search
 clouds = '[0 TO 20]'  # range of acceptable cloud cover % for imagery search
-credentials = '/home/heiko/linuxpy/sencredentials.txt'  # contains two lines of text with username and password
+#credentials = '/home/heiko/linuxpy/sencredentials.txt'  # VirtualBox: contains two lines of text with username and password
+#                                                        # for the Sentinel Data Hub
+credentials = '/home/h/hb91/credentials/sencredentials.txt' # ALICE: contains two lines of text with username and password
                                                         # for the Sentinel Data Hub
 
 ##############################################################################
@@ -60,9 +65,9 @@ api = SentinelAPI(username, password, 'https://scihub.copernicus.eu/dhus')
 driver = ogr.GetDriverByName('ESRI Shapefile')
 
 # open it
-dataSource = driver.Open(shapefile, 0)
+dataSource = driver.Open(shapedir + shapefile, 0)
 if dataSource is None:
-    print('Could not open ' + shapefile)
+    print('Could not open ' + shapedir + shapefile)
     sys.exit(1) #exit with an error code
 
 # get the layer from the shapefile
@@ -89,12 +94,12 @@ print('Geometry of feature 1:', geom)
 # convert the shapefile to geojson
 ###############################################
 gjfile = shapefile.split(".")[0]+".geojson"
-com = "ogr2ogr -f GeoJSON -t_srs crs:84 " + gjfile + " " + shapefile
+com = "ogr2ogr -f GeoJSON -t_srs crs:84 " + gjfile + " " + shapedir + shapefile
 flag = os.system(com)
 if flag == 0:
     print('Shapefile converted to Geojson format: ' + gjfile)
 else:
-    print('Error converting shaoefile to Geojson')
+    print('Error converting shapefile to Geojson')
 
 # convert the geojson to wkt for the API search
 footprint = geojson_to_wkt(read_geojson(gjfile))
@@ -156,6 +161,26 @@ if not os.path.exists(datadir):
 # change to the 'data' directory
 os.chdir(datadir)
 
+# check whether any of the images have already been downloaded previously
+# get list of zip filenames from data directory
+print("Existing zip files in " + datadir + ":")
+zipfiles = ["empty"]
+for file in os.listdir(datadir):
+    if file.endswith(".zip"):
+        sen2id = file.split(".")[0] # remove file extension
+        if (len(zipfiles) == 1) and (zipfiles[0] == "empty"):
+            zipfiles[0] = sen2id
+        else:
+            zipfiles.append(sen2id) # add to list of results
+        print(sen2id)
+# compare to search results and remove duplicates
+print("Scenes in product list earmarked for download:")
+for this_scene in products_df_n['title']:
+    if this_scene in zipfiles:
+        products_df_n = products_df_n[products_df_n.title != this_scene] # drop duplicate from product list
+    else:
+        print(this_scene) # print scene ID if not already in datadir
+
 # download sorted and reduced products in order
 api.download_all(products_df_n['uuid'])
 
@@ -183,9 +208,8 @@ os.chdir(datadir) # change to the data directory
 allfiles = [f for f in listdir(datadir) if isfile(join(datadir, f))]
 # unzip all files
 for x in range(len(allfiles)):
-    if allfiles[x].split(".")[1] == "zip":
-        print("Unzipping file ", x+1, ": ", allfiles[x])
-        os.system("unzip "+allfiles[x])
-        # remove zip file after extraction
-        os.remove(allfiles[x])
-
+# to only unzip the new downloads, use:
+# if allfiles[x].split(".")[1] == "zip" and allfiles[x].split(".")[1] in zipfiles:
+if allfiles[x].split(".")[1] == "zip":
+    print("Unzipping file ", x+1, ": ", allfiles[x])
+    os.system("unzip -o "+allfiles[x]) # -o is the overwrite flag, i.e. without prompting every time
