@@ -208,8 +208,8 @@ os.chdir(datadir) # change to the data directory
 allfiles = [f for f in listdir(datadir) if isfile(join(datadir, f))]
 # unzip all files
 for x in range(len(allfiles)):
-# to only unzip the new downloads, use:
-# if allfiles[x].split(".")[1] == "zip" and allfiles[x].split(".")[1] in zipfiles:
-if allfiles[x].split(".")[1] == "zip":
-    print("Unzipping file ", x+1, ": ", allfiles[x])
-    os.system("unzip -o "+allfiles[x]) # -o is the overwrite flag, i.e. without prompting every time
+    # to only unzip the new downloads, use:
+    # if allfiles[x].split(".")[1] == "zip" and allfiles[x].split(".")[1] in zipfiles:
+    if allfiles[x].split(".")[1] == "zip":
+        print("Unzipping file ", x+1, ": ", allfiles[x])
+        os.system("unzip -o "+allfiles[x]) # -o is the overwrite flag, i.e. without prompting every time
