@@ -11,7 +11,7 @@ def sen2cor_process(safe_filepath, conf):
     if platform.system() == "Windows":
         sen2cor_process_windows(safe_filepath, conf)
     if platform.system() == "Linux":
-        sen2cor_process_unix()
+        sen2cor_process_unix(safe_filepath)
 
 
 def sen2cor_process_windows(safe_filepath, conf):
