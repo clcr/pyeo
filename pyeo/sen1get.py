@@ -187,4 +187,3 @@ for x in range(len(allfiles)):
         os.system("unzip "+allfiles[x])
         # remove zip file after extraction
         os.remove(allfiles[x])
-
