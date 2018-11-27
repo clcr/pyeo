@@ -82,7 +82,7 @@ if __name__ == "__main__":
     composite_merged_dir = os.path.join(project_root, r"composite/merged")
 
     if args.start_date == "LATEST":
-        # This isn't nice, but returns the yyyymmdd string of the latest merged image
+        # This isn't nice, but returns the yyyymmdd string of the latest stacked image
         start_date = pyeo.get_s2_image_acquisition_time(pyeo.sort_by_s2_timestamp(
             [image_name for image_name in os.listdir(stacked_image_dir) if image_name.endswith(".tif")],
             recent_first=True
@@ -96,7 +96,8 @@ if __name__ == "__main__":
 
     # Download and build the initial composite. Does not do by default
     if args.build_composite:
-        log.info("Downloading for initial composite between {} and {}".format(composite_start_date, composite_end_date))
+        log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
+            composite_start_date, composite_end_date, cloud_cover))
         composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date, conf)
         pyeo.download_new_s2_data(composite_products, composite_l1_image_dir)
         log.info("Preprocessing composite products")
@@ -146,7 +147,7 @@ if __name__ == "__main__":
 
         # Stack with composite
         if args.do_stack or do_all:
-            log.info("Stacking images with composite")
+            log.info("Stacking {} with composite {}".format(new_image_path, latest_composite_path))
             new_stack_path = pyeo.stack_old_and_new_images(latest_composite_path, new_image_path, stacked_image_dir)
 
         # Classify with composite
@@ -155,6 +156,7 @@ if __name__ == "__main__":
             new_class_image = os.path.join(catagorised_image_dir, "class_{}".format(os.path.basename(new_stack_path)))
             new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
             pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10)
+
 
         # Update composite
         if args.do_update or do_all:

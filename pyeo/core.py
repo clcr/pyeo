@@ -15,6 +15,7 @@ import numpy.ma as ma
 from tempfile import TemporaryDirectory
 import sklearn.ensemble as ens
 from sklearn.model_selection import cross_val_score
+from skimage import morphology as morph
 import scipy.sparse as sp
 import joblib
 import shutil
@@ -44,6 +45,10 @@ class CreateNewStacksException(ForestSentinelException):
 
 
 class StackImageException(ForestSentinelException):
+    pass
+
+
+class BadS2Exception(ForestSentinelException):
     pass
 
 
@@ -89,10 +94,13 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
 
     """
     ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
+    log = logging.getLogger(__name__)
     api = SentinelAPI(user, passwd)
     footprint = geojson_to_wkt(read_geojson(geojsonfile))
+    log.info("Sending query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
+        footprint, start_date, end_date, cloud))
     products = api.query(footprint,
-                         ((start_date, end_date)), platformname="Sentinel-2",
+                         (start_date, end_date), platformname="Sentinel-2",
                          cloudcoverpercentage="[0 TO " + cloud + "]")
     return products
 
@@ -568,11 +576,11 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
             with TemporaryDirectory() as td:
                 temp_model_mask_path = os.path.join(td, "temp_model.msk")
                 confidence_mask_path = create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
-                create_mask_from_model(out_path, cloud_model_path, temp_model_mask_path)
+                create_mask_from_model(out_path, cloud_model_path, temp_model_mask_path, buffer_size=10)
                 combine_masks((temp_model_mask_path, confidence_mask_path), get_mask_path(out_path),
                               combination_func="or")
         else:
-            create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
+            create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold, buffer_size)
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
@@ -582,14 +590,10 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     image_glob = os.path.join(safe_dir, granule_path)
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
-    if file_list == "":
-        log.error("File list for stacking is empty.")
-    else:
-#        log.info("Ordered band file list for stacking:")
-#        for thisfile in file_list:
-#            log.info("Band: {}".format(thisfile))
-        stack_images(file_list, out_image_path, geometry_mode="intersect")
-        log.info("Finished stacking image bands into file: {}".format(out_image_path))
+    if not file_list:
+        log.error("No 10m imagery present in {}".format(safe_dir))
+        raise BadS2Exception
+    stack_images(file_list, out_image_path, geometry_mode="intersect")
     return out_image_path
 
 
@@ -741,7 +745,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     log.info("New empty image created at {}".format(out_raster_file))
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     for i, raster in enumerate(rasters):
-        log.info("Now mosaicKing raster no. {}".format(i))
+        log.info("Now mosaicking raster no. {}".format(i))
         in_raster_array = raster.GetVirtualMemArray()
         if len(in_raster_array.shape) == 2:
             in_raster_array = np.expand_dims(in_raster_array, 0)
@@ -760,8 +764,6 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     be a binary .msk file with the same path as their corresponding image. All images must have the same
     number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
     composite_out_path will be created. Takes projection, resolution, ect from first band of first raster in list."""
-
-    #TODO: Add code that updates an existing composite mask. Should be doable inside this function.
 
     log = logging.getLogger(__name__)
     driver = gdal.GetDriverByName(format)
@@ -1089,13 +1091,13 @@ def get_poly_size(poly):
     return out
 
 
-def create_mask_from_model(image_path, model_path, model_clear = 0):
-    """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model."""
+def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10, buffer_size=0):
+    """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path."""
     with TemporaryDirectory() as td:
         log = logging.getLogger(__name__)
-        log.info("Building cloud mask for {}".format(image_path))
+        log.info("Building cloud mask for {} with model {}".format(image_path, model_path))
         temp_mask_path = os.path.join(td, "cat_mask.tif")
-        classify_image(image_path, model_path, temp_mask_path)
+        classify_image(image_path, model_path, temp_mask_path, num_chunks=10)
         temp_mask = gdal.Open(temp_mask_path, gdal.GA_Update)
         temp_mask_array = temp_mask.GetVirtualMemArray()
         mask_path = get_mask_path(image_path)
@@ -1106,13 +1108,16 @@ def create_mask_from_model(image_path, model_path, model_clear = 0):
         mask_array = None
         temp_mask = None
         mask = None
+        if buffer_size:
+            buffer_mask_in_place(mask_path, buffer_size)
         log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
         return mask_path
 
 
-def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 30):
-    """Creates a binary mask where pixels under the cloud confidence threshold are TRUE"""
+def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 30, buffer_size = 0):
+    """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1"""
     log = logging.getLogger(__name__)
+    log.info("Creating mask for {} with {} confidence threshold".format(image_path, cloud_conf_threshold))
     cloud_glob = "GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2"
     cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
     cloud_image = gdal.Open(cloud_path)
@@ -1128,6 +1133,9 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
     cloud_image = None
     mask_image = None
     resample_image_in_place(mask_path, 10)
+    if buffer_size:
+        buffer_mask_in_place(mask_path, buffer_size)
+    log.info("Mask created at {}".format(mask_path))
     return mask_path
 
 
@@ -1184,6 +1192,18 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     out_mask_array = None
     out_mask = None
     return out_path
+
+
+def buffer_mask_in_place(mask_path, buffer_size):
+    """Expands a mask in-place, overwriting the previous mask"""
+    log = logging.getLogger(__name__)
+    log.info("Buffering {} with buffer size {}".format(mask_path, buffer_size))
+    mask = gdal.Open(mask_path, gdal.GA_Update)
+    mask_array = mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    cache = morph.binary_erosion(mask_array, selem=morph.disk(buffer_size))
+    np.copyto(mask_array, cache)
+    mask_array = None
+    mask = None
 
 
 def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
