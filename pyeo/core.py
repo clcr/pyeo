@@ -105,7 +105,6 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
     return products
 
 
-
 def init_log(log_path):
     """Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
      Returns the log for the calling script"""
@@ -437,17 +436,17 @@ def clean_l2_dir(l2_dir, resolution="10m", warning=True):
 def clean_aoi(aoi_dir, images_to_keep = 4, warning=True):
     """Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
     composite directories. Will not affect the output folder."""
-    l1_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1")), recent_first=True)
-    l2_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2")), recent_first=True)
-    comp_l1_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
-    comp_l2_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
-    merged_list = sort_by_s2_timestamp(
+    l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1")), recent_first=True)
+    l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2")), recent_first=True)
+    comp_l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
+    comp_l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
+    merged_list = sort_by_timestamp(
         [image for image in os.listdir(os.path.join(aoi_dir, "images/merged")) if image.endswith(".tif")],
         recent_first=True)
-    stacked_list = sort_by_s2_timestamp(
+    stacked_list = sort_by_timestamp(
         [image for image in os.listdir(os.path.join(aoi_dir, "images/stacked")) if image.endswith(".tif")],
         recent_first=True)
-    comp_merged_list = sort_by_s2_timestamp(
+    comp_merged_list = sort_by_timestamp(
         [image for image in os.listdir(os.path.join(aoi_dir, "composite/merged")) if image.endswith(".tif")],
         recent_first=True)
     for image_list in (l1_list, l2_list, comp_l1_list, comp_l2_list):
@@ -559,7 +558,7 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     return out
 
 
-def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None):
+def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, buffer_size=0):
     """For every folder in a directory, aggregates all 10m resolution bands into a single geotif
      and creates a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)

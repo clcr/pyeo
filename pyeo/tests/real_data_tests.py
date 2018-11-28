@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
 import pyeo.core as pyeo
 import gdal
 import numpy as np
+import pytest
 
 
 def test_mask_buffering():
@@ -66,19 +67,40 @@ def test_ml_masking():
         buffer_size=1000
     )
 
-
+@pytest.mark.slow
 def test_preprocessing():
-    pass
-
-
-def test_preprocessing():
-    pass
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    l1_dirs = ["S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+               "S2B_MSIL1C_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE"]
+    try:
+        [shutil.rmtree(os.path.join("test_outputs", l1_dir)) for l1_dir in l1_dirs]
+    except FileNotFoundError:
+        pass
+    [pyeo.atmospheric_correction("test_data/"+l1_dir) for l1_dir in l1_dirs]
+    assert os.path.isfile(
+        "test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m/T13QFB_20180103T172709_B08_10m.jp2"
+    )
+    assert os.path.isfile(
+        "test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE/GRANULE/L2A_T13QFB_A014452_20180329T173239/IMG_DATA/R10m/T13QFB_20180329T173239_B08_10m.jp2"
+    )
 
 
 def test_merging():
-    #TODO: Implement
-
-    pass
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    l2_dirs = ["S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+               "S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE"]
+    try:
+        os.remove("test_outputs/20180329T171921_N0206.tif")
+        os.remove("test_outputs/20180103T172709_N0206.tif")
+        os.remove("test_outputs/20180329T171921_N0206.msk")
+        os.remove("test_outputs/20180103T172709_N0206.msk")
+    except FileNotFoundError:
+        pass
+    # Leaving this out until reprocessed
+    # pyeo.aggregate_and_mask_10m_bands("test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+    #                                  "test_outputs/")
+    pyeo.aggregate_and_mask_10m_bands("test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m",
+                                      "test_outputs/")
 
 
 def test_stacking():
