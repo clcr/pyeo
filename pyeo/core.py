@@ -372,10 +372,10 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
         if len(nextline) > 0:
             log.info(nextline)
         if nextline == '' and sen2cor_proc.poll() is not None:
-            break
+            raise subprocess.CalledProcessError(-1, "L2A_Process")
         if "CRITICAL" in nextline:
             #log.error(nextline)
-            break
+            raise subprocess.CalledProcessError(-1, "L2A_Process")
 
     log.info("sen2cor processing finished for {}".format(image_path))
     if delete_unprocessed_image:
