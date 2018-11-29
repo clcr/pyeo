@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     log.info("Finding most recent composite")
     latest_composite_name = \
-        pyeo.sort_by_s2_timestamp(
+        pyeo.sort_by_timestamp(
             [image_name for image_name in os.listdir(composite_dir) if image_name.endswith(".tif")],
             recent_first=True
         )[0]
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     log.info("Sorting image list")
     images = \
-        pyeo.sort_by_s2_timestamp(
+        pyeo.sort_by_timestamp(
             [image_name for image_name in os.listdir(merged_image_dir) if image_name.endswith(".tif")],
             recent_first=True
         )

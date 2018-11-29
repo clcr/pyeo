@@ -76,7 +76,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
              password for hub
 
     geojsonfile : string
-                  AOI polygon of interest
+                  AOI polygon of interest in EPSG 4326
 
     start_date : string
                  date of beginning of search
@@ -99,8 +99,8 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     log.info("Sending query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
-                         (start_date, end_date), platformname="Sentinel-2",
-                         cloudcoverpercentage=(0, cloud))
+                         date=(start_date, end_date), platformname="Sentinel-2",
+                         cloudcoverpercentage="[0 TO {}]".format(cloud))
     return products
 
 
