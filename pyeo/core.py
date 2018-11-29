@@ -52,8 +52,7 @@ class BadS2Exception(ForestSentinelException):
     pass
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
-                output_folder=None, api=True):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
 
@@ -101,7 +100,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
                          (start_date, end_date), platformname="Sentinel-2",
-                         cloudcoverpercentage="[0 TO " + cloud + "]")
+                         cloudcoverpercentage=(0, cloud))
     return products
 
 
