@@ -362,8 +362,8 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     # will take some work to make sure they all finish before the program moves on.
     log = logging.getLogger(__name__)
     # added sen2cor_path by hb91
-    log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--resolution=10']))
-    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--resolution=10'],
+    log.info("calling subprocess: {}".format([sen2cor_path, image_path]))
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
 
