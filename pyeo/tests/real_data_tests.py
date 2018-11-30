@@ -90,16 +90,15 @@ def test_merging():
     l2_dirs = ["S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
                "S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE"]
     try:
-        os.remove("test_outputs/20180329T171921_N0206.tif")
-        os.remove("test_outputs/20180103T172709_N0206.tif")
-        os.remove("test_outputs/20180329T171921_N0206.msk")
-        os.remove("test_outputs/20180103T172709_N0206.msk")
+        os.remove("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif")
+        os.remove("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif")
+        os.remove("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.msk")
+        os.remove("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.msk")
     except FileNotFoundError:
         pass
-    # Leaving this out until reprocessed
-    # pyeo.aggregate_and_mask_10m_bands("test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
-    #                                  "test_outputs/")
-    pyeo.aggregate_and_mask_10m_bands("test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m",
+    pyeo.aggregate_and_mask_10m_bands("test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+                                      "test_outputs/")
+    pyeo.aggregate_and_mask_10m_bands("test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE",
                                       "test_outputs/")
 
 
@@ -110,10 +109,13 @@ def test_stacking():
         os.remove("test_outputs/20180103T172709_20180319T172021.msk")
     except FileNotFoundError:
         pass
-    pyeo.stack_old_and_new_images(r"test_data/20180103T172709.tif", r"test_data/20180319T172021.tif", r"test_outputs")
-    assert os.path.exists(r"test_outputs/20180103T172709_20180319T172021.tif")
-    image = gdal.Open(r"test_outputs/20180103T172709_20180319T172021.tif")
-    assert not np.all(image.GetVirtualMemArray() == 0)
+    pyeo.stack_old_and_new_images(r"test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
+                                  r"test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif",
+                                  r"test_outputs")
+    assert os.path.exists(r"test_outputs/T13QFB_20180319T172021_20180103T172709.tif")
+    image = gdal.Open(r"test_outputs/T13QFB_20180319T172021_20180103T172709.tif")
+    image_array = image.GetVirtualMemArray()
+    assert not np.all(image_array == 0)
 
 
 def test_classification():
@@ -126,7 +128,8 @@ def test_classification():
                         "test_outputs/class_20180103T172709_20180319T172021.tif")
     assert os.path.exists("test_outputs/class_20180103T172709_20180319T172021.tif")
     image = gdal.Open("test_outputs/class_20180103T172709_20180319T172021.tif")
-    assert not np.all(image.GetVirtualMemArray() == 0)
+    image_array = image.GetVirtualMemArray()
+    assert not np.all(image_array == 0)
 
 
 def test_mask_combination():
