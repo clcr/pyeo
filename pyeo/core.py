@@ -52,8 +52,7 @@ class BadS2Exception(ForestSentinelException):
     pass
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
-                output_folder=None, api=True):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
 
@@ -77,7 +76,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
              password for hub
 
     geojsonfile : string
-                  AOI polygon of interest
+                  AOI polygon of interest in EPSG 4326
 
     start_date : string
                  date of beginning of search
@@ -100,8 +99,8 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
     log.info("Sending query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
-                         (start_date, end_date), platformname="Sentinel-2",
-                         cloudcoverpercentage="[0 TO " + cloud + "]")
+                         date=(start_date, end_date), platformname="Sentinel-2",
+                         cloudcoverpercentage="[0 TO {}]".format(cloud))
     return products
 
 
@@ -373,10 +372,10 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
         if len(nextline) > 0:
             log.info(nextline)
         if nextline == '' and sen2cor_proc.poll() is not None:
-            break
+            raise subprocess.CalledProcessError(-1, "L2A_Process")
         if "CRITICAL" in nextline:
             #log.error(nextline)
-            break
+            raise subprocess.CalledProcessError(-1, "L2A_Process")
 
     log.info("sen2cor processing finished for {}".format(image_path))
     if delete_unprocessed_image:
@@ -559,15 +558,13 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 
 
 def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, buffer_size=0):
-    """For every .SAFE file in a directory, aggregates all 10m resolution bands into a single geotif
+    """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif
      and creates a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
-    #log.info("SAFE dfile path list: {}".format(safe_file_path_list))
     for safe_dir in safe_file_path_list:
         log.info("----------------------------------------------------")
         log.info("Merging 10m bands in SAFE dir: {}".format(safe_dir))
-        #OLD: out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
         out_path = os.path.join(out_dir, get_sen_2_granule_id(safe_dir)) + ".tif"
         log.info("Output file: {}".format(out_path))
         stack_sentinel_2_bands(safe_dir, out_path, band='10m')
