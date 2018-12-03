@@ -70,7 +70,7 @@ def test_ml_masking():
     pyeo.create_mask_from_model(
         r"test_outputs/ml_mask_test.tif",
         r"test_data/cloud_model_v0.1.pkl",
-        buffer_size=1000
+        buffer_size=10
     )
 
 @pytest.mark.slow
@@ -133,7 +133,7 @@ def test_classification():
     except FileNotFoundError:
         pass
     pyeo.classify_image("test_data/T13QFB_20180103T172709_20180329T171921.tif", "test_data/manantlan_v1.pkl",
-                        "test_outputs/class_T13QFB_20180103T172709_20180319T172021.tif")
+                        "test_outputs/class_T13QFB_20180103T172709_20180319T172021.tif", num_chunks=2)
     image = gdal.Open("test_outputs/class_T13QFB_20180103T172709_20180319T172021.tif")
     assert image
     image_array = image.GetVirtualMemArray()

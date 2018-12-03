@@ -371,7 +371,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
         nextline = sen2cor_proc.stdout.readline()
         if len(nextline) > 0:
             log.info(nextline)
-        if nextline == '' and sen2cor_proc.poll() is None:
+        if nextline == '' and sen2cor_proc.poll() is not None:
             break
         if "CRITICAL" in nextline:
             #log.error(nextline)
