@@ -707,6 +707,8 @@ def stack_images(raster_paths, out_raster_path,
         out_raster_view = None
         in_raster_view = None
         present_layer += in_raster.RasterCount
+        in_raster_array = None
+        in_raster = None
     out_raster_array = None
     out_raster = None
 
@@ -1244,7 +1246,7 @@ def apply_array_image_mask(array, mask):
 
 
 def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
-                   apply_mask=False, out_type="GTiff", num_chunks=2):
+                   apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0):
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
@@ -1280,47 +1282,63 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     # Mask out missing values from the classification
     # at this point, image_array has dimensions [band, y, x]
+    log.info("Reshaping image from GDAL to Scikit-Learn dimensions")
     image_array = reshape_raster_for_ml(image_array)
     # Now it has dimensions [x * y, band] as needed for Scikit-Learn
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
-    np.any(image_array != nodata, axis=1, out=goodpixels)
-
+    log.info("Finding good pixels without missing values")
+    log.info("image_array.shape = {}".format(image_array.shape))
+    good_samples = image_array[np.all(image_array != nodata, axis = 1), :]
+    good_indices = [i for (i,j) in enumerate(image_array) if np.all(j != nodata)]
     n_samples = image_array.shape[0] # gives x * y dimension of the whole image
-    n_good_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
-    classes = np.empty(n_samples, dtype=np.ubyte)
+    n_good_samples = len(good_samples)
+    log.info("   All  samples: {}".format(n_samples))
+    log.info("   Good samples: {}".format(n_good_samples))
+    classes = np.full(n_good_samples, nodata, dtype=np.ubyte)
     if prob_out_dir:
-        probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
+        probs = np.full((n_good_samples, model.n_classes_), nodata, dtype=np.float32)
 
     chunk_size = int(n_good_samples / num_chunks)
-    chunk_resid = n_good_samples - chunk_size * num_chunks
+    chunk_resid = n_good_samples - (chunk_size * num_chunks)
+    log.info("   Number of chunks {} Chunk size {} Chunk residual {}".format(num_chunks, chunk_size, chunk_resid))
+    # The chunks iterate over all values in the array [x * y, bands] always with 8 bands per chunk
     for chunk_id in range(num_chunks):
         offset = chunk_id * chunk_size
         # process the residual pixels with the last chunk
         if chunk_id == num_chunks - 1:
             chunk_size = chunk_size + chunk_resid
         log.info("   Classifying chunk {} of size {}".format(chunk_id, chunk_size))
-        chunk_view = image_array[offset : offset + chunk_size, :]
-        goodpixels_view = goodpixels[offset : offset + chunk_size]
-        out_view = classes[offset : offset + chunk_size]
-        out_view[:] = model.predict(chunk_view[goodpixels_view,])
-        # put class values in the right pixel position again
-        np.copyto(chunk_view, out_view, where=goodpixels_view)
+        chunk_view = good_samples[offset : offset + chunk_size]
+        #indices_view = good_indices[offset : offset + chunk_size]
+        out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
+        out_view[:] = model.predict(chunk_view)
 
         if prob_out_dir:
-            prob_view = probs[
-                offset : offset + chunk_size, :
-            ]
-            prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view,])
-            # put prob values in the right pixel position again
-            np.copyto(prob_view, out_view, where=goodpixels_view)
+            log.info("   Calculating probabilities")
+            prob_view = probs[offset : offset + chunk_size, :]
+            prob_view[:, :] = model.predict_proba(chunk_view)
 
+    log.info("   Creating class array of size {}".format(n_samples))
+    class_out_array = np.full((n_samples), nodata)
+    for i, class_val in zip(good_indices, classes):
+        class_out_array[i] = class_val
+
+    log.info("   Creating GDAL class image")
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
-        reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
+        reshape_ml_out_to_raster(class_out_array, image.RasterXSize, image.RasterYSize)
 
     if prob_out_dir:
+        log.info("   Creating probability array of size {}".format(n_samples * model.n_classes_))
+        prob_out_array = np.full((n_samples, model.n_classes_), nodata)
+        for i, prob_val in zip(good_indices, probs):
+            prob_out_array[i] = prob_val
+        log.info("   Creating GDAL probability image")
+        log.info("   N Classes = {}".format(prob_out_array.shape[1]))
+        log.info("   Image X size = {}".format(image.RasterXSize))
+        log.info("   Image Y size = {}".format(image.RasterYSize))
         prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
-            reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
+            reshape_prob_out_to_raster(prob_out_array, image.RasterXSize, image.RasterYSize)
 
     class_out_image = None
     prob_out_image = None
