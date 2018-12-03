@@ -1289,10 +1289,15 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
     log.info("Finding good pixels without missing values")
     log.info("image_array.shape = {}".format(image_array.shape))
-    good_samples = image_array[np.all(image_array != nodata, axis = 1), :]
-    good_indices = [i for (i,j) in enumerate(image_array) if np.all(j != nodata)]
-    n_samples = image_array.shape[0] # gives x * y dimension of the whole image
-    n_good_samples = len(good_samples)
+    n_samples = image_array.shape[0]  # gives x * y dimension of the whole image
+    if 0 in image_array:  # a quick pre-check
+        good_samples = image_array[np.all(image_array != nodata, axis=1), :]
+        good_indices = [i for (i, j) in enumerate(image_array) if np.all(j != nodata)] # This is slowing things down too much
+        n_good_samples = len(good_samples)
+    else:
+        good_samples = image_array
+        good_indices = range(0, n_samples)
+        n_good_samples = n_samples
     log.info("   All  samples: {}".format(n_samples))
     log.info("   Good samples: {}".format(n_good_samples))
     classes = np.full(n_good_samples, nodata, dtype=np.ubyte)
@@ -1312,12 +1317,12 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         chunk_view = good_samples[offset : offset + chunk_size]
         #indices_view = good_indices[offset : offset + chunk_size]
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
-        out_view[:] = model.predict(chunk_view, n_jobs=-1)
+        out_view[:] = model.predict(chunk_view)
 
         if prob_out_dir:
             log.info("   Calculating probabilities")
             prob_view = probs[offset : offset + chunk_size, :]
-            prob_view[:, :] = model.predict_proba(chunk_view, n_jobs=-1)
+            prob_view[:, :] = model.predict_proba(chunk_view)
 
     log.info("   Creating class array of size {}".format(n_samples))
     class_out_array = np.full((n_samples), nodata)
