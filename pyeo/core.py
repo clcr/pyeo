@@ -1312,12 +1312,12 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         chunk_view = good_samples[offset : offset + chunk_size]
         #indices_view = good_indices[offset : offset + chunk_size]
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
-        out_view[:] = model.predict(chunk_view)
+        out_view[:] = model.predict(chunk_view, n_jobs=-1)
 
         if prob_out_dir:
             log.info("   Calculating probabilities")
             prob_view = probs[offset : offset + chunk_size, :]
-            prob_view[:, :] = model.predict_proba(chunk_view)
+            prob_view[:, :] = model.predict_proba(chunk_view, n_jobs=-1)
 
     log.info("   Creating class array of size {}".format(n_samples))
     class_out_array = np.full((n_samples), nodata)
