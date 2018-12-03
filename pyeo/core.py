@@ -385,9 +385,13 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
             raise subprocess.CalledProcessError(-1, "L2A_Process")
 
     log.info("sen2cor processing finished for {}".format(image_path))
+    log.info("Validating:")
+    if not validate_l2_data(image_path.replace("MSIL1C", "MSIL2A")):
+        log.error("10m imagery not present in {}".format(image_path.replace("MSIL1C", "MSIL2A")))
+        raise BadS2Exception
     if delete_unprocessed_image:
-        log.info("removing {}".format(image_path))
-        shutil.rmtree(image_path)
+            log.info("removing {}".format(image_path))
+            shutil.rmtree(image_path)
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
@@ -406,7 +410,7 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
             continue
         try:
             l2_path = apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=delete_unprocessed_image)
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, BadS2Exception):
             log.error("Atmospheric correction failed for {}. Moving on to next image.".format(image))
             pass
         else:
@@ -416,14 +420,28 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
 
+def validate_l2_data(l2_SAFE_file, resolution="10m"):
+    """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+    an invalid shapefile; this will prevent disconnected files from being """
+    log = logging.getLogger(__name__)
+    if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
+        log.error("{} is not a valid L2 file")
+        return True
+    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
+    image_glob = os.path.join(l2_SAFE_file, granule_path)
+    if glob.glob(image_glob):
+        return True
+    else:
+        return False
+
+
 def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
     If warning=True, prompts first."""
     log = logging.getLogger(__name__)
-    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
-    image_glob = os.path.join(l2_SAFE_file, granule_path)
-    if not glob.glob(image_glob):
+    is_valid = validate_l2_data(l2_SAFE_file, resolution)
+    if not is_valid:
         if warning:
             if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
                 return
