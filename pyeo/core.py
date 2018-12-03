@@ -1251,7 +1251,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     TODO: Ignore areas where one image has missing values
-    TODO: Need to check over Heiko merge
+    TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
     log = logging.getLogger(__name__)
     log.info("Classifying file: {}".format(image_path))
