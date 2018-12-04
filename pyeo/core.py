@@ -1141,7 +1141,7 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
     """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1"""
     log = logging.getLogger(__name__)
     log.info("Creating mask for {} with {} confidence threshold".format(image_path, cloud_conf_threshold))
-    cloud_glob = "GRANULE/*/QI_DATA/L2A_T37NBA_20170713T075209_CLD_20m.jp2"
+    cloud_glob = "GRANULE/*/QI_DATA/*CLD*_20m.jp2"  # This should match both old and new mask formats
     cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
     cloud_image = gdal.Open(cloud_path)
     cloud_confidence_array = cloud_image.GetVirtualMemArray()
