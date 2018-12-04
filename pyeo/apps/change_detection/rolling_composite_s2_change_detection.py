@@ -98,8 +98,9 @@ if __name__ == "__main__":
     if args.build_composite:
         log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
             composite_start_date, composite_end_date, cloud_cover))
-        composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date, conf)
-        pyeo.download_new_s2_data(composite_products, composite_l1_image_dir)
+        composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
+                                                         conf)
+        pyeo.download_new_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir)
         log.info("Preprocessing composite products")
         pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
                                     delete_unprocessed_image=True)
@@ -126,7 +127,7 @@ if __name__ == "__main__":
 
     log.info("Finding most recent composite")
     latest_composite_name = \
-        pyeo.sort_by_s2_timestamp(
+        pyeo.sort_by_timestamp(
             [image_name for image_name in os.listdir(composite_dir) if image_name.endswith(".tif")],
             recent_first=True
         )[0]
@@ -135,7 +136,7 @@ if __name__ == "__main__":
 
     log.info("Sorting image list")
     images = \
-        pyeo.sort_by_s2_timestamp(
+        pyeo.sort_by_timestamp(
             [image_name for image_name in os.listdir(merged_image_dir) if image_name.endswith(".tif")],
             recent_first=True
         )

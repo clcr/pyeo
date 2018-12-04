@@ -52,8 +52,7 @@ class BadS2Exception(ForestSentinelException):
     pass
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
-                output_folder=None, api=True):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
 
@@ -77,7 +76,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
              password for hub
 
     geojsonfile : string
-                  AOI polygon of interest
+                  AOI polygon of interest in EPSG 4326
 
     start_date : string
                  date of beginning of search
@@ -100,10 +99,9 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud='50',
     log.info("Sending query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
-                         (start_date, end_date), platformname="Sentinel-2",
-                         cloudcoverpercentage="[0 TO " + cloud + "]")
+                         date=(start_date, end_date), platformname="Sentinel-2",
+                         cloudcoverpercentage="[0 TO {}]".format(cloud))
     return products
-
 
 
 def init_log(log_path):
@@ -195,10 +193,19 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
     return result
 
 
-def download_new_s2_data(new_data, aoi_image_dir):
-    """Downloads new imagery from AWS. new_data is a dict from Sentinel_2"""
+def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None):
+    """Downloads new imagery from AWS. new_data is a dict from Sentinel_2. If l2_dir is given, will
+    check that directory for existing imagery and skip if exists."""
+    log = logging.getLogger(__name__)
     for image in new_data:
+        if l2_dir:
+            l2_path = os.path.join(l2_dir, new_data[image]['identifier'].replace("MSIL1C", "MSIL2A")+".SAFE")
+            log.info("Checking {} for existing L2 imagery".format(l2_path))
+            if os.path.isdir(l2_path):
+                log.info("L2 imagery exists, skipping download.")
+                continue
         download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
+        log.info("Downloading {}".format(new_data[image]['identifier']))
 
 
 def load_api_key(path_to_api):
@@ -354,63 +361,87 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
         log.info("Item {} download complete".format(item_id))
 
 
-def apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=False):
+def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     """Applies sen2cor to the SAFE file at image_path. Returns the path to the new product."""
     # Here be OS magic. Since sen2cor runs in its own process, Python has to spin around and wait
     # for it; since it's doing that, it may as well be logging the output from sen2cor. This
-    # approatch can be multithreaded in future to process multiple image (1 per core) but that
+    # approach can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
     log = logging.getLogger(__name__)
-    sen2cor_proc = subprocess.Popen([L2A_path, '--resolution=10', image_path],
+    # added sen2cor_path by hb91
+    log.info("calling subprocess: {}".format([sen2cor_path, image_path]))
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
 
     while True:
         nextline = sen2cor_proc.stdout.readline()
+        if len(nextline) > 0:
+            log.info(nextline)
         if nextline == '' and sen2cor_proc.poll() is not None:
             break
         if "CRITICAL" in nextline:
-            log.error(nextline)
-            break
-        log.info(nextline)
+            #log.error(nextline)
+            raise subprocess.CalledProcessError(-1, "L2A_Process")
 
     log.info("sen2cor processing finished for {}".format(image_path))
+    log.info("Validating:")
+    if not validate_l2_data(image_path.replace("MSIL1C", "MSIL2A")):
+        log.error("10m imagery not present in {}".format(image_path.replace("MSIL1C", "MSIL2A")))
+        raise BadS2Exception
     if delete_unprocessed_image:
-        shutil.rmtree(image_path)
+            log.info("removing {}".format(image_path))
+            shutil.rmtree(image_path)
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def atmospheric_correction(image_directory, out_directory, L2A_path, delete_unprocessed_image=False):
+def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
     """Applies Sen2cor cloud correction to level 1C images"""
     log = logging.getLogger(__name__)
-    images = [image for image in os.listdir(image_directory)
+    images = [image for image in os.listdir(in_directory)
               if image.startswith('MSIL1C', 4)]
-    log.info(images)
     # Opportunity for multithreading here
     for image in images:
-        image_path = os.path.join(image_directory, image)
-        image_timestamp = get_sen_2_image_timestamp(image)
+        log.info("Atmospheric correction of {}".format(image))
+        image_path = os.path.join(in_directory, image)
+        #image_timestamp = get_sen_2_image_timestamp(image)
         if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
             log.warning("{} exists. Skipping.".format(image.replace("MSIL1C", "MSIL2A")))
             continue
         try:
-            l2_path = apply_sen2cor(image_path, L2A_path, delete_unprocessed_image=delete_unprocessed_image)
-        except subprocess.CalledProcessError:
+            l2_path = apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=delete_unprocessed_image)
+        except (subprocess.CalledProcessError, BadS2Exception):
             log.error("Atmospheric correction failed for {}. Moving on to next image.".format(image))
             pass
         else:
             l2_name = os.path.basename(l2_path)
+            log.info("L2  path: {}".format(l2_path))
+            log.info("New path: {}".format(os.path.join(out_directory, l2_name)))
             os.rename(l2_path, os.path.join(out_directory, l2_name))
+
+
+def validate_l2_data(l2_SAFE_file, resolution="10m"):
+    """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+    an invalid shapefile; this will prevent disconnected files from being """
+    log = logging.getLogger(__name__)
+    if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
+        log.error("{} is not a valid L2 file")
+        return True
+    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
+    image_glob = os.path.join(l2_SAFE_file, granule_path)
+    if glob.glob(image_glob):
+        return True
+    else:
+        return False
 
 
 def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
     If warning=True, prompts first."""
     log = logging.getLogger(__name__)
-    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
-    image_glob = os.path.join(l2_SAFE_file, granule_path)
-    if not glob.glob(image_glob):
+    is_valid = validate_l2_data(l2_SAFE_file, resolution)
+    if not is_valid:
         if warning:
             if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
                 return
@@ -429,17 +460,17 @@ def clean_l2_dir(l2_dir, resolution="10m", warning=True):
 def clean_aoi(aoi_dir, images_to_keep = 4, warning=True):
     """Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
     composite directories. Will not affect the output folder."""
-    l1_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1")), recent_first=True)
-    l2_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2")), recent_first=True)
-    comp_l1_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
-    comp_l2_list = sort_by_s2_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
-    merged_list = sort_by_s2_timestamp(
+    l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1")), recent_first=True)
+    l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2")), recent_first=True)
+    comp_l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
+    comp_l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
+    merged_list = sort_by_timestamp(
         [image for image in os.listdir(os.path.join(aoi_dir, "images/merged")) if image.endswith(".tif")],
         recent_first=True)
-    stacked_list = sort_by_s2_timestamp(
+    stacked_list = sort_by_timestamp(
         [image for image in os.listdir(os.path.join(aoi_dir, "images/stacked")) if image.endswith(".tif")],
         recent_first=True)
-    comp_merged_list = sort_by_s2_timestamp(
+    comp_merged_list = sort_by_timestamp(
         [image for image in os.listdir(os.path.join(aoi_dir, "composite/merged")) if image.endswith(".tif")],
         recent_first=True)
     for image_list in (l1_list, l2_list, comp_l1_list, comp_l2_list):
@@ -468,98 +499,100 @@ def create_matching_dataset(in_dataset, out_path,
     return out_dataset
 
 
-def create_new_stacks(image_dir, stack_dir, threshold = 100):
-    """Creates new stacks with from the newest image. Threshold; how small a part
-    of latest_image will be before it's considered to be fully processed
-     New_image_name must exist inside image_dir.
-    TODO: Write up algorithm properly"""
-    # OK, here's the plan. Step 1: REMOVED. Not actually needed.
-    # Step 2: Sort directory by timestamp, *newest first*, discarding any newer
-    # than new_image_name
-    # Step 3: new_data_polygon = bounds(new_image_name)
-    # Step 4: for each image backwards in time:
-    #    a. Check if it intersects new_data_polygon
-    #    b. If it does
-    #       - add to a to_be_stacked list,
-    #       -subtract it's bounding box from new_data_polygon.
-    #   c. If new_data_polygon drops having a total area less than threshold, stop.
-    # Step 4: Stack new rasters for each image in new_data list.
+def create_new_stacks(image_dir, stack_dir):
+    """
+    Creates new stacks with with adjacent image acquisition dates. Threshold; how small a part
+    of the latest_image will be before it's considered to be fully processed.
+    New_image_name must exist inside image_dir.
+
+    Step 1: Sort directory as follows:
+            Relative Orbit number (RO4O), then Tile Number (T15PXT), then
+            Datatake sensing start date (YYYYMMDD) and time(THHMMSS).
+            newest first.
+    Step 2: For each tile number:
+            new_data_polygon = bounds(new_image_name)
+    Step 3: For each tiff image coverring that tile, work backwards in time:
+            a. Check if it intersects new_data_polygon
+            b. If it does
+               - add to a to_be_stacked list,
+               - subtract it's bounding box from new_data_polygon.
+            c. If new_data_polygon drops having a total area less than threshold, stop.
+    Step 4: Stack new rasters for each tile in new_data list.
+    """
     log = logging.getLogger(__name__)
-    safe_files = glob.glob(os.path.join(image_dir, "*.tif"))
-    if len(safe_files) == 0:
-        raise CreateNewStacksException("image_dir is empty")
-    safe_files = sort_by_s2_timestamp(safe_files)
-    latest_image_path = safe_files[0]
-    latest_image = gdal.Open(latest_image_path)
-    new_data_poly = get_raster_bounds(latest_image)
-    to_be_stacked = []
-    for file in safe_files[1:]:
-        image = gdal.Open(file)
-        image_poly = get_raster_bounds(image)
-        if image_poly.Intersection(new_data_poly):
-            to_be_stacked.append(file)
-            new_data_poly = new_data_poly.Difference(image_poly)
-            if new_data_poly.GetArea() < threshold:
-                image = None
-                break
-        image = None
     new_images = []
-    for image in to_be_stacked:
-        if image in os.listdir(stack_dir):
-            log.warning(r"{} exists, skipping.".format(image))
-            break
-        new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
+    tiles = get_sen_2_tiles(image_dir)
+    tiles = list(set(tiles)) # eliminate duplicates
+    n_tiles = len(tiles)
+    log.info("Found {} unique tile IDs for stacking:".format(n_tiles))
+    for tile in tiles:
+        log.info("   {}".format(tile))  # Why in its own loop?
+    for tile in tiles:
+        log.info("Tile ID for stacking: {}".format(tile))
+        safe_files = glob.glob(os.path.join(image_dir, "*" + tile + "*.tif")) # choose all files with that tile ID
+        if len(safe_files) == 0:
+            raise CreateNewStacksException("Image_dir is empty: {}".format(os.path.join(image_dir, tile + "*.tif")))
+        else:
+            safe_files = sort_by_timestamp(safe_files)
+            log.info("Image file list for pairwise stacking for this tile:")
+            for file in safe_files:
+                log.info("   {}".format(file))
+            latest_image_path = safe_files[0]
+            for image in safe_files[1:]:
+                new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
+                latest_image_path = image
     return new_images
 
 
-def sort_by_s2_timestamp(strings, recent_first=True):
+def get_sen_2_tiles(image_dir):
+    """
+    gets the list of tiles present in the directory
+    """
+    image_files = glob.glob(os.path.join(image_dir, "*.tif"))
+    if len(image_files) == 0:
+        raise CreateNewStacksException("Image_dir is empty")
+    else:
+        tiles = []
+        for image_file in image_files:
+            tile = get_sen_2_image_tile(image_file)
+            tiles.append(tile)
+    return tiles
+
+
+def sort_by_timestamp(strings, recent_first=True):
     """Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
     guarantee ordering of strings with the same timestamp."""
-    strings.sort(key=lambda x: get_s2_image_acquisition_time(x), reverse=recent_first)
+    strings.sort(key=lambda x: get_image_acquisition_time(x), reverse=recent_first)
     return strings
 
 
-def sort_by_pyeo_timestamp(strings, recent_first=True):
-    """Takes a list of strings and a timestamp spec as specifications and sorts list by timestamp"""
-    strings.sort(key=lambda x: get_pyeo_image_acquisition_time(x), reverse=recent_first)
-    return strings
-
-
-def get_s2_image_acquisition_time(image_name):
-    """Gets the datetime object from a .safe filename or a planet image. No test."""
+def get_image_acquisition_time(image_name):
+    """Gets the datetime object from a .safe filename of a planet image. No test."""
     return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
-
-
-def get_pyeo_image_acquisition_time(image_name):
-    return dt.datetime.strptime(get_pyeo_timestamp(image_name), '%Y%m%d%H%M%S')
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     """Opens a dataset given a safe file. Give band as a string."""
     image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
+    # edited by hb91
+    #image_glob = r"GRANULE/*/IMG_DATA/*_{}.jp2".format(band)
     fp_glob = os.path.join(safe_file_path, image_glob)
     image_file_path = glob.glob(fp_glob)
     out = gdal.Open(image_file_path[0])
     return out
 
 
-def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, force_reprocess=False,
-                                 buffer_size = 20):
-    """For every folder in a directory, aggregates all 10m resolution bands into a single geotif
-     and create a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
+def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, buffer_size=0):
+    """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif
+     and creates a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
     log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
-    log.info("Aggregating tile following files: {}".format(safe_file_path_list))
     for safe_dir in safe_file_path_list:
-        out_path = os.path.join(out_dir, get_sen_2_image_timestamp(safe_dir))+".tif"
-        if os.path.exists(out_path) and not force_reprocess:
-            log.info("{} exists, skipping".format(out_path))
-            continue
-        try:
-            stack_sentinel_2_bands(safe_dir, out_path, band='10m')
-        except BadS2Exception:
-            log.error("{} in incorrectly processed, continuing.".format(safe_dir))
-            continue
+        log.info("----------------------------------------------------")
+        log.info("Merging 10m bands in SAFE dir: {}".format(safe_dir))
+        out_path = os.path.join(out_dir, get_sen_2_granule_id(safe_dir)) + ".tif"
+        log.info("Output file: {}".format(out_path))
+        stack_sentinel_2_bands(safe_dir, out_path, band='10m')
         if cloud_model_path:
             with TemporaryDirectory() as td:
                 temp_model_mask_path = os.path.join(td, "temp_model.msk")
@@ -574,7 +607,7 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     log = logging.getLogger(__name__)
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(band)
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
     image_glob = os.path.join(safe_dir, granule_path)
     file_list = glob.glob(image_glob)
     file_list.sort()   # Sorting alphabetically gives the right order for bands
@@ -586,19 +619,34 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
 
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
-    """Stacks an old and new image, names the result with the two timestamps"""
+    """
+    Stacks two images with the same tile
+    Names the result with the two timestamps.
+    First, decompose the granule ID into its components:
+    e.g. S2A, MSIL2A, 20180301, T162211, N0206, R040, T15PXT, 20180301, T194348
+    are the mission ID(S2A/S2B), product level(L2A), datatake sensing start date (YYYYMMDD) and time(THHMMSS),
+    the Processing Baseline number (N0206), Relative Orbit number (RO4O), Tile Number field (T15PXT),
+    followed by processing run date and then time
+    """
     log = logging.getLogger(__name__)
-    log.info("Stacking {} and {}".format(old_image_path, new_image_path))
-    old_timestamp = get_sen_2_image_timestamp(os.path.basename(old_image_path))
-    new_timestamp = get_sen_2_image_timestamp(os.path.basename(new_image_path))
-    out_path = os.path.join(out_dir, old_timestamp + '_' + new_timestamp)
-    stack_images([old_image_path, new_image_path], out_path + ".tif")
-    if create_combined_mask:
-        out_mask_path = out_path + ".msk"
-        old_mask_path = get_mask_path(old_image_path)
-        new_mask_path = get_mask_path(new_image_path)
-        combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
-    return out_path + ".tif"
+    tile_old = get_sen_2_image_tile(old_image_path)
+    tile_new = get_sen_2_image_tile(new_image_path)
+    if (tile_old == tile_new):
+        log.info("Stacking {} and".format(old_image_path))
+        log.info("         {}".format(new_image_path))
+        old_timestamp = get_sen_2_image_timestamp(os.path.basename(old_image_path))
+        new_timestamp = get_sen_2_image_timestamp(os.path.basename(new_image_path))
+        out_path = os.path.join(out_dir, tile_new + '_' + old_timestamp + '_' + new_timestamp)
+        log.info("Output stacked file: {}".format(out_path + ".tif"))
+        stack_images([old_image_path, new_image_path], out_path + ".tif")
+        if create_combined_mask:
+            out_mask_path = out_path + ".msk"
+            old_mask_path = get_mask_path(old_image_path)
+            new_mask_path = get_mask_path(new_image_path)
+            combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
+        return out_path + ".tif"
+    else:
+        log.error("Tiles  of the two images do not match. Aborted.")
 
 
 def get_sen_2_image_timestamp(image_name):
@@ -606,6 +654,30 @@ def get_sen_2_image_timestamp(image_name):
     timestamp_re = r"\d{8}T\d{6}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
+
+
+def get_sen_2_image_orbit(image_name):
+    """Returns the relative orbit number of a Sentinel 2 image"""
+    tmp1 = image_name.split("/")[-1]  # remove path
+    tmp2 = tmp1.split(".")[0] # remove file extension
+    comps = tmp2.split("_") # decompose
+    return comps[4]
+
+
+def get_sen_2_image_tile(image_name):
+    """Returns the tile number of a Sentinel 2 image"""
+    tmp1 = image_name.split("/")[-1]  # remove path
+    tmp2 = tmp1.split(".")[0] # remove file extension
+    comps = tmp2.split("_") # decompose
+    return comps[5]
+
+
+def get_sen_2_granule_id(safe_dir):
+    """Returns the unique ID of a Sentinel 2 granule from a SAFE directory path"""
+    """At present, only works for LINUX"""
+    tmp = safe_dir.split("/")[-1] # removes path to SAFE directory
+    id  = tmp.split(".")[0] # removes ".SAFE" from the ID name
+    return id
 
 
 def get_pyeo_timestamp(image_name):
@@ -660,14 +732,27 @@ def stack_images(raster_paths, out_raster_path,
         out_raster_view = None
         in_raster_view = None
         present_layer += in_raster.RasterCount
+        in_raster_array = None
+        in_raster = None
     out_raster_array = None
     out_raster = None
 
 
 def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.GDT_Int32, nodata = 0):
-    """Mosaics multiple images with the same number of layers into one single image. Overwrites
-    overlapping pixels with the value furthest down raster_paths. Takes projection ect from the first
-    raster."""
+    """
+    Mosaics multiple images with the same number of layers into one single image. Overwrites
+    overlapping pixels with the value furthest down raster_paths. Takes projection from the first
+    raster.
+
+    TODO: consider using GDAL:
+
+    gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
+              [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]
+              [-ul_lr ulx uly lrx lry] [-init "value [value...]"]
+              [-n nodata_value] [-a_nodata output_nodata_value]
+              [-ot datatype] [-createonly] input_files
+    """
+
     # This, again, is very similar to stack_rasters
     log = logging.getLogger(__name__)
     log.info("Beginning mosaic")
@@ -683,7 +768,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     log.info("New empty image created at {}".format(out_raster_file))
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     for i, raster in enumerate(rasters):
-        log.info("Now mosaicing raster no. {}".format(i))
+        log.info("Now mosaicking raster no. {}".format(i))
         in_raster_array = raster.GetVirtualMemArray()
         if len(in_raster_array.shape) == 2:
             in_raster_array = np.expand_dims(in_raster_array, 0)
@@ -693,7 +778,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
         np.copyto(out_raster_view, in_raster_array, where=in_raster_array != nodata)
         in_raster_array = None
         out_raster_view = None
-    log.info("Raster mosaicing done")
+    log.info("Raster mosaicking done")
     out_raster_array = None
 
 
@@ -757,13 +842,12 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
     """Composites every image in image_dir, assumes all have associated masks.  Will
      place a file named composite_[last image date].tif inside composite_out_dir"""
     log = logging.getLogger(__name__)
-
     log.info("Compositing {}".format(image_dir))
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
-                          in sort_by_s2_timestamp(os.listdir(image_dir), recent_first=False)
+                          in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
                           if image_name.endswith(".tif")]
-    last_timestamp = get_s2_image_acquisition_time(sorted_image_paths[-1])
-    composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp.strftime("%Y%m%dT%H%M%S")))
+    last_timestamp = get_image_acquisition_time(sorted_image_paths[-1])
+    composite_out_path = os.path.join(composite_out_dir, "composite_{}".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
 
@@ -1057,7 +1141,7 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
     """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1"""
     log = logging.getLogger(__name__)
     log.info("Creating mask for {} with {} confidence threshold".format(image_path, cloud_conf_threshold))
-    cloud_glob = "GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2"
+    cloud_glob = "GRANULE/*/QI_DATA/*CLD*_20m.jp2"  # This should match both old and new mask formats
     cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
     cloud_image = gdal.Open(cloud_path)
     cloud_confidence_array = cloud_image.GetVirtualMemArray()
@@ -1178,9 +1262,6 @@ def resample_image_in_place(image_path, new_res):
         shutil.move(temp_image, image_path)
 
 
-
-
-
 def apply_array_image_mask(array, mask):
     """Applies a mask of (y,x) to an image array of (bands, y, x), returning a ma.array object"""
     band_count = array.shape[0]
@@ -1189,23 +1270,32 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
-                   apply_mask=False, out_type="GTiff", num_chunks=None):
-    """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
-    with a ~15GB machine)"""
+def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
+                   apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0):
+    """
+    Classifies change between two stacked images.
+    Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
+    TODO: Ignore areas where one image has missing values
+    TODO: This has gotten very hairy; rewrite when you update this to take generic models
+    """
     log = logging.getLogger(__name__)
-    log.info("Starting classification for {} with model {}".format(image_path, model_path))
+    log.info("Classifying file: {}".format(image_path))
+    log.info("Saved model     : {}".format(model_path))
     image = gdal.Open(image_path)
     if num_chunks == None:
         log.info("No chunk size given, attempting autochunk.")
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
     model = joblib.load(model_path)
-    map_out_image = create_matching_dataset(image, class_out_dir, format=out_type)
-    if prob_out_path:
-        prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
+    class_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
+    log.info("Created classification image file: {}".format(class_out_dir))
+    if prob_out_dir:
+        log.info("n classes in the model: {}".format(model.n_classes_))
+        prob_out_image = create_matching_dataset(image, prob_out_dir, bands=model.n_classes_, datatype=gdal.GDT_Float32)
+        log.info("Created probability image file: {}".format(prob_out_dir))
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
+
     if apply_mask:
         mask_path = get_mask_path(image_path)
         log.info("Applying mask at {}".format(mask_path))
@@ -1214,36 +1304,76 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path=None,
         image_array = apply_array_image_mask(image_array, mask_array)
         mask_array = None
         mask = None
-    image_array = reshape_raster_for_ml(image_array)
-    n_samples = image_array.shape[0]
-    classes = np.empty(n_samples, dtype=np.int16)
-    if prob_out_path:
-        probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
 
-    if n_samples % num_chunks != 0:
-        raise ForestSentinelException("Please pick a chunk size that divides evenly")
-    chunk_size = int(n_samples / num_chunks)
+    # Mask out missing values from the classification
+    # at this point, image_array has dimensions [band, y, x]
+    log.info("Reshaping image from GDAL to Scikit-Learn dimensions")
+    image_array = reshape_raster_for_ml(image_array)
+    # Now it has dimensions [x * y, band] as needed for Scikit-Learn
+
+    # Determine where in the image array there are no missing values in any of the bands (axis 1)
+    log.info("Finding good pixels without missing values")
+    log.info("image_array.shape = {}".format(image_array.shape))
+    n_samples = image_array.shape[0]  # gives x * y dimension of the whole image
+    if 0 in image_array:  # a quick pre-check
+        good_samples = image_array[np.all(image_array != nodata, axis=1), :]
+        good_indices = [i for (i, j) in enumerate(image_array) if np.all(j != nodata)] # This is slowing things down too much
+        n_good_samples = len(good_samples)
+    else:
+        good_samples = image_array
+        good_indices = range(0, n_samples)
+        n_good_samples = n_samples
+    log.info("   All  samples: {}".format(n_samples))
+    log.info("   Good samples: {}".format(n_good_samples))
+    classes = np.full(n_good_samples, nodata, dtype=np.ubyte)
+    if prob_out_dir:
+        probs = np.full((n_good_samples, model.n_classes_), nodata, dtype=np.float32)
+
+    chunk_size = int(n_good_samples / num_chunks)
+    chunk_resid = n_good_samples - (chunk_size * num_chunks)
+    log.info("   Number of chunks {} Chunk size {} Chunk residual {}".format(num_chunks, chunk_size, chunk_resid))
+    # The chunks iterate over all values in the array [x * y, bands] always with 8 bands per chunk
     for chunk_id in range(num_chunks):
-        log.info("Processing chunk {}".format(chunk_id))
-        chunk_view = image_array[
-            chunk_id*chunk_size: chunk_id * chunk_size + chunk_size, :
-        ]
-        out_view = classes[
-            chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
-        ]
+        offset = chunk_id * chunk_size
+        # process the residual pixels with the last chunk
+        if chunk_id == num_chunks - 1:
+            chunk_size = chunk_size + chunk_resid
+        log.info("   Classifying chunk {} of size {}".format(chunk_id, chunk_size))
+        chunk_view = good_samples[offset : offset + chunk_size]
+        #indices_view = good_indices[offset : offset + chunk_size]
+        out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
-        if prob_out_path:
-            prob_view = probs[
-                chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
-            ]
+
+        if prob_out_dir:
+            log.info("   Calculating probabilities")
+            prob_view = probs[offset : offset + chunk_size, :]
             prob_view[:, :] = model.predict_proba(chunk_view)
-    map_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
-    if prob_out_path:
-        prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
-    map_out_image = None
+
+    log.info("   Creating class array of size {}".format(n_samples))
+    class_out_array = np.full((n_samples), nodata)
+    for i, class_val in zip(good_indices, classes):
+        class_out_array[i] = class_val
+
+    log.info("   Creating GDAL class image")
+    class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
+        reshape_ml_out_to_raster(class_out_array, image.RasterXSize, image.RasterYSize)
+
+    if prob_out_dir:
+        log.info("   Creating probability array of size {}".format(n_samples * model.n_classes_))
+        prob_out_array = np.full((n_samples, model.n_classes_), nodata)
+        for i, prob_val in zip(good_indices, probs):
+            prob_out_array[i] = prob_val
+        log.info("   Creating GDAL probability image")
+        log.info("   N Classes = {}".format(prob_out_array.shape[1]))
+        log.info("   Image X size = {}".format(image.RasterXSize))
+        log.info("   Image Y size = {}".format(image.RasterYSize))
+        prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
+            reshape_prob_out_to_raster(prob_out_array, image.RasterXSize, image.RasterYSize)
+
+    class_out_image = None
     prob_out_image = None
-    if prob_out_path:
-        return class_out_dir, prob_out_path
+    if prob_out_dir:
+        return class_out_dir, prob_out_dir
     else:
         return class_out_dir
 
@@ -1274,11 +1404,14 @@ def covert_image_format(image, format):
 
 def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
                        apply_mask=False, out_type="GTiff", num_chunks=None):
-    """Classifies every .tif in in_dir using model at model_path. Outputs are saved
-     in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively."""
-    # Needs test
+    """
+    Classifies every .tif in in_dir using model at model_path. Outputs are saved
+    in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.
+    """
     log = logging.getLogger(__name__)
-    log.info("Classifying directory {}, output saved in {} and {}".format(in_dir, class_out_dir, prob_out_dir))
+    log.info("Classifying files in {}".format(in_dir))
+    log.info("Class files saved in {}".format(class_out_dir))
+    log.info("Prob. files saved in {}".format(prob_out_dir))
     for image_path in glob.glob(in_dir+r"/*.tif"):
         image_name = os.path.basename(image_path).split('.')[0]
         class_out_path = os.path.join(class_out_dir, image_name+"_class.tif")
