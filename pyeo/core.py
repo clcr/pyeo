@@ -193,10 +193,17 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
     return result
 
 
-def download_new_s2_data(new_data, aoi_image_dir):
-    """Downloads new imagery from AWS. new_data is a dict from Sentinel_2"""
+def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None):
+    """Downloads new imagery from AWS. new_data is a dict from Sentinel_2. If l2_dir is given, will
+    check that directory for existing imagery and skip if exists."""
     log = logging.getLogger(__name__)
     for image in new_data:
+        if l2_dir:
+            l2_path = os.path.join(l2_dir, new_data[image]['identifier'].replace("MSIL1C", "MSIL2A")+".SAFE")
+            log.info("Checking {} for existing L2 imagery".format(l2_path))
+            if os.path.isdir(l2_path):
+                log.info("L2 imagery exists, skipping download.")
+                continue
         download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
         log.info("Downloading {}".format(new_data[image]['identifier']))
 
@@ -372,15 +379,19 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
         if len(nextline) > 0:
             log.info(nextline)
         if nextline == '' and sen2cor_proc.poll() is not None:
-            raise subprocess.CalledProcessError(-1, "L2A_Process")
+            break
         if "CRITICAL" in nextline:
             #log.error(nextline)
             raise subprocess.CalledProcessError(-1, "L2A_Process")
 
     log.info("sen2cor processing finished for {}".format(image_path))
+    log.info("Validating:")
+    if not validate_l2_data(image_path.replace("MSIL1C", "MSIL2A")):
+        log.error("10m imagery not present in {}".format(image_path.replace("MSIL1C", "MSIL2A")))
+        raise BadS2Exception
     if delete_unprocessed_image:
-        log.info("removing {}".format(image_path))
-        shutil.rmtree(image_path)
+            log.info("removing {}".format(image_path))
+            shutil.rmtree(image_path)
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
@@ -399,7 +410,7 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
             continue
         try:
             l2_path = apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=delete_unprocessed_image)
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, BadS2Exception):
             log.error("Atmospheric correction failed for {}. Moving on to next image.".format(image))
             pass
         else:
@@ -409,14 +420,28 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
 
+def validate_l2_data(l2_SAFE_file, resolution="10m"):
+    """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+    an invalid shapefile; this will prevent disconnected files from being """
+    log = logging.getLogger(__name__)
+    if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
+        log.error("{} is not a valid L2 file")
+        return True
+    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
+    image_glob = os.path.join(l2_SAFE_file, granule_path)
+    if glob.glob(image_glob):
+        return True
+    else:
+        return False
+
+
 def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
     If warning=True, prompts first."""
     log = logging.getLogger(__name__)
-    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
-    image_glob = os.path.join(l2_SAFE_file, granule_path)
-    if not glob.glob(image_glob):
+    is_valid = validate_l2_data(l2_SAFE_file, resolution)
+    if not is_valid:
         if warning:
             if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
                 return
@@ -707,6 +732,8 @@ def stack_images(raster_paths, out_raster_path,
         out_raster_view = None
         in_raster_view = None
         present_layer += in_raster.RasterCount
+        in_raster_array = None
+        in_raster = None
     out_raster_array = None
     out_raster = None
 
@@ -1114,7 +1141,7 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
     """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1"""
     log = logging.getLogger(__name__)
     log.info("Creating mask for {} with {} confidence threshold".format(image_path, cloud_conf_threshold))
-    cloud_glob = "GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2"
+    cloud_glob = "GRANULE/*/QI_DATA/*CLD*_20m.jp2"  # This should match both old and new mask formats
     cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
     cloud_image = gdal.Open(cloud_path)
     cloud_confidence_array = cloud_image.GetVirtualMemArray()
@@ -1244,12 +1271,12 @@ def apply_array_image_mask(array, mask):
 
 
 def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
-                   apply_mask=False, out_type="GTiff", num_chunks=2):
+                   apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0):
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     TODO: Ignore areas where one image has missing values
-    TODO: Need to check over Heiko merge
+    TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
     log = logging.getLogger(__name__)
     log.info("Classifying file: {}".format(image_path))
@@ -1280,47 +1307,68 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     # Mask out missing values from the classification
     # at this point, image_array has dimensions [band, y, x]
+    log.info("Reshaping image from GDAL to Scikit-Learn dimensions")
     image_array = reshape_raster_for_ml(image_array)
     # Now it has dimensions [x * y, band] as needed for Scikit-Learn
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
-    np.any(image_array != nodata, axis=1, out=goodpixels)
-
-    n_samples = image_array.shape[0] # gives x * y dimension of the whole image
-    n_good_samples = len(np.where(goodpixels)) # gives the number of pixels with no missing values in any band
-    classes = np.empty(n_samples, dtype=np.ubyte)
+    log.info("Finding good pixels without missing values")
+    log.info("image_array.shape = {}".format(image_array.shape))
+    n_samples = image_array.shape[0]  # gives x * y dimension of the whole image
+    if 0 in image_array:  # a quick pre-check
+        good_samples = image_array[np.all(image_array != nodata, axis=1), :]
+        good_indices = [i for (i, j) in enumerate(image_array) if np.all(j != nodata)] # This is slowing things down too much
+        n_good_samples = len(good_samples)
+    else:
+        good_samples = image_array
+        good_indices = range(0, n_samples)
+        n_good_samples = n_samples
+    log.info("   All  samples: {}".format(n_samples))
+    log.info("   Good samples: {}".format(n_good_samples))
+    classes = np.full(n_good_samples, nodata, dtype=np.ubyte)
     if prob_out_dir:
-        probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
+        probs = np.full((n_good_samples, model.n_classes_), nodata, dtype=np.float32)
 
     chunk_size = int(n_good_samples / num_chunks)
-    chunk_resid = n_good_samples - chunk_size * num_chunks
+    chunk_resid = n_good_samples - (chunk_size * num_chunks)
+    log.info("   Number of chunks {} Chunk size {} Chunk residual {}".format(num_chunks, chunk_size, chunk_resid))
+    # The chunks iterate over all values in the array [x * y, bands] always with 8 bands per chunk
     for chunk_id in range(num_chunks):
         offset = chunk_id * chunk_size
         # process the residual pixels with the last chunk
         if chunk_id == num_chunks - 1:
             chunk_size = chunk_size + chunk_resid
         log.info("   Classifying chunk {} of size {}".format(chunk_id, chunk_size))
-        chunk_view = image_array[offset : offset + chunk_size, :]
-        goodpixels_view = goodpixels[offset : offset + chunk_size]
-        out_view = classes[offset : offset + chunk_size]
-        out_view[:] = model.predict(chunk_view[goodpixels_view,])
-        # put class values in the right pixel position again
-        np.copyto(chunk_view, out_view, where=goodpixels_view)
+        chunk_view = good_samples[offset : offset + chunk_size]
+        #indices_view = good_indices[offset : offset + chunk_size]
+        out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
+        out_view[:] = model.predict(chunk_view)
 
         if prob_out_dir:
-            prob_view = probs[
-                offset : offset + chunk_size, :
-            ]
-            prob_view[:, :] = model.predict_proba(chunk_view[goodpixels_view,])
-            # put prob values in the right pixel position again
-            np.copyto(prob_view, out_view, where=goodpixels_view)
+            log.info("   Calculating probabilities")
+            prob_view = probs[offset : offset + chunk_size, :]
+            prob_view[:, :] = model.predict_proba(chunk_view)
 
+    log.info("   Creating class array of size {}".format(n_samples))
+    class_out_array = np.full((n_samples), nodata)
+    for i, class_val in zip(good_indices, classes):
+        class_out_array[i] = class_val
+
+    log.info("   Creating GDAL class image")
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
-        reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
+        reshape_ml_out_to_raster(class_out_array, image.RasterXSize, image.RasterYSize)
 
     if prob_out_dir:
+        log.info("   Creating probability array of size {}".format(n_samples * model.n_classes_))
+        prob_out_array = np.full((n_samples, model.n_classes_), nodata)
+        for i, prob_val in zip(good_indices, probs):
+            prob_out_array[i] = prob_val
+        log.info("   Creating GDAL probability image")
+        log.info("   N Classes = {}".format(prob_out_array.shape[1]))
+        log.info("   Image X size = {}".format(image.RasterXSize))
+        log.info("   Image Y size = {}".format(image.RasterYSize))
         prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
-            reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
+            reshape_prob_out_to_raster(prob_out_array, image.RasterXSize, image.RasterYSize)
 
     class_out_image = None
     prob_out_image = None
