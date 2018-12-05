@@ -395,6 +395,27 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
+def create_mask_from_fmask(in_safe_dir, out_file):
+    """Calls fmask to create a new mask for L1 data"""
+    log = logging.getLogger(__name__)
+    args = [
+        "fmask_sentinel2Stacked.py",
+        "-o", out_file,
+        "--safedir", in_safe_dir
+    ]
+    log.info("Attempting fmask on {}, output at {}".format(in_safe_dir, out_file))
+    fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    while True:
+        nextline = fmask_proc.stdout.readline()
+        if len(nextline) > 0:
+            log.info(nextline)
+        if nextline == '' and fmask_proc.poll() is not None:
+            break
+        if "CRITICAL" in nextline:
+            raise subprocess.CalledProcessError(-1, "L2A_Process")
+
+
+
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
     """Applies Sen2cor cloud correction to level 1C images"""
     log = logging.getLogger(__name__)
