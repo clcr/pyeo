@@ -23,7 +23,7 @@ def test_fmask():
         os.remove("test_outputs/masks/fmask.tif")
     except FileNotFoundError:
         pass
-    pyeo.crete_mask_from_fmask(
+    pyeo.create_mask_from_fmask(
         "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
         "test_outputs/masks/fmask.tif"
     )
