@@ -104,8 +104,6 @@ def test_merging():
         pass
     pyeo.aggregate_and_mask_10m_bands("test_data/L2/",
                                       "test_outputs/", buffer_size=3)
-    pyeo.aggregate_and_mask_10m_bands("test_data/L2/",
-                                      "test_outputs/", buffer_size=3)
 
 
 def test_stacking():
