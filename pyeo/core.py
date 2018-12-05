@@ -395,7 +395,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def create_mask_from_fmask(in_safe_dir, out_file):
+def apply_fmask(in_safe_dir, out_file):
     """Calls fmask to create a new mask for L1 data"""
     log = logging.getLogger(__name__)
     args = [
@@ -413,7 +413,6 @@ def create_mask_from_fmask(in_safe_dir, out_file):
             break
         if "CRITICAL" in nextline:
             raise subprocess.CalledProcessError(-1, "L2A_Process")
-
 
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
@@ -623,6 +622,12 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
                               combination_func="or")
         else:
             create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold, buffer_size)
+
+
+def create_combined_sen2_fmask(image_to_mask, l1_safe_dir, l2_safe_dir):
+    """Creates image_to_mask.msk, using information from its l1 and l2 safe_dirs"""
+    with TemporaryDirectory as td:
+        fmask_path = td
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
@@ -1158,11 +1163,11 @@ def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10,
         return mask_path
 
 
-def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 0, buffer_size = 3):
+def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_threshold=0, buffer_size=3):
     """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1. If
     cloud_conf_threshold = 0, use scl mask else use confidence image """
     log = logging.getLogger(__name__)
-    log.info("Creating mask for {} with {} confidence threshold".format(image_path, cloud_conf_threshold))
+    log.info("Creating mask for {} with {} confidence threshold".format(l2_safe_path, cloud_conf_threshold))
     if cloud_conf_threshold:
         cloud_glob = "GRANULE/*/QI_DATA/*CLD*_20m.jp2"  # This should match both old and new mask formats
         cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
@@ -1177,19 +1182,41 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
         scl_array = cloud_image.GetVirtualMemArray()
         mask_array = np.isin(scl_array, (4, 5, 6))
 
-    mask_path = get_mask_path(image_path)
-    mask_image = create_matching_dataset(cloud_image, mask_path)
+    mask_image = create_matching_dataset(cloud_image, out_path)
     mask_image_array = mask_image.GetVirtualMemArray(eAccess=gdal.GF_Write)
     np.copyto(mask_image_array, mask_array)
     mask_image_array = None
     cloud_image = None
     mask_image = None
-    resample_image_in_place(mask_path, 10)
+    resample_image_in_place(out_path, 10)
     if buffer_size:
-        buffer_mask_in_place(mask_path, buffer_size)
-    log.info("Mask created at {}".format(mask_path))
-    return mask_path
+        buffer_mask_in_place(out_path, buffer_size)
+    log.info("Mask created at {}".format(out_path))
+    return out_path
 
+
+def create_mask_from_fmask(in_l1_dir, out_path):
+    with TemporaryDirectory as td:
+        temp_fmask_path = td.join(td, "fmask.tif")
+        apply_fmask(in_l1_dir, temp_fmask_path)
+        fmask_image = gdal.Open(temp_fmask_path)
+        fmask_array = fmask_image.GetVirtualMemArray()
+        out_image = create_matching_dataset(fmask_image, out_path, datatype=gdal.GDT_Byte)
+        out_array = out_image.GetVirtualMemArray()
+        out_array[:,:] = np.isin(fmask_array, (2, 3, 4), invert=True)
+        out_array = None
+        out_image = None
+        fmask_array = None
+        fmask_image = None
+
+
+def create_mask_from_sen2cor_and_fmask(l1_dir, l2_dir, out_mask_path):
+    with TemporaryDirectory() as td:
+        s2c_mask_path = os.path.join(td, "s2_mask.tif")
+        fmask_mask_path = os.path.join(td, "fmask.tif")
+        create_mask_from_confidence_layer(l2_dir, s2c_mask_path)
+        create_mask_from_fmask(l1_dir, fmask_mask_path)
+        combine_masks([s2c_mask_path, fmask_mask_path], out_mask_path, combination_func="AND", geometry_func="UNION")
 
 
 def get_mask_path(image_path):
