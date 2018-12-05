@@ -422,7 +422,7 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
 
 def validate_l2_data(l2_SAFE_file, resolution="10m"):
     """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
-    an invalid shapefile; this will prevent disconnected files from being """
+    an invalid SAFE directory; this will prevent disconnected files from being deleted"""
     log = logging.getLogger(__name__)
     if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
         log.error("{} is not a valid L2 file")
@@ -1137,16 +1137,24 @@ def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10,
         return mask_path
 
 
-def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 30, buffer_size = 0):
-    """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1"""
+def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_threshold = 0, buffer_size = 3):
+    """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1. If
+    cloud_conf_threshold = 0, use scl mask else use confidence image """
     log = logging.getLogger(__name__)
     log.info("Creating mask for {} with {} confidence threshold".format(image_path, cloud_conf_threshold))
-    cloud_glob = "GRANULE/*/QI_DATA/*CLD*_20m.jp2"  # This should match both old and new mask formats
-    cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
-    cloud_image = gdal.Open(cloud_path)
-    cloud_confidence_array = cloud_image.GetVirtualMemArray()
-    mask_array = (cloud_confidence_array < cloud_conf_threshold)
-    cloud_confidence_array = None
+    if cloud_conf_threshold:
+        cloud_glob = "GRANULE/*/QI_DATA/*CLD*_20m.jp2"  # This should match both old and new mask formats
+        cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
+        cloud_image = gdal.Open(cloud_path)
+        cloud_confidence_array = cloud_image.GetVirtualMemArray()
+        mask_array = (cloud_confidence_array < cloud_conf_threshold)
+        cloud_confidence_array = None
+    else:
+        cloud_glob = "GRANULE/*/IMG_DATA/R20m/*SCL*_20m.jp2"  # This should match both old and new mask formats
+        cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
+        cloud_image = gdal.Open(cloud_path)
+        scl_array = cloud_image.GetVirtualMemArray()
+        mask_array = np.isin(scl_array, (4, 5, 6))
 
     mask_path = get_mask_path(image_path)
     mask_image = create_matching_dataset(cloud_image, mask_path)
@@ -1160,6 +1168,7 @@ def create_mask_from_confidence_layer(image_path, l2_safe_path, cloud_conf_thres
         buffer_mask_in_place(mask_path, buffer_size)
     log.info("Mask created at {}".format(mask_path))
     return mask_path
+
 
 
 def get_mask_path(image_path):
