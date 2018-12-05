@@ -624,12 +624,6 @@ def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_mo
             create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold, buffer_size)
 
 
-def create_combined_sen2_fmask(image_to_mask, l1_safe_dir, l2_safe_dir):
-    """Creates image_to_mask.msk, using information from its l1 and l2 safe_dirs"""
-    with TemporaryDirectory as td:
-        fmask_path = td
-
-
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     log = logging.getLogger(__name__)
@@ -1196,13 +1190,13 @@ def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_thresho
 
 
 def create_mask_from_fmask(in_l1_dir, out_path):
-    with TemporaryDirectory as td:
-        temp_fmask_path = td.join(td, "fmask.tif")
+    with TemporaryDirectory() as td:
+        temp_fmask_path = os.path.join(td, "fmask.tif")
         apply_fmask(in_l1_dir, temp_fmask_path)
         fmask_image = gdal.Open(temp_fmask_path)
         fmask_array = fmask_image.GetVirtualMemArray()
         out_image = create_matching_dataset(fmask_image, out_path, datatype=gdal.GDT_Byte)
-        out_array = out_image.GetVirtualMemArray()
+        out_array = out_image.GetVirtualMemArray(eAccess=gdal.GA_Update)
         out_array[:,:] = np.isin(fmask_array, (2, 3, 4), invert=True)
         out_array = None
         out_image = None
@@ -1216,7 +1210,7 @@ def create_mask_from_sen2cor_and_fmask(l1_dir, l2_dir, out_mask_path):
         fmask_mask_path = os.path.join(td, "fmask.tif")
         create_mask_from_confidence_layer(l2_dir, s2c_mask_path)
         create_mask_from_fmask(l1_dir, fmask_mask_path)
-        combine_masks([s2c_mask_path, fmask_mask_path], out_mask_path, combination_func="AND", geometry_func="UNION")
+        combine_masks([s2c_mask_path, fmask_mask_path], out_mask_path, combination_func="and", geometry_func="union")
 
 
 def get_mask_path(image_path):
