@@ -1202,6 +1202,7 @@ def create_mask_from_fmask(in_l1_dir, out_path):
         out_image = None
         fmask_array = None
         fmask_image = None
+        resample_image_in_place(out_path, 10)
 
 
 def create_mask_from_sen2cor_and_fmask(l1_dir, l2_dir, out_mask_path):
