@@ -142,12 +142,13 @@ def test_classification():
 
 def test_mask_combination():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    masks = [r"test_data/"+mask for mask in os.listdir("test_data") if mask.endswith(".msk")]
     try:
         os.remove("test_outputs/union_or_combination.tif")
         os.remove("test_outputs/intersection_and_combination.tif")
     except FileNotFoundError:
         pass
-    pyeo.combine_masks(, "test_outputs/union_or_combination.tif",
+    pyeo.combine_masks(masks, "test_outputs/union_or_combination.tif",
                        geometry_func="union", combination_func="or")
     pyeo.combine_masks(masks, "test_outputs/intersection_and_combination.tif",
                        geometry_func="intersect", combination_func="and")

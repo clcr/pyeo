@@ -2,6 +2,8 @@ import os, sys
 import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
 import pyeo.core as pyeo
+import numpy as np
+import gdal
 
 
 def test_mask_from_confidence_layer():
@@ -52,3 +54,18 @@ def test_combination_mask():
         "test_data/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
         "test_outputs/masks/combined_mask.tif"
     )
+
+
+def test_mask_joining():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/masks/joining_test.tif")
+    except FileNotFoundError:
+        pass
+    pyeo.combine_masks(["test_data/masks/fmask_cloud_and_shadow.tif", "test_data/masks/confidence_mask.tif"],
+                       "test_outputs/masks/joining_test.tif", combination_func="and", geometry_func="union")
+    out_image = gdal.Open("test_outputs/masks/joining_test.tif")
+    assert out_image
+    out_array = out_image.GetVirtualMemArray()
+    assert 1 in out_array
+    assert 0 in out_array

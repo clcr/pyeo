@@ -1241,7 +1241,7 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     # I might reconsider this later, but I think it'll overcomplicate things.
     out_mask_array = out_mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
     out_mask_array[:, :] = 1
-    for in_mask in masks:
+    for i, in_mask in enumerate(masks):
         in_mask_array = in_mask.GetVirtualMemArray()
         if geometry_func == "intersect":
             out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_mask, combined_polygon)
@@ -1253,17 +1253,21 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
             raise Exception("Invalid geometry_func; can be 'intersect' or 'union'")
         out_mask_view = out_mask_array[out_y_min: out_y_max, out_x_min: out_x_max]
         in_mask_view = in_mask_array[in_y_min: in_y_max, in_x_min: in_x_max]
-        if combination_func is 'or':
-            out_mask_view = np.bitwise_or(out_mask_view, in_mask_view)
-        elif combination_func is 'and':
-            out_mask_view = np.bitwise_and(out_mask_view, in_mask_view)
-        elif combination_func is 'nor':
-            out_mask_view = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view))
+        if i is 0:
+            out_mask_view[:,:] = in_mask_view
         else:
-            raise Exception("Invalid combination_func; valid values are 'or', 'and', and 'nor'")
+            if combination_func is 'or':
+                out_mask_view[:,:] = np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8)
+            elif combination_func is 'and':
+                out_mask_view[:,:] = np.bitwise_and(out_mask_view, in_mask_view, dtype=np.uint8)
+            elif combination_func is 'nor':
+                out_mask_view[:,:] = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8), dtype=np.uint8)
+            else:
+                raise Exception("Invalid combination_func; valid values are 'or', 'and', and 'nor'")
         in_mask_view = None
         out_mask_view = None
         in_mask_array = None
+        in_mask = None
     out_mask_array = None
     out_mask = None
     return out_path
