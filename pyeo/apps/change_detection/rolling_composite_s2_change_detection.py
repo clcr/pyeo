@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     if args.start_date == "LATEST":
         # This isn't nice, but returns the yyyymmdd string of the latest stacked image
-        start_date = pyeo.get_s2_image_acquisition_time(pyeo.sort_by_s2_timestamp(
+        start_date = pyeo.get_image_acquisition_time(pyeo.sort_by_timestamp(
             [image_name for image_name in os.listdir(stacked_image_dir) if image_name.endswith(".tif")],
             recent_first=True
         )[0]).strftime("%Y%m%d")
@@ -160,7 +160,7 @@ if __name__ == "__main__":
             pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10)
 
 
-        # Update composite
+        # Build new composite
         if args.do_update or do_all:
             log.info("Updating composite")
             new_composite_path = os.path.join(composite_dir, "composite_"+os.path.basename(image))
