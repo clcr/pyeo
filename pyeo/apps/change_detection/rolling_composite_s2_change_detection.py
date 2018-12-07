@@ -103,9 +103,10 @@ if __name__ == "__main__":
         pyeo.download_new_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir)
         log.info("Preprocessing composite products")
         pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
-                                    delete_unprocessed_image=True)
+                                    delete_unprocessed_image=False)
         log.info("Aggregating composite layers")
-        pyeo.aggregate_and_mask_10m_bands(composite_l2_image_dir, composite_merged_dir, cloud_certainty_threshold)
+        pyeo.aggregate_and_mask_10m_bands(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
+                                          cloud_certainty_threshold)
         log.info("Building initial cloud-free composite")
         pyeo.composite_directory(composite_merged_dir, composite_dir)
 
@@ -118,12 +119,12 @@ if __name__ == "__main__":
     # Atmospheric correction
     if args.do_preprocess or do_all:
         log.info("Applying sen2cor")
-        pyeo.atmospheric_correction(l1_image_dir, l2_image_dir, sen2cor_path, delete_unprocessed_image=True)
+        pyeo.atmospheric_correction(l1_image_dir, l2_image_dir, sen2cor_path, delete_unprocessed_image=False)
 
     # Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Aggregating layers")
-        pyeo.aggregate_and_mask_10m_bands(l2_image_dir, merged_image_dir, cloud_certainty_threshold)
+        pyeo.aggregate_and_mask_10m_bands(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold)
 
     log.info("Finding most recent composite")
     latest_composite_name = \
