@@ -16,8 +16,6 @@ def setup_module():
     pyeo.init_log("test_log.log")
 
 
-
-
 def test_mask_buffering():
     """This is a bad test, but never mind"""
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -45,6 +43,10 @@ def test_composite_images_with_mask():
                  r"test_data/20180329T171921.tif"]
     out_file = r"test_outputs/composite_test.tif"
     pyeo.composite_images_with_mask(test_data, out_file)
+    image = gdal.Open("test_outputs/composite_test.tif")
+    assert image
+    image_array = image.GetVirtualMemArray()
+    assert image_array.max > 10
 
 
 def test_buffered_composite():
@@ -75,28 +77,26 @@ def test_ml_masking():
         buffer_size=10
     )
 
+
 @pytest.mark.slow
 def test_preprocessing():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    l1_dirs = ["S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
-               "S2B_MSIL1C_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE"]
     try:
-        [shutil.rmtree(os.path.join("test_outputs", l1_dir)) for l1_dir in l1_dirs]
+        shutil.rmtree("test_outputs/L2")
     except FileNotFoundError:
         pass
-    [pyeo.atmospheric_correction("test_data/"+l1_dir) for l1_dir in l1_dirs]
+    pyeo.atmospheric_correction("test_data/L1", "test_outputs/L2",
+                                "/data/clcr/shared/Sen2Cor-02.05.05-Linux64/bin/L2A_Process")  # not portable; figure out how
     assert os.path.isfile(
-        "test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m/T13QFB_20180103T172709_B08_10m.jp2"
+        "test_outputs/L2/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m/T13QFB_20180103T172709_B08_10m.jp2"
     )
     assert os.path.isfile(
-        "test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE/GRANULE/L2A_T13QFB_A014452_20180329T173239/IMG_DATA/R10m/T13QFB_20180329T173239_B08_10m.jp2"
+        "test_outputs/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE/GRANULE/L2A_T13QFB_A014452_20180329T173239/IMG_DATA/R10m/T13QFB_20180329T173239_B08_10m.jp2"
     )
 
 
 def test_merging():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    l2_dirs = ["S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
-               "S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE"]
     try:
         os.remove("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif")
         os.remove("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif")
@@ -118,11 +118,11 @@ def test_stacking():
     pyeo.stack_old_and_new_images(r"test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif",
                                   r"test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
                                   r"test_outputs")
-    #assert os.path.exists(os.path.abspath(r"test_outputs/T13QFB_20180103T172709_20180319T172021.tif"))
-    image = gdal.Open(os.path.abspath("test_outputs/T13QFB_20180319T172021_20180103T172709.tif"))
+    image = gdal.Open("test_outputs/T13QFB_20180319T172021_20180103T172709.tif")
+    assert image
     image_array = image.GetVirtualMemArray()
     for layer in range(image_array.shape(0)):
-        assert image_array[layer, :, :].max > 1000
+        assert image_array[layer, :, :].max > 10
 
 
 @pytest.mark.slow
