@@ -403,7 +403,7 @@ def apply_fmask(in_safe_dir, out_file):
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
-    log.info("Attempting fmask on {}, output at {}".format(in_safe_dir, out_file))
+    log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
     fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
@@ -602,26 +602,20 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     return out
 
 
-def aggregate_and_mask_10m_bands(in_dir, out_dir, cloud_threshold = 60, cloud_model_path=None, buffer_size=0):
+def aggregate_and_mask_10m_bands(l2_dir, out_dir, l1_dir, cloud_threshold = 60, buffer_size=0):
     """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif
-     and creates a cloudmask from the sen2cor confidence layer and RandomForest model if provided"""
+     and creates a cloudmask from the combined fmask and sen2cor cloudmasks."""
     log = logging.getLogger(__name__)
-    safe_file_path_list = [os.path.join(in_dir, safe_file_path) for safe_file_path in os.listdir(in_dir)]
-    for safe_dir in safe_file_path_list:
+    safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
+    for l2_safe_file in safe_file_path_list:
         log.info("----------------------------------------------------")
-        log.info("Merging 10m bands in SAFE dir: {}".format(safe_dir))
-        out_path = os.path.join(out_dir, get_sen_2_granule_id(safe_dir)) + ".tif"
+        log.info("Merging 10m bands in SAFE dir: {}".format(l2_safe_file))
+        out_path = os.path.join(out_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
         log.info("Output file: {}".format(out_path))
-        stack_sentinel_2_bands(safe_dir, out_path, band='10m')
-        if cloud_model_path:
-            with TemporaryDirectory() as td:
-                temp_model_mask_path = os.path.join(td, "temp_model.msk")
-                confidence_mask_path = create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold)
-                create_mask_from_model(out_path, cloud_model_path, temp_model_mask_path, buffer_size=10)
-                combine_masks((temp_model_mask_path, confidence_mask_path), get_mask_path(out_path),
-                              combination_func="or")
-        else:
-            create_mask_from_confidence_layer(out_path, safe_dir, cloud_threshold, buffer_size)
+        stack_sentinel_2_bands(l2_safe_file, out_path, band='10m')
+        l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
+        mask_path = get_mask_path(out_path)
+        create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path)
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
@@ -669,6 +663,26 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         log.error("Tiles  of the two images do not match. Aborted.")
 
 
+def get_l1_safe_file(image_name, l1_dir):
+    """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+    a filename"""
+    timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
+    granule = get_sen_2_image_tile(os.path.basename(image_name))
+    safe_glob = "S2[A|B]_MSIL1C_{}_*_{}_*.SAFE".format(timestamp, granule)
+    out = glob.glob(os.path.join(l1_dir, safe_glob))[0]
+    return out
+
+
+def get_l2_safe_file(image_name, l2_dir):
+    """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+    a filename"""
+    timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
+    granule = get_sen_2_image_tile(os.path.basename(image_name))
+    safe_glob = "S2[A|B]_MSIL2A_{}_*_{}_*.SAFE".format(timestamp, granule)
+    out = glob.glob(os.path.join(l2_dir, safe_glob))[0]
+    return out
+
+
 def get_sen_2_image_timestamp(image_name):
     """Returns the timestamps part of a Sentinel 2 image"""
     timestamp_re = r"\d{8}T\d{6}"
@@ -685,18 +699,16 @@ def get_sen_2_image_orbit(image_name):
 
 
 def get_sen_2_image_tile(image_name):
-    """Returns the tile number of a Sentinel 2 image"""
-    tmp1 = image_name.split("/")[-1]  # remove path
-    tmp2 = tmp1.split(".")[0] # remove file extension
-    comps = tmp2.split("_") # decompose
-    return comps[5]
+    """Returns the tile number of a Sentinel 2 image or path"""
+    name = os.path.basename(image_name)
+    tile = re.findall(r"T\d{2}[A-Z]{3}", name)[0]  # Matches tile ID, but not timestamp
+    return tile
 
 
 def get_sen_2_granule_id(safe_dir):
     """Returns the unique ID of a Sentinel 2 granule from a SAFE directory path"""
-    """At present, only works for LINUX"""
-    tmp = safe_dir.split("/")[-1] # removes path to SAFE directory
-    id  = tmp.split(".")[0] # removes ".SAFE" from the ID name
+    tmp = os.path.basename(safe_dir) # removes path to SAFE directory
+    id = tmp.split(".")[0] # removes ".SAFE" from the ID name
     return id
 
 
@@ -1190,6 +1202,8 @@ def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_thresho
 
 
 def create_mask_from_fmask(in_l1_dir, out_path):
+    log = logging.getLogger(__name__)
+    log.info("Creating fmask for {}".format(in_l1_dir))
     with TemporaryDirectory() as td:
         temp_fmask_path = os.path.join(td, "fmask.tif")
         apply_fmask(in_l1_dir, temp_fmask_path)
@@ -1197,6 +1211,7 @@ def create_mask_from_fmask(in_l1_dir, out_path):
         fmask_array = fmask_image.GetVirtualMemArray()
         out_image = create_matching_dataset(fmask_image, out_path, datatype=gdal.GDT_Byte)
         out_array = out_image.GetVirtualMemArray(eAccess=gdal.GA_Update)
+        log.info("fmask created, converting to binary cloud/shadow mask")
         out_array[:,:] = np.isin(fmask_array, (2, 3, 4), invert=True)
         out_array = None
         out_image = None
@@ -1227,6 +1242,9 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     """ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
     Python true or false """
     # TODO Implement intersection and union
+    log = logging.getLogger(__name__)
+    log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
+        mask_paths, combination_func, geometry_func))
     masks = [gdal.Open(mask_path) for mask_path in mask_paths]
     combined_polygon = get_combined_polygon(masks, geometry_func)
     gt = masks[0].GetGeoTransform()

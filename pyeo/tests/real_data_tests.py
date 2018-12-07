@@ -105,7 +105,11 @@ def test_merging():
     except FileNotFoundError:
         pass
     pyeo.aggregate_and_mask_10m_bands("test_data/L2/",
-                                      "test_outputs/", buffer_size=3)
+                                      "test_outputs/", "test_data/L1/", buffer_size=3)
+    assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif")
+    assert os.path.exists("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif")
+    assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.msk")
+    assert os.path.exists("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.msk")
 
 
 def test_stacking():
@@ -163,6 +167,30 @@ def test_mask_closure():
         os.remove(out_mask_path)
     shutil.copy("test_data/20180103T172709.msk", out_mask_path)
     pyeo.buffer_mask_in_place(out_mask_path, 30)
+
+
+def test_get_l1():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    output = pyeo.get_l1_safe_file(
+        "test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
+        "test_data/L1"
+    )
+    assert output == "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE"
+
+
+def test_get_l2():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    output = pyeo.get_l2_safe_file(
+        "test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
+        "test_data/L2"
+    )
+    assert output == "test_data/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE"
+
+
+def test_get_tile():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    assert pyeo.get_sen_2_image_tile("test_data/T13QFB_20180103T172709_20180329T171921.tif") == "T13QFB"
+    assert pyeo.get_sen_2_image_tile("test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif") == "T13QFB"
 
 
 if __name__ == "__main__":
