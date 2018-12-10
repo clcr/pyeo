@@ -615,7 +615,7 @@ def aggregate_and_mask_10m_bands(l2_dir, out_dir, l1_dir, cloud_threshold = 60, 
         stack_sentinel_2_bands(l2_safe_file, out_path, band='10m')
         l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
         mask_path = get_mask_path(out_path)
-        create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path)
+        create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
@@ -1220,11 +1220,11 @@ def create_mask_from_fmask(in_l1_dir, out_path):
         resample_image_in_place(out_path, 10)
 
 
-def create_mask_from_sen2cor_and_fmask(l1_dir, l2_dir, out_mask_path):
+def create_mask_from_sen2cor_and_fmask(l1_dir, l2_dir, out_mask_path, buffer_size=0):
     with TemporaryDirectory() as td:
         s2c_mask_path = os.path.join(td, "s2_mask.tif")
         fmask_mask_path = os.path.join(td, "fmask.tif")
-        create_mask_from_confidence_layer(l2_dir, s2c_mask_path)
+        create_mask_from_confidence_layer(l2_dir, s2c_mask_path, buffer_size=buffer_size)
         create_mask_from_fmask(l1_dir, fmask_mask_path)
         combine_masks([s2c_mask_path, fmask_mask_path], out_mask_path, combination_func="and", geometry_func="union")
 

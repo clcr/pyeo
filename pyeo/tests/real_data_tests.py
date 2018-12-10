@@ -1,10 +1,24 @@
-"""A set of tests using the data in real_data. This is designed to run slow and keep the test outputs after running.
+"""A set of integrations tests using the data in real_data. Each major test simulates a step in the processing chain.
+A test is considered passed if it produces a valid gdal object that contains a sensible range of values (ie not all 0s
+or 1s). It does NOT check to see if the image is valid or not; visual inspection using QGIS is strongly recommended!
+This is designed to run slow and keep the test outputs after running; around 20 minutes normal, and around ~2.5 hours
+if --runslow is used.
 Notes:
-    - Anything in test_data should not be touched and will remain as constant input for inputs
+    - Anything in test_data should not be touched by code and will remain as constant input for inputs. It will be
+    updated if the API significantly changes.
+    - Every file in test_outputs get deleted at the start of the relevant test and re-created;
+    this means that test outputs persist between test runs for inspection and tweaking
+
+Recommended running augments:
+cd .../pyeo/tests
+pytest real_data_tests.py --log-cli-level DEBUG   (runs all non-slow tests with log output printed to stdout)
+pytest real_data_tests.py --log-cli-level DEBUG -k composite   (runs all non-slow tests with 'composite' in the function
+name)
+pytest real_data_tests.py --log-cli-level DEBUG --runslow  (runs all tests)
 """
 import os, sys
 import shutil
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
 import pyeo.core as pyeo
 import gdal
 import numpy as np
@@ -17,7 +31,6 @@ def setup_module():
 
 
 def test_mask_buffering():
-    """This is a bad test, but never mind"""
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_masks = [r"test_data/buffered_masks/20180103T172709.msk",
                   r"test_data/buffered_masks/20180319T172021.msk",
@@ -38,15 +51,14 @@ def test_composite_images_with_mask():
         os.remove(r"test_outputs/composite_test.tif")
     except FileNotFoundError:
         pass
-    test_data = [r"test_data/20180103T172709.tif",
-                 r"test_data/20180319T172021.tif",
-                 r"test_data/20180329T171921.tif"]
+    test_data = [r"test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
+                 r"test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif"]
     out_file = r"test_outputs/composite_test.tif"
     pyeo.composite_images_with_mask(test_data, out_file)
     image = gdal.Open("test_outputs/composite_test.tif")
     assert image
     image_array = image.GetVirtualMemArray()
-    assert image_array.max > 10
+    assert image_array.max() > 10
 
 
 def test_buffered_composite():
@@ -105,7 +117,7 @@ def test_merging():
     except FileNotFoundError:
         pass
     pyeo.aggregate_and_mask_10m_bands("test_data/L2/",
-                                      "test_outputs/", "test_data/L1/", buffer_size=3)
+                                      "test_outputs/", "test_data/L1/", buffer_size=5)
     assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif")
     assert os.path.exists("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif")
     assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.msk")
