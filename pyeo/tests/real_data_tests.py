@@ -30,6 +30,21 @@ def setup_module():
     pyeo.init_log("test_log.log")
 
 
+@pytest.mark.webtest
+def test_google_cloud_dl():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        shutil.rmtree("test_outputs/google_data")
+    except FileNotFoundError:
+        pass
+    os.mkdir("test_outputs/google_data")
+    product_ids = ["S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE"]
+    pyeo.download_from_google_cloud(product_ids, "test_outputs/google_data")
+    for id in product_ids:
+        assert os.path.exists("test_outputs/google_data/{}".format(id))
+
+
+
 def test_mask_buffering():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_masks = [r"test_data/buffered_masks/20180103T172709.msk",

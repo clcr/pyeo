@@ -22,14 +22,19 @@ import shutil
 
 import json
 import csv
+import requests
 
 try:
-    import requests
+    from google.cloud import storage
+except ModuleNotFoundError:
+    print("google-cloud-storage required for Google downloads. Try pip install google-cloud-storage")
+
+try:
     import tenacity
     from planet import api as planet_api
     from multiprocessing.dummy import Pool
 except ModuleNotFoundError:
-    print("Requests, Tenacity, Planet and Multiprocessing are required for Planet data downloading")
+    print("Tenacity, Planet and Multiprocessing are required for Planet data downloading")
 
 
 class ForestSentinelException(Exception):
@@ -52,19 +57,21 @@ class BadS2Exception(ForestSentinelException):
     pass
 
 
+class BadGoogleURLExceeption(ForestSentinelException):
+    pass
+
+
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
 
     From Geospatial Learn by Ciaran Robb, embedded here for portability.
 
-    A convenience function that wraps sentinelsat query & download
+    Produces a dict of sentinel-2 IDs and
 
     Notes
     -----------
 
-    I have found the sentinesat sometimes fails to download the second image,
-    so I have written some code to avoid this - choose api = False for this
 
     Parameters
     -----------
@@ -83,9 +90,6 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
 
     end_date : string
                date of end of search
-
-    output_folder : string
-                    where you intend to download the imagery
 
     cloud : string (optional)
             include a cloud filter in the search
@@ -206,6 +210,29 @@ def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None):
                 continue
         download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
         log.info("Downloading {}".format(new_data[image]['identifier']))
+
+
+def download_from_google_cloud(product_ids, out_folder):
+    """Downloads every object of the safe_file """
+    log = logging.getLogger(__name__)
+    log.info("Downloading following products from Google Cloud:".format(product_ids))
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket("gcp-public-data-sentinel-2")
+    for id in product_ids:
+        tile_id = get_sen_2_image_tile(id)
+        utm_zone = tile_id[1:3]
+        lat_band = tile_id[3]
+        grid_square = tile_id[4:6]
+        object_prefix = r"/tiles/{}/{}/{}/{}/".format(
+            utm_zone, lat_band, grid_square, id
+        )
+        object_iter = bucket.list_blobs(prefix=object_prefix)
+        for s2_object in object_iter:
+            blob = bucket.get_blob(s2_object)
+            object_out_path = os.path.join(out_folder, s2_object.replace(object_prefix, ""))
+            os.makedirs(os.path.dirname(object_out_path), exist_ok=True)
+            log.info("Downloading from {} to {}".format(s2_object, object_out_path))
+            blob.download_to_filename(object_out_path)
 
 
 def load_api_key(path_to_api):
