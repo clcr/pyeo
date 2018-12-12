@@ -223,16 +223,23 @@ def download_from_google_cloud(product_ids, out_folder):
         utm_zone = tile_id[1:3]
         lat_band = tile_id[3]
         grid_square = tile_id[4:6]
-        object_prefix = r"/tiles/{}/{}/{}/{}/".format(
+        object_prefix = r"tiles/{}/{}/{}/{}/".format(
             utm_zone, lat_band, grid_square, id
         )
-        object_iter = bucket.list_blobs(prefix=object_prefix)
+        object_iter = bucket.list_blobs(prefix=object_prefix, delimiter=None)
         for s2_object in object_iter:
-            blob = bucket.get_blob(s2_object)
-            object_out_path = os.path.join(out_folder, s2_object.replace(object_prefix, ""))
+            blob = bucket.get_blob(s2_object.name)
+            object_out_path = os.path.join(
+                os.path.abspath(out_folder),
+                s2_object.name.replace(os.path.dirname(object_prefix.rstrip('/')), "").strip('/')
+            )
             os.makedirs(os.path.dirname(object_out_path), exist_ok=True)
             log.info("Downloading from {} to {}".format(s2_object, object_out_path))
-            blob.download_to_filename(object_out_path)
+            with open(object_out_path, 'w+b') as f:
+                blob.download_to_file(f)
+        # Need to make these two empty folders for sen2cor to work properly
+        os.mkdir(os.path.join(os.path.abspath(out_folder), id, "AUX_DATA"))
+        os.mkdir(os.path.join(os.path.abspath(out_folder), id, "HTML"))
 
 
 def load_api_key(path_to_api):
