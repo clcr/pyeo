@@ -61,6 +61,10 @@ class BadGoogleURLExceeption(ForestSentinelException):
     pass
 
 
+class BadDataSourceExpection(ForestSentinelException):
+    pass
+
+
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
@@ -197,8 +201,8 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
     return result
 
 
-def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None):
-    """Downloads new imagery from AWS. new_data is a dict from Sentinel_2. If l2_dir is given, will
+def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
+    """Downloads new imagery from AWS or google_cloud. new_data is a dict from Sentinel_2. If l2_dir is given, will
     check that directory for existing imagery and skip if exists."""
     log = logging.getLogger(__name__)
     for image in new_data:
@@ -208,8 +212,14 @@ def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None):
             if os.path.isdir(l2_path):
                 log.info("L2 imagery exists, skipping download.")
                 continue
-        download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
-        log.info("Downloading {}".format(new_data[image]['identifier']))
+        log.info("Downloading {} from {}".format(new_data[image]['identifier'], source))
+        if source=='aws':
+            download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
+        elif source=='google':
+            download_from_google_cloud([new_data[image]['identifier']], folder=aoi_image_dir)
+        else:
+            log.error("Invalid data source; valid values are 'aws' and 'google'")
+            raise BadDataSourceExpection
 
 
 def download_from_google_cloud(product_ids, out_folder):

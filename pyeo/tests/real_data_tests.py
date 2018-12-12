@@ -23,11 +23,29 @@ import pyeo.core as pyeo
 import gdal
 import numpy as np
 import pytest
+import configparser
 
 
 def setup_module():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     pyeo.init_log("test_log.log")
+
+
+
+def load_test_creds():
+    test_conf = configparser.ConfigParser()
+    test_conf.read("test_data/test_creds.ini")
+    return test_conf
+
+
+@pytest.mark.webtest
+def test_query():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_conf = load_test_creds()
+    images = pyeo.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
+                     "test_data/marque_de_com_really_simple.geojson",
+                     "20180101", "20180201")
+    assert len(images) > 0
 
 
 @pytest.mark.webtest
@@ -42,7 +60,6 @@ def test_google_cloud_dl():
     pyeo.download_from_google_cloud(product_ids, "test_outputs/google_data")
     for id in product_ids:
         assert os.path.exists("test_outputs/google_data/{}".format(id))
-
 
 
 def test_mask_buffering():
