@@ -27,14 +27,19 @@ if __name__ == "__main__":
     do_all = True
 
     # Reading in config file
-    parser = argparse.ArgumentParser(description='Automatically detect and report on change')
-    parser.add_argument('--conf', dest='config_path', action='store', default=r'change_detection.ini',
-                        help="Path to the .ini file specifying the job.")
+    parser = argparse.ArgumentParser(description='Downloads, preprocesses and classifies sentinel 2 images. A directory'
+                                                 'structure to contain preprocessed and downloaded files will be'
+                                                 ' created at the aoi_root location specified in the config file.')
+    parser.add_argument(dest='config_path', action='store', default=r'change_detection.ini',
+                        help="A path to a .ini file containing the specification for the job. See "
+                             "pyeo/apps/change_detection/change_detection.ini for an example.")
     parser.add_argument('--start_date', dest='start_date', help="Overrides the start date in the config file. Set to "
                                                                 "LATEST to get the date of the last merged accquistion")
     parser.add_argument('--end_date', dest='end_date', help="Overrides the end date in the config file. Set to TODAY"
                                                             "to get today's date")
-    parser.add_argument('-b', '--build_composite', dest='build_composite', action='store_true', default=False)
+    parser.add_argument('-b', '--build_composite', dest='build_composite', action='store_true', default=False,
+                        help="If present, creates a cloud-free (ish) composite between the two dates specified in the "
+                             "config file.")
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
     parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
@@ -100,7 +105,7 @@ if __name__ == "__main__":
             composite_start_date, composite_end_date, cloud_cover))
         composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
                                                          conf)
-        pyeo.download_new_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir)
+        pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='google')
         log.info("Preprocessing composite products")
         pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
                                     delete_unprocessed_image=False)
@@ -114,7 +119,7 @@ if __name__ == "__main__":
     if args.do_download or do_all:
         products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
         log.info("Downloading")
-        pyeo.download_new_s2_data(products, l1_image_dir)
+        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, "google")
 
     # Atmospheric correction
     if args.do_preprocess or do_all:

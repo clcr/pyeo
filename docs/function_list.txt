@@ -11,7 +11,7 @@ File structure and logging
 
 Sentinel 2 data acquisition 
   check_for_new_s2_data
-  download_new_s2_data
+  download_s2_data
   sent2_query (from geospatial_learn)
 
 Planet data acquisition

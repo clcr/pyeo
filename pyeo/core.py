@@ -22,14 +22,19 @@ import shutil
 
 import json
 import csv
+import requests
 
 try:
-    import requests
+    from google.cloud import storage
+except ModuleNotFoundError:
+    print("google-cloud-storage required for Google downloads. Try pip install google-cloud-storage")
+
+try:
     import tenacity
     from planet import api as planet_api
     from multiprocessing.dummy import Pool
 except ModuleNotFoundError:
-    print("Requests, Tenacity, Planet and Multiprocessing are required for Planet data downloading")
+    print("Tenacity, Planet and Multiprocessing are required for Planet data downloading")
 
 
 class ForestSentinelException(Exception):
@@ -52,19 +57,25 @@ class BadS2Exception(ForestSentinelException):
     pass
 
 
+class BadGoogleURLExceeption(ForestSentinelException):
+    pass
+
+
+class BadDataSourceExpection(ForestSentinelException):
+    pass
+
+
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
 
     From Geospatial Learn by Ciaran Robb, embedded here for portability.
 
-    A convenience function that wraps sentinelsat query & download
+    Produces a dict of sentinel-2 IDs and
 
     Notes
     -----------
 
-    I have found the sentinesat sometimes fails to download the second image,
-    so I have written some code to avoid this - choose api = False for this
 
     Parameters
     -----------
@@ -83,9 +94,6 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
 
     end_date : string
                date of end of search
-
-    output_folder : string
-                    where you intend to download the imagery
 
     cloud : string (optional)
             include a cloud filter in the search
@@ -193,8 +201,8 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
     return result
 
 
-def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None):
-    """Downloads new imagery from AWS. new_data is a dict from Sentinel_2. If l2_dir is given, will
+def download_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
+    """Downloads S2 imagery from AWS or google_cloud. new_data is a dict from Sentinel_2. If l2_dir is given, will
     check that directory for existing imagery and skip if exists."""
     log = logging.getLogger(__name__)
     for image in new_data:
@@ -204,8 +212,46 @@ def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None):
             if os.path.isdir(l2_path):
                 log.info("L2 imagery exists, skipping download.")
                 continue
-        download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
-        log.info("Downloading {}".format(new_data[image]['identifier']))
+        log.info("Downloading {} from {}".format(new_data[image]['identifier'], source))
+        if source=='aws':
+            download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
+        elif source=='google':
+            download_from_google_cloud([new_data[image]['identifier']], out_folder=aoi_image_dir)
+        else:
+            log.error("Invalid data source; valid values are 'aws' and 'google'")
+            raise BadDataSourceExpection
+
+
+def download_from_google_cloud(product_ids, out_folder):
+    """Downloads every object of the safe_file """
+    log = logging.getLogger(__name__)
+    log.info("Downloading following products from Google Cloud:".format(product_ids))
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket("gcp-public-data-sentinel-2")
+    for safe_id in product_ids:
+        if not safe_id.endswith(".SAFE"):
+            safe_id = safe_id+".SAFE"
+        tile_id = get_sen_2_image_tile(safe_id)
+        utm_zone = tile_id[1:3]
+        lat_band = tile_id[3]
+        grid_square = tile_id[4:6]
+        object_prefix = r"tiles/{}/{}/{}/{}/".format(
+            utm_zone, lat_band, grid_square, safe_id
+        )
+        object_iter = bucket.list_blobs(prefix=object_prefix, delimiter=None)
+        for s2_object in object_iter:
+            blob = bucket.get_blob(s2_object.name)
+            object_out_path = os.path.join(
+                os.path.abspath(out_folder),
+                s2_object.name.replace(os.path.dirname(object_prefix.rstrip('/')), "").strip('/')
+            )
+            os.makedirs(os.path.dirname(object_out_path), exist_ok=True)
+            log.info("Downloading from {} to {}".format(s2_object, object_out_path))
+            with open(object_out_path, 'w+b') as f:
+                blob.download_to_file(f)
+        # Need to make these two empty folders for sen2cor to work properly
+        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "AUX_DATA"))
+        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "HTML"))
 
 
 def load_api_key(path_to_api):
