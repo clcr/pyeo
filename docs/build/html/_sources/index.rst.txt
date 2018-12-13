@@ -78,7 +78,7 @@ Sentinel 2 data acquisition
 
  .. autofunction:: check_for_new_s2_data
 
- .. autofunction:: download_new_s2_data
+ .. autofunction:: download_s2_data
 
  .. autofunction:: sent2_query (from geospatial_learn)
 

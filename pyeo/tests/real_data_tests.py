@@ -39,13 +39,21 @@ def load_test_creds():
 
 
 @pytest.mark.webtest
-def test_query():
+def test_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_conf = load_test_creds()
     images = pyeo.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
                      "test_data/marque_de_com_really_simple.geojson",
-                     "20180101", "20180201")
+                     "20180101", "20180110")
     assert len(images) > 0
+    try:
+        shutil.rmtree("test_outputs/L1")
+    except FileNotFoundError:
+        pass
+    os.mkdir("test_outputs/L1")
+    pyeo.download_s2_data(images, "test_outputs/L1", source='google')
+    for safe_id in images:
+        assert os.path.exists("test_outputs/L1/{}".format(safe_id+".SAFE"))
 
 
 @pytest.mark.webtest

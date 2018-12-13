@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Downloads, preprocesses and classifies sentinel 2 images. A directory'
                                                  'structure to contain preprocessed and downloaded files will be'
                                                  ' created at the aoi_root location specified in the config file.')
-    parser.add_argument('conf', dest='config_path', action='store', default=r'change_detection.ini',
+    parser.add_argument(dest='config_path', action='store', default=r'change_detection.ini',
                         help="A path to a .ini file containing the specification for the job. See "
                              "pyeo/apps/change_detection/change_detection.ini for an example.")
     parser.add_argument('--start_date', dest='start_date', help="Overrides the start date in the config file. Set to "
@@ -70,7 +70,6 @@ if __name__ == "__main__":
     sen2cor_path = conf['sen2cor']['path']
     composite_start_date = conf['forest_sentinel']['composite_start']
     composite_end_date = conf['forest_sentinel']['composite_end']
-    download_source = conf['forest_sentinel']['download source']
 
     pyeo.create_file_structure(project_root)
     log = pyeo.init_log(log_path)
@@ -106,7 +105,7 @@ if __name__ == "__main__":
             composite_start_date, composite_end_date, cloud_cover))
         composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
                                                          conf)
-        pyeo.download_new_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir)
+        pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='google')
         log.info("Preprocessing composite products")
         pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
                                     delete_unprocessed_image=False)
@@ -120,7 +119,7 @@ if __name__ == "__main__":
     if args.do_download or do_all:
         products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
         log.info("Downloading")
-        pyeo.download_new_s2_data(products, l1_image_dir)
+        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, "google")
 
     # Atmospheric correction
     if args.do_preprocess or do_all:

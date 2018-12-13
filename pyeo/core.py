@@ -201,8 +201,8 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
     return result
 
 
-def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
-    """Downloads new imagery from AWS or google_cloud. new_data is a dict from Sentinel_2. If l2_dir is given, will
+def download_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
+    """Downloads S2 imagery from AWS or google_cloud. new_data is a dict from Sentinel_2. If l2_dir is given, will
     check that directory for existing imagery and skip if exists."""
     log = logging.getLogger(__name__)
     for image in new_data:
@@ -216,7 +216,7 @@ def download_new_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
         if source=='aws':
             download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
         elif source=='google':
-            download_from_google_cloud([new_data[image]['identifier']], folder=aoi_image_dir)
+            download_from_google_cloud([new_data[image]['identifier']], out_folder=aoi_image_dir)
         else:
             log.error("Invalid data source; valid values are 'aws' and 'google'")
             raise BadDataSourceExpection
@@ -228,13 +228,15 @@ def download_from_google_cloud(product_ids, out_folder):
     log.info("Downloading following products from Google Cloud:".format(product_ids))
     storage_client = storage.Client()
     bucket = storage_client.get_bucket("gcp-public-data-sentinel-2")
-    for id in product_ids:
-        tile_id = get_sen_2_image_tile(id)
+    for safe_id in product_ids:
+        if not safe_id.endswith(".SAFE"):
+            safe_id = safe_id+".SAFE"
+        tile_id = get_sen_2_image_tile(safe_id)
         utm_zone = tile_id[1:3]
         lat_band = tile_id[3]
         grid_square = tile_id[4:6]
         object_prefix = r"tiles/{}/{}/{}/{}/".format(
-            utm_zone, lat_band, grid_square, id
+            utm_zone, lat_band, grid_square, safe_id
         )
         object_iter = bucket.list_blobs(prefix=object_prefix, delimiter=None)
         for s2_object in object_iter:
@@ -248,8 +250,8 @@ def download_from_google_cloud(product_ids, out_folder):
             with open(object_out_path, 'w+b') as f:
                 blob.download_to_file(f)
         # Need to make these two empty folders for sen2cor to work properly
-        os.mkdir(os.path.join(os.path.abspath(out_folder), id, "AUX_DATA"))
-        os.mkdir(os.path.join(os.path.abspath(out_folder), id, "HTML"))
+        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "AUX_DATA"))
+        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "HTML"))
 
 
 def load_api_key(path_to_api):
