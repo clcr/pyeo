@@ -836,7 +836,8 @@ def get_poly_size(poly):
     return out
 
 
-def create_cloud_mask(image_path, model_path, mask_out_path, model_nodata = 1):
+def create_cloud_mask(image_path, mask_out_path, model_nodata = 1):
+
     log = logging.getLogger(__name__)
     log.info("Building cloud mask for {}".format(image_path))
     mask_path = get_mask_path(image_path)
@@ -956,7 +957,7 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2):
+def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2,mask_tif=''):
     """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
     with a ~15GB machine)"""
     log = logging.getLogger(__name__)
@@ -964,11 +965,11 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_m
     image = gdal.Open(image_path)
     model = joblib.load(model_path)
     map_out_image = create_matching_dataset(image, class_out_dir)
-    prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
+    #prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
     if apply_mask:
-        mask_path = get_mask_path(image_path)
+        mask_path = mask_tif
         log.info("Applying mask at {}".format(mask_path))
         mask = gdal.Open(mask_path)
         mask_array = mask.GetVirtualMemArray()
@@ -978,7 +979,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_m
     image_array = reshape_raster_for_ml(image_array)
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.int16)
-    probs = np.empty((n_samples, model.n_classes_), dtype=np.float32)
+    #probs = np.zeros((n_samples, model.n_classes_), dtype=np.float32)
     if n_samples % num_chunks != 0:
         raise ForestSentinelException("Please pick a chunk size that divides evenly")
     chunk_size = int(n_samples / num_chunks)
@@ -990,13 +991,13 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_m
         out_view = classes[
             chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
         ]
-        prob_view = probs[
-            chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
-        ]
+     #   prob_view = probs[
+     #       chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
+     #   ]
         out_view[:] = model.predict(chunk_view)
-        prob_view[:, :] = model.predict_proba(chunk_view)
+      #  prob_view[:, :] = model.predict_proba(chunk_view)
     map_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
-    prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
+    #prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
     map_out_image = None
     prob_out_image = None
     return class_out_dir, prob_out_path
@@ -1044,7 +1045,7 @@ def reshape_prob_out_to_raster(probs, width, height):
     return image_array
 
 
-def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attribute="CODE"):
+def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attribute="CODE",stat_out = True, plot_stat= False):
     """Returns a trained random forest model from the training data. This
     assumes that image and model are in the same directory, with a shapefile.
     Give training_image_path a path to a list of .tif files. See spec in the R drive for data structure.
@@ -1053,6 +1054,7 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
     learning_data = None
     classes = None
     for training_image_file_path in training_image_file_paths:
+        print('working on ' + training_image_file_path)
         training_image_folder, training_image_name = os.path.split(training_image_file_path)
         training_image_name = training_image_name[:-4]  # Strip the file extension
         shape_path = os.path.join(training_image_folder, training_image_name, training_image_name + '.shp')
@@ -1067,44 +1069,76 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
     model.fit(learning_data, classes)
     scores = cross_val_score(model, learning_data, classes, cv=cross_val_repeats)
+
+  #  score_out_txt =
+  #   with open(scores_out_txt, 'w') as score_file:
+  #       score_file.write(str(scores))
     return model, scores
 
+def create_trained_model_simp(learning_data,classes,cross_val_repeats = 5):
+    """Returns a trained random forest model from the training data. This
+    assumes that image and model are in the same directory, with a shapefile.
+    Give training_image_path a path to a list of .tif files. See spec in the R drive for data structure.
+    At present, the model is an ExtraTreesClassifier arrived at by tpot; see tpot_classifier_kenya -> tpot 1)"""
+    # This could be optimised by pre-allocating the training array. but not now.
+
+    if np.logical_or(learning_data is None, classes is None):
+            print('error learning dataset or classes is empty')
+    else:
+          #  learning_data = np.append(learning_data, this_training_data, 0)
+           # classes = np.append(classes, this_classes)
+           #  model = ens.RandomForestClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
+           #                           min_samples_split=16, n_estimators=100,n_jobs= 6, class_weight='balanced')
+
+            model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features='sqrt', min_samples_leaf=2,
+                                       min_samples_split=16, n_estimators=100, n_jobs=1, class_weight='balanced')
+            model.fit(learning_data, classes)
+            scores = cross_val_score(model, learning_data, classes, cv=cross_val_repeats)
+    return model, scores
 
 def create_model_for_region(path_to_region, model_out, scores_out, attribute="CODE"):
     """Creates a model based on training data for files in a given region"""
-    image_glob = os.path.join(path_to_region, r"*.tif")
+    image_glob = os.path.join(path_to_region, r"*.TIF")
+  #  image_glob = os.path.join(path_to_region, r"*/*.tif")
     image_list = glob.glob(image_glob)
+
     model, scores = create_trained_model(image_list, attribute=attribute)
     joblib.dump(model, model_out)
     with open(scores_out, 'w') as score_file:
         score_file.write(str(scores))
 
 
-def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id = 4326):
+def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id = 4326, all_touched = True):
     """Given an image and a shapefile with categories, return x and y suitable
     for feeding into random_forest.fit.
     Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'
     WRITE A TEST FOR THIS TOO; if this goes wrong, it'll go wrong quietly and in a way that'll cause the most issues
      further on down the line."""
     with TemporaryDirectory() as td:
+        #td=os.path.dirname(image_path)
         shape_projection = osr.SpatialReference()
         shape_projection.ImportFromEPSG(shape_projection_id)
         image = gdal.Open(image_path)
         image_gt = image.GetGeoTransform()
         x_res, y_res = image_gt[1], image_gt[5]
-        ras_path = os.path.join(td, "poly_ras")
+        ras_path = os.path.join(td, "poly_ras.tif")
         ras_params = gdal.RasterizeOptions(
             noData=0,
             attribute=attribute,
             xRes=x_res,
             yRes=y_res,
             outputType=gdal.GDT_Int16,
-            outputSRS=shape_projection
+            outputSRS=shape_projection,
+            allTouched=all_touched,
+        #    layers=os.path.basename(shape_path)[:-4]
         )
         # This produces a rasterised geotiff that's right, but not perfectly aligned to pixels.
         # This can probably be fixed.
+        #vector_ds = gdal.OpenEx(shape_path, gdal.OF_VECTOR)
         gdal.Rasterize(ras_path, shape_path, options=ras_params)
+
         rasterised_shapefile = gdal.Open(ras_path)
+
         shape_array = rasterised_shapefile.GetVirtualMemArray()
         local_x, local_y = get_local_top_left(image, rasterised_shapefile)
         shape_sparse = sp.coo_matrix(shape_array)
@@ -1117,7 +1151,7 @@ def get_training_data(image_path, shape_path, attribute="CODE", shape_projection
                     ]
         for index in range(len(features)):
             training_data[index, :] = image_view[:, y[index], x[index]]
-        return training_data, features
+    return training_data, features
 
 
 def get_local_top_left(raster1, raster2):
