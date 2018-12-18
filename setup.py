@@ -20,6 +20,7 @@ setup(
         'joblib',
         'requests',
         'tenacity',
-        'planet'
+        'planet',
+        'pytest'
     ],
 )
