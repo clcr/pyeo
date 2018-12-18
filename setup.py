@@ -16,11 +16,13 @@ setup(
         'gdal',
         'numpy',
         'scikit-learn',
+        'scikit-image'
         'scipy',
         'joblib',
         'requests',
         'tenacity',
         'planet',
-        'pytest'
+        'pytest',
+        'gdal'
     ],
 )
