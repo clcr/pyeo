@@ -23,6 +23,6 @@ setup(
         'tenacity',
         'planet',
         'pytest',
-        'gdal'
+        'GDAL'
     ],
 )
