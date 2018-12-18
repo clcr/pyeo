@@ -1,7 +1,10 @@
 language: python
 python:
   - "3.6"
+virtualenv:
+  system_site_packages: true
 install:
+  - sudo apt-get install -y gdal-bin
   - pip install .
 script:
   - pytest pyeo/tests/pyeo_tests.py
