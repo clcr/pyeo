@@ -13,7 +13,7 @@ setup(
         'sentinelsat>=0.12.1',
         'sentinelhub>=2.4.2',
         'pytest>=3.5.0',
-        'gdal>=2.3.0',
+        'pygdal>=2.3.0',
         'numpy>=1.15.4',
         'scikit-learn==0.19.2',
         'scikit-image>=0.14.0'
