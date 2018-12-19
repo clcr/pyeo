@@ -222,8 +222,8 @@ def download_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
             raise BadDataSourceExpection
 
 
-def download_from_google_cloud(product_ids, out_folder):
-    """Downloads every object of the safe_file """
+def download_from_google_cloud(product_ids, out_folder, redownload = False):
+    """Passed a list of S2 safefiles, we """
     log = logging.getLogger(__name__)
     log.info("Downloading following products from Google Cloud:".format(product_ids))
     storage_client = storage.Client()
@@ -231,6 +231,12 @@ def download_from_google_cloud(product_ids, out_folder):
     for safe_id in product_ids:
         if not safe_id.endswith(".SAFE"):
             safe_id = safe_id+".SAFE"
+        if validate_l1_data(os.path.join(out_folder, safe_id) and not redownload):
+            log.info("File exists, skipping.")
+            return
+        if redownload:
+            log.info("Removing {}".format(os.path.join(out_folder, safe_id)))
+            shutil.rmtree(os.path.join(out_folder, safe_id))
         tile_id = get_sen_2_image_tile(safe_id)
         utm_zone = tile_id[1:3]
         lat_band = tile_id[3]
@@ -250,8 +256,8 @@ def download_from_google_cloud(product_ids, out_folder):
             with open(object_out_path, 'w+b') as f:
                 blob.download_to_file(f)
         # Need to make these two empty folders for sen2cor to work properly
-        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "AUX_DATA"))
-        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "HTML"))
+        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "AUX_DATA"), exists_ok=True)
+        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "HTML"), exists_ok=True)
 
 
 def load_api_key(path_to_api):
@@ -487,19 +493,37 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
 
 
 def validate_l2_data(l2_SAFE_file, resolution="10m"):
-    """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
-    an invalid SAFE directory; this will prevent disconnected files from being deleted"""
+    """Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
+    an invalid SAFE directory; this will prevent disconnected files from being deleted.
+    Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
     log = logging.getLogger(__name__)
     if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
         log.error("{} is not a valid L2 file")
-        return True
+        return 2
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
     image_glob = os.path.join(l2_SAFE_file, granule_path)
     if glob.glob(image_glob):
-        return True
+        return 1
     else:
-        return False
+        return 0
+
+
+def validate_l1_data(l1_SAFE_file, resolution="10m"):
+    """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+    an invalid SAFE directory; this will prevent disconnected files from being deleted.
+    Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
+    log = logging.getLogger(__name__)
+    if not l2_SAFE_file.endswith(".SAFE") or "L1C" not in l2_SAFE_file:
+        log.error("{} is not a valid L1 file")
+        return 2
+    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
+    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_*.jp2".format(resolution)
+    image_glob = os.path.join(l1_SAFE_file, granule_path)
+    if glob.glob(image_glob):
+        return 1
+    else:
+        return 0
 
 
 def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):

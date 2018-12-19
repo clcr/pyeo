@@ -32,16 +32,18 @@ def setup_module():
 
 
 
-def load_test_creds():
+def load_test_conf():
     test_conf = configparser.ConfigParser()
     test_conf.read("test_data/test_creds.ini")
     return test_conf
 
 
+
+
 @pytest.mark.webtest
 def test_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    test_conf = load_test_creds()
+    test_conf = load_test_conf()
     images = pyeo.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
                      "test_data/marque_de_com_really_simple.geojson",
                      "20180101", "20180110")
@@ -137,8 +139,9 @@ def test_preprocessing():
         shutil.rmtree("test_outputs/L2")
     except FileNotFoundError:
         pass
+    conf = load_test_conf()
     pyeo.atmospheric_correction("test_data/L1", "test_outputs/L2",
-                                "/data/clcr/shared/Sen2Cor-02.05.05-Linux64/bin/L2A_Process")  # not portable; figure out how
+                                conf['sen2cor']['path'])
     assert os.path.isfile(
         "test_outputs/L2/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m/T13QFB_20180103T172709_B08_10m.jp2"
     )
