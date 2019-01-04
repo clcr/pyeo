@@ -231,7 +231,7 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
     for safe_id in product_ids:
         if not safe_id.endswith(".SAFE"):
             safe_id = safe_id+".SAFE"
-        if validate_l1_data(os.path.join(out_folder, safe_id) and not redownload):
+        if validate_l1_data(os.path.join(out_folder, safe_id)) and not redownload:
             log.info("File exists, skipping.")
             return
         if redownload:
@@ -256,8 +256,11 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
             with open(object_out_path, 'w+b') as f:
                 blob.download_to_file(f)
         # Need to make these two empty folders for sen2cor to work properly
-        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "AUX_DATA"), exists_ok=True)
-        os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "HTML"), exists_ok=True)
+        try:
+            os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "AUX_DATA"))
+            os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "HTML"))
+        except FileExistsError:
+            pass
 
 
 def load_api_key(path_to_api):
@@ -514,10 +517,10 @@ def validate_l1_data(l1_SAFE_file, resolution="10m"):
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
     Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
     log = logging.getLogger(__name__)
-    if not l2_SAFE_file.endswith(".SAFE") or "L1C" not in l2_SAFE_file:
+    if not l1_SAFE_file.endswith(".SAFE") or "L1C" not in l1_SAFE_file:
         log.error("{} is not a valid L1 file")
         return 2
-    log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
+    log.info("Checking {} for incomplete {} imagery".format(l1_SAFE_file, resolution))
     granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_*.jp2".format(resolution)
     image_glob = os.path.join(l1_SAFE_file, granule_path)
     if glob.glob(image_glob):
