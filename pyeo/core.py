@@ -13,6 +13,7 @@ from osgeo import ogr, osr
 import numpy as np
 import numpy.ma as ma
 from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile
 import sklearn.ensemble as ens
 from sklearn.model_selection import cross_val_score
 from skimage import morphology as morph
@@ -891,7 +892,8 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     """Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
     be a binary .msk file with the same path as their corresponding image. All images must have the same
     number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
-    composite_out_path will be created. Takes projection, resolution, ect from first band of first raster in list."""
+    composite_out_path will be created. Takes projection, resolution, ect from first band of first raster in list.
+    Will reproject images and masks if they do not match initial raster."""
 
     log = logging.getLogger(__name__)
     driver = gdal.GetDriverByName(format)
@@ -919,21 +921,26 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     mask_paths = []
 
     for i, in_raster in enumerate(in_raster_list):
-        # Get a view of in_raster according to output_array
-        log.info("Adding {} to composite".format(in_raster_path_list[i]))
-        in_bounds = get_raster_bounds(in_raster)
-        x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
-        output_view = output_array[:, y_min:y_max, x_min:x_max]
+        with NamedTemporaryFile() as temp_raster:
+            if in_raster.GetProejction() is not projection:
+                log.info("Reprojecting {} to {}".format(in_raster, projection))
+                in_raster = reproject_image(in_raster, temp_raster, projection)
 
-        # Move every unmasked pixel in in_raster to output_view
-        mask_paths.append(get_mask_path(in_raster_path_list[i]))
-        log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
-        in_masked = get_masked_array(in_raster, mask_paths[i])
-        np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
+            # Get a view of in_raster according to output_array
+            log.info("Adding {} to composite".format(in_raster_path_list[i]))
+            in_bounds = get_raster_bounds(in_raster)
+            x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
+            output_view = output_array[:, y_min:y_max, x_min:x_max]
 
-        # Deallocate
-        output_view = None
-        in_masked = None
+            # Move every unmasked pixel in in_raster to output_view
+            mask_paths.append(get_mask_path(in_raster_path_list[i]))
+            log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
+            in_masked = get_masked_array(in_raster, mask_paths[i])
+            np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
+
+            # Deallocate
+            output_view = None
+            in_masked = None
 
     output_array = None
     output_image = None
@@ -941,6 +948,17 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
     combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
     return composite_out_path
+
+
+def reproject_image(in_raster_path, out_raster_path, new_projection):
+    """Reprojects an image to new_projection. Wraps gdal.ReprojectImage function"""
+    log = logging.getLogger(__name__)
+    log.info("Reprojecting {} to {}".format(in_raster_path, new_projection))
+    gdal.ReprojectImage(src_dataset=in_raster_path,
+                        dst_ds=out_raster_path,
+                        dst_wkt=new_projection)
+    log.info("Reprojection complete, new image at {}".format(out_raster_path))
+    return
 
 
 def composite_directory(image_dir, composite_out_dir, format="GTiff"):

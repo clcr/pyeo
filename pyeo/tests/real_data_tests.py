@@ -106,6 +106,22 @@ def test_composite_images_with_mask():
     assert image_array.max() > 10
 
 
+def test_composite_across_projections():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove(r"test_outputs/composite_test.tif")
+    except FileNotFoundError:
+        pass
+    test_data = [r"test_data/S2A_MSIL2A_20180703T073611_N0206_R092_T36MZE_20180703T094637.tif",
+                 r"test_data/S2B_MSIL2A_20180728T073609_N0206_R092_T37MBV_20180728T114325.tif"]
+    out_file = r"test_outputs/composite_test.tif"
+    pyeo.composite_images_with_mask(test_data, out_file)
+    image = gdal.Open("test_outputs/composite_test.tif")
+    assert image
+    image_array = image.GetVirtualMemArray()
+    assert image_array.max() > 10
+
+
 def test_buffered_composite():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:
