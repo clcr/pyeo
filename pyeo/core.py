@@ -955,21 +955,28 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
 def reproject_image(in_raster, out_raster_path, new_projection):
     """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function"""
+    # It's ridiculous that Gdal makes this this involved -_-
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
         in_raster = gdal.Open(in_raster)
+    pdb.set_trace()
     out_raster = gdal.GetDriverByName("GTiff").Create(
         out_raster_path,
         xsize=in_raster.RasterXSize,
         ysize=in_raster.RasterYSize,
         bands=in_raster.RasterCount,
+        eType=in_raster.GetRasterBand(1).DataType
     )
+    out_raster.SetProjection(in_raster.GetProjection())
+    out_raster.SetGeoTransform(in_raster.GetGeoTransform())
     # Making the (slightly dangerous) assumption that Gdal will recalc the geotransform as well. Let's see.
     gdal.ReprojectImage(src_ds=in_raster,
                         dst_ds=out_raster,
                         dst_wkt=new_projection)
     log.info("Reprojection complete, new image at {}".format(out_raster_path))
+    out_raster = None
+    in_raster = None
     return out_raster_path
 
 
