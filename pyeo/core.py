@@ -919,12 +919,13 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         output_array = np.expand_dims(output_array, 0)
 
     mask_paths = []
+    with TemporaryDirectory() as reproj_dir:
+        for i, in_raster in enumerate(in_raster_list):
+            mask_paths.append(get_mask_path(in_raster_path_list[i]))
 
-    for i, in_raster in enumerate(in_raster_list):
-        with NamedTemporaryFile() as temp_raster:
-            if in_raster.GetProejction() is not projection:
-                log.info("Reprojecting {} to {}".format(in_raster, projection))
-                in_raster = reproject_image(in_raster, temp_raster, projection)
+            if in_raster.GetProjection() is not projection:
+                in_raster = reproject_image(in_raster, reproj_dir+"/image_{}.tif".format(i), projection)
+                mask_paths[i] = reproject_image(mask_paths[i], reproj_dir+"/image_{}.msk".format(i), projection)
 
             # Get a view of in_raster according to output_array
             log.info("Adding {} to composite".format(in_raster_path_list[i]))
@@ -933,7 +934,6 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
             output_view = output_array[:, y_min:y_max, x_min:x_max]
 
             # Move every unmasked pixel in in_raster to output_view
-            mask_paths.append(get_mask_path(in_raster_path_list[i]))
             log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
             in_masked = get_masked_array(in_raster, mask_paths[i])
             np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
@@ -942,11 +942,11 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
             output_view = None
             in_masked = None
 
-    output_array = None
-    output_image = None
-    log.info("Composite done")
-    log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
-    combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
+        output_array = None
+        output_image = None
+        log.info("Composite done")
+        log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
+        combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
     return composite_out_path
 
 
@@ -954,11 +954,11 @@ def reproject_image(in_raster_path, out_raster_path, new_projection):
     """Reprojects an image to new_projection. Wraps gdal.ReprojectImage function"""
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster_path, new_projection))
-    gdal.ReprojectImage(src_dataset=in_raster_path,
+    gdal.ReprojectImage(src_ds=in_raster_path,
                         dst_ds=out_raster_path,
                         dst_wkt=new_projection)
     log.info("Reprojection complete, new image at {}".format(out_raster_path))
-    return
+    return out_raster_path
 
 
 def composite_directory(image_dir, composite_out_dir, format="GTiff"):
@@ -1331,7 +1331,7 @@ def get_mask_path(image_path):
 
 def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func ="intersect"):
     """ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
-    Python true or false """
+    Python true or false. Also assumes that all masks are the same projection for now."""
     # TODO Implement intersection and union
     log = logging.getLogger(__name__)
     log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
