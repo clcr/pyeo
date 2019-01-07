@@ -25,6 +25,8 @@ import json
 import csv
 import requests
 
+import pdb
+
 try:
     from google.cloud import storage
 except ModuleNotFoundError:
@@ -923,8 +925,9 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         for i, in_raster in enumerate(in_raster_list):
             mask_paths.append(get_mask_path(in_raster_path_list[i]))
 
-            if in_raster.GetProjection() is not projection:
-                in_raster = reproject_image(in_raster, reproj_dir+"/image_{}.tif".format(i), projection)
+            # Reproject images and masks if required
+            if in_raster.GetProjection() != projection:
+                in_raster = gdal.Open(reproject_image(in_raster, reproj_dir+"/image_{}.tif".format(i), projection))
                 mask_paths[i] = reproject_image(mask_paths[i], reproj_dir+"/image_{}.msk".format(i), projection)
 
             # Get a view of in_raster according to output_array
@@ -950,12 +953,21 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     return composite_out_path
 
 
-def reproject_image(in_raster_path, out_raster_path, new_projection):
-    """Reprojects an image to new_projection. Wraps gdal.ReprojectImage function"""
+def reproject_image(in_raster, out_raster_path, new_projection):
+    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function"""
     log = logging.getLogger(__name__)
-    log.info("Reprojecting {} to {}".format(in_raster_path, new_projection))
-    gdal.ReprojectImage(src_ds=in_raster_path,
-                        dst_ds=out_raster_path,
+    log.info("Reprojecting {} to {}".format(in_raster, new_projection))
+    if type(in_raster) is str:
+        in_raster = gdal.Open(in_raster)
+    out_raster = gdal.GetDriverByName("GTiff").Create(
+        out_raster_path,
+        xsize=in_raster.RasterXSize,
+        ysize=in_raster.RasterYSize,
+        bands=in_raster.RasterCount,
+    )
+    # Making the (slightly dangerous) assumption that Gdal will recalc the geotransform as well. Let's see.
+    gdal.ReprojectImage(src_ds=in_raster,
+                        dst_ds=out_raster,
                         dst_wkt=new_projection)
     log.info("Reprojection complete, new image at {}".format(out_raster_path))
     return out_raster_path
@@ -1440,7 +1452,6 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
-    TODO: Ignore areas where one image has missing values
     TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
     log = logging.getLogger(__name__)
