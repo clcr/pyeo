@@ -31,6 +31,8 @@ import numpy as np
 import pytest
 import configparser
 
+gdal.UseExceptions()
+
 
 def setup_module():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -134,6 +136,7 @@ def test_reprojection():
     pyeo.reproject_image(image, out_file, new_projection)
     result = gdal.Open(out_file)
     assert result
+   # assert result.GetProjection() == new_projection
     result_array = result.GetVirtualMemArray()
     assert result_array.max() > 10
 

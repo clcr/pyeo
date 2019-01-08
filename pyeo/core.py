@@ -954,30 +954,49 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
 
 def reproject_image(in_raster, out_raster_path, new_projection):
-    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function"""
+    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Assumes the new projection
+    is the same pixel size as the old one."""
     # It's ridiculous that Gdal makes this this involved -_-
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
         in_raster = gdal.Open(in_raster)
-    pdb.set_trace()
     out_raster = gdal.GetDriverByName("GTiff").Create(
         out_raster_path,
         xsize=in_raster.RasterXSize,
         ysize=in_raster.RasterYSize,
         bands=in_raster.RasterCount,
-        eType=in_raster.GetRasterBand(1).DataType
-    )
-    out_raster.SetProjection(in_raster.GetProjection())
-    out_raster.SetGeoTransform(in_raster.GetGeoTransform())
-    # Making the (slightly dangerous) assumption that Gdal will recalc the geotransform as well. Let's see.
-    gdal.ReprojectImage(src_ds=in_raster,
-                        dst_ds=out_raster,
-                        dst_wkt=new_projection)
-    log.info("Reprojection complete, new image at {}".format(out_raster_path))
+        eType=in_raster.GetRasterBand(1).DataType)
+    out_gt = reproject_geotransform(
+        in_raster.GetGeoTransform(),
+        in_raster.GetProjection(),
+        new_projection)
+    out_raster.SetGeoTransform(out_gt)
+    out_raster.SetProjection(new_projection)
+    out_raster.FlushCache()
+    #pdb.set_trace()
+    err = gdal.ReprojectImage(src_ds=in_raster,
+                              dst_ds=out_raster,
+                              src_wkt=in_raster.GetProjection(),
+                              dst_wkt=new_projection,
+                              eResampleAlg=gdal.gdalconst.GRA_Bilinear)
+    log.info("Reprojection complete with error code {}, new image at {}".format(err, out_raster_path))
     out_raster = None
     in_raster = None
     return out_raster_path
+
+
+def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
+    """Reprojects a geotransform into a new projection."""
+    old_proj = osr.SpatialReference()
+    new_proj = osr.SpatialReference()
+    old_proj.ImportFromWkt(old_proj_wkt)
+    new_proj.ImportFromWkt(new_proj_wkt)
+    transform = osr.CoordinateTransformation(old_proj, new_proj)
+    (ulx, uly, _) = transform.TransformPoint(in_gt[0], in_gt[3])
+    out_gt = (ulx, in_gt[1], in_gt[2], uly, in_gt[4], in_gt[5])
+    return out_gt
+
 
 
 def composite_directory(image_dir, composite_out_dir, format="GTiff"):
