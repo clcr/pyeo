@@ -44,8 +44,8 @@ If you want to edit this code, run
 
    python setup.py devel
 
-instead of :code:`install`
 
+instead of :code:`install`
 To verify the installation, open a Python prompt and type
 
 >>> import pyeo
