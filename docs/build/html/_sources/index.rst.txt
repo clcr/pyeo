@@ -44,8 +44,8 @@ If you want to edit this code, run
 
    python setup.py devel
 
-instead of :code:`install`
 
+instead of :code:`install`
 To verify the installation, open a Python prompt and type
 
 >>> import pyeo
@@ -78,7 +78,7 @@ Sentinel 2 data acquisition
 
  .. autofunction:: check_for_new_s2_data
 
- .. autofunction:: download_s2_data
+ .. autofunction:: download_new_s2_data
 
  .. autofunction:: sent2_query (from geospatial_learn)
 
