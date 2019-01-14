@@ -921,8 +921,9 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         output_array = np.expand_dims(output_array, 0)
 
     mask_paths = []
-    with TemporaryDirectory() as reproj_dir:
-        for i, in_raster in enumerate(in_raster_list):
+
+    for i, in_raster in enumerate(in_raster_list):
+        with TemporaryDirectory() as reproj_dir:
             mask_paths.append(get_mask_path(in_raster_path_list[i]))
 
             # Reproject images and masks if required
@@ -945,18 +946,18 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
             output_view = None
             in_masked = None
 
-        output_array = None
-        output_image = None
-        log.info("Composite done")
-        log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
-        combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
+    output_array = None
+    output_image = None
+    log.info("Composite done")
+    log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
+    combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
     return composite_out_path
 
 
-def reproject_image(in_raster, out_raster_path, new_projection):
+def reproject_image(in_raster, out_raster_path, new_projection, memory = 2e9):
     """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Assumes the new projection
-    is the same pixel size as the old one."""
-    gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection)
+    is the same pixel size as the old one. 2gb memory limit by default (because it works in most places)"""
+    gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory)
     return out_raster_path
 
 
