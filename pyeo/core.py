@@ -974,7 +974,6 @@ def reproject_image(in_raster, out_raster_path, new_projection):
     out_raster.SetGeoTransform(out_gt)
     out_raster.SetProjection(new_projection)
     out_raster.FlushCache()
-    #pdb.set_trace()
     err = gdal.ReprojectImage(src_ds=in_raster,
                               dst_ds=out_raster,
                               src_wkt=in_raster.GetProjection(),
@@ -988,6 +987,7 @@ def reproject_image(in_raster, out_raster_path, new_projection):
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     """Reprojects a geotransform into a new projection."""
+    pdb.set_trace()
     old_proj = osr.SpatialReference()
     new_proj = osr.SpatialReference()
     old_proj.ImportFromWkt(old_proj_wkt)
