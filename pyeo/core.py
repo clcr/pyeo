@@ -456,7 +456,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def apply_fmask(in_safe_dir, out_file, fmask_path = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"):
+def apply_fmask(in_safe_dir, out_file, fmask_path = "/home/john/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"):
     """Calls fmask to create a new mask for L1 data"""
     log = logging.getLogger(__name__)
     args = [
@@ -464,7 +464,7 @@ def apply_fmask(in_safe_dir, out_file, fmask_path = "/data/clcr/shared/miniconda
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
-    pdb.set_trace()
+    # pdb.set_trace()
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
     fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
@@ -699,7 +699,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
             mask_path = get_mask_path(temp_path)
             create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
-            log.info()
+            log.info("Cloudmask created")
 
             out_path = os.path.join(out_dir, os.path.basename(temp_path))
             out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
@@ -712,7 +712,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 reproject_image(temp_path, out_path, wkt)
                 reproject_image(mask_path, out_mask_path, wkt)
             else:
-                log.info("Moving to {}".format(out_dir))
+                log.info("Moving images to {}".format(out_dir))
                 shutil.move(temp_path, out_path)
                 shutil.move(mask_path, out_mask_path)
 
@@ -984,20 +984,19 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
 
 
 
-def reproject_image(in_raster, out_raster_path, new_projection, memory = 2e3):
+def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff",  memory = 2e3):
     """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Assumes the new projection
     is the same pixel size as the old one. 2gb memory limit by default (because it works in most places)"""
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
         in_raster = gdal.Open(in_raster)
-    gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory)
+    gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory,format=driver)
     return out_raster_path
 
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     """Reprojects a geotransform into a new projection."""
-    pdb.set_trace()
     old_proj = osr.SpatialReference()
     new_proj = osr.SpatialReference()
     old_proj.ImportFromWkt(old_proj_wkt)
