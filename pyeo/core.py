@@ -940,6 +940,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
             # Move every unmasked pixel in in_raster to output_view
             log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
             in_masked = get_masked_array(in_raster, mask_paths[i])
+            pdb.set_trace()
             np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
             # Deallocate
@@ -954,7 +955,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     return composite_out_path
 
 
-def reproject_image(in_raster, out_raster_path, new_projection, memory = 2e9):
+def reproject_image(in_raster, out_raster_path, new_projection, memory = 2e3):
     """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Assumes the new projection
     is the same pixel size as the old one. 2gb memory limit by default (because it works in most places)"""
     gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory)
