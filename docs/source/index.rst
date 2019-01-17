@@ -110,7 +110,7 @@ Sentinel 2 preprocessing
 
  .. autofunction:: open_dataset_from_safe
 
- .. autofunction:: aggregate_and_mask_10m_bands
+ .. autofunction:: preprocess_sen2_images
 
  .. autofunction:: stack_sentinel_2_bands
 

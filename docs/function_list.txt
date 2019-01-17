@@ -27,7 +27,7 @@ Sentinel 2 preprocessing
   sort_by_timestamp
   get_image_acquisition_time
   open_dataset_from_safe
-  aggregate_and_mask_10m_bands
+  preprocess_sen2_images
   stack_sentinel_2_bands
   get_sen_2_image_timestamp
 

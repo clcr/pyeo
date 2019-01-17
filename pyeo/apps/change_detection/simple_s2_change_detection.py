@@ -81,7 +81,7 @@ if __name__ == "__main__":
         log.info("Cleaning L2A directory")
         pyeo.clean_l2_dir(l2_image_path, resolution="10m", warning=False)
         log.info("Aggregating layers")
-        pyeo.aggregate_and_mask_10m_bands(l2_image_path, merged_image_path, cloud_certainty_threshold)
+        pyeo.preprocess_sen2_images(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
     # Stack layers
     if args.do_stack or do_all:

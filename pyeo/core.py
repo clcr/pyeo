@@ -678,20 +678,36 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     return out
 
 
-def aggregate_and_mask_10m_bands(l2_dir, out_dir, l1_dir, cloud_threshold = 60, buffer_size=0):
-    """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif
-     and creates a cloudmask from the combined fmask and sen2cor cloudmasks."""
+def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold = 60, buffer_size=0, new_projection=None):
+    """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
+    the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided"""
     log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
     for l2_safe_file in safe_file_path_list:
-        log.info("----------------------------------------------------")
-        log.info("Merging 10m bands in SAFE dir: {}".format(l2_safe_file))
-        out_path = os.path.join(out_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
-        log.info("Output file: {}".format(out_path))
-        stack_sentinel_2_bands(l2_safe_file, out_path, band='10m')
-        l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
-        mask_path = get_mask_path(out_path)
-        create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
+        with TemporaryDirectory() as temp_dir:
+            log.info("----------------------------------------------------")
+            log.info("Merging 10m bands in SAFE dir: {}".format(l2_safe_file))
+            temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
+            log.info("Output file: {}".format(temp_path))
+            stack_sentinel_2_bands(l2_safe_file, temp_path, band='10m')
+
+            log.info("Creating cloudmask for {}".format(temp_path))
+            l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
+            mask_path = get_mask_path(temp_path)
+            create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
+            log.info()
+
+            out_path = os.path.join(out_dir, os.path.basename(temp_path))
+            out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
+
+            if new_projection:
+                log.info("Reprojecting images")
+                reproject_image(temp_path, out_path, new_projection)
+                reproject_image(mask_path, out_mask_path, new_projection)
+            else:
+                log.info("Moving to {}".format(out_dir))
+                shutil.move(temp_path, out_path)
+                shutil.move(mask_path, out_mask_path)
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
@@ -926,11 +942,6 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         with TemporaryDirectory() as reproj_dir:
             mask_paths.append(get_mask_path(in_raster_path_list[i]))
 
-            # Reproject images and masks if required
-            if in_raster.GetProjection() != projection:
-                in_raster = gdal.Open(reproject_image(in_raster, reproj_dir+"/image_{}.tif".format(i), projection))
-                mask_paths[i] = reproject_image(mask_paths[i], reproj_dir+"/image_{}.msk".format(i), projection)
-
             # Get a view of in_raster according to output_array
             log.info("Adding {} to composite".format(in_raster_path_list[i]))
             in_bounds = get_raster_bounds(in_raster)
@@ -940,7 +951,6 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
             # Move every unmasked pixel in in_raster to output_view
             log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
             in_masked = get_masked_array(in_raster, mask_paths[i])
-            pdb.set_trace()
             np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
             # Deallocate
@@ -955,9 +965,26 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     return composite_out_path
 
 
+def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
+    """Reprojects every file ending with extension to new_projection and saves in out_dir"""
+    with TemporaryDirectory() as reproj_dir:
+        log = logging.getLogger(__name__)
+        image_paths = [os.path.abspath(image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
+        for image_path in image_paths:
+            reproj_path = os.path.join(out_dir, os.path.basename(image_path))
+            log.info("Reprojecting {} to {}, storing in {}".format(image_path, reproj_path, new_projection))
+            reproject_image(image_path, reproj_path, new_projection)
+
+
+
+
 def reproject_image(in_raster, out_raster_path, new_projection, memory = 2e3):
     """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Assumes the new projection
     is the same pixel size as the old one. 2gb memory limit by default (because it works in most places)"""
+    log = logging.getLogger(__name__)
+    log.info("Reprojecting {} to {}".format(in_raster, new_projection))
+    if type(in_raster) is str:
+        in_raster = gdal.Open(in_raster)
     gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory)
     return out_raster_path
 
@@ -973,7 +1000,6 @@ def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     (ulx, uly, _) = transform.TransformPoint(in_gt[0], in_gt[3])
     out_gt = (ulx, in_gt[1], in_gt[2], uly, in_gt[4], in_gt[5])
     return out_gt
-
 
 
 def composite_directory(image_dir, composite_out_dir, format="GTiff"):
