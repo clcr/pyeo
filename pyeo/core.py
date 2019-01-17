@@ -12,8 +12,8 @@ import gdal
 from osgeo import ogr, osr
 import numpy as np
 import numpy.ma as ma
+import tempfile
 from tempfile import TemporaryDirectory
-from tempfile import NamedTemporaryFile
 import sklearn.ensemble as ens
 from sklearn.model_selection import cross_val_score
 from skimage import morphology as morph
@@ -26,6 +26,9 @@ import csv
 import requests
 
 import pdb
+
+# A hack to get around over-zealous temporary file removal on ALICE
+tempfile.tempdir = os.path.abspath(os.path.dirname(__file__))
 
 try:
     from google.cloud import storage
@@ -461,6 +464,7 @@ def apply_fmask(in_safe_dir, out_file, fmask_path = "/data/clcr/shared/miniconda
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
+    pdb.set_trace()
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
     fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
@@ -970,13 +974,12 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
 def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
     """Reprojects every file ending with extension to new_projection and saves in out_dir"""
-    with TemporaryDirectory() as reproj_dir:
-        log = logging.getLogger(__name__)
-        image_paths = [os.path.abspath(image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
-        for image_path in image_paths:
-            reproj_path = os.path.join(out_dir, os.path.basename(image_path))
-            log.info("Reprojecting {} to {}, storing in {}".format(image_path, reproj_path, new_projection))
-            reproject_image(image_path, reproj_path, new_projection)
+    log = logging.getLogger(__name__)
+    image_paths = [os.path.abspath(image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
+    for image_path in image_paths:
+        reproj_path = os.path.join(out_dir, os.path.basename(image_path))
+        log.info("Reprojecting {} to {}, storing in {}".format(image_path, reproj_path, new_projection))
+        reproject_image(image_path, reproj_path, new_projection)
 
 
 
