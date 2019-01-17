@@ -453,11 +453,11 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def apply_fmask(in_safe_dir, out_file):
+def apply_fmask(in_safe_dir, out_file, fmask_path = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"):
     """Calls fmask to create a new mask for L1 data"""
     log = logging.getLogger(__name__)
     args = [
-        "fmask_sentinel2Stacked.py",
+        fmask_path,
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
