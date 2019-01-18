@@ -77,6 +77,12 @@ def test_google_cloud_dl():
         assert os.path.exists("test_outputs/google_data/{}".format(id))
 
 
+def test_fmask():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/fmask")
+
+
 def test_mask_buffering():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_masks = [r"test_data/buffered_masks/20180103T172709.msk",

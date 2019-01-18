@@ -101,17 +101,20 @@ if __name__ == "__main__":
 
     # Download and build the initial composite. Does not do by default
     if args.build_composite:
-        log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
-            composite_start_date, composite_end_date, cloud_cover))
-        composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
-                                                         conf)
-        pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='google')
-        log.info("Preprocessing composite products")
-        pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
-                                    delete_unprocessed_image=False)
-        log.info("Aggregating composite layers")
-        pyeo.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
-                                    cloud_certainty_threshold)
+        if args.do_download or do_all:
+            log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
+                composite_start_date, composite_end_date, cloud_cover))
+            composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
+                                                             conf)
+            pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='google')
+        if args.do_preprocess or do_all:
+            log.info("Preprocessing composite products")
+            pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
+                                        delete_unprocessed_image=False)
+        if args.do_merge or do_all:
+            log.info("Aggregating composite layers")
+            pyeo.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
+                                        cloud_certainty_threshold)
         log.info("Building initial cloud-free composite")
         pyeo.composite_directory(composite_merged_dir, composite_dir)
 

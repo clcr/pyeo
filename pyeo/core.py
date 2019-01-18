@@ -460,12 +460,12 @@ def apply_fmask(in_safe_dir, out_file, fmask_command ="fmask_sentinel2Stacked.py
     """Calls fmask to create a new mask for L1 data"""
     log = logging.getLogger(__name__)
     args = [
+        '/usr/bin/env',
         fmask_command,
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
     env = os.environ.copy()
-    # pdb.set_trace()
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
     fmask_proc = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
@@ -475,7 +475,7 @@ def apply_fmask(in_safe_dir, out_file, fmask_command ="fmask_sentinel2Stacked.py
         if nextline == '' and fmask_proc.poll() is not None:
             break
         if "CRITICAL" in nextline:
-            raise subprocess.CalledProcessError(-1, "L2A_Process")
+            raise subprocess.CalledProcessError(-1, "fmask_sentinel2Stacked.py")
 
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
