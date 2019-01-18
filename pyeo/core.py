@@ -456,17 +456,18 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def apply_fmask(in_safe_dir, out_file, fmask_path = "/home/john/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"):
+def apply_fmask(in_safe_dir, out_file, fmask_command ="fmask_sentinel2Stacked.py"):
     """Calls fmask to create a new mask for L1 data"""
     log = logging.getLogger(__name__)
     args = [
-        fmask_path,
+        fmask_command,
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
+    env = os.environ.copy()
     # pdb.set_trace()
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
-    fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    fmask_proc = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
         if len(nextline) > 0:
@@ -975,13 +976,12 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
     """Reprojects every file ending with extension to new_projection and saves in out_dir"""
     log = logging.getLogger(__name__)
-    image_paths = [os.path.abspath(image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
+    image_paths = [os.path.join(in_dir, image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
+    pdb.set_trace()
     for image_path in image_paths:
         reproj_path = os.path.join(out_dir, os.path.basename(image_path))
         log.info("Reprojecting {} to {}, storing in {}".format(image_path, reproj_path, new_projection))
         reproject_image(image_path, reproj_path, new_projection)
-
-
 
 
 def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff",  memory = 2e3):
@@ -991,7 +991,7 @@ def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff"
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
         in_raster = gdal.Open(in_raster)
-    gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory,format=driver)
+    gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory, format=driver)
     return out_raster_path
 
 
