@@ -77,12 +77,6 @@ def test_google_cloud_dl():
         assert os.path.exists("test_outputs/google_data/{}".format(id))
 
 
-def test_fmask():
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    try:
-        os.remove("test_outputs/fmask")
-
-
 def test_mask_buffering():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_masks = [r"test_data/buffered_masks/20180103T172709.msk",
@@ -120,14 +114,61 @@ def test_composite_across_projections():
         os.remove(r"test_outputs/composite_test.tif")
     except FileNotFoundError:
         pass
+    try:
+        shutil.rmtree(r"test_outputs/reprojected")
+    except FileNotFoundError:
+        pass
+    os.mkdir(r"test_outputs/reprojected")
+    #EPSG 4326
+    projection = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
     test_data = [r"test_data/S2A_MSIL2A_20180703T073611_N0206_R092_T36MZE_20180703T094637.tif",
                  r"test_data/S2B_MSIL2A_20180728T073609_N0206_R092_T37MBV_20180728T114325.tif"]
+    pyeo.reproject_image(test_data[0], r"test_outputs/reprojected/0.tif", projection)
+    pyeo.reproject_image(test_data[1], r"test_outputs/reprojected/1.tif", projection)
+    pyeo.reproject_image(pyeo.get_mask_path(test_data[0]), r"test_outputs/reprojected/0.msk", projection)
+    pyeo.reproject_image(pyeo.get_mask_path(test_data[1]), r"test_outputs/reprojected/1.msk", projection)
+    
     out_file = r"test_outputs/composite_test.tif"
-    pyeo.composite_images_with_mask(test_data, out_file)
+    pyeo.composite_images_with_mask([
+       r"test_outputs/reprojected/0.tif",
+        r"test_outputs/reprojected/1.tif"],
+        out_file)
     image = gdal.Open("test_outputs/composite_test.tif")
     assert image
     image_array = image.GetVirtualMemArray()
     assert image_array.max() > 10
+
+
+def test_composite_across_projections_meters():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove(r"test_outputs/composite_test.tif")
+    except FileNotFoundError:
+        pass
+    try:
+        shutil.rmtree(r"test_outputs/reprojected")
+    except FileNotFoundError:
+        pass
+    os.mkdir(r"test_outputs/reprojected")
+    # WGS 36S
+    projection = r"""PROJCS["WGS 84 / UTM zone 36S",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",33],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","32736"]]"""
+    
+    test_data = [r"test_data/S2A_MSIL2A_20180703T073611_N0206_R092_T36MZE_20180703T094637.tif",
+                 r"test_data/S2B_MSIL2A_20180728T073609_N0206_R092_T37MBV_20180728T114325.tif"]
+    pyeo.reproject_image(test_data[0], r"test_outputs/reprojected/0.tif", projection)
+    pyeo.reproject_image(test_data[1], r"test_outputs/reprojected/1.tif", projection)
+    pyeo.reproject_image(pyeo.get_mask_path(test_data[0]), r"test_outputs/reprojected/0.msk", projection)
+    pyeo.reproject_image(pyeo.get_mask_path(test_data[1]), r"test_outputs/reprojected/1.msk", projection)
+    
+    out_file = r"test_outputs/composite_test.tif"
+    pyeo.composite_images_with_mask([
+       r"test_outputs/reprojected/0.tif",
+        r"test_outputs/reprojected/1.tif"],
+        out_file)
+    image = gdal.Open("test_outputs/composite_test.tif")
+    assert image
+    image_array = image.GetVirtualMemArray()
+    assert image_array.max() > 1
 
 
 def test_reprojection():

@@ -1445,8 +1445,12 @@ def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
     """Returns an empty image of the extent of input polygon"""
     # TODO: Implement nodata
     bounds_x_min, bounds_x_max, bounds_y_min, bounds_y_max = polygon.GetEnvelope()
-    final_width_pixels = int((bounds_x_max - bounds_x_min) / x_res)
-    final_height_pixels = int((bounds_y_max - bounds_y_min) / y_res)
+    if bounds_x_min >= bounds_x_max:
+        bounds_x_min, bounds_x_max = bounds_x_max, bounds_x_min
+    if bounds_y_min >= bounds_y_max:
+        bounds_y_min, bounds_y_max = bounds_y_max, bounds_y_min
+    final_width_pixels = int(np.abs(bounds_x_max - bounds_x_min) / x_res)
+    final_height_pixels = int(np.abs(bounds_y_max - bounds_y_min) / y_res)
     driver = gdal.GetDriverByName(format)
     out_raster = driver.Create(
         out_path, xsize=final_width_pixels, ysize=final_height_pixels,
