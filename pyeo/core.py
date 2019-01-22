@@ -937,9 +937,10 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Creating composite at {}".format(composite_out_path))
     log.info("Composite info: x_res: {}, y_res: {}, {} bands, datatype: {}, projection: {}"
              .format(x_res, y_res, n_bands, datatype, projection))
-    out_bounds = get_combined_polygon(in_raster_list, geometry_mode="union")
+    out_bounds = get_poly_bounding_rect(get_combined_polygon(in_raster_list, geometry_mode="union"))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
+    # pdb.set_trace()
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
     if len(output_array.shape) == 2:
         output_array = np.expand_dims(output_array, 0)
@@ -947,26 +948,25 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     mask_paths = []
 
     for i, in_raster in enumerate(in_raster_list):
-        with TemporaryDirectory() as reproj_dir:
-            mask_paths.append(get_mask_path(in_raster_path_list[i]))
+        mask_paths.append(get_mask_path(in_raster_path_list[i]))
 
-            # Get a view of in_raster according to output_array
-            log.info("Adding {} to composite".format(in_raster_path_list[i]))
-            in_bounds = get_raster_bounds(in_raster)
-            x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
-            output_view = output_array[:, y_min:y_max, x_min:x_max]
+        # Get a view of in_raster according to output_array
+        log.info("Adding {} to composite".format(in_raster_path_list[i]))
+        in_bounds = get_raster_bounds(in_raster)
+        x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
+        output_view = output_array[:, y_min:y_max, x_min:x_max]
 
-            # Move every unmasked pixel in in_raster to output_view
-            log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
-            in_masked = get_masked_array(in_raster, mask_paths[i])
-            np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
+        # Move every unmasked pixel in in_raster to output_view
+        log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
+        in_masked = get_masked_array(in_raster, mask_paths[i])
+        np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
-            # Deallocate
-            output_view = None
-            in_masked = None
+        # Deallocate
+        output_view = None
+        in_masked = None
 
     output_array = None
-    output_image = None
+    composite_image = None
     log.info("Composite done")
     log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
     combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
@@ -977,7 +977,6 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
     """Reprojects every file ending with extension to new_projection and saves in out_dir"""
     log = logging.getLogger(__name__)
     image_paths = [os.path.join(in_dir, image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
-    pdb.set_trace()
     for image_path in image_paths:
         reproj_path = os.path.join(out_dir, os.path.basename(image_path))
         log.info("Reprojecting {} to {}, storing in {}".format(image_path, reproj_path, new_projection))
@@ -985,13 +984,17 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
 
 
 def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff",  memory = 2e3):
-    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Assumes the new projection
-    is the same pixel size as the old one. 2gb memory limit by default (because it works in most places)"""
+    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Will round projection
+    back to whatever 2gb memory limit by default (because it works in most places)"""
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
         in_raster = gdal.Open(in_raster)
+    res = in_raster.GetGeoTransform()[1]
     gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory, format=driver)
+    # Lets try this
+    pdb.set_trace()
+    resample_image_in_place(out_raster_path, res)
     return out_raster_path
 
 
@@ -1281,6 +1284,22 @@ def get_poly_size(poly):
     x_max, y_max, not_needed = boundary.GetPoint(2)
     out = (x_max - x_min, y_max-y_min)
     return out
+
+
+def get_poly_bounding_rect(poly):
+    """Returns a polygon of the bounding rectangle of input polygon. Can probably be combined with
+    get_aoi_bounds."""
+    aoi_bounds = ogr.Geometry(ogr.wkbLinearRing)
+    x_min, x_max, y_min, y_max = poly.GetEnvelope()
+    aoi_bounds.AddPoint(x_min, y_min)
+    aoi_bounds.AddPoint(x_max, y_min)
+    aoi_bounds.AddPoint(x_max, y_max)
+    aoi_bounds.AddPoint(x_min, y_max)
+    aoi_bounds.AddPoint(x_min, y_min)
+    bounds_poly = ogr.Geometry(ogr.wkbPolygon)
+    bounds_poly.AddGeometry(aoi_bounds)
+    return bounds_poly
+
 
 
 def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10, buffer_size=0):

@@ -27,6 +27,7 @@ import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
 import pyeo.core as pyeo
 import gdal
+import osr
 import numpy as np
 import pytest
 import configparser
@@ -119,8 +120,10 @@ def test_composite_across_projections():
     except FileNotFoundError:
         pass
     os.mkdir(r"test_outputs/reprojected")
-    #EPSG 4326
-    projection = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
+    epsg = 4326
+    proj = osr.SpatialReference()
+    proj.ImportFromEPSG(epsg)
+    projection = proj.ExportToWkt() # Refactor this terrible nonsense later
     test_data = [r"test_data/S2A_MSIL2A_20180703T073611_N0206_R092_T36MZE_20180703T094637.tif",
                  r"test_data/S2B_MSIL2A_20180728T073609_N0206_R092_T37MBV_20180728T114325.tif"]
     pyeo.reproject_image(test_data[0], r"test_outputs/reprojected/0.tif", projection)
@@ -150,8 +153,10 @@ def test_composite_across_projections_meters():
     except FileNotFoundError:
         pass
     os.mkdir(r"test_outputs/reprojected")
-    # WGS 36S
-    projection = r"""PROJCS["WGS 84 / UTM zone 36S",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",33],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","32736"]]"""
+    epsg = 32736
+    proj = osr.SpatialReference()
+    proj.ImportFromEPSG(epsg)
+    projection = proj.ExportToWkt() # Refactor this terrible nonsense later
     
     test_data = [r"test_data/S2A_MSIL2A_20180703T073611_N0206_R092_T36MZE_20180703T094637.tif",
                  r"test_data/S2B_MSIL2A_20180728T073609_N0206_R092_T37MBV_20180728T114325.tif"]
