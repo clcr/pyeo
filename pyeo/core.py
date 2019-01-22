@@ -229,7 +229,7 @@ def download_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
 
 
 def download_from_google_cloud(product_ids, out_folder, redownload = False):
-    """Passed a list of S2 safefiles, we """
+    """Passed a list of S2 product ids , downloads them into out_for"""
     log = logging.getLogger(__name__)
     log.info("Downloading following products from Google Cloud:".format(product_ids))
     storage_client = storage.Client()
