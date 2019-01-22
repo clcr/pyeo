@@ -940,7 +940,6 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     out_bounds = get_poly_bounding_rect(get_combined_polygon(in_raster_list, geometry_mode="union"))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
-    # pdb.set_trace()
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
     if len(output_array.shape) == 2:
         output_array = np.expand_dims(output_array, 0)
@@ -992,8 +991,8 @@ def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff"
         in_raster = gdal.Open(in_raster)
     res = in_raster.GetGeoTransform()[1]
     gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory, format=driver)
-    # Lets try this
-    pdb.set_trace()
+    # After warping, image has irregular gt; resample back to previous pixel size
+    # TODO: Make this an option
     resample_image_in_place(out_raster_path, res)
     return out_raster_path
 
