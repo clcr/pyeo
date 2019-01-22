@@ -195,14 +195,14 @@ def check_for_new_s2_data(aoi_path, aoi_image_dir, conf):
         sys.exit(1)
 
 
-def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
+def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
     log = logging.getLogger(__name__)
     log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
     user = conf['sent_2']['user']
     password = conf['sent_2']['pass']
     start_timestamp = dt.datetime.strptime(start_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
     end_timestamp = dt.datetime.strptime(end_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
-    result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp)
+    result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp, cloud=cloud_cover)
     log.info("Search returned {} images".format(len(result)))
     return result
 

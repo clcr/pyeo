@@ -106,7 +106,7 @@ if __name__ == "__main__":
             log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
                 composite_start_date, composite_end_date, cloud_cover))
             composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
-                                                             conf)
+                                                             conf, cloud_cover=cloud_cover)
             pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='google')
         if args.do_preprocess or do_all:
             log.info("Preprocessing composite products")
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     # Query and download all images since last composite
     if args.do_download or do_all:
-        products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
+        products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=cloud_cover)
         log.info("Downloading")
         pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, "google")
 
