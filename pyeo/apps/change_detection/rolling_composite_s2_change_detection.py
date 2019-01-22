@@ -168,11 +168,11 @@ if __name__ == "__main__":
             new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
             pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10)
 
-
         # Build new composite
         if args.do_update or do_all:
             log.info("Updating composite")
-            new_composite_path = os.path.join(composite_dir, "composite_"+os.path.basename(image))
+            new_composite_path = os.path.join(
+                composite_dir, "composite_"+core.get_sen_2_timestamp(os.path.basename(image)))
             pyeo.composite_images_with_mask((latest_composite_path, new_image_path), new_composite_path)
             latest_composite_path = new_composite_path
 
