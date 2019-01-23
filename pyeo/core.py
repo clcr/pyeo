@@ -71,6 +71,10 @@ class BadDataSourceExpection(ForestSentinelException):
     pass
 
 
+class FMaskException(ForestSentinelException):
+    pass
+
+
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
@@ -456,26 +460,26 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def apply_fmask(in_safe_dir, out_file, fmask_command ="fmask_sentinel2Stacked.py"):
+def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"):
     """Calls fmask to create a new mask for L1 data"""
+    # For reasons known only to the spirits, calling subprocess.run from within this function on a HPC cause the PATH
+    # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
+    if "torque" in os.getenv("PATH"):  # Are we on a HPC? If so, give explicit path to fmask
+        fmask_command = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"
     log = logging.getLogger(__name__)
     args = [
-        '/usr/bin/env',
         fmask_command,
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
-    env = os.environ.copy()
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
-    fmask_proc = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
         if len(nextline) > 0:
             log.info(nextline)
         if nextline == '' and fmask_proc.poll() is not None:
             break
-        if "CRITICAL" in nextline:
-            raise subprocess.CalledProcessError(-1, "fmask_sentinel2Stacked.py")
 
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
@@ -695,6 +699,8 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
             log.info("Output file: {}".format(temp_path))
             stack_sentinel_2_bands(l2_safe_file, temp_path, band='10m')
+
+            #pdb.set_trace()
 
             log.info("Creating cloudmask for {}".format(temp_path))
             l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
@@ -1300,7 +1306,6 @@ def get_poly_bounding_rect(poly):
     return bounds_poly
 
 
-
 def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10, buffer_size=0):
     """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path."""
     with TemporaryDirectory() as td:
@@ -1360,6 +1365,7 @@ def create_mask_from_fmask(in_l1_dir, out_path):
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
     with TemporaryDirectory() as td:
+        #pdb.set_trace()
         temp_fmask_path = os.path.join(td, "fmask.tif")
         apply_fmask(in_l1_dir, temp_fmask_path)
         fmask_image = gdal.Open(temp_fmask_path)
