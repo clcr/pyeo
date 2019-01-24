@@ -1,3 +1,5 @@
+import pdb
+
 import os
 import sys
 import logging
@@ -9,6 +11,8 @@ from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 import subprocess
 import gdal
+#Strip the Windows PATH variable that a lib (gdal?) adds (for some reason).
+os.environ["PATH"] = os.environ["PATH"].split(';')[1]
 from osgeo import ogr, osr
 import numpy as np
 import numpy.ma as ma
@@ -25,10 +29,6 @@ import json
 import csv
 import requests
 
-import pdb
-
-# A hack to get around over-zealous temporary file removal on ALICE
-tempfile.tempdir = os.path.abspath(os.path.dirname(__file__))
 
 try:
     from google.cloud import storage
@@ -473,6 +473,7 @@ def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"
         "--safedir", in_safe_dir
     ]
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
+    # pdb.set_trace()
     fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
