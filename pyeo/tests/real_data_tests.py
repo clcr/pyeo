@@ -310,7 +310,7 @@ def test_mask_closure():
     if os.path.exists(out_mask_path):
         os.remove(out_mask_path)
     shutil.copy("test_data/20180103T172709.msk", out_mask_path)
-    pyeo.buffer_mask_in_place(out_mask_path, 30)
+    pyeo.buffer_mask_in_place(out_mask_path, 3)
 
 
 def test_get_l1():
