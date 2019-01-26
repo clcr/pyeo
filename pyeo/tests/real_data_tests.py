@@ -26,7 +26,7 @@ import os, sys
 import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
 import pyeo.core as pyeo
-import gdal
+from pyeo.core import gdal
 import osr
 import numpy as np
 import pytest
@@ -249,7 +249,7 @@ def test_merging():
         os.remove("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.msk")
     except FileNotFoundError:
         pass
-    pyeo.preprocess_sen2_images("test_data/L2/", "test_outputs/", "test_data/L1/", buffer_size=5, epsg=4326)
+    pyeo.preprocess_sen2_images("test_data/L2/", "test_outputs/", "test_data/L1/", buffer_size=5)
     assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif")
     assert os.path.exists("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif")
     assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.msk")

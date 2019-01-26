@@ -11,8 +11,6 @@ from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 import subprocess
 import gdal
-#Strip the Windows PATH variable that a lib (gdal?) adds (for some reason).
-os.environ["PATH"] = os.environ["PATH"].split(';')[1]
 from osgeo import ogr, osr
 import numpy as np
 import numpy.ma as ma

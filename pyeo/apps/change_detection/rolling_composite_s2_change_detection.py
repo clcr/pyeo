@@ -70,7 +70,7 @@ if __name__ == "__main__":
     sen2cor_path = conf['sen2cor']['path']
     composite_start_date = conf['forest_sentinel']['composite_start']
     composite_end_date = conf['forest_sentinel']['composite_end']
-    epsg = conf['forest_sentinel']['epsg']
+    epsg = int(conf['forest_sentinel']['epsg'])
 
     pyeo.create_file_structure(project_root)
     log = pyeo.init_log(log_path)
