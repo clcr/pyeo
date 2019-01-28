@@ -1,9 +1,11 @@
+import pdb
+
 import os, sys
 import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
 import pyeo.core as pyeo
 import numpy as np
-import gdal
+from pyeo.core import gdal
 
 
 def test_mask_from_confidence_layer():
@@ -29,6 +31,7 @@ def test_fmask():
         "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
         "test_outputs/masks/fmask.tif"
     )
+    assert gdal.Open("test_outputs/masks/fmask.tif")
 
 
 def test_fmask_cloud_mask():

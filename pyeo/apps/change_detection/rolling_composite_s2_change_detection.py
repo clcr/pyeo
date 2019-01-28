@@ -70,6 +70,7 @@ if __name__ == "__main__":
     sen2cor_path = conf['sen2cor']['path']
     composite_start_date = conf['forest_sentinel']['composite_start']
     composite_end_date = conf['forest_sentinel']['composite_end']
+    epsg = int(conf['forest_sentinel']['epsg'])
 
     pyeo.create_file_structure(project_root)
     log = pyeo.init_log(log_path)
@@ -105,7 +106,7 @@ if __name__ == "__main__":
             log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
                 composite_start_date, composite_end_date, cloud_cover))
             composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
-                                                             conf)
+                                                             conf, cloud_cover=cloud_cover)
             pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='google')
         if args.do_preprocess or do_all:
             log.info("Preprocessing composite products")
@@ -114,13 +115,13 @@ if __name__ == "__main__":
         if args.do_merge or do_all:
             log.info("Aggregating composite layers")
             pyeo.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
-                                        cloud_certainty_threshold)
+                                        cloud_certainty_threshold, epsg=epsg)
         log.info("Building initial cloud-free composite")
         pyeo.composite_directory(composite_merged_dir, composite_dir)
 
     # Query and download all images since last composite
     if args.do_download or do_all:
-        products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
+        products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=cloud_cover)
         log.info("Downloading")
         pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, "google")
 
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     # Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Aggregating layers")
-        pyeo.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold)
+        pyeo.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold, epsg=epsg)
 
     log.info("Finding most recent composite")
     latest_composite_name = \
@@ -167,11 +168,11 @@ if __name__ == "__main__":
             new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
             pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10)
 
-
         # Build new composite
         if args.do_update or do_all:
             log.info("Updating composite")
-            new_composite_path = os.path.join(composite_dir, "composite_"+os.path.basename(image))
+            new_composite_path = os.path.join(
+                composite_dir, "composite_"+core.get_sen_2_timestamp(os.path.basename(image)))
             pyeo.composite_images_with_mask((latest_composite_path, new_image_path), new_composite_path)
             latest_composite_path = new_composite_path
 

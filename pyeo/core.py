@@ -1,3 +1,5 @@
+import pdb
+
 import os
 import sys
 import logging
@@ -25,10 +27,6 @@ import json
 import csv
 import requests
 
-import pdb
-
-# A hack to get around over-zealous temporary file removal on ALICE
-tempfile.tempdir = os.path.abspath(os.path.dirname(__file__))
 
 try:
     from google.cloud import storage
@@ -68,6 +66,10 @@ class BadGoogleURLExceeption(ForestSentinelException):
 
 
 class BadDataSourceExpection(ForestSentinelException):
+    pass
+
+
+class FMaskException(ForestSentinelException):
     pass
 
 
@@ -195,14 +197,14 @@ def check_for_new_s2_data(aoi_path, aoi_image_dir, conf):
         sys.exit(1)
 
 
-def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf):
+def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
     log = logging.getLogger(__name__)
     log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
     user = conf['sent_2']['user']
     password = conf['sent_2']['pass']
     start_timestamp = dt.datetime.strptime(start_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
     end_timestamp = dt.datetime.strptime(end_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
-    result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp)
+    result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp, cloud=cloud_cover)
     log.info("Search returned {} images".format(len(result)))
     return result
 
@@ -229,7 +231,7 @@ def download_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
 
 
 def download_from_google_cloud(product_ids, out_folder, redownload = False):
-    """Passed a list of S2 safefiles, we """
+    """Passed a list of S2 product ids , downloads them into out_for"""
     log = logging.getLogger(__name__)
     log.info("Downloading following products from Google Cloud:".format(product_ids))
     storage_client = storage.Client()
@@ -456,26 +458,27 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     return image_path.replace("MSIL1C", "MSIL2A")
 
 
-def apply_fmask(in_safe_dir, out_file, fmask_command ="fmask_sentinel2Stacked.py"):
+def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"):
     """Calls fmask to create a new mask for L1 data"""
+    # For reasons known only to the spirits, calling subprocess.run from within this function on a HPC cause the PATH
+    # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
+    if "torque" in os.getenv("PATH"):  # Are we on a HPC? If so, give explicit path to fmask
+        fmask_command = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"
     log = logging.getLogger(__name__)
     args = [
-        '/usr/bin/env',
         fmask_command,
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
-    env = os.environ.copy()
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
-    fmask_proc = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    # pdb.set_trace()
+    fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
         if len(nextline) > 0:
             log.info(nextline)
         if nextline == '' and fmask_proc.poll() is not None:
             break
-        if "CRITICAL" in nextline:
-            raise subprocess.CalledProcessError(-1, "fmask_sentinel2Stacked.py")
 
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
@@ -695,6 +698,8 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
             log.info("Output file: {}".format(temp_path))
             stack_sentinel_2_bands(l2_safe_file, temp_path, band='10m')
+
+            #pdb.set_trace()
 
             log.info("Creating cloudmask for {}".format(temp_path))
             l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
@@ -937,7 +942,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Creating composite at {}".format(composite_out_path))
     log.info("Composite info: x_res: {}, y_res: {}, {} bands, datatype: {}, projection: {}"
              .format(x_res, y_res, n_bands, datatype, projection))
-    out_bounds = get_combined_polygon(in_raster_list, geometry_mode="union")
+    out_bounds = get_poly_bounding_rect(get_combined_polygon(in_raster_list, geometry_mode="union"))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
@@ -947,26 +952,25 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     mask_paths = []
 
     for i, in_raster in enumerate(in_raster_list):
-        with TemporaryDirectory() as reproj_dir:
-            mask_paths.append(get_mask_path(in_raster_path_list[i]))
+        mask_paths.append(get_mask_path(in_raster_path_list[i]))
 
-            # Get a view of in_raster according to output_array
-            log.info("Adding {} to composite".format(in_raster_path_list[i]))
-            in_bounds = get_raster_bounds(in_raster)
-            x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
-            output_view = output_array[:, y_min:y_max, x_min:x_max]
+        # Get a view of in_raster according to output_array
+        log.info("Adding {} to composite".format(in_raster_path_list[i]))
+        in_bounds = get_raster_bounds(in_raster)
+        x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
+        output_view = output_array[:, y_min:y_max, x_min:x_max]
 
-            # Move every unmasked pixel in in_raster to output_view
-            log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
-            in_masked = get_masked_array(in_raster, mask_paths[i])
-            np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
+        # Move every unmasked pixel in in_raster to output_view
+        log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
+        in_masked = get_masked_array(in_raster, mask_paths[i])
+        np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
-            # Deallocate
-            output_view = None
-            in_masked = None
+        # Deallocate
+        output_view = None
+        in_masked = None
 
     output_array = None
-    output_image = None
+    composite_image = None
     log.info("Composite done")
     log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
     combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
@@ -977,7 +981,6 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
     """Reprojects every file ending with extension to new_projection and saves in out_dir"""
     log = logging.getLogger(__name__)
     image_paths = [os.path.join(in_dir, image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
-    pdb.set_trace()
     for image_path in image_paths:
         reproj_path = os.path.join(out_dir, os.path.basename(image_path))
         log.info("Reprojecting {} to {}, storing in {}".format(image_path, reproj_path, new_projection))
@@ -985,13 +988,17 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
 
 
 def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff",  memory = 2e3):
-    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Assumes the new projection
-    is the same pixel size as the old one. 2gb memory limit by default (because it works in most places)"""
+    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Will round projection
+    back to whatever 2gb memory limit by default (because it works in most places)"""
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
         in_raster = gdal.Open(in_raster)
+    res = in_raster.GetGeoTransform()[1]
     gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory, format=driver)
+    # After warping, image has irregular gt; resample back to previous pixel size
+    # TODO: Make this an option
+    resample_image_in_place(out_raster_path, res)
     return out_raster_path
 
 
@@ -1015,7 +1022,7 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
                           in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
                           if image_name.endswith(".tif")]
-    last_timestamp = get_image_acquisition_time(sorted_image_paths[-1])
+    last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
     composite_out_path = os.path.join(composite_out_dir, "composite_{}".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
@@ -1283,6 +1290,21 @@ def get_poly_size(poly):
     return out
 
 
+def get_poly_bounding_rect(poly):
+    """Returns a polygon of the bounding rectangle of input polygon. Can probably be combined with
+    get_aoi_bounds."""
+    aoi_bounds = ogr.Geometry(ogr.wkbLinearRing)
+    x_min, x_max, y_min, y_max = poly.GetEnvelope()
+    aoi_bounds.AddPoint(x_min, y_min)
+    aoi_bounds.AddPoint(x_max, y_min)
+    aoi_bounds.AddPoint(x_max, y_max)
+    aoi_bounds.AddPoint(x_min, y_max)
+    aoi_bounds.AddPoint(x_min, y_min)
+    bounds_poly = ogr.Geometry(ogr.wkbPolygon)
+    bounds_poly.AddGeometry(aoi_bounds)
+    return bounds_poly
+
+
 def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10, buffer_size=0):
     """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path."""
     with TemporaryDirectory() as td:
@@ -1342,6 +1364,7 @@ def create_mask_from_fmask(in_l1_dir, out_path):
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
     with TemporaryDirectory() as td:
+        #pdb.set_trace()
         temp_fmask_path = os.path.join(td, "fmask.tif")
         apply_fmask(in_l1_dir, temp_fmask_path)
         fmask_image = gdal.Open(temp_fmask_path)
@@ -1445,8 +1468,12 @@ def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
     """Returns an empty image of the extent of input polygon"""
     # TODO: Implement nodata
     bounds_x_min, bounds_x_max, bounds_y_min, bounds_y_max = polygon.GetEnvelope()
-    final_width_pixels = int((bounds_x_max - bounds_x_min) / x_res)
-    final_height_pixels = int((bounds_y_max - bounds_y_min) / y_res)
+    if bounds_x_min >= bounds_x_max:
+        bounds_x_min, bounds_x_max = bounds_x_max, bounds_x_min
+    if bounds_y_min >= bounds_y_max:
+        bounds_y_min, bounds_y_max = bounds_y_max, bounds_y_min
+    final_width_pixels = int(np.abs(bounds_x_max - bounds_x_min) / x_res)
+    final_height_pixels = int(np.abs(bounds_y_max - bounds_y_min) / y_res)
     driver = gdal.GetDriverByName(format)
     out_raster = driver.Create(
         out_path, xsize=final_width_pixels, ysize=final_height_pixels,
