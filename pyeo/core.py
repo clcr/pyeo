@@ -768,6 +768,24 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         log.error("Tiles  of the two images do not match. Aborted.")
 
 
+def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True):
+    """Stacks an image with a cloud-free composite"""
+    log = logging.getLogger(__name__)
+    log.info("Stacking {} with composite {}".format(image_path, composite_path))
+    composite_timestamp = get_sen_2_image_timestamp(composite_path)
+    image_timestamp = get_sen_2_image_timestamp(image_path)
+    tile = get_sen_2_image_tile(image_path)
+    out_filename = "composite_{}_{}_{}.tif".format(tile, composite_timestamp, image_timestamp)
+    out_path = os.path.join(out_dir, out_filename)
+    stack_images([composite_path, image_path], out_path)
+    if create_combined_mask:
+        out_mask_path = out_path.rsplit('.')[0] + ".msk"
+        image_mask_path = get_mask_path(image_path)
+        comp_mask_path = get_mask_path(composite_path)
+        combine_masks([comp_mask_path, image_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
+    return out_path
+
+
 def get_l1_safe_file(image_name, l1_dir):
     """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
     a filename"""
