@@ -65,12 +65,17 @@ class BadGoogleURLExceeption(ForestSentinelException):
     pass
 
 
+class ImageMissingFromGoogleCloud(ForestSentinelException):
+    pass
+
+
 class BadDataSourceExpection(ForestSentinelException):
     pass
 
 
 class FMaskException(ForestSentinelException):
     pass
+
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
@@ -253,6 +258,9 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
             utm_zone, lat_band, grid_square, safe_id
         )
         object_iter = bucket.list_blobs(prefix=object_prefix, delimiter=None)
+        if object_iter == None:
+            log.error("{} missing from Google Cloud, continuing".format(safe_id))
+            continue
         for s2_object in object_iter:
             blob = bucket.get_blob(s2_object.name)
             object_out_path = os.path.join(
@@ -1526,7 +1534,7 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
+def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
                    apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0, skip_existing = False):
     """
     Classifies change between two stacked images.
@@ -1535,9 +1543,10 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     """
     log = logging.getLogger(__name__)
     if skip_existing:
-        if os.path.isfile(os.path.join(class_out_dir, os.path.basename(image_path))):
+        log.info("Checking for existing classification {}".format(class_out_path))
+        if os.path.isfile(class_out_path):
             log.info("Class image exists, skipping.")
-            return class_out_dir
+            return class_out_path
     log.info("Classifying file: {}".format(image_path))
     log.info("Saved model     : {}".format(model_path))
     image = gdal.Open(image_path)
@@ -1546,12 +1555,12 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
     model = joblib.load(model_path)
-    class_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
-    log.info("Created classification image file: {}".format(class_out_dir))
-    if prob_out_dir:
+    class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
+    log.info("Created classification image file: {}".format(class_out_path))
+    if prob_out_path:
         log.info("n classes in the model: {}".format(model.n_classes_))
-        prob_out_image = create_matching_dataset(image, prob_out_dir, bands=model.n_classes_, datatype=gdal.GDT_Float32)
-        log.info("Created probability image file: {}".format(prob_out_dir))
+        prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
+        log.info("Created probability image file: {}".format(prob_out_path))
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
 
@@ -1585,7 +1594,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     log.info("   All  samples: {}".format(n_samples))
     log.info("   Good samples: {}".format(n_good_samples))
     classes = np.full(n_good_samples, nodata, dtype=np.ubyte)
-    if prob_out_dir:
+    if prob_out_path:
         probs = np.full((n_good_samples, model.n_classes_), nodata, dtype=np.float32)
 
     chunk_size = int(n_good_samples / num_chunks)
@@ -1603,7 +1612,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
 
-        if prob_out_dir:
+        if prob_out_path:
             log.info("   Calculating probabilities")
             prob_view = probs[offset : offset + chunk_size, :]
             prob_view[:, :] = model.predict_proba(chunk_view)
@@ -1617,7 +1626,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(class_out_array, image.RasterXSize, image.RasterYSize)
 
-    if prob_out_dir:
+    if prob_out_path:
         log.info("   Creating probability array of size {}".format(n_samples * model.n_classes_))
         prob_out_array = np.full((n_samples, model.n_classes_), nodata)
         for i, prob_val in zip(good_indices, probs):
@@ -1631,10 +1640,10 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     class_out_image = None
     prob_out_image = None
-    if prob_out_dir:
-        return class_out_dir, prob_out_dir
+    if prob_out_path:
+        return class_out_path, prob_out_path
     else:
-        return class_out_dir
+        return class_out_path
 
 
 def autochunk(dataset, mem_limit=None):
