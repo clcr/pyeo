@@ -1527,13 +1527,17 @@ def apply_array_image_mask(array, mask):
 
 
 def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
-                   apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0):
+                   apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0, skip_existing = False):
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
     log = logging.getLogger(__name__)
+    if skip_existing:
+        if os.path.isfile(os.path.join(class_out_dir, os.path.basename(image_path))):
+            log.info("Class image exists, skipping.")
+            return class_out_dir
     log.info("Classifying file: {}".format(image_path))
     log.info("Saved model     : {}".format(model_path))
     image = gdal.Open(image_path)
