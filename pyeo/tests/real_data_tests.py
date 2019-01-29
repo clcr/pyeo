@@ -79,6 +79,7 @@ def test_google_cloud_dl():
 
 
 @pytest.mark.webtest
+@pytest.mark.xfail
 def test_old_format_google_cloud_dl():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:

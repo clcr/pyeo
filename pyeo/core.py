@@ -258,7 +258,7 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
             utm_zone, lat_band, grid_square, safe_id
         )
         object_iter = bucket.list_blobs(prefix=object_prefix, delimiter=None)
-        if object_iter == None:
+        if object_iter.num_results == 0:
             log.error("{} missing from Google Cloud, continuing".format(safe_id))
             continue
         for s2_object in object_iter:
