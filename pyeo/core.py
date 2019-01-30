@@ -253,6 +253,9 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
             utm_zone, lat_band, grid_square, safe_id
         )
         object_iter = bucket.list_blobs(prefix=object_prefix, delimiter=None)
+        if object_iter.num_results == 0:
+            log.error("{} missing from Google Cloud, continuing".format(safe_id))
+            continue
         for s2_object in object_iter:
             blob = bucket.get_blob(s2_object.name)
             object_out_path = os.path.join(
@@ -711,7 +714,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
 
             if epsg:
-                log.info("Reprojecting images to epsg {}".format(epsg))
+                log.info("Reprojecting images to {}".format(epsg))
                 proj = osr.SpatialReference()
                 proj.ImportFromEPSG(epsg)
                 wkt = proj.ExportToWkt()
@@ -766,6 +769,24 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         return out_path + ".tif"
     else:
         log.error("Tiles  of the two images do not match. Aborted.")
+
+
+def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True):
+    """Stacks an image with a cloud-free composite"""
+    log = logging.getLogger(__name__)
+    log.info("Stacking {} with composite {}".format(image_path, composite_path))
+    composite_timestamp = get_sen_2_image_timestamp(composite_path)
+    image_timestamp = get_sen_2_image_timestamp(image_path)
+    tile = get_sen_2_image_tile(image_path)
+    out_filename = "composite_{}_{}_{}.tif".format(tile, composite_timestamp, image_timestamp)
+    out_path = os.path.join(out_dir, out_filename)
+    stack_images([composite_path, image_path], out_path)
+    if create_combined_mask:
+        out_mask_path = out_path.rsplit('.')[0] + ".msk"
+        image_mask_path = get_mask_path(image_path)
+        comp_mask_path = get_mask_path(composite_path)
+        combine_masks([comp_mask_path, image_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
+    return out_path
 
 
 def get_l1_safe_file(image_name, l1_dir):
@@ -1023,7 +1044,7 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
                           in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
                           if image_name.endswith(".tif")]
     last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
-    composite_out_path = os.path.join(composite_out_dir, "composite_{}".format(last_timestamp))
+    composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format)
 
 
@@ -1108,10 +1129,6 @@ def pixel_bounds_from_polygon(raster, polygon):
     if y_min_pixel >= y_max_pixel:
         y_min_pixel, y_max_pixel = y_max_pixel, y_min_pixel
     return x_min_pixel, x_max_pixel, y_min_pixel, y_max_pixel
-
-
-
-    
 
 
 def point_to_pixel_coordinates(raster, point, oob_fail=False):
@@ -1530,14 +1547,19 @@ def apply_array_image_mask(array, mask):
     return out
 
 
-def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
-                   apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0):
+def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
+                   apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0, skip_existing = False):
     """
     Classifies change between two stacked images.
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
     log = logging.getLogger(__name__)
+    if skip_existing:
+        log.info("Checking for existing classification {}".format(class_out_path))
+        if os.path.isfile(class_out_path):
+            log.info("Class image exists, skipping.")
+            return class_out_path
     log.info("Classifying file: {}".format(image_path))
     log.info("Saved model     : {}".format(model_path))
     image = gdal.Open(image_path)
@@ -1546,12 +1568,12 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
     model = joblib.load(model_path)
-    class_out_image = create_matching_dataset(image, class_out_dir, format=out_type, datatype=gdal.GDT_Byte)
-    log.info("Created classification image file: {}".format(class_out_dir))
-    if prob_out_dir:
+    class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
+    log.info("Created classification image file: {}".format(class_out_path))
+    if prob_out_path:
         log.info("n classes in the model: {}".format(model.n_classes_))
-        prob_out_image = create_matching_dataset(image, prob_out_dir, bands=model.n_classes_, datatype=gdal.GDT_Float32)
-        log.info("Created probability image file: {}".format(prob_out_dir))
+        prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
+        log.info("Created probability image file: {}".format(prob_out_path))
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
 
@@ -1585,7 +1607,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     log.info("   All  samples: {}".format(n_samples))
     log.info("   Good samples: {}".format(n_good_samples))
     classes = np.full(n_good_samples, nodata, dtype=np.ubyte)
-    if prob_out_dir:
+    if prob_out_path:
         probs = np.full((n_good_samples, model.n_classes_), nodata, dtype=np.float32)
 
     chunk_size = int(n_good_samples / num_chunks)
@@ -1603,7 +1625,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
 
-        if prob_out_dir:
+        if prob_out_path:
             log.info("   Calculating probabilities")
             prob_view = probs[offset : offset + chunk_size, :]
             prob_view[:, :] = model.predict_proba(chunk_view)
@@ -1617,7 +1639,7 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
     class_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = \
         reshape_ml_out_to_raster(class_out_array, image.RasterXSize, image.RasterYSize)
 
-    if prob_out_dir:
+    if prob_out_path:
         log.info("   Creating probability array of size {}".format(n_samples * model.n_classes_))
         prob_out_array = np.full((n_samples, model.n_classes_), nodata)
         for i, prob_val in zip(good_indices, probs):
@@ -1631,10 +1653,10 @@ def classify_image(image_path, model_path, class_out_dir, prob_out_dir=None,
 
     class_out_image = None
     prob_out_image = None
-    if prob_out_dir:
-        return class_out_dir, prob_out_dir
+    if prob_out_path:
+        return class_out_path, prob_out_path
     else:
-        return class_out_dir
+        return class_out_path
 
 
 def autochunk(dataset, mem_limit=None):
