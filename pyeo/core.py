@@ -711,7 +711,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
 
             if epsg:
-                log.info("Reprojecting images to {}".format(epsg))
+                log.info("Reprojecting images to epsg {}".format(epsg))
                 proj = osr.SpatialReference()
                 proj.ImportFromEPSG(epsg)
                 wkt = proj.ExportToWkt()
