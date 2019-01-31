@@ -65,17 +65,12 @@ class BadGoogleURLExceeption(ForestSentinelException):
     pass
 
 
-class ImageMissingFromGoogleCloud(ForestSentinelException):
-    pass
-
-
 class BadDataSourceExpection(ForestSentinelException):
     pass
 
 
 class FMaskException(ForestSentinelException):
     pass
-
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
@@ -924,7 +919,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     in_gt = rasters[0].GetGeoTransform()
     x_res = in_gt[1]
     y_res = in_gt[5] * -1  # Y resolution in agt is -ve for Maths reasons
-    combined_polyon = get_combined_polygon(rasters, geometry_mode='union')
+    combined_polyon = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode='union'))
     layers = rasters[0].RasterCount
     out_raster = create_new_image_from_polygon(combined_polyon, out_raster_file, x_res, y_res, layers,
                                                projection, format, datatype)
@@ -968,7 +963,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Creating composite at {}".format(composite_out_path))
     log.info("Composite info: x_res: {}, y_res: {}, {} bands, datatype: {}, projection: {}"
              .format(x_res, y_res, n_bands, datatype, projection))
-    out_bounds = get_poly_bounding_rect(get_combined_polygon(in_raster_list, geometry_mode="union"))
+    out_bounds = align_bounds_to_whole_number(get_poly_bounding_rect(get_combined_polygon(in_raster_list, geometry_mode="union")))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
@@ -1450,7 +1445,7 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
         mask_paths, combination_func, geometry_func))
     masks = [gdal.Open(mask_path) for mask_path in mask_paths]
-    combined_polygon = get_combined_polygon(masks, geometry_func)
+    combined_polygon = align_bounds_to_whole_number(get_combined_polygon(masks, geometry_func))
     gt = masks[0].GetGeoTransform()
     x_res = gt[1]
     y_res = gt[5]*-1  # Y res is -ve in geotransform
