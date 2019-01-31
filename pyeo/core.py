@@ -864,7 +864,7 @@ def stack_images(raster_paths, out_raster_path,
     in_gt = rasters[0].GetGeoTransform()
     x_res = in_gt[1]
     y_res = in_gt[5]*-1   # Y resolution in agt is -ve for Maths reasons
-    combined_polygons = get_combined_polygon(rasters, geometry_mode)
+    combined_polygons = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode))
 
     # Creating a new gdal object
     out_raster = create_new_image_from_polygon(combined_polygons, out_raster_path, x_res, y_res,
@@ -1294,6 +1294,24 @@ def get_aoi_bounds(aoi):
     aoi_bounds.AddPoint(x_max, y_min)
     aoi_bounds.AddPoint(x_max, y_max)
     aoi_bounds.AddPoint(x_min, y_max)
+    aoi_bounds.AddPoint(x_min, y_min)
+    bounds_poly = ogr.Geometry(ogr.wkbPolygon)
+    bounds_poly.AddGeometry(aoi_bounds)
+    return bounds_poly
+
+
+def align_bounds_to_whole_number(bounding_box):
+    """Shifts bounding_box polygon so that its size becomes a whole number"""
+    # This should prevent off-by-one errors caused by bad image alignment
+    aoi_bounds = ogr.Geometry(ogr.wkbLinearRing)
+    (x_min, x_max, y_min, y_max) = bounding_box.GetEnvelope()
+    # This will create a box that has a whole number as its height and width
+    x_new = x_min + np.floor(x_max-x_min)
+    y_new = y_min + np.floor(y_max-y_min)
+    aoi_bounds.AddPoint(x_min, y_min)
+    aoi_bounds.AddPoint(x_new, y_min)
+    aoi_bounds.AddPoint(x_new, y_new)
+    aoi_bounds.AddPoint(x_min, y_new)
     aoi_bounds.AddPoint(x_min, y_min)
     bounds_poly = ogr.Geometry(ogr.wkbPolygon)
     bounds_poly.AddGeometry(aoi_bounds)

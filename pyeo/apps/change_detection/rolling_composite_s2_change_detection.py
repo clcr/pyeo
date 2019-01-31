@@ -172,7 +172,7 @@ if __name__ == "__main__":
         if args.do_update or do_all:
             log.info("Updating composite")
             new_composite_path = os.path.join(
-                composite_dir, "composite_"+pyeo.get_sen_2_timestamp(os.path.basename(image)))
+                composite_dir, "composite_{}.tif".format(pyeo.get_sen_2_image_timestamp(os.path.basename(image))))
             pyeo.composite_images_with_mask((latest_composite_path, new_image_path), new_composite_path)
             latest_composite_path = new_composite_path
 
