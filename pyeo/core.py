@@ -247,10 +247,9 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     if not prod:
         log.error("{} failed to download".format(product_uuid))
     zip_path = os.path.join(out_folder, prod['title']+".zip")
-    out_path = zip_path.rsplit('.')[0] + ".SAFE"
-    log.info("Unzipping {} to {}".format)
+    log.info("Unzipping {} to {}".format(zip_path, out_folder))
     zip_ref = zipfile.ZipFile(zip_path, 'r')
-    zip_ref.extractall(out_path)
+    zip_ref.extractall(out_folder)
     zip_ref.close()
 
 

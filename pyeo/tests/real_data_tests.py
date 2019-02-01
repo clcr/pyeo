@@ -62,8 +62,8 @@ def test_query_and_download():
         pass
     os.mkdir("test_outputs/L1")
     pyeo.download_s2_data(images, "test_outputs/L1", source='scihub', user=user, passwd=passwd)
-    for safe_id in images:
-        assert os.path.exists("test_outputs/L1/{}".format(safe_id+".SAFE"))
+    for image_id in images:
+        assert os.path.exists("test_outputs/L1/{}".format(images[image_id]['title']+".SAFE"))
 
 
 @pytest.mark.webtest
