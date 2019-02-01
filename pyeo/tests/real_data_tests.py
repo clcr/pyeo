@@ -50,6 +50,8 @@ def load_test_conf():
 def test_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_conf = load_test_conf()
+    user = test_conf["sent_2"]["user"]
+    passwd = test_conf["sent_2"]["pass"]
     images = pyeo.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
                      "test_data/marque_de_com_really_simple.geojson",
                      "20180101", "20180110")
@@ -59,7 +61,7 @@ def test_query_and_download():
     except FileNotFoundError:
         pass
     os.mkdir("test_outputs/L1")
-    pyeo.download_s2_data(images, "test_outputs/L1", source='google')
+    pyeo.download_s2_data(images, "test_outputs/L1", source='scihub', user=user, passwd=passwd)
     for safe_id in images:
         assert os.path.exists("test_outputs/L1/{}".format(safe_id+".SAFE"))
 

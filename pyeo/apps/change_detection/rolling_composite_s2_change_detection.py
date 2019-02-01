@@ -107,7 +107,8 @@ if __name__ == "__main__":
                 composite_start_date, composite_end_date, cloud_cover))
             composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
                                                              conf, cloud_cover=cloud_cover)
-            pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='google')
+            pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='scihub',
+                                  user=sen_user, passwd=sen_pass)
         if args.do_preprocess or do_all:
             log.info("Preprocessing composite products")
             pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,

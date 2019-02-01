@@ -22,6 +22,7 @@ from skimage import morphology as morph
 import scipy.sparse as sp
 import joblib
 import shutil
+import zipfile
 
 import json
 import csv
@@ -30,6 +31,7 @@ import requests
 
 try:
     from google.cloud import storage
+    from google.cloud.exceptions import ServiceUnavailable
 except ModuleNotFoundError:
     print("google-cloud-storage required for Google downloads. Try pip install google-cloud-storage")
 
@@ -209,27 +211,54 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
     return result
 
 
-def download_s2_data(new_data, aoi_image_dir, l2_dir=None, source='aws'):
-    """Downloads S2 imagery from AWS or google_cloud. new_data is a dict from Sentinel_2. If l2_dir is given, will
-    check that directory for existing imagery and skip if exists."""
+def download_s2_data(new_data, out_folder, l2_dir=None, source='scihub', user=None, passwd=None):
+    """Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2. If l2_dir is given,
+    will check that directory for existing imagery and skip if exists."""
     log = logging.getLogger(__name__)
-    for image in new_data:
+    for image_uuid in new_data:
+        l1_path = os.path.join(out_folder, new_data[image_uuid]['identifier'])
+        if check_for_invalid_l1_data(l1_path) == 1:
+            log.info("L1 imagery exists, skipping download")
+            continue
         if l2_dir:
-            l2_path = os.path.join(l2_dir, new_data[image]['identifier'].replace("MSIL1C", "MSIL2A")+".SAFE")
+            l2_path = os.path.join(l2_dir, new_data[image_uuid]['identifier'].replace("MSIL1C", "MSIL2A")+".SAFE")
             log.info("Checking {} for existing L2 imagery".format(l2_path))
             if os.path.isdir(l2_path):
                 log.info("L2 imagery exists, skipping download.")
                 continue
-        log.info("Downloading {} from {}".format(new_data[image]['identifier'], source))
+        log.info("Downloading {} from {}".format(new_data[image_uuid]['identifier'], source))
         if source=='aws':
-            download_safe_format(product_id=new_data[image]['identifier'], folder=aoi_image_dir)
+            download_safe_format(product_id=new_data[image_uuid]['identifier'], folder=out_folder)
         elif source=='google':
-            download_from_google_cloud([new_data[image]['identifier']], out_folder=aoi_image_dir)
+            download_from_google_cloud([new_data[image_uuid]['identifier']], out_folder=out_folder)
+        elif source=="scihub":
+            download_from_scihub(image_uuid, out_folder, user, passwd)
         else:
-            log.error("Invalid data source; valid values are 'aws' and 'google'")
+            log.error("Invalid data source; valid values are 'aws', 'google' and 'scihub'")
             raise BadDataSourceExpection
 
 
+def download_from_scihub(product_uuid, out_folder, user, passwd):
+    """Downloads and unzips product_uuid from scihub"""
+    log = logging.getLogger(__name__)
+    api = SentinelAPI(user, passwd)
+    log.info("Downloading {} from scihub".format(product_uuid))
+    prod = api.download(product_uuid, out_folder)
+    if not prod:
+        log.error("{} failed to download".format(product_uuid))
+    zip_path = os.path.join(out_folder, prod['title']+".zip")
+    out_path = zip_path.rsplit('.')[0] + ".SAFE"
+    log.info("Unzipping {} to {}".format)
+    zip_ref = zipfile.ZipFile(zip_path, 'r')
+    zip_ref.extractall(out_path)
+    zip_ref.close()
+
+
+@tenacity.retry(
+    wait=tenacity.wait_exponential(),
+    stop=tenacity.stop_after_delay(10000),
+    retry=tenacity.retry_if_exception_type(ServiceUnavailable)
+)
 def download_from_google_cloud(product_ids, out_folder, redownload = False):
     """Passed a list of S2 product ids , downloads them into out_for"""
     log = logging.getLogger(__name__)
@@ -239,7 +268,7 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
     for safe_id in product_ids:
         if not safe_id.endswith(".SAFE"):
             safe_id = safe_id+".SAFE"
-        if validate_l1_data(os.path.join(out_folder, safe_id)) and not redownload:
+        if check_for_invalid_l1_data(os.path.join(out_folder, safe_id)) and not redownload:
             log.info("File exists, skipping.")
             return
         if redownload:
@@ -257,21 +286,32 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
             log.error("{} missing from Google Cloud, continuing".format(safe_id))
             continue
         for s2_object in object_iter:
-            blob = bucket.get_blob(s2_object.name)
-            object_out_path = os.path.join(
-                os.path.abspath(out_folder),
-                s2_object.name.replace(os.path.dirname(object_prefix.rstrip('/')), "").strip('/')
-            )
-            os.makedirs(os.path.dirname(object_out_path), exist_ok=True)
-            log.info("Downloading from {} to {}".format(s2_object, object_out_path))
-            with open(object_out_path, 'w+b') as f:
-                blob.download_to_file(f)
+            download_blob_from_google(bucket, object_prefix, out_folder, s2_object)
         # Need to make these two empty folders for sen2cor to work properly
         try:
             os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "AUX_DATA"))
             os.mkdir(os.path.join(os.path.abspath(out_folder), safe_id, "HTML"))
         except FileExistsError:
             pass
+
+
+@tenacity.retry(
+    wait=tenacity.wait_exponential(),
+    stop=tenacity.stop_after_delay(10000),
+    retry=tenacity.retry_if_exception_type(ServiceUnavailable)
+)
+def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
+
+    blob = bucket.get_blob(s2_object.name)
+    object_out_path = os.path.join(
+        os.path.abspath(out_folder),
+        s2_object.name.replace(os.path.dirname(object_prefix.rstrip('/')), "").strip('/')
+    )
+    os.makedirs(os.path.dirname(object_out_path), exist_ok=True)
+    log.info("Downloading from {} to {}".format(s2_object, object_out_path))
+    with open(object_out_path, 'w+b') as f:
+        blob.download_to_file(f)
+
 
 
 def load_api_key(path_to_api):
@@ -452,7 +492,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
 
     log.info("sen2cor processing finished for {}".format(image_path))
     log.info("Validating:")
-    if not validate_l2_data(image_path.replace("MSIL1C", "MSIL2A")):
+    if not check_for_invalid_l2_data(image_path.replace("MSIL1C", "MSIL2A")):
         log.error("10m imagery not present in {}".format(image_path.replace("MSIL1C", "MSIL2A")))
         raise BadS2Exception
     if delete_unprocessed_image:
@@ -509,13 +549,13 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
             os.rename(l2_path, os.path.join(out_directory, l2_name))
 
 
-def validate_l2_data(l2_SAFE_file, resolution="10m"):
+def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
     """Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
     Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
     log = logging.getLogger(__name__)
     if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
-        log.error("{} is not a valid L2 file")
+        log.info("{} is not a valid L2 file")
         return 2
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
@@ -526,15 +566,15 @@ def validate_l2_data(l2_SAFE_file, resolution="10m"):
         return 0
 
 
-def validate_l1_data(l1_SAFE_file, resolution="10m"):
+def check_for_invalid_l1_data(l1_SAFE_file):
     """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
     Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
     log = logging.getLogger(__name__)
     if not l1_SAFE_file.endswith(".SAFE") or "L1C" not in l1_SAFE_file:
-        log.error("{} is not a valid L1 file")
+        log.info("{} is not a valid L1 file")
         return 2
-    log.info("Checking {} for incomplete {} imagery".format(l1_SAFE_file, resolution))
+    log.info("Checking {} for incomplete imagery".format(l1_SAFE_file))
     granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_*.jp2".format(resolution)
     image_glob = os.path.join(l1_SAFE_file, granule_path)
     if glob.glob(image_glob):
@@ -547,7 +587,7 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
     If warning=True, prompts first."""
     log = logging.getLogger(__name__)
-    is_valid = validate_l2_data(l2_SAFE_file, resolution)
+    is_valid = check_for_invalid_l2_data(l2_SAFE_file, resolution)
     if not is_valid:
         if warning:
             if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
