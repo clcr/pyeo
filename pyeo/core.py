@@ -251,6 +251,8 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     zip_ref = zipfile.ZipFile(zip_path, 'r')
     zip_ref.extractall(out_folder)
     zip_ref.close()
+    log.info("Removing {}".format(zip_path))
+    os.remove(zip_path)
 
 
 @tenacity.retry(
