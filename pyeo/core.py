@@ -576,7 +576,7 @@ def check_for_invalid_l1_data(l1_SAFE_file):
         log.info("{} is not a valid L1 file")
         return 2
     log.info("Checking {} for incomplete imagery".format(l1_SAFE_file))
-    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_*.jp2".format(resolution)
+    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_*.jp2"
     image_glob = os.path.join(l1_SAFE_file, granule_path)
     if glob.glob(image_glob):
         return 1
