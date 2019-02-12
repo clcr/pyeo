@@ -124,7 +124,7 @@ if __name__ == "__main__":
     if args.do_download or do_all:
         products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=cloud_cover)
         log.info("Downloading")
-        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, "google")
+        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, "scihub")
 
     # Atmospheric correction
     if args.do_preprocess or do_all:
