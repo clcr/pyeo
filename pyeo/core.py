@@ -719,17 +719,16 @@ def get_image_acquisition_time(image_name):
     return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
 
 
-def get_preceding_image(image_name, search_dir):
+def get_preceding_image_path(target_image_name, search_dir):
     """Gets the path to the image in search_dir preceding the image called image_name"""
-    target_time = get_image_acquisition_time(image_name)
-    image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=False) # Sort image list oldest first
-    for image_path in image_paths:
-        accq_time = get_image_acquisition_time(image_path)
-        if accq_time < target_time:   # If the target image was accquired after this one
-            last_image = image_path
-            continue
-        else:      # If the ta
-            return os.path.join(search_dir, last_image)
+    target_time = get_image_acquisition_time(target_image_name)
+    image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=True) # Sort image list newest first
+    for image_path in image_paths:   # Walk through newest to oldest
+        accq_time = get_image_acquisition_time(image_path)   # Get this image time
+        if accq_time < target_time:   # If this image is older than the target image, return it.
+            return os.path.join(search_dir, image_path)
+    raise FileNotFoundError("No image older than {}".format(target_image_name))
+
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
