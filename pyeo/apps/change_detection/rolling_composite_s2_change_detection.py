@@ -116,7 +116,7 @@ if __name__ == "__main__":
         if args.do_merge or do_all:
             log.info("Aggregating composite layers")
             pyeo.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
-                                        cloud_certainty_threshold, epsg=epsg)
+                                        cloud_certainty_threshold, epsg=epsg, buffer_size=5)
         log.info("Building initial cloud-free composite")
         pyeo.composite_directory(composite_merged_dir, composite_dir)
 
@@ -134,7 +134,8 @@ if __name__ == "__main__":
     # Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Aggregating layers")
-        pyeo.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold, epsg=epsg)
+        pyeo.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold, epsg=epsg,
+                                    buffer_size=5)
 
     log.info("Finding most recent composite")
     latest_composite_name = \
