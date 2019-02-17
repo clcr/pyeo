@@ -719,6 +719,19 @@ def get_image_acquisition_time(image_name):
     return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
 
 
+def get_preceding_image(image_name, search_dir):
+    """Gets the path to the image in search_dir preceding the image called image_name"""
+    target_time = get_image_acquisition_time(image_name)
+    image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=False) # Sort image list oldest first
+    for image_path in image_paths:
+        accq_time = get_image_acquisition_time(image_path)
+        if accq_time < target_time:   # If the target image was accquired after this one
+            last_image = image_path
+            continue
+        else:      # If the ta
+            return os.path.join(search_dir, last_image)
+
+
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     """Opens a dataset given a safe file. Give band as a string."""
     image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
