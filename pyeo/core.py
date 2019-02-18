@@ -1458,6 +1458,26 @@ def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_thresho
     return out_path
 
 
+def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, buffer_size=0, out_resolution=None):
+    """Creates a mask from a classification mask: 1 for each pixel containing one of classes_of_interest, otherwise 0"""
+    # TODO: pull this out of the above function
+    class_image = gdal.Open(class_map_path)
+    class_array = class_image.GetVirtualMemArray()
+    mask_array = np.isin(class_array, classes_of_interest)
+    out_mask = create_matching_dataset(class_image, out_path)
+    out_array = out_mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    np.copyto(out_array, mask_array)
+    class_array = None
+    class_image = None
+    out_array = None
+    if out_resolution:
+        resample_image_in_place(out_path, out_resolution)
+    if buffer_size:
+        buffer_mask_in_place(out_path)
+    return out_path
+
+
+
 def create_mask_from_fmask(in_l1_dir, out_path):
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
