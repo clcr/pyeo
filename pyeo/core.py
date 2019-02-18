@@ -1620,12 +1620,11 @@ def resample_image_in_place(image_path, new_res):
         shutil.move(temp_image, image_path)
 
 
-def apply_array_image_mask(array, mask):
-    """Applies a mask of (y,x) to an image array of (bands, y, x), returning a ma.array object"""
+def apply_array_image_mask(array, mask, fill_value=0):
+    """Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value"""
     band_count = array.shape[0]
     stacked_mask = np.stack([mask]*band_count, axis=0)
-    out = ma.masked_array(array, stacked_mask)
-    return out
+    return np.where(stacked_mask == 1, array, fill_value)
 
 
 def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
