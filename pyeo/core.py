@@ -1467,7 +1467,7 @@ def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, bu
     class_image = gdal.Open(class_map_path)
     class_array = class_image.GetVirtualMemArray()
     mask_array = np.isin(class_array, classes_of_interest)
-    out_mask = create_matching_dataset(class_image, out_path)
+    out_mask = create_matching_dataset(class_image, out_path, datatype=gdal.GDT_Byte)
     out_array = out_mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
     np.copyto(out_array, mask_array)
     class_array = None
