@@ -710,14 +710,19 @@ def get_sen_2_tiles(image_dir):
 def sort_by_timestamp(strings, recent_first=True):
     """Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
     guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp"""
-    filter(get_image_acquisition_time, strings)
+    strings = list(filter(get_image_acquisition_time, strings))
     strings.sort(key=lambda x: get_image_acquisition_time(x), reverse=recent_first)
     return strings
 
 
 def get_image_acquisition_time(image_name):
     """Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present"""
-    return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
+    try:
+        return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
+    except AttributeError:
+        return None
+
+
 
 
 def get_preceding_image_path(target_image_name, search_dir):
