@@ -150,7 +150,7 @@ if __name__ == "__main__":
     images = \
         pyeo.sort_by_timestamp(
             [image_name for image_name in os.listdir(merged_image_dir) if image_name.endswith(".tif")],
-            recent_first=True
+            recent_first=False
         )
     log.info("Images to process: {}".format(images))
 
