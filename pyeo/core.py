@@ -830,7 +830,7 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         log.error("Tiles  of the two images do not match. Aborted.")
 
 
-def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True):
+def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True, skip_if_exists=True):
     """Stacks an image with a cloud-free composite"""
     log = logging.getLogger(__name__)
     log.info("Stacking {} with composite {}".format(image_path, composite_path))
@@ -839,6 +839,9 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
     tile = get_sen_2_image_tile(image_path)
     out_filename = "composite_{}_{}_{}.tif".format(tile, composite_timestamp, image_timestamp)
     out_path = os.path.join(out_dir, out_filename)
+    if os.path.exists(out_path) and skip_if_exists:
+        log.info("{} exists, skipping".format(out_path))
+        return out_path
     stack_images([composite_path, image_path], out_path)
     if create_combined_mask:
         out_mask_path = out_path.rsplit('.')[0] + ".msk"
@@ -1475,7 +1478,6 @@ def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, bu
     if buffer_size:
         buffer_mask_in_place(out_path)
     return out_path
-
 
 
 def create_mask_from_fmask(in_l1_dir, out_path):
