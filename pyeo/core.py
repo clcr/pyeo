@@ -1473,6 +1473,7 @@ def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, bu
     class_array = None
     class_image = None
     out_array = None
+    out_mask = None
     if out_resolution:
         resample_image_in_place(out_path, out_resolution)
     if buffer_size:
