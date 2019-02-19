@@ -354,6 +354,13 @@ def test_get_tile():
     assert pyeo.get_sen_2_image_tile("test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif") == "T13QFB"
 
 
+def test_get_preceding_image():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_dir = "test_data/L2"
+    test_image_name = "S2B_MSIL2A_20180713T172709_N0206_R012_T13QFB_2018073T192359.SAFE"
+    assert pyeo.get_preceding_image_path(test_image_name, test_dir) == "test_data/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE"
+
+
 if __name__ == "__main__":
     print(sys.path)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))

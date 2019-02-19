@@ -116,7 +116,7 @@ if __name__ == "__main__":
         if args.do_merge or do_all:
             log.info("Aggregating composite layers")
             pyeo.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
-                                        cloud_certainty_threshold, epsg=epsg)
+                                        cloud_certainty_threshold, epsg=epsg, buffer_size=5)
         log.info("Building initial cloud-free composite")
         pyeo.composite_directory(composite_merged_dir, composite_dir)
 
@@ -134,7 +134,8 @@ if __name__ == "__main__":
     # Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Aggregating layers")
-        pyeo.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold, epsg=epsg)
+        pyeo.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold, epsg=epsg,
+                                    buffer_size=5)
 
     log.info("Finding most recent composite")
     latest_composite_name = \
@@ -149,7 +150,7 @@ if __name__ == "__main__":
     images = \
         pyeo.sort_by_timestamp(
             [image_name for image_name in os.listdir(merged_image_dir) if image_name.endswith(".tif")],
-            recent_first=True
+            recent_first=False
         )
     log.info("Images to process: {}".format(images))
 
@@ -157,8 +158,9 @@ if __name__ == "__main__":
         log.info("Detecting change for {}".format(image))
         new_image_path = os.path.join(merged_image_dir, image)
 
-        # Stack with composite
+        # Stack with preceding composite
         if args.do_stack or do_all:
+            latest_composite_path = pyeo.get_preceding_image_path(new_image_path, composite_dir)
             log.info("Stacking {} with composite {}".format(new_image_path, latest_composite_path))
             new_stack_path = pyeo.stack_image_with_composite(new_image_path, latest_composite_path, stacked_image_dir)
 
@@ -167,7 +169,8 @@ if __name__ == "__main__":
             log.info("Classifying with composite")
             new_class_image = os.path.join(catagorised_image_dir, "class_{}".format(os.path.basename(new_stack_path)))
             new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
-            pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10, skip_existing = True)
+            pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10,
+                                skip_existing=True, apply_mask=True)
 
         # Build new composite
         if args.do_update or do_all:

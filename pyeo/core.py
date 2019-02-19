@@ -709,14 +709,32 @@ def get_sen_2_tiles(image_dir):
 
 def sort_by_timestamp(strings, recent_first=True):
     """Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
-    guarantee ordering of strings with the same timestamp."""
+    guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp"""
+    strings = list(filter(get_image_acquisition_time, strings))
     strings.sort(key=lambda x: get_image_acquisition_time(x), reverse=recent_first)
     return strings
 
 
 def get_image_acquisition_time(image_name):
-    """Gets the datetime object from a .safe filename of a planet image. No test."""
-    return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
+    """Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present"""
+    try:
+        return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
+    except AttributeError:
+        return None
+
+
+
+
+def get_preceding_image_path(target_image_name, search_dir):
+    """Gets the path to the image in search_dir preceding the image called image_name"""
+    target_time = get_image_acquisition_time(target_image_name)
+    image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=True) # Sort image list newest first
+    for image_path in image_paths:   # Walk through newest to oldest
+        accq_time = get_image_acquisition_time(image_path)   # Get this image time
+        if accq_time < target_time:   # If this image is older than the target image, return it.
+            return os.path.join(search_dir, image_path)
+    raise FileNotFoundError("No image older than {}".format(target_image_name))
+
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
@@ -812,7 +830,7 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         log.error("Tiles  of the two images do not match. Aborted.")
 
 
-def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True):
+def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True, skip_if_exists=True):
     """Stacks an image with a cloud-free composite"""
     log = logging.getLogger(__name__)
     log.info("Stacking {} with composite {}".format(image_path, composite_path))
@@ -821,6 +839,9 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
     tile = get_sen_2_image_tile(image_path)
     out_filename = "composite_{}_{}_{}.tif".format(tile, composite_timestamp, image_timestamp)
     out_path = os.path.join(out_dir, out_filename)
+    if os.path.exists(out_path) and skip_if_exists:
+        log.info("{} exists, skipping".format(out_path))
+        return out_path
     stack_images([composite_path, image_path], out_path)
     if create_combined_mask:
         out_mask_path = out_path.rsplit('.')[0] + ".msk"
@@ -1440,6 +1461,26 @@ def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_thresho
     return out_path
 
 
+def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, buffer_size=0, out_resolution=None):
+    """Creates a mask from a classification mask: 1 for each pixel containing one of classes_of_interest, otherwise 0"""
+    # TODO: pull this out of the above function
+    class_image = gdal.Open(class_map_path)
+    class_array = class_image.GetVirtualMemArray()
+    mask_array = np.isin(class_array, classes_of_interest)
+    out_mask = create_matching_dataset(class_image, out_path, datatype=gdal.GDT_Byte)
+    out_array = out_mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    np.copyto(out_array, mask_array)
+    class_array = None
+    class_image = None
+    out_array = None
+    out_mask = None
+    if out_resolution:
+        resample_image_in_place(out_path, out_resolution)
+    if buffer_size:
+        buffer_mask_in_place(out_path)
+    return out_path
+
+
 def create_mask_from_fmask(in_l1_dir, out_path):
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
@@ -1580,12 +1621,14 @@ def resample_image_in_place(image_path, new_res):
         shutil.move(temp_image, image_path)
 
 
-def apply_array_image_mask(array, mask):
-    """Applies a mask of (y,x) to an image array of (bands, y, x), returning a ma.array object"""
-    band_count = array.shape[0]
+def apply_array_image_mask(array, mask, fill_value=0):
+    """Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value"""
+    if array.ndim == 2:
+        band_count = 1
+    else:
+        band_count = array.shape[0]
     stacked_mask = np.stack([mask]*band_count, axis=0)
-    out = ma.masked_array(array, stacked_mask)
-    return out
+    return np.where(stacked_mask == 1, array, fill_value)
 
 
 def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
