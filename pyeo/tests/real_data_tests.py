@@ -321,6 +321,17 @@ def test_mask_combination():
     assert not mask_1.GetVirtualMemArray().all == False
 
 
+def test_composite_off_by_one():
+    """The images in test_outputs/off_by_one were producing off-by-one errors"""
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        shutil.rmtree("test_outputs/off_by_one_error")
+    except FileNotFoundError:
+        pass
+    os.mkdir("test_outputs/off_by_one_error")
+    pyeo.composite_directory("test_data/off_by_one", "test_outputs/off_by_one_error")
+
+
 def test_mask_closure():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     out_mask_path = "test_outputs/test_mask.msk"
