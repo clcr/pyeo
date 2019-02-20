@@ -1039,7 +1039,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
         # Get a view of in_raster according to output_array
         log.info("Adding {} to composite".format(in_raster_path_list[i]))
-        in_bounds = get_raster_bounds(in_raster)
+        in_bounds = align_bounds_to_whole_number(get_raster_bounds(in_raster))
         x_min, x_max, y_min, y_max = pixel_bounds_from_polygon(composite_image, in_bounds)
         output_view = output_array[:, y_min:y_max, x_min:x_max]
 
@@ -1209,8 +1209,8 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
         x_geo = point.GetX()
         y_geo = point.GetY()
     gt = raster.GetGeoTransform()
-    x_pixel = int(np.floor((x_geo - gt[0])/gt[1]))
-    y_pixel = int(np.floor((y_geo - gt[3])/gt[5]))  # y resolution is -ve
+    x_pixel = int(np.floor((x_geo - np.floor(gt[0]))/gt[1]))
+    y_pixel = int(np.floor((y_geo - np.floor(gt[3]))/gt[5]))  # y resolution is -ve
     return x_pixel, y_pixel
 
 
