@@ -1209,8 +1209,8 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
         x_geo = point.GetX()
         y_geo = point.GetY()
     gt = raster.GetGeoTransform()
-    x_pixel = int(np.floor((x_geo - np.floor(gt[0]))/gt[1]))
-    y_pixel = int(np.floor((y_geo - np.floor(gt[3]))/gt[5]))  # y resolution is -ve
+    x_pixel = int(np.floor((x_geo - gt[0])/gt[1]))
+    y_pixel = int(np.floor((y_geo - gt[3])/gt[5]))  # y resolution is -ve
     return x_pixel, y_pixel
 
 
@@ -1318,11 +1318,12 @@ def check_overlap(raster, aoi):
 
 
 def get_raster_bounds(raster):
-    """Returns a wkbPolygon geometry with the bounding rectangle of a raster calculate from its geotransform"""
+    """Returns a wkbPolygon geometry with the bounding rectangle of a raster calculated from its geotransform"""
     raster_bounds = ogr.Geometry(ogr.wkbLinearRing)
     geotrans = raster.GetGeoTransform()
-    top_left_x = geotrans[0]
-    top_left_y = geotrans[3]
+    # We can't rely on the top-left coord being whole numbers any more, since images may have been reprojected
+    top_left_x = np.floor(geotrans[0])
+    top_left_y = np.floor(geotrans[3])
     width = geotrans[1]*raster.RasterXSize
     height = geotrans[5]*raster.RasterYSize * -1  # RasterYSize is +ve, but geotransform is -ve so this should go good
     raster_bounds.AddPoint(top_left_x, top_left_y)
