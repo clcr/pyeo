@@ -1025,7 +1025,8 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Creating composite at {}".format(composite_out_path))
     log.info("Composite info: x_res: {}, y_res: {}, {} bands, datatype: {}, projection: {}"
              .format(x_res, y_res, n_bands, datatype, projection))
-    out_bounds = align_bounds_to_whole_number(get_poly_bounding_rect(get_combined_polygon(in_raster_list, geometry_mode="union")))
+    out_bounds = align_bounds_to_whole_number(get_poly_bounding_rect(get_combined_polygon(in_raster_list,
+                                                                                          geometry_mode="union")))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
@@ -1103,7 +1104,7 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
     log = logging.getLogger(__name__)
     log.info("Compositing {}".format(image_dir))
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
-                          in sort_by_timestamp(os.listdir(image_dir), recent_first=False)
+                          in sort_by_timestamp(os.listdir(image_dir), recent_first=False) # Let's think about this
                           if image_name.endswith(".tif")]
     last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
     composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp))
@@ -1209,8 +1210,8 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
         x_geo = point.GetX()
         y_geo = point.GetY()
     gt = raster.GetGeoTransform()
-    x_pixel = int(np.floor((x_geo - gt[0])/gt[1]))
-    y_pixel = int(np.floor((y_geo - gt[3])/gt[5]))  # y resolution is -ve
+    x_pixel = int(np.floor((x_geo - np.floor(gt[0]))/gt[1]))
+    y_pixel = int(np.floor((y_geo - np.floor(gt[3]))/gt[5]))  # y resolution is -ve
     return x_pixel, y_pixel
 
 

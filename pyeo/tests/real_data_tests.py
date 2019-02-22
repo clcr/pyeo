@@ -319,6 +319,8 @@ def test_mask_combination():
                        geometry_func="intersect", combination_func="and")
     mask_1 = gdal.Open("test_outputs/union_or_combination.tif")
     assert not mask_1.GetVirtualMemArray().all == False
+    mask_2 = gdal.Open("test_outputs/intersection_and_combination.tif")
+    assert not mask_1.GetVirtualMemArray().all == False
 
 
 def test_composite_off_by_one():
