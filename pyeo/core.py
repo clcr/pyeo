@@ -729,11 +729,21 @@ def get_preceding_image_path(target_image_name, search_dir):
     """Gets the path to the image in search_dir preceding the image called image_name"""
     target_time = get_image_acquisition_time(target_image_name)
     image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=True) # Sort image list newest first
+    image_paths = filter(is_tif, image_paths)
     for image_path in image_paths:   # Walk through newest to oldest
         accq_time = get_image_acquisition_time(image_path)   # Get this image time
         if accq_time < target_time:   # If this image is older than the target image, return it.
             return os.path.join(search_dir, image_path)
     raise FileNotFoundError("No image older than {}".format(target_image_name))
+
+
+
+def is_tif(image_string):
+    """Returns True if image ends with .tif"""
+    if image_string.endswith(".tif"):
+        return True
+    else:
+        return False
 
 
 
