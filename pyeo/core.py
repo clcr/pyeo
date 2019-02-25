@@ -849,12 +849,12 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
     tile = get_sen_2_image_tile(image_path)
     out_filename = "composite_{}_{}_{}.tif".format(tile, composite_timestamp, image_timestamp)
     out_path = os.path.join(out_dir, out_filename)
-    if os.path.exists(out_path) and skip_if_exists:
-        log.info("{} exists, skipping".format(out_path))
+    out_mask_path = out_path.rsplit('.')[0] + ".msk"
+    if os.path.exists(out_path) and os.path.exists(out_mask_path) and skip_if_exists:
+        log.info("{} and mask exists, skipping".format(out_path))
         return out_path
     stack_images([composite_path, image_path], out_path)
     if create_combined_mask:
-        out_mask_path = out_path.rsplit('.')[0] + ".msk"
         image_mask_path = get_mask_path(image_path)
         comp_mask_path = get_mask_path(composite_path)
         combine_masks([comp_mask_path, image_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
