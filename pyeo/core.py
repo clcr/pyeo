@@ -20,7 +20,7 @@ import sklearn.ensemble as ens
 from sklearn.model_selection import cross_val_score
 from skimage import morphology as morph
 import scipy.sparse as sp
-import joblib
+from sklearn.externals import joblib
 import shutil
 import zipfile
 
