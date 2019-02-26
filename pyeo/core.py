@@ -853,7 +853,7 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
     if os.path.exists(out_path) and os.path.exists(out_mask_path) and skip_if_exists:
         log.info("{} and mask exists, skipping".format(out_path))
         return out_path
-    stack_images([composite_path, image_path], out_path)
+    stack_images([composite_path, image_path], out_path, geometry_mode="intersect")
     if create_combined_mask:
         image_mask_path = get_mask_path(image_path)
         comp_mask_path = get_mask_path(composite_path)
@@ -991,9 +991,9 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     in_gt = rasters[0].GetGeoTransform()
     x_res = in_gt[1]
     y_res = in_gt[5] * -1  # Y resolution in agt is -ve for Maths reasons
-    combined_polyon = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode='union'))
+    combined_polygon = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode='union'))
     layers = rasters[0].RasterCount
-    out_raster = create_new_image_from_polygon(combined_polyon, out_raster_file, x_res, y_res, layers,
+    out_raster = create_new_image_from_polygon(combined_polygon, out_raster_file, x_res, y_res, layers,
                                                projection, format, datatype)
     log.info("New empty image created at {}".format(out_raster_file))
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
@@ -1035,8 +1035,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Creating composite at {}".format(composite_out_path))
     log.info("Composite info: x_res: {}, y_res: {}, {} bands, datatype: {}, projection: {}"
              .format(x_res, y_res, n_bands, datatype, projection))
-    out_bounds = align_bounds_to_whole_number(get_poly_bounding_rect(get_combined_polygon(in_raster_list,
-                                                                                          geometry_mode="union")))
+    out_bounds = get_poly_bounding_rect(get_combined_polygon(in_raster_list,geometry_mode="union"))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
