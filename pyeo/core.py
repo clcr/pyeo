@@ -930,8 +930,8 @@ def stack_images(raster_paths, out_raster_path,
     projection = rasters[0].GetProjection()
     in_gt = rasters[0].GetGeoTransform()
     x_res = in_gt[1]
-    y_res = in_gt[5]*-1   # Y resolution in agt is -ve for Maths reasons
-    combined_polygons = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode))
+    y_res = in_gt[5]*-1   # Y resolution in affine geotransform is -ve for Maths reasons
+    combined_polygons = get_combined_polygon(rasters, geometry_mode)
 
     # Creating a new gdal object
     out_raster = create_new_image_from_polygon(combined_polygons, out_raster_path, x_res, y_res,
