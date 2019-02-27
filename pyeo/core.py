@@ -1219,8 +1219,8 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
         x_geo = point.GetX()
         y_geo = point.GetY()
     gt = raster.GetGeoTransform()
-    x_pixel = int(np.floor((x_geo - np.floor(gt[0]))/gt[1]))
-    y_pixel = int(np.floor((y_geo - np.floor(gt[3]))/gt[5]))  # y resolution is -ve
+    x_pixel = int(np.floor((x_geo - floor_to_resolution(gt[0], gt[1]))/gt[1]))
+    y_pixel = int(np.floor((y_geo - floor_to_resolution(gt[3], gt[5]*-1))/gt[5]))  # y resolution is -ve
     return x_pixel, y_pixel
 
 
@@ -1332,8 +1332,9 @@ def get_raster_bounds(raster):
     raster_bounds = ogr.Geometry(ogr.wkbLinearRing)
     geotrans = raster.GetGeoTransform()
     # We can't rely on the top-left coord being whole numbers any more, since images may have been reprojected
-    top_left_x = np.floor(geotrans[0])
-    top_left_y = np.floor(geotrans[3])
+    # So we floor to the resolution of the geotransform maybe?
+    top_left_x = floor_to_resolution(geotrans[0], geotrans[1])
+    top_left_y = floor_to_resolution(geotrans[3], geotrans[5]*-1)
     width = geotrans[1]*raster.RasterXSize
     height = geotrans[5]*raster.RasterYSize * -1  # RasterYSize is +ve, but geotransform is -ve so this should go good
     raster_bounds.AddPoint(top_left_x, top_left_y)
@@ -1344,6 +1345,11 @@ def get_raster_bounds(raster):
     bounds_poly = ogr.Geometry(ogr.wkbPolygon)
     bounds_poly.AddGeometry(raster_bounds)
     return bounds_poly
+
+
+def floor_to_resolution(input, resolution):
+    """Returns input rounded DOWN to the nearest multiple of resolution."""
+    return input - (input%resolution)
 
 
 def get_raster_size(raster):
