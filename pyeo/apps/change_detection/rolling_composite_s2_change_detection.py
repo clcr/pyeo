@@ -40,6 +40,8 @@ if __name__ == "__main__":
     parser.add_argument('-b', '--build_composite', dest='build_composite', action='store_true', default=False,
                         help="If present, creates a cloud-free (ish) composite between the two dates specified in the "
                              "config file.")
+    parser.add_argument("--chunks", dest="num_chunks", type=int, default=10, help="Sets the number of chunks to split "
+                                                                                  "images to in ml processing")
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
     parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
