@@ -20,7 +20,8 @@ import sklearn.ensemble as ens
 from sklearn.model_selection import cross_val_score
 from skimage import morphology as morph
 import scipy.sparse as sp
-from sklearn.externals import joblib
+from sklearn.externals import joblib as sklearn_joblib
+import joblib
 import shutil
 import zipfile
 
@@ -1668,7 +1669,11 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
         log.info("No chunk size given, attempting autochunk.")
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
-    model = joblib.load(model_path)
+    try:
+        model = sklearn_joblib.load(model_path)
+    except KeyError:
+        log.warning("Sklearn joblib import failed,trying generic joblib")
+        model = joblib.load(model_path)
     class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_path))
     if prob_out_path:
