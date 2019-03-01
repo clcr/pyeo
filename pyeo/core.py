@@ -1036,7 +1036,8 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     log.info("Creating composite at {}".format(composite_out_path))
     log.info("Composite info: x_res: {}, y_res: {}, {} bands, datatype: {}, projection: {}"
              .format(x_res, y_res, n_bands, datatype, projection))
-    out_bounds = get_poly_bounding_rect(get_combined_polygon(in_raster_list,geometry_mode="union"))
+    out_bounds = align_bounds_to_whole_number(get_poly_bounding_rect(get_combined_polygon(in_raster_list,
+                                                                                          geometry_mode="union")))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
