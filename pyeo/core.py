@@ -168,7 +168,7 @@ def create_file_structure(root):
 
 def read_aoi(aoi_path):
     """Opens the geojson file for the aoi. If FeatureCollection, return the first feature."""
-    with open(aoi_path ,'r') as aoi_fp:
+    with open(aoi_path, 'r') as aoi_fp:
         aoi_dict = json.load(aoi_fp)
         if aoi_dict["type"] == "FeatureCollection":
             aoi_dict = aoi_dict["features"][0]
@@ -177,8 +177,6 @@ def read_aoi(aoi_path):
 
 def check_for_new_s2_data(aoi_path, aoi_image_dir, conf):
     """Checks the S2 API for new data; if it's there, return the result"""
-    # TODO: This isn't breaking properly on existing imagery
-    # TODO: In fact, just clean this up completely, it's a bloody mess.
     # set up API for query
     log = logging.getLogger(__name__)
     user = conf['sent_2']['user']
@@ -1678,7 +1676,10 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_path))
     if prob_out_path:
-        log.info("n classes in the model: {}".format(model.n_classes_))
+        try:
+            log.info("n classes in the model: {}".format(model.n_classes_))
+        except AttributeError:
+            log.warning("Model has no n_classes_ attribute (known issue with GridSearch)")
         prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
         log.info("Created probability image file: {}".format(prob_out_path))
     model.n_cores = -1
