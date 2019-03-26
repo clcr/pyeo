@@ -1011,7 +1011,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     out_raster_array = None
 
 
-def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff"):
+def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff", generate_dates_image=False):
     """Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
     be a binary .msk file with the same path as their corresponding image. All images must have the same
     number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
@@ -1038,6 +1038,12 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
                                                                                           geometry_mode="union")))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
+
+    if generate_dates_image:
+        time_out_path = composite_out_path.rsplit('.')[0]+"dates.tif"
+        dates_image = create_matching_dataset(composite_image, time_out_path, bands=1, datatype=gdal.GDT_UInt16)
+        dates_array = dates_image.GetVirtualMemArray()
+
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
     if len(output_array.shape) == 2:
         output_array = np.expand_dims(output_array, 0)
@@ -1057,6 +1063,12 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         log.info("Mask for {} at {}".format(in_raster_path_list[i], mask_paths[i]))
         in_masked = get_masked_array(in_raster, mask_paths[i])
         np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
+
+        # Save dates in date_image if needed
+        if generate_dates_image:
+            dates_view = dates_array[y_min: y_max, x_min: x_max]
+            date = int(get_image_acquisition_time(in_raster.GetFileList()[0]).lsplit("T"))
+            dates_view[...] = np.where(np.logical_not(in_masked.mask), date)
 
         # Deallocate
         output_view = None
