@@ -120,7 +120,7 @@ if __name__ == "__main__":
             pyeo.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
                                         cloud_certainty_threshold, epsg=epsg, buffer_size=5)
         log.info("Building initial cloud-free composite")
-        pyeo.composite_directory(composite_merged_dir, composite_dir)
+        pyeo.composite_directory(composite_merged_dir, composite_dir, generate_date_images=True)
 
     # Query and download all images since last composite
     if args.do_download or do_all:
@@ -179,7 +179,8 @@ if __name__ == "__main__":
             log.info("Updating composite")
             new_composite_path = os.path.join(
                 composite_dir, "composite_{}.tif".format(pyeo.get_sen_2_image_timestamp(os.path.basename(image))))
-            pyeo.composite_images_with_mask((latest_composite_path, new_image_path), new_composite_path)
+            pyeo.composite_images_with_mask(
+                (latest_composite_path, new_image_path), new_composite_path, generate_date_image=True)
             latest_composite_path = new_composite_path
 
     log.info("***PROCESSING END***")

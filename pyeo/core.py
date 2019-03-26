@@ -722,8 +722,6 @@ def get_image_acquisition_time(image_name):
         return None
 
 
-
-
 def get_preceding_image_path(target_image_name, search_dir):
     """Gets the path to the image in search_dir preceding the image called image_name"""
     target_time = get_image_acquisition_time(target_image_name)
@@ -736,14 +734,12 @@ def get_preceding_image_path(target_image_name, search_dir):
     raise FileNotFoundError("No image older than {}".format(target_image_name))
 
 
-
 def is_tif(image_string):
     """Returns True if image ends with .tif"""
     if image_string.endswith(".tif"):
         return True
     else:
         return False
-
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
@@ -1070,6 +1066,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
             # Gets timestamp as integer in form yyyymmdd
             date = np.uint32(get_sen_2_image_timestamp(in_raster.GetFileList()[0]).split("T")[0])
             dates_view[np.logical_not(in_masked.mask[0, ...])] = date
+            log.debug(dates_view.max())
             dates_view = None
 
         # Deallocate

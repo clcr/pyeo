@@ -30,6 +30,8 @@ if __name__ == "__main__":
                         help="Path to logfile (optional)")
     parser.add_argument('-r', '--remask', dest='mask_path', action="store",
                         help="If present, remask the files using an image at model_path")
+    parser.add_argument('-d', '--dates_image', dest="generate_dates_image", action = "store_true",
+                        help="If present, will build a single-layer .tif of dates of pixels in composite")
     args = parser.parse_args()
 
     comp_dir = args.in_dir
@@ -45,4 +47,4 @@ if __name__ == "__main__":
         for image in [os.path.join(os.path.dirname(comp_dir), file) for file in os.listdir(comp_dir)]:
             pyeo.core.create_mask_from_model(image, args.mask_path)
 
-    pyeo.core.composite_directory(comp_dir, args.out_path)
+    pyeo.core.composite_directory(comp_dir, args.out_path, generate_date_images=args.generate_dates_image)
