@@ -1066,7 +1066,6 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
             # Gets timestamp as integer in form yyyymmdd
             date = np.uint32(get_sen_2_image_timestamp(in_raster.GetFileList()[0]).split("T")[0])
             dates_view[np.logical_not(in_masked.mask[0, ...])] = date
-            log.debug(dates_view.max())
             dates_view = None
 
         # Deallocate
