@@ -1920,3 +1920,41 @@ def get_local_top_left(raster1, raster2):
     """Gets the top-left corner of raster1 in the array of raster 2; WRITE A TEST FOR THIS"""
     inner_gt = raster2.GetGeoTransform()
     return point_to_pixel_coordinates(raster1, [inner_gt[0], inner_gt[3]])
+
+
+def raster_sum(inRst, outFn, inFmt="Gtiff"):
+    """Takes a raster stack as input and calculates its sum. Outputs a single
+    layer raster.
+
+    :param str inRst: Path to raster stack to calculate the sum for.
+    :param str inFmt: String specifying the input data format e.g. 'GTiff' or 'jp2'.
+    :param str outFmt: String specifying the input data format e.g. 'GTiff' or 'VRT'.
+    :param str outFn: Filename output as str including directory else image will be
+    written to current working directory.
+    :return: A raster file will be written to disk.
+    """
+    log = logging.getLogger(__name__)
+    # get input dataset info
+    in_ds = gdal.Open(inRst)
+    in_band = in_ds.GetRasterBand(1)
+
+    # create output settings
+    driver = gdal.GetDriverByName(inFmt)
+    out_ds = driver.Create(outFn, in_band.XSize, in_band.YSize, 1,
+                           in_band.DataType)
+    out_ds.SetProjection(in_ds.GetProjection())
+    out_ds.SetGeoTransform(in_ds.GetGeoTransform())
+
+    # calculate and out sum of input raster stack
+    out_ds.GetRasterBand(1).WriteArray((gdal.Open(inRst).ReadAsArray().sum())
+
+    # write the data to disk
+    out_ds.FlushCache()
+
+    # setting ComputeStatistics to false calculates stats on all pixels not estimates
+    out_ds.GetRasterBand(1).ComputeStatistics(False)
+    out_ds.BuildOverviews("average", [2, 4, 8, 16, 32])
+
+    del out_ds
+
+    return print("Finished summing-up of {}".format(inRst))
