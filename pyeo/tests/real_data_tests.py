@@ -31,6 +31,7 @@ import osr
 import numpy as np
 import pytest
 import configparser
+import glob
 
 gdal.UseExceptions()
 
@@ -374,8 +375,38 @@ def test_get_preceding_image():
     assert pyeo.get_preceding_image_path(test_image_name, test_dir) == "test_data/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE"
 
 
+def test_raster_reclass_binary():
+    test_image_name = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany/class_composite_T36NYF_20180112T075259_20180117T075241.tif'
+    test_value = 1
+    out_fn = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany/class_composite_T36NYF_20180112T075259_20180117T075241_rcl.tif'
+    a = pyeo.raster_reclass_binary(test_image_name, test_value, outFn=out_fn)
+    print(np.unique(a) == [0, 1])
+
+
+def test_raster_reclass_directory():
+    test_dir = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany'
+    rst_list = glob.glob(os.path.join(test_dir, '*.tif'))
+    test_value = 1
+    suffix = '_rcl.'
+    for i, in_rst in enumerate(rst_list):
+        path, fn = os.path.split(in_rst)
+        n, fmt = fn.split('.', 2)
+        fn = n+suffix+fmt
+        out_fn = os.path.join(path, fn)
+        pyeo.raster_reclass_binary(in_rst, test_value, outFn=out_fn)
+
+
+def test_raster_sum():
+    test_dir = "/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany"
+    test_pattern = '*_T36NYF_*_rcl.tif'
+    fn = 'KEN_cherangany_forestChange_sum2018.tif'
+    out_fn = os.path.join(test_dir, fn)
+    test_image_list = glob.glob(os.path.join(test_dir, test_pattern))
+    pyeo.raster_sum(inRstList=test_image_list, outFn=out_fn)
+
+
 if __name__ == "__main__":
     print(sys.path)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     log = pyeo.init_log("test_log.log")
-    test_mask_combination()
+    test_raster_sum()

@@ -254,11 +254,11 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     os.remove(zip_path)
 
 
-@tenacity.retry(
-    wait=tenacity.wait_exponential(),
-    stop=tenacity.stop_after_delay(10000),
-    retry=tenacity.retry_if_exception_type(ServiceUnavailable)
-)
+# @tenacity.retry(
+#     wait=tenacity.wait_exponential(),
+#     stop=tenacity.stop_after_delay(10000),
+#     retry=tenacity.retry_if_exception_type(ServiceUnavailable)
+# )
 def download_from_google_cloud(product_ids, out_folder, redownload = False):
     """Passed a list of S2 product ids , downloads them into out_for"""
     log = logging.getLogger(__name__)
@@ -295,11 +295,11 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
             pass
 
 
-@tenacity.retry(
-    wait=tenacity.wait_exponential(),
-    stop=tenacity.stop_after_delay(10000),
-    retry=tenacity.retry_if_exception_type(ServiceUnavailable)
-)
+# @tenacity.retry(
+#     wait=tenacity.wait_exponential(),
+#     stop=tenacity.stop_after_delay(10000),
+#     retry=tenacity.retry_if_exception_type(ServiceUnavailable)
+# )
 def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
 
     blob = bucket.get_blob(s2_object.name)
@@ -1922,39 +1922,112 @@ def get_local_top_left(raster1, raster2):
     return point_to_pixel_coordinates(raster1, [inner_gt[0], inner_gt[3]])
 
 
-def raster_sum(inRst, outFn, inFmt="Gtiff"):
-    """Takes a raster stack as input and calculates its sum. Outputs a single
-    layer raster.
+def raster_to_array(rst_pth):
+    """Reads in a raster file and returns a N-dimensional array.
 
-    :param str inRst: Path to raster stack to calculate the sum for.
-    :param str inFmt: String specifying the input data format e.g. 'GTiff' or 'jp2'.
+    :param str rst_pth: Path to input raster.
+    :return: N-dimensional array.
+    """
+    log = logging.getLogger(__name__)
+    in_ds = gdal.Open(rst_pth)
+    out_array = in_ds.ReadAsArray()
+
+    return out_array
+
+
+def raster_reclass_binary(img_path, rcl_value, outFn, outFmt='GTiff', write_out=True):
+    """Takes a raster and reclassifies the values
+
+
+    :param str img_path: Path to 1 band input  raster.
+    :param int rcl_value: Integer indication the value that should be reclassified to 1. All other values will be 0.
+    :param str outFn: Output file name.
+    :param str outFmt: Output format. Set to GTiff by default. Other GDAL options available.
+    :param write_out: Boolean. Set to True by default. Will write raster to disk. If False, only an array is returned
+    :return: Reclassifies numpy array
+    """
+    log = logging.getLogger(__name__)
+    log.info('Starting raster reclassifcation.')
+    # load in classification raster
+    in_ds = gdal.Open(img_path)
+    in_band = in_ds.GetRasterBand(1)
+    in_array = in_band.ReadAsArray()
+
+    # reclassify
+    in_array[in_array != rcl_value] = 0
+    in_array[in_array == rcl_value] = 1
+
+    if write_out:
+        driver = gdal.GetDriverByName(outFmt)
+        out_ds = driver.Create(outFn, in_band.XSize, in_band.YSize, 1,
+                               in_band.DataType)
+        out_ds.SetProjection(in_ds.GetProjection())
+        out_ds.SetGeoTransform(in_ds.GetGeoTransform())
+
+        out_ds.GetRasterBand(1).WriteArray(in_array)
+
+        # write the data to disk
+        out_ds.FlushCache()
+
+        # Compute statistics on each output band
+        # setting ComputeStatistics to false calculates stats on all pixels not estimates
+        out_ds.GetRasterBand(1).ComputeStatistics(False)
+
+        out_ds.BuildOverviews("average", [2, 4, 8, 16, 32])
+
+        out_ds = None
+
+    return in_array
+
+
+def raster_sum(inRstList, outFn, outFmt='GTiff'):
+    """Creates a raster stack from a list of rasters. Adapted from Chris Gerard's
+    book 'Geoprocessing with Python'. The out put data type is the same as the input data type.
+
+    :param str inRstList: List of rasters to stack.
     :param str outFmt: String specifying the input data format e.g. 'GTiff' or 'VRT'.
     :param str outFn: Filename output as str including directory else image will be
     written to current working directory.
-    :return: A raster file will be written to disk.
     """
     log = logging.getLogger(__name__)
-    # get input dataset info
-    in_ds = gdal.Open(inRst)
+    log.info('Starting raster sum function.')
+
+    # open 1st band to get info
+    in_ds = gdal.Open(inRstList[0])
     in_band = in_ds.GetRasterBand(1)
 
-    # create output settings
-    driver = gdal.GetDriverByName(inFmt)
+    # Get raster shape
+    rst_dim = (in_band.YSize, in_band.XSize)
+
+    # initiate empty array
+    empty_arr = np.empty(rst_dim, dtype=np.uint8)
+
+    for i, rst in enumerate(inRstList):
+        #Todo: Check that dimensions and shape of both arrays are the same in the first loop.
+        ds = gdal.Open(rst)
+        bnd = ds.GetRasterBand(1)
+        arr = bnd.ReadAsArray()
+        empty_arr = empty_arr + arr
+
+    # Create a 1 band GeoTiff with the same properties as the input raster
+    driver = gdal.GetDriverByName(outFmt)
     out_ds = driver.Create(outFn, in_band.XSize, in_band.YSize, 1,
                            in_band.DataType)
     out_ds.SetProjection(in_ds.GetProjection())
     out_ds.SetGeoTransform(in_ds.GetGeoTransform())
 
-    # calculate and out sum of input raster stack
-    out_ds.GetRasterBand(1).WriteArray((gdal.Open(inRst).ReadAsArray().sum())
+    out_ds.GetRasterBand(1).WriteArray(empty_arr)
 
     # write the data to disk
     out_ds.FlushCache()
 
-    # setting ComputeStatistics to false calculates stats on all pixels not estimates
-    out_ds.GetRasterBand(1).ComputeStatistics(False)
+    # Compute statistics on each output band setting ComputeStatistics to false calculates stats on all pixels
+    # not estimates
+    out_ds.GetRasterBand(i).ComputeStatistics(False)
+
     out_ds.BuildOverviews("average", [2, 4, 8, 16, 32])
 
-    del out_ds
+    out_ds = None
 
-    return print("Finished summing-up of {}".format(inRst))
+    log.info('Finished summing up of raster layers.')
+
