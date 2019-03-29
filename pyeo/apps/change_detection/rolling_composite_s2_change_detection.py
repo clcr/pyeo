@@ -51,6 +51,8 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--update', dest='do_update', action='store_true', default=False)
     parser.add_argument('-r', '--remove', dest='do_delete', action='store_true', default=False)
 
+    parser.add_argument('--skip_prob_image', dest="skip_prob_image", action="store_true", default=False)
+
     args = parser.parse_args()
 
     # If any processing step args are present, do not assume that we want to do all steps
@@ -88,6 +90,9 @@ if __name__ == "__main__":
     composite_l1_image_dir = os.path.join(project_root, r"composite/L1")
     composite_l2_image_dir = os.path.join(project_root, r"composite/L2")
     composite_merged_dir = os.path.join(project_root, r"composite/merged")
+
+    if args.skip_prob_image:
+        probability_image_dir = None
 
     if args.start_date == "LATEST":
         # This isn't nice, but returns the yyyymmdd string of the latest stacked image
