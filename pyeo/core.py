@@ -1963,7 +1963,7 @@ def raster_reclass_binary(img_path, rcl_value, outFn, outFmt='GTiff', write_out=
                                in_band.DataType)
         out_ds.SetProjection(in_ds.GetProjection())
         out_ds.SetGeoTransform(in_ds.GetGeoTransform())
-
+        # Todo: Check for existing files. Skip if exists or make overwrite optional.
         out_ds.GetRasterBand(1).WriteArray(in_array)
 
         # write the data to disk
@@ -2023,7 +2023,7 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
 
     # Compute statistics on each output band setting ComputeStatistics to false calculates stats on all pixels
     # not estimates
-    out_ds.GetRasterBand(i).ComputeStatistics(False)
+    out_ds.GetRasterBand(1).ComputeStatistics(False)
 
     out_ds.BuildOverviews("average", [2, 4, 8, 16, 32])
 
