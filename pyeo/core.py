@@ -722,8 +722,6 @@ def get_image_acquisition_time(image_name):
         return None
 
 
-
-
 def get_preceding_image_path(target_image_name, search_dir):
     """Gets the path to the image in search_dir preceding the image called image_name"""
     target_time = get_image_acquisition_time(target_image_name)
@@ -736,14 +734,12 @@ def get_preceding_image_path(target_image_name, search_dir):
     raise FileNotFoundError("No image older than {}".format(target_image_name))
 
 
-
 def is_tif(image_string):
     """Returns True if image ends with .tif"""
     if image_string.endswith(".tif"):
         return True
     else:
         return False
-
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
@@ -1011,7 +1007,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     out_raster_array = None
 
 
-def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff"):
+def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff", generate_date_image=False):
     """Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
     be a binary .msk file with the same path as their corresponding image. All images must have the same
     number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
@@ -1038,6 +1034,12 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
                                                                                           geometry_mode="union")))
     composite_image = create_new_image_from_polygon(out_bounds, composite_out_path, x_res, y_res, n_bands,
                                                     projection, format, datatype)
+
+    if generate_date_image:
+        time_out_path = composite_out_path.rsplit('.')[0]+"_dates.tif"
+        dates_image = create_matching_dataset(composite_image, time_out_path, bands=1, datatype=gdal.GDT_UInt32)
+        dates_array = dates_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
+
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
     if len(output_array.shape) == 2:
         output_array = np.expand_dims(output_array, 0)
@@ -1058,12 +1060,23 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
         in_masked = get_masked_array(in_raster, mask_paths[i])
         np.copyto(output_view, in_masked, where=np.logical_not(in_masked.mask))
 
+        # Save dates in date_image if needed
+        if generate_date_image:
+            dates_view = dates_array[y_min: y_max, x_min: x_max]
+            # Gets timestamp as integer in form yyyymmdd
+            date = np.uint32(get_sen_2_image_timestamp(in_raster.GetFileList()[0]).split("T")[0])
+            dates_view[np.logical_not(in_masked.mask[0, ...])] = date
+            dates_view = None
+
         # Deallocate
         output_view = None
         in_masked = None
 
     output_array = None
+    dates_array = None
+    dates_image = None
     composite_image = None
+
     log.info("Composite done")
     log.info("Creating composite mask at {}".format(composite_out_path.rsplit(".")[0]+".msk"))
     combine_masks(mask_paths, composite_out_path.rsplit(".")[0]+".msk", combination_func='or', geometry_func="union")
@@ -1107,7 +1120,7 @@ def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     return out_gt
 
 
-def composite_directory(image_dir, composite_out_dir, format="GTiff"):
+def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_date_images=False):
     """Composites every image in image_dir, assumes all have associated masks.  Will
      place a file named composite_[last image date].tif inside composite_out_dir"""
     log = logging.getLogger(__name__)
@@ -1117,7 +1130,7 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff"):
                           if image_name.endswith(".tif")]
     last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
     composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp))
-    composite_images_with_mask(sorted_image_paths, composite_out_path, format)
+    composite_images_with_mask(sorted_image_paths, composite_out_path, format, generate_date_image=generate_date_images)
 
 
 def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path):

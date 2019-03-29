@@ -120,7 +120,7 @@ def test_composite_images_with_mask():
     test_data = [r"test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
                  r"test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif"]
     out_file = r"test_outputs/composite_test.tif"
-    pyeo.composite_images_with_mask(test_data, out_file)
+    pyeo.composite_images_with_mask(test_data, out_file, generate_date_image=True)
     image = gdal.Open("test_outputs/composite_test.tif")
     assert image
     image_array = image.GetVirtualMemArray()
@@ -332,7 +332,7 @@ def test_composite_off_by_one():
     except FileNotFoundError:
         pass
     os.mkdir("test_outputs/off_by_one_error")
-    pyeo.composite_directory("test_data/off_by_one", "test_outputs/off_by_one_error")
+    pyeo.composite_directory("test_data/off_by_one", "test_outputs/off_by_one_error",generate_date_images=True)
 
 
 def test_mask_closure():

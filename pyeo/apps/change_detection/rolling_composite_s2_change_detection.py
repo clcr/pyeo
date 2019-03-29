@@ -51,6 +51,8 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--update', dest='do_update', action='store_true', default=False)
     parser.add_argument('-r', '--remove', dest='do_delete', action='store_true', default=False)
 
+    parser.add_argument('--skip_prob_image', dest="skip_prob_image", action="store_true", default=False)
+
     args = parser.parse_args()
 
     # If any processing step args are present, do not assume that we want to do all steps
@@ -89,6 +91,9 @@ if __name__ == "__main__":
     composite_l2_image_dir = os.path.join(project_root, r"composite/L2")
     composite_merged_dir = os.path.join(project_root, r"composite/merged")
 
+    if args.skip_prob_image:
+        probability_image_dir = None
+
     if args.start_date == "LATEST":
         # This isn't nice, but returns the yyyymmdd string of the latest stacked image
         start_date = pyeo.get_image_acquisition_time(pyeo.sort_by_timestamp(
@@ -120,7 +125,7 @@ if __name__ == "__main__":
             pyeo.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
                                         cloud_certainty_threshold, epsg=epsg, buffer_size=5)
         log.info("Building initial cloud-free composite")
-        pyeo.composite_directory(composite_merged_dir, composite_dir)
+        pyeo.composite_directory(composite_merged_dir, composite_dir, generate_date_images=True)
 
     # Query and download all images since last composite
     if args.do_download or do_all:
@@ -179,7 +184,8 @@ if __name__ == "__main__":
             log.info("Updating composite")
             new_composite_path = os.path.join(
                 composite_dir, "composite_{}.tif".format(pyeo.get_sen_2_image_timestamp(os.path.basename(image))))
-            pyeo.composite_images_with_mask((latest_composite_path, new_image_path), new_composite_path)
+            pyeo.composite_images_with_mask(
+                (latest_composite_path, new_image_path), new_composite_path, generate_date_image=True)
             latest_composite_path = new_composite_path
 
     log.info("***PROCESSING END***")
