@@ -384,7 +384,7 @@ def test_raster_reclass_binary():
 
 
 def test_raster_reclass_directory():
-    test_dir = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany'
+    test_dir = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/mt_elgon'
     rst_list = glob.glob(os.path.join(test_dir, '*.tif'))
     test_value = 1
     suffix = '_rcl.'
@@ -397,9 +397,10 @@ def test_raster_reclass_directory():
 
 
 def test_raster_sum():
-    test_dir = "/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany"
-    test_pattern = '*_T36NYF_*_rcl.tif'
-    fn = 'KEN_cherangany_forestChange_sum2018.tif'
+    test_dir = "/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/mt_elgon"
+    test_pattern = '*_T37MDR_*_rcl.tif'
+    tile_id = 'T37MDR'
+    fn = 'KEN_cherangany_' + tile_id + '_forestChange_sum2018.tif'
     out_fn = os.path.join(test_dir, fn)
     test_image_list = glob.glob(os.path.join(test_dir, test_pattern))
     pyeo.raster_sum(inRstList=test_image_list, outFn=out_fn)
@@ -409,4 +410,5 @@ if __name__ == "__main__":
     print(sys.path)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     log = pyeo.init_log("test_log.log")
-    test_raster_sum()
+    test_raster_reclass_directory()
+    # test_raster_sum()
