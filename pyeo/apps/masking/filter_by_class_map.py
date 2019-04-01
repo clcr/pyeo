@@ -20,4 +20,4 @@ if __name__ == "__main__":
 
     log = pyeo.init_log(args.log_path)
 
-    pyeo.filter_by_class_map(args.input_image, args.class_image, args.output)
+    pyeo.filter_by_class_map(args.input_image, args.class_image, args.output, args.filter_classes)
