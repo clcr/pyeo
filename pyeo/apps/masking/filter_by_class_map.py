@@ -14,7 +14,7 @@ if __name__ == "__main__":
     parser.add_argument("input_image")
     parser.add_argument("class_image")
     parser.add_argument("output")
-    parser.add_argument("filter_classes", dest="filter_classes", nargs="*", type=int)
+    parser.add_argument("filter_classes", nargs="*", type=int)
     parser.add_argument("-l", "--log_path", default=os.path.join(os.getcwd(), "comparison.log"))
     args = parser.parse_args()
 
