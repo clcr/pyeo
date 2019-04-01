@@ -2046,28 +2046,32 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
 
 
 
-def filter_by_class_map(filter_map_path, class_map_path, out_map_path, classes_of_interest):
+def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_interest, out_resolution=10):
     """Filters class_map_path for pixels in filter_map_path containing only classes_of_interest.
     Assumes that filter_map_path and class_map_path are same resolution and projection."""
     # TODO: put into proper place in core
     log = logging.getLogger(__name__)
-    log.info("Filtering {} using classes{} from map {}".format(class_map_path, classes_of_interest, filter_map_path))
+    log.info("Filtering {} using classes{} from map {}".format(class_map_path, classes_of_interest, image_path))
     with TemporaryDirectory() as td:
 
-        filter_mask_path = os.path.join(td, "filter_mask_path")
-        create_mask_from_class_map(filter_map_path, filter_mask_path, classes_of_interest, out_resolution=10)
+        binary_mask_path = os.path.join(td, "binary_mask.tif")
+        create_mask_from_class_map(class_map_path, binary_mask_path, classes_of_interest, out_resolution=out_resolution)
 
-        log.info("Mask created at {}, applying...".format(filter_mask_path))
-        class_map = gdal.Open(class_map_path)
+        log.info("Mask created at {}, applying...".format(binary_mask_path))
+        class_map = gdal.Open(binary_mask_path)
         class_array = class_map.GetVirtualMemArray()
-        filter_map = gdal.Open(filter_mask_path)
-        filter_array = filter_map.GetVirtualMemArray()
-        out_map = create_matching_dataset(class_map, out_map_path)
+
+        image_map = gdal.Open(image_path)
+        image_array = image_map.GetVirtualMemArray()
+        out_map = create_matching_dataset(image_map, out_map_path)
         out_array = out_map.GetVirtualMemArray(eAccess=gdal.GA_Update)
-        in_bounds = get_raster_bounds(class_map)
-        in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(filter_map, in_bounds)
-        filter_view = filter_array[in_y_min: in_y_max, in_x_min: in_x_max]
-        filtered_array = apply_array_image_mask(class_array, filter_view)
+        class_bounds = get_raster_bounds(class_map)
+        image_bounds = get_raster_bounds(image_map)
+        in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(image_map, class_bounds)
+        image_view = image_array[in_y_min: in_y_max, in_x_min: in_x_max]
+        class_x_min, class_x_max, class_y_min, class_y_max = pixel_bounds_from_polygon(class_map, image_bounds)
+        class_view = class_array[class_y_min: class_y_max, class_x_min: class_x_max]
+        filtered_array = apply_array_image_mask(class_view, image_view)
 
         np.copyto(out_array, filtered_array)
         out_array = None
