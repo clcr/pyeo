@@ -1036,7 +1036,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
                                                     projection, format, datatype)
 
     if generate_date_image:
-        time_out_path = composite_out_path.rsplit('.')[0]+"_dates.tif"
+        time_out_path = composite_out_path.rsplit('.')[0]+".dates"
         dates_image = create_matching_dataset(composite_image, time_out_path, bands=1, datatype=gdal.GDT_UInt32)
         dates_array = dates_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
 
