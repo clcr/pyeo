@@ -61,6 +61,7 @@ if __name__ == "__main__":
 
     conf = configparser.ConfigParser()
     conf.read(args.config_path)
+
     sen_user = conf['sent_2']['user']
     sen_pass = conf['sent_2']['pass']
     project_root = conf['forest_sentinel']['root_dir']
@@ -93,6 +94,7 @@ if __name__ == "__main__":
 
     if args.skip_prob_image:
         probability_image_dir = None
+
 
     if args.start_date == "LATEST":
         # This isn't nice, but returns the yyyymmdd string of the latest stacked image
@@ -159,6 +161,8 @@ if __name__ == "__main__":
             [image_name for image_name in os.listdir(merged_image_dir) if image_name.endswith(".tif")],
             recent_first=False
         )
+    if not images:
+        raise FileNotFoundError("No images found in {}. Did your preprocessing complete?".format(merged_image_dir))
     log.info("Images to process: {}".format(images))
 
     for image in images:

@@ -77,8 +77,8 @@ dependencies:
   - libxml2=2.9.8=h143f9aa_1005
   - libxslt=1.1.32=h4785a14_1002
   - lxml=4.3.0=py36h23eabaa_1000
-  - matplotlib=3.0.2=py36h8a2030e_1001
-  - matplotlib-base=3.0.2=py36h167e16e_1001
+  - matplotlib
+  - matplotlib-base
   - mkl_fft=1.0.10=py36_0
   - mkl_random=1.0.2=py36_0
   - more-itertools=4.3.0=py36_1000
