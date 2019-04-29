@@ -835,7 +835,8 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         log.error("Tiles  of the two images do not match. Aborted.")
 
 
-def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True, skip_if_exists=True):
+def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True, skip_if_exists=True,
+                               invert_stack = False):
     """Stacks an image with a cloud-free composite"""
     log = logging.getLogger(__name__)
     log.info("Stacking {} with composite {}".format(image_path, composite_path))
@@ -848,7 +849,10 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
     if os.path.exists(out_path) and os.path.exists(out_mask_path) and skip_if_exists:
         log.info("{} and mask exists, skipping".format(out_path))
         return out_path
-    stack_images([composite_path, image_path], out_path, geometry_mode="intersect")
+    to_be_stacked = [composite_path, image_path]
+    if invert_stack:
+        to_be_stacked.reverse()
+    stack_images(to_be_stacked, out_path, geometry_mode="intersect")
     if create_combined_mask:
         image_mask_path = get_mask_path(image_path)
         comp_mask_path = get_mask_path(composite_path)
