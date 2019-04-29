@@ -30,27 +30,28 @@ the basic GDAL/OGR/OSR stack.
 Installation
 ============
 
-With Git installed, :code:`cd` to an install location then run the following lines
+With Git and Miniconda or Anaconda installed, :code:`cd` to an install location then run the following lines
 
 .. code-block:: bash
 
    git clone https://github.com/clcr/pyeo.git
    cd pyeo
-   python setup.py install
-
-If you want to edit this code, run
-
-.. code-block:: bash
-
-   python setup.py devel
+   conda env create --file environment.yml --name pyeo_env
+   conda activate pyeo_env
 
 
-instead of :code:`install`
-To verify the installation, open a Python prompt and type
+Including Pyeo in your own code
+===============================
 
->>> import pyeo
+Include the following lines at the start of your Python scripts:
 
-You should get no errors.
+.. code-block:: python
+
+   import sys
+   sys.path.append("/path/to/pyeo")
+   import pyeo.core as pyeo
+
+You may see a warning about scikit versions; this is normal.
 
 Function reference
 ==================
@@ -61,6 +62,8 @@ At present, all processing code is located in pyeo/core.py.
 A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.
+
+Conven
 
 
 File structure and logging

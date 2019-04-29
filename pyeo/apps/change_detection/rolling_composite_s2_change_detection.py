@@ -59,7 +59,7 @@ if __name__ == "__main__":
     if (args.do_download or args.do_preprocess or args.do_merge or args.do_stack or args.do_classify) == True:
         do_all = False
 
-    conf = configparser.ConfigParser()
+    conf = configparser.ConfigParser(allow_no_value=False)
     conf.read(args.config_path)
 
     sen_user = conf['sent_2']['user']

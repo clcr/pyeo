@@ -167,6 +167,11 @@ def create_file_structure(root):
             pass
 
 
+def validate_config_file(config_path):
+    #TODO: fill
+    ...
+
+
 def read_aoi(aoi_path):
     """Opens the geojson file for the aoi. If FeatureCollection, return the first feature."""
     with open(aoi_path, 'r') as aoi_fp:
