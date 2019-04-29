@@ -1800,10 +1800,6 @@ def autochunk(dataset, mem_limit=None):
             return num_chunks
 
 
-def covert_image_format(image, format):
-    pass
-
-
 def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
                        apply_mask=False, out_type="GTiff", num_chunks=None):
     """
