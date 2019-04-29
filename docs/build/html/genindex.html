@@ -1,12 +1,10 @@
 
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Index &#8212; Pyeo  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +12,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -44,6 +42,7 @@
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
@@ -58,21 +57,29 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#pyeo.core.activate_and_dl_planet_item">activate_and_dl_planet_item() (in module pyeo.core)</a>
 </li>
-      <li><a href="index.html#pyeo.core.aggregate_and_mask_10m_bands">preprocess_sen2_images() (in module pyeo.core)</a>
+      <li><a href="index.html#pyeo.core.align_bounds_to_whole_number">align_bounds_to_whole_number() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.apply_array_image_mask">apply_array_image_mask() (in module pyeo.core)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#pyeo.core.apply_array_image_mask">apply_array_image_mask() (in module pyeo.core)</a>
+      <li><a href="index.html#pyeo.core.apply_fmask">apply_fmask() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.apply_sen2cor">apply_sen2cor() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.atmospheric_correction">atmospheric_correction() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.autochunk">autochunk() (in module pyeo.core)</a>
 </li>
   </ul></td>
 </tr></table>
 
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.buffer_mask_in_place">buffer_mask_in_place() (in module pyeo.core)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#pyeo.core.build_search_request">build_search_request() (in module pyeo.core)</a>
 </li>
@@ -82,11 +89,27 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.change_from_composite">change_from_composite() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.check_for_invalid_l1_data">check_for_invalid_l1_data() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.check_for_invalid_l2_data">check_for_invalid_l2_data() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.check_for_new_s2_data">check_for_new_s2_data() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.check_for_s2_data_by_date">check_for_s2_data_by_date() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.check_overlap">check_overlap() (in module pyeo.core)</a>
 </li>
+      <li><a href="index.html#pyeo.core.classify_directory">classify_directory() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.classify_image">classify_image() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.clean_aoi">clean_aoi() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.clean_l2_data">clean_l2_data() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.clean_l2_dir">clean_l2_dir() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.clip_raster">clip_raster() (in module pyeo.core)</a>
 </li>
@@ -94,19 +117,27 @@
 </li>
       <li><a href="index.html#pyeo.core.composite_directory">composite_directory() (in module pyeo.core)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#pyeo.core.composite_images_with_mask">composite_images_with_mask() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.create_file_structure">create_file_structure() (in module pyeo.core)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.create_mask_from_class_map">create_mask_from_class_map() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.create_mask_from_confidence_layer">create_mask_from_confidence_layer() (in module pyeo.core)</a>
 </li>
+      <li><a href="index.html#pyeo.core.create_mask_from_fmask">create_mask_from_fmask() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.create_mask_from_model">create_mask_from_model() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.create_mask_from_sen2cor_and_fmask">create_mask_from_sen2cor_and_fmask() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.create_matching_dataset">create_matching_dataset() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.create_model_for_region">create_model_for_region() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.create_model_from_signatures">create_model_from_signatures() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.create_new_image_from_polygon">create_new_image_from_polygon() (in module pyeo.core)</a>
 </li>
@@ -124,9 +155,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#pyeo.core.do_quick_search">do_quick_search() (in module pyeo.core)</a>
 </li>
+      <li><a href="index.html#pyeo.core.do_saved_search">do_saved_search() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.download_blob_from_google">download_blob_from_google() (in module pyeo.core)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#pyeo.core.do_saved_search">do_saved_search() (in module pyeo.core)</a>
+      <li><a href="index.html#pyeo.core.download_from_google_cloud">download_from_google_cloud() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.download_from_scihub">download_from_scihub() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.download_planet_image_on_day">download_planet_image_on_day() (in module pyeo.core)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -134,6 +173,14 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.filter_by_class_map">filter_by_class_map() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.flatten_probability_image">flatten_probability_image() (in module pyeo.core)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.floor_to_resolution">floor_to_resolution() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.ForestSentinelException">ForestSentinelException (class in pyeo.core)</a>
 </li>
   </ul></td>
@@ -152,9 +199,19 @@
 </li>
       <li><a href="index.html#pyeo.core.get_image_acquisition_time">get_image_acquisition_time() (in module pyeo.core)</a>
 </li>
+      <li><a href="index.html#pyeo.core.get_l1_safe_file">get_l1_safe_file() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_l2_safe_file">get_l2_safe_file() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.get_local_top_left">get_local_top_left() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.get_mask_path">get_mask_path() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_masked_array">get_masked_array() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_planet_product_path">get_planet_product_path() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_poly_bounding_rect">get_poly_bounding_rect() (in module pyeo.core)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -162,13 +219,25 @@
 </li>
       <li><a href="index.html#pyeo.core.get_poly_size">get_poly_size() (in module pyeo.core)</a>
 </li>
+      <li><a href="index.html#pyeo.core.get_preceding_image_path">get_preceding_image_path() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_pyeo_timestamp">get_pyeo_timestamp() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.get_raster_bounds">get_raster_bounds() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.get_raster_intersection">get_raster_intersection() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.get_raster_size">get_raster_size() (in module pyeo.core)</a>
 </li>
+      <li><a href="index.html#pyeo.core.get_sen_2_granule_id">get_sen_2_granule_id() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_sen_2_image_orbit">get_sen_2_image_orbit() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_sen_2_image_tile">get_sen_2_image_tile() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.get_sen_2_image_timestamp">get_sen_2_image_timestamp() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.get_sen_2_tiles">get_sen_2_tiles() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.get_training_data">get_training_data() (in module pyeo.core)</a>
 </li>
@@ -181,15 +250,29 @@
       <li><a href="index.html#pyeo.core.init_log">init_log() (in module pyeo.core)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.is_tif">is_tif() (in module pyeo.core)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.load_api_key">load_api_key() (in module pyeo.core)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="index.html#pyeo.core.multiple_intersection">multiple_intersection() (in module pyeo.core)</a>
+      <li><a href="index.html#pyeo.core.mosaic_images">mosaic_images() (in module pyeo.core)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.multiple_intersection">multiple_intersection() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.multiple_union">multiple_union() (in module pyeo.core)</a>
 </li>
   </ul></td>
@@ -212,10 +295,14 @@
 </li>
       <li><a href="index.html#pyeo.core.point_to_pixel_coordinates">point_to_pixel_coordinates() (in module pyeo.core)</a>
 </li>
-      <li><a href="index.html#module-pyeo.apps.change_detection.simple_s2_change_detection">pyeo.apps.change_detection.simple_s2_change_detection (module)</a>
+      <li><a href="index.html#pyeo.core.preprocess_sen2_images">preprocess_sen2_images() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.project_array">project_array() (in module pyeo.core)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#module-pyeo.apps.change_detection.simple_s2_change_detection">pyeo.apps.change_detection.simple_s2_change_detection (module)</a>
+</li>
       <li><a href="index.html#module-pyeo.apps.model_creation.create_model_from_shapefile_and_raster">pyeo.apps.model_creation.create_model_from_shapefile_and_raster (module)</a>
 </li>
       <li><a href="index.html#module-pyeo.apps.subprocessing.composite_directory">pyeo.apps.subprocessing.composite_directory (module)</a>
@@ -230,12 +317,26 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.raster_reclass_binary">raster_reclass_binary() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.raster_sum">raster_sum() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.raster_to_array">raster_to_array() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.read_aoi">read_aoi() (in module pyeo.core)</a>
 </li>
-      <li><a href="index.html#pyeo.core.resample_image_in_place">resample_image_in_place() (in module pyeo.core)</a>
+      <li><a href="index.html#pyeo.core.read_geojson">read_geojson() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.reproject_directory">reproject_directory() (in module pyeo.core)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#pyeo.core.reproject_geotransform">reproject_geotransform() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.reproject_image">reproject_image() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.resample_image_in_place">resample_image_in_place() (in module pyeo.core)</a>
+</li>
       <li><a href="index.html#pyeo.core.reshape_ml_out_to_raster">reshape_ml_out_to_raster() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.reshape_prob_out_to_raster">reshape_prob_out_to_raster() (in module pyeo.core)</a>
@@ -253,6 +354,8 @@
       <li><a href="index.html#pyeo.core.sort_by_timestamp">sort_by_timestamp() (in module pyeo.core)</a>
 </li>
       <li><a href="index.html#pyeo.core.stack_and_trim_images">stack_and_trim_images() (in module pyeo.core)</a>
+</li>
+      <li><a href="index.html#pyeo.core.stack_image_with_composite">stack_image_with_composite() (in module pyeo.core)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -293,7 +396,19 @@
         <div class="sphinxsidebarwrapper">
             <p class="logo"><a href="index.html">
               <img class="logo" src="_static/pyeologo_small.png" alt="Logo"/>
-            </a></p><div class="relations">
+            </a></p>
+<h1 class="logo"><a href="index.html">Pyeo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -306,12 +421,18 @@
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -320,8 +441,8 @@
       &copy;2018, John Roberts.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

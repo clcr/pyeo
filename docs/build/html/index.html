@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Welcome to Pyeo’s documentation! &#8212; Pyeo  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -13,7 +11,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -40,9 +38,9 @@
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </div>
 <div class="section" id="introduction">
@@ -98,6 +96,43 @@ Returns the log for the calling script</p>
 <dd><p>Opens the geojson file for the aoi. If FeatureCollection, return the first feature.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="pyeo.core.clean_aoi">
+<code class="descclassname">pyeo.core.</code><code class="descname">clean_aoi</code><span class="sig-paren">(</span><em>aoi_dir</em>, <em>images_to_keep=4</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.clean_aoi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
+composite directories. Will not affect the output folder.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_preceding_image_path">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_preceding_image_path</code><span class="sig-paren">(</span><em>target_image_name</em>, <em>search_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_preceding_image_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the path to the image in search_dir preceding the image called image_name</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_pyeo_timestamp">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_pyeo_timestamp</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_pyeo_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all timestamps in a Pyeo image.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.is_tif">
+<code class="descclassname">pyeo.core.</code><code class="descname">is_tif</code><span class="sig-paren">(</span><em>image_string</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.is_tif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if image ends with .tif</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.load_api_key">
+<code class="descclassname">pyeo.core.</code><code class="descname">load_api_key</code><span class="sig-paren">(</span><em>path_to_api</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.load_api_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an API key from a single-line text file containing that API</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.read_geojson">
+<code class="descclassname">pyeo.core.</code><code class="descname">read_geojson</code><span class="sig-paren">(</span><em>geojson_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.read_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a GeoJSON file into a GeoJSON object.</p>
+</dd></dl>
+
 </div></blockquote>
 </div>
 <div class="section" id="sentinel-2-data-acquisition">
@@ -114,21 +149,26 @@ Returns the log for the calling script</p>
 <code class="descclassname">pyeo.core.</code><code class="descname">sent2_query</code><span class="sig-paren">(</span><em>from geospatial_learn</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.sent2_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>From Geospatial Learn by Ciaran Robb, embedded here for portability.</p>
 <p>Produces a dict of sentinel-2 IDs and</p>
-<dl class="docutils">
-<dt>user <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd>username for esa hub</dd>
-<dt>passwd <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd>password for hub</dd>
-<dt>geojsonfile <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd>AOI polygon of interest in EPSG 4326</dd>
-<dt>start_date <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd>date of beginning of search</dd>
-<dt>end_date <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd>date of end of search</dd>
-<dt>cloud <span class="classifier-delimiter">:</span> <span class="classifier">string (optional)</span></dt>
-<dd>include a cloud filter in the search</dd>
+<dl class="simple">
+<dt>user<span class="classifier">string</span></dt><dd><p>username for esa hub</p>
+</dd>
+<dt>passwd<span class="classifier">string</span></dt><dd><p>password for hub</p>
+</dd>
+<dt>geojsonfile<span class="classifier">string</span></dt><dd><p>AOI polygon of interest in EPSG 4326</p>
+</dd>
+<dt>start_date<span class="classifier">string</span></dt><dd><p>date of beginning of search</p>
+</dd>
+<dt>end_date<span class="classifier">string</span></dt><dd><p>date of end of search</p>
+</dd>
+<dt>cloud<span class="classifier">string (optional)</span></dt><dd><p>include a cloud filter in the search</p>
+</dd>
 </dl>
 </dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.check_for_s2_data_by_date">
+<code class="descclassname">pyeo.core.</code><code class="descname">check_for_s2_data_by_date</code><span class="sig-paren">(</span><em>aoi_path</em>, <em>start_date</em>, <em>end_date</em>, <em>conf</em>, <em>cloud_cover=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.check_for_s2_data_by_date" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div></blockquote>
 </div>
@@ -136,27 +176,33 @@ Returns the log for the calling script</p>
 <h2>Planet data acquisition<a class="headerlink" href="#planet-data-acquisition" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><dl class="function">
+<dt id="pyeo.core.download_planet_image_on_day">
+<code class="descclassname">pyeo.core.</code><code class="descname">download_planet_image_on_day</code><span class="sig-paren">(</span><em>aoi_path</em>, <em>date</em>, <em>out_path</em>, <em>api_key</em>, <em>item_type='PSScene4Band'</em>, <em>search_name='auto'</em>, <em>asset_type='analytic'</em>, <em>threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.download_planet_image_on_day" title="Permalink to this definition">¶</a></dt>
+<dd><p>Queries and downloads all images on the date in the aoi given</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.core.planet_query">
 <code class="descclassname">pyeo.core.</code><code class="descname">planet_query</code><span class="sig-paren">(</span><em>aoi_path</em>, <em>start_date</em>, <em>end_date</em>, <em>out_path</em>, <em>api_key</em>, <em>item_type='PSScene4Band'</em>, <em>search_name='auto'</em>, <em>asset_type='analytic'</em>, <em>threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.planet_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads data from Planetlabs for a given time period in the given AOI</p>
-<dl class="docutils">
-<dt>aoi <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>Filepath of a single-polygon geojson containing the aoi</dd>
-<dt>start_date <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>the inclusive start of the time window in UTC format</dd>
-<dt>end_date <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>the inclusive end of the time window in UTC format</dd>
-<dt>out_path <span class="classifier-delimiter">:</span> <span class="classifier">filepath-like object</span></dt>
-<dd>A path to the output folder
-Any identically-named imagery will be overwritten</dd>
-<dt>item_type <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>Image type to download (see Planet API docs)</dd>
-<dt>search_name <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>A name to refer to the search (required for large searches)</dd>
-<dt>asset_type <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>Planet asset type to download (see Planet API docs)</dd>
-<dt>threads <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd>The number of downloads to perform concurrently</dd>
+<dl class="simple">
+<dt>aoi<span class="classifier">str</span></dt><dd><p>Filepath of a single-polygon geojson containing the aoi</p>
+</dd>
+<dt>start_date<span class="classifier">str</span></dt><dd><p>the inclusive start of the time window in UTC format</p>
+</dd>
+<dt>end_date<span class="classifier">str</span></dt><dd><p>the inclusive end of the time window in UTC format</p>
+</dd>
+<dt>out_path<span class="classifier">filepath-like object</span></dt><dd><p>A path to the output folder
+Any identically-named imagery will be overwritten</p>
+</dd>
+<dt>item_type<span class="classifier">str</span></dt><dd><p>Image type to download (see Planet API docs)</p>
+</dd>
+<dt>search_name<span class="classifier">str</span></dt><dd><p>A name to refer to the search (required for large searches)</p>
+</dd>
+<dt>asset_type<span class="classifier">str</span></dt><dd><p>Planet asset type to download (see Planet API docs)</p>
+</dd>
+<dt>threads<span class="classifier">int</span></dt><dd><p>The number of downloads to perform concurrently</p>
+</dd>
 </dl>
 <p>IMPORTANT: Will not run for searches returning greater than 250 items.</p>
 </dd></dl>
@@ -185,6 +231,34 @@ Any identically-named imagery will be overwritten</dd>
 <dd><p>Activates and downloads a single planet item</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="pyeo.core.get_planet_product_path">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_planet_product_path</code><span class="sig-paren">(</span><em>planet_dir</em>, <em>product</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_planet_product_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to a Planet product within a Planet directory</p>
+</dd></dl>
+
+</div></blockquote>
+</div>
+<div class="section" id="data-source-download-functions">
+<h2>Data source download functions<a class="headerlink" href="#data-source-download-functions" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><dl class="function">
+<dt id="pyeo.core.download_blob_from_google">
+<code class="descclassname">pyeo.core.</code><code class="descname">download_blob_from_google</code><span class="sig-paren">(</span><em>bucket</em>, <em>object_prefix</em>, <em>out_folder</em>, <em>s2_object</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.download_blob_from_google" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.download_from_google_cloud">
+<code class="descclassname">pyeo.core.</code><code class="descname">download_from_google_cloud</code><span class="sig-paren">(</span><em>product_ids</em>, <em>out_folder</em>, <em>redownload=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.download_from_google_cloud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Passed a list of S2 product ids , downloads them into out_for</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.download_from_scihub">
+<code class="descclassname">pyeo.core.</code><code class="descname">download_from_scihub</code><span class="sig-paren">(</span><em>product_uuid</em>, <em>out_folder</em>, <em>user</em>, <em>passwd</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.download_from_scihub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Downloads and unzips product_uuid from scihub</p>
+</dd></dl>
+
 </div></blockquote>
 </div>
 <div class="section" id="sentinel-2-preprocessing">
@@ -197,6 +271,12 @@ Any identically-named imagery will be overwritten</dd>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.core.apply_fmask">
+<code class="descclassname">pyeo.core.</code><code class="descname">apply_fmask</code><span class="sig-paren">(</span><em>in_safe_dir</em>, <em>out_file</em>, <em>fmask_command='fmask_sentinel2Stacked.py'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.apply_fmask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls fmask to create a new mask for L1 data</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.core.atmospheric_correction">
 <code class="descclassname">pyeo.core.</code><code class="descname">atmospheric_correction</code><span class="sig-paren">(</span><em>in_directory</em>, <em>out_directory</em>, <em>sen2cor_path</em>, <em>delete_unprocessed_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.atmospheric_correction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies Sen2cor cloud correction to level 1C images</p>
@@ -206,13 +286,13 @@ Any identically-named imagery will be overwritten</dd>
 <dt id="pyeo.core.sort_by_timestamp">
 <code class="descclassname">pyeo.core.</code><code class="descname">sort_by_timestamp</code><span class="sig-paren">(</span><em>strings</em>, <em>recent_first=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
-guarantee ordering of strings with the same timestamp.</p>
+guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.core.get_image_acquisition_time">
 <code class="descclassname">pyeo.core.</code><code class="descname">get_image_acquisition_time</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_image_acquisition_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the datetime object from a .safe filename of a planet image. No test.</p>
+<dd><p>Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present</p>
 </dd></dl>
 
 <dl class="function">
@@ -222,10 +302,10 @@ guarantee ordering of strings with the same timestamp.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyeo.core.aggregate_and_mask_10m_bands">
-<code class="descclassname">pyeo.core.</code><code class="descname">preprocess_sen2_images</code><span class="sig-paren">(</span><em>l2_dir</em>, <em>out_dir</em>, <em>l1_dir</em>, <em>cloud_threshold=60</em>, <em>buffer_size=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.aggregate_and_mask_10m_bands" title="Permalink to this definition">¶</a></dt>
-<dd><p>For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif
-and creates a cloudmask from the combined fmask and sen2cor cloudmasks.</p>
+<dt id="pyeo.core.preprocess_sen2_images">
+<code class="descclassname">pyeo.core.</code><code class="descname">preprocess_sen2_images</code><span class="sig-paren">(</span><em>l2_dir</em>, <em>out_dir</em>, <em>l1_dir</em>, <em>cloud_threshold=60</em>, <em>buffer_size=0</em>, <em>epsg=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.preprocess_sen2_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
+the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided</p>
 </dd></dl>
 
 <dl class="function">
@@ -238,6 +318,73 @@ and creates a cloudmask from the combined fmask and sen2cor cloudmasks.</p>
 <dt id="pyeo.core.get_sen_2_image_timestamp">
 <code class="descclassname">pyeo.core.</code><code class="descname">get_sen_2_image_timestamp</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_sen_2_image_timestamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the timestamps part of a Sentinel 2 image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.check_for_invalid_l1_data">
+<code class="descclassname">pyeo.core.</code><code class="descname">check_for_invalid_l1_data</code><span class="sig-paren">(</span><em>l1_SAFE_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.check_for_invalid_l1_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+an invalid SAFE directory; this will prevent disconnected files from being deleted.
+Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.check_for_invalid_l2_data">
+<code class="descclassname">pyeo.core.</code><code class="descname">check_for_invalid_l2_data</code><span class="sig-paren">(</span><em>l2_SAFE_file</em>, <em>resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.check_for_invalid_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
+an invalid SAFE directory; this will prevent disconnected files from being deleted.
+Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.clean_l2_data">
+<code class="descclassname">pyeo.core.</code><code class="descname">clean_l2_data</code><span class="sig-paren">(</span><em>l2_SAFE_file</em>, <em>resolution='10m'</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.clean_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes any directories that don’t have band 2, 3, 4 or 8 in the specified resolution folder
+If warning=True, prompts first.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.clean_l2_dir">
+<code class="descclassname">pyeo.core.</code><code class="descname">clean_l2_dir</code><span class="sig-paren">(</span><em>l2_dir</em>, <em>resolution='10m'</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.clean_l2_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls clean_l2_data on every SAFE file in l2_dir</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_l1_safe_file">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_l1_safe_file</code><span class="sig-paren">(</span><em>image_name</em>, <em>l1_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_l1_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+a filename</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_l2_safe_file">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_l2_safe_file</code><span class="sig-paren">(</span><em>image_name</em>, <em>l2_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_l2_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+a filename</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_sen_2_granule_id">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_sen_2_granule_id</code><span class="sig-paren">(</span><em>safe_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_sen_2_granule_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the unique ID of a Sentinel 2 granule from a SAFE directory path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_sen_2_image_orbit">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_sen_2_image_orbit</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_sen_2_image_orbit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the relative orbit number of a Sentinel 2 image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_sen_2_image_tile">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_sen_2_image_tile</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_sen_2_image_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tile number of a Sentinel 2 image or path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_sen_2_tiles">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_sen_2_tiles</code><span class="sig-paren">(</span><em>image_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_sen_2_tiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets the list of tiles present in the directory</p>
 </dd></dl>
 
 </div></blockquote>
@@ -258,20 +405,19 @@ Datatype is set from the first layer of in_dataset if unspecified</p>
 <dd><p>Creates new stacks with with adjacent image acquisition dates. Threshold; how small a part
 of the latest_image will be before it’s considered to be fully processed.
 New_image_name must exist inside image_dir.</p>
-<dl class="docutils">
-<dt>Step 1: Sort directory as follows:</dt>
-<dd>Relative Orbit number (RO4O), then Tile Number (T15PXT), then
+<dl class="simple">
+<dt>Step 1: Sort directory as follows:</dt><dd><p>Relative Orbit number (RO4O), then Tile Number (T15PXT), then
 Datatake sensing start date (YYYYMMDD) and time(THHMMSS).
-newest first.</dd>
-<dt>Step 2: For each tile number:</dt>
-<dd>new_data_polygon = bounds(new_image_name)</dd>
-<dt>Step 3: For each tiff image coverring that tile, work backwards in time:</dt>
-<dd><ol class="first last loweralpha simple">
-<li>Check if it intersects new_data_polygon</li>
-<li>If it does
+newest first.</p>
+</dd>
+<dt>Step 2: For each tile number:</dt><dd><p>new_data_polygon = bounds(new_image_name)</p>
+</dd>
+<dt>Step 3: For each tiff image coverring that tile, work backwards in time:</dt><dd><ol class="loweralpha simple">
+<li><p>Check if it intersects new_data_polygon</p></li>
+<li><p>If it does
 - add to a to_be_stacked list,
-- subtract it’s bounding box from new_data_polygon.</li>
-<li>If new_data_polygon drops having a total area less than threshold, stop.</li>
+- subtract it’s bounding box from new_data_polygon.</p></li>
+<li><p>If new_data_polygon drops having a total area less than threshold, stop.</p></li>
 </ol>
 </dd>
 </dl>
@@ -298,9 +444,15 @@ geometry_mode can be “union” or “intersect”</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.core.stack_image_with_composite">
+<code class="descclassname">pyeo.core.</code><code class="descname">stack_image_with_composite</code><span class="sig-paren">(</span><em>image_path</em>, <em>composite_path</em>, <em>out_dir</em>, <em>create_combined_mask=True</em>, <em>skip_if_exists=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.stack_image_with_composite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks an image with a cloud-free composite</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.core.get_raster_bounds">
 <code class="descclassname">pyeo.core.</code><code class="descname">get_raster_bounds</code><span class="sig-paren">(</span><em>raster</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_raster_bounds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a wkbPolygon geometry with the bounding rectangle of a raster calculate from its geotransform</p>
+<dd><p>Returns a wkbPolygon geometry with the bounding rectangle of a raster calculated from its geotransform</p>
 </dd></dl>
 
 <dl class="function">
@@ -317,7 +469,7 @@ geometry_mode can be “union” or “intersect”</p>
 
 <dl class="function">
 <dt id="pyeo.core.composite_images_with_mask">
-<code class="descclassname">pyeo.core.</code><code class="descname">composite_images_with_mask</code><span class="sig-paren">(</span><em>in_raster_path_list</em>, <em>composite_out_path</em>, <em>format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.composite_images_with_mask" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyeo.core.</code><code class="descname">composite_images_with_mask</code><span class="sig-paren">(</span><em>in_raster_path_list</em>, <em>composite_out_path</em>, <em>format='GTiff'</em>, <em>generate_date_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.composite_images_with_mask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
 be a binary .msk file with the same path as their corresponding image. All images must have the same
 number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
@@ -327,9 +479,102 @@ Will reproject images and masks if they do not match initial raster.</p>
 
 <dl class="function">
 <dt id="pyeo.core.composite_directory">
-<code class="descclassname">pyeo.core.</code><code class="descname">composite_directory</code><span class="sig-paren">(</span><em>image_dir</em>, <em>composite_out_dir</em>, <em>format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.composite_directory" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyeo.core.</code><code class="descname">composite_directory</code><span class="sig-paren">(</span><em>image_dir</em>, <em>composite_out_dir</em>, <em>format='GTiff'</em>, <em>generate_date_images=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.composite_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Composites every image in image_dir, assumes all have associated masks.  Will
 place a file named composite_[last image date].tif inside composite_out_dir</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.filter_by_class_map">
+<code class="descclassname">pyeo.core.</code><code class="descname">filter_by_class_map</code><span class="sig-paren">(</span><em>image_path</em>, <em>class_map_path</em>, <em>out_map_path</em>, <em>classes_of_interest</em>, <em>out_resolution=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.filter_by_class_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filters class_map_path for pixels in filter_map_path containing only classes_of_interest.
+Assumes that filter_map_path and class_map_path are same resolution and projection.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.mosaic_images">
+<code class="descclassname">pyeo.core.</code><code class="descname">mosaic_images</code><span class="sig-paren">(</span><em>raster_paths</em>, <em>out_raster_file</em>, <em>format='GTiff'</em>, <em>datatype=5</em>, <em>nodata=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.mosaic_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mosaics multiple images with the same number of layers into one single image. Overwrites
+overlapping pixels with the value furthest down raster_paths. Takes projection from the first
+raster.</p>
+<p>TODO: consider using GDAL:</p>
+<dl class="simple">
+<dt>gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*</dt><dd><p>[-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]
+[-ul_lr ulx uly lrx lry] [-init “value [value…]”]
+[-n nodata_value] [-a_nodata output_nodata_value]
+[-ot datatype] [-createonly] input_files</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.raster_reclass_binary">
+<code class="descclassname">pyeo.core.</code><code class="descname">raster_reclass_binary</code><span class="sig-paren">(</span><em>img_path</em>, <em>rcl_value</em>, <em>outFn</em>, <em>outFmt='GTiff'</em>, <em>write_out=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.raster_reclass_binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a raster and reclassifies the values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img_path</strong> (<em>str</em>) – Path to 1 band input  raster.</p></li>
+<li><p><strong>rcl_value</strong> (<em>int</em>) – Integer indication the value that should be reclassified to 1. All other values will be 0.</p></li>
+<li><p><strong>outFn</strong> (<em>str</em>) – Output file name.</p></li>
+<li><p><strong>outFmt</strong> (<em>str</em>) – Output format. Set to GTiff by default. Other GDAL options available.</p></li>
+<li><p><strong>write_out</strong> – Boolean. Set to True by default. Will write raster to disk. If False, only an array is returned</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Reclassifies numpy array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.raster_sum">
+<code class="descclassname">pyeo.core.</code><code class="descname">raster_sum</code><span class="sig-paren">(</span><em>inRstList</em>, <em>outFn</em>, <em>outFmt='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.raster_sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a raster stack from a list of rasters. Adapted from Chris Gerard’s
+book ‘Geoprocessing with Python’. The out put data type is the same as the input data type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRstList</strong> (<em>str</em>) – List of rasters to stack.</p></li>
+<li><p><strong>outFmt</strong> (<em>str</em>) – String specifying the input data format e.g. ‘GTiff’ or ‘VRT’.</p></li>
+<li><p><strong>outFn</strong> (<em>str</em>) – Filename output as str including directory else image will be</p></li>
+</ul>
+</dd>
+</dl>
+<p>written to current working directory.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.raster_to_array">
+<code class="descclassname">pyeo.core.</code><code class="descname">raster_to_array</code><span class="sig-paren">(</span><em>rst_pth</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.raster_to_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in a raster file and returns a N-dimensional array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rst_pth</strong> (<em>str</em>) – Path to input raster.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>N-dimensional array.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.reproject_directory">
+<code class="descclassname">pyeo.core.</code><code class="descname">reproject_directory</code><span class="sig-paren">(</span><em>in_dir</em>, <em>out_dir</em>, <em>new_projection</em>, <em>extension='.tif'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.reproject_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reprojects every file ending with extension to new_projection and saves in out_dir</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.reproject_image">
+<code class="descclassname">pyeo.core.</code><code class="descname">reproject_image</code><span class="sig-paren">(</span><em>in_raster</em>, <em>out_raster_path</em>, <em>new_projection</em>, <em>driver='GTiff'</em>, <em>memory=2000.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.reproject_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Will round projection
+back to whatever 2gb memory limit by default (because it works in most places)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.reproject_geotransform">
+<code class="descclassname">pyeo.core.</code><code class="descname">reproject_geotransform</code><span class="sig-paren">(</span><em>in_gt</em>, <em>old_proj_wkt</em>, <em>new_proj_wkt</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.reproject_geotransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reprojects a geotransform into a new projection.</p>
 </dd></dl>
 
 </div></blockquote>
@@ -383,6 +628,13 @@ place a file named composite_[last image date].tif inside composite_out_dir</p>
 <dt id="pyeo.core.get_poly_size">
 <code class="descclassname">pyeo.core.</code><code class="descname">get_poly_size</code><span class="sig-paren">(</span><em>poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_poly_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the width and height of a bounding box of a polygon. No test</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.get_poly_bounding_rect">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_poly_bounding_rect</code><span class="sig-paren">(</span><em>poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_poly_bounding_rect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a polygon of the bounding rectangle of input polygon. Can probably be combined with
+get_aoi_bounds.</p>
 </dd></dl>
 
 </div></blockquote>
@@ -448,6 +700,18 @@ Will np.floor() when converting from geo to pixel units and np.absolute() y reso
 <dd><p>Gets the top-left corner of raster1 in the array of raster 2; WRITE A TEST FOR THIS</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="pyeo.core.align_bounds_to_whole_number">
+<code class="descclassname">pyeo.core.</code><code class="descname">align_bounds_to_whole_number</code><span class="sig-paren">(</span><em>bounding_box</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.align_bounds_to_whole_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shifts bounding_box polygon so that its size becomes a whole number</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.floor_to_resolution">
+<code class="descclassname">pyeo.core.</code><code class="descname">floor_to_resolution</code><span class="sig-paren">(</span><em>input</em>, <em>resolution</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.floor_to_resolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns input rounded DOWN to the nearest multiple of resolution.</p>
+</dd></dl>
+
 </div></blockquote>
 </div>
 <div class="section" id="masking-functions">
@@ -467,6 +731,22 @@ cloud_conf_threshold = 0, use scl mask else use confidence image</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.core.create_mask_from_class_map">
+<code class="descclassname">pyeo.core.</code><code class="descname">create_mask_from_class_map</code><span class="sig-paren">(</span><em>class_map_path</em>, <em>out_path</em>, <em>classes_of_interest</em>, <em>buffer_size=0</em>, <em>out_resolution=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.create_mask_from_class_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a mask from a classification mask: 1 for each pixel containing one of classes_of_interest, otherwise 0</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.create_mask_from_fmask">
+<code class="descclassname">pyeo.core.</code><code class="descname">create_mask_from_fmask</code><span class="sig-paren">(</span><em>in_l1_dir</em>, <em>out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.create_mask_from_fmask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.create_mask_from_sen2cor_and_fmask">
+<code class="descclassname">pyeo.core.</code><code class="descname">create_mask_from_sen2cor_and_fmask</code><span class="sig-paren">(</span><em>l1_dir</em>, <em>l2_dir</em>, <em>out_mask_path</em>, <em>buffer_size=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.create_mask_from_sen2cor_and_fmask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="pyeo.core.get_mask_path">
 <code class="descclassname">pyeo.core.</code><code class="descname">get_mask_path</code><span class="sig-paren">(</span><em>image_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_mask_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>A gdal mask is an image with the same name as the image it’s masking, but with a .msk extension</p>
@@ -480,9 +760,29 @@ Python true or false. Also assumes that all masks are the same projection for no
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.core.get_masked_array">
+<code class="descclassname">pyeo.core.</code><code class="descname">get_masked_array</code><span class="sig-paren">(</span><em>raster</em>, <em>mask_path</em>, <em>fill_value=-9999</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_masked_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a numpy.mask masked array for the raster.
+Masked pixels are FALSE in the mask image (multiplicateive map),
+but TRUE in the masked_array (nodata pixels)</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.core.apply_array_image_mask">
-<code class="descclassname">pyeo.core.</code><code class="descname">apply_array_image_mask</code><span class="sig-paren">(</span><em>array</em>, <em>mask</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.apply_array_image_mask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Applies a mask of (y,x) to an image array of (bands, y, x), returning a ma.array object</p>
+<code class="descclassname">pyeo.core.</code><code class="descname">apply_array_image_mask</code><span class="sig-paren">(</span><em>array</em>, <em>mask</em>, <em>fill_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.apply_array_image_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.buffer_mask_in_place">
+<code class="descclassname">pyeo.core.</code><code class="descname">buffer_mask_in_place</code><span class="sig-paren">(</span><em>mask_path</em>, <em>buffer_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.buffer_mask_in_place" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expands a mask in-place, overwriting the previous mask</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.project_array">
+<code class="descclassname">pyeo.core.</code><code class="descname">project_array</code><span class="sig-paren">(</span><em>array_in</em>, <em>depth</em>, <em>axis</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.project_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new array with an extra dimension. Data is projected along that dimension to depth.</p>
 </dd></dl>
 
 </div></blockquote>
@@ -492,10 +792,23 @@ Python true or false. Also assumes that all masks are the same projection for no
 <blockquote>
 <div><dl class="function">
 <dt id="pyeo.core.classify_image">
-<code class="descclassname">pyeo.core.</code><code class="descname">classify_image</code><span class="sig-paren">(</span><em>image_path</em>, <em>model_path</em>, <em>class_out_dir</em>, <em>prob_out_dir=None</em>, <em>apply_mask=False</em>, <em>out_type='GTiff'</em>, <em>num_chunks=10</em>, <em>nodata=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.classify_image" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyeo.core.</code><code class="descname">classify_image</code><span class="sig-paren">(</span><em>image_path</em>, <em>model_path</em>, <em>class_out_path</em>, <em>prob_out_path=None</em>, <em>apply_mask=False</em>, <em>out_type='GTiff'</em>, <em>num_chunks=10</em>, <em>nodata=0</em>, <em>skip_existing=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.classify_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classifies change between two stacked images.
 Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
 TODO: This has gotten very hairy; rewrite when you update this to take generic models</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.classify_directory">
+<code class="descclassname">pyeo.core.</code><code class="descname">classify_directory</code><span class="sig-paren">(</span><em>in_dir</em>, <em>model_path</em>, <em>class_out_dir</em>, <em>prob_out_dir</em>, <em>apply_mask=False</em>, <em>out_type='GTiff'</em>, <em>num_chunks=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.classify_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classifies every .tif in in_dir using model at model_path. Outputs are saved
+in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.change_from_composite">
+<code class="descclassname">pyeo.core.</code><code class="descname">change_from_composite</code><span class="sig-paren">(</span><em>image_path</em>, <em>composite_path</em>, <em>model_path</em>, <em>class_out_path</em>, <em>prob_out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.change_from_composite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a change map comparing an image with a composite</p>
 </dd></dl>
 
 <dl class="function">
@@ -532,6 +845,11 @@ At present, the model is an ExtraTreesClassifier arrived at by tpot; see tpot_cl
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.core.create_model_from_signatures">
+<code class="descclassname">pyeo.core.</code><code class="descname">create_model_from_signatures</code><span class="sig-paren">(</span><em>sig_csv_path</em>, <em>model_out</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.create_model_from_signatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="pyeo.core.get_training_data">
 <code class="descclassname">pyeo.core.</code><code class="descname">get_training_data</code><span class="sig-paren">(</span><em>image_path</em>, <em>shape_path</em>, <em>attribute='CODE'</em>, <em>shape_projection_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.get_training_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given an image and a shapefile with categories, return x and y suitable
@@ -539,7 +857,22 @@ for feeding into random_forest.fit.
 Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED ‘0’
 WRITE A TEST FOR THIS TOO; if this goes wrong, it’ll go wrong quietly and in a way that’ll cause the most issues</p>
 <blockquote>
-<div>further on down the line.</div></blockquote>
+<div><p>further on down the line.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.flatten_probability_image">
+<code class="descclassname">pyeo.core.</code><code class="descname">flatten_probability_image</code><span class="sig-paren">(</span><em>prob_image</em>, <em>out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.flatten_probability_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a single-band raster containing the highest certainties in a input probablility raster</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.core.autochunk">
+<code class="descclassname">pyeo.core.</code><code class="descname">autochunk</code><span class="sig-paren">(</span><em>dataset</em>, <em>mem_limit=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.core.autochunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the number of chunks to break a dataset into without a memory error.
+We want to break the dataset into as few chunks as possible without going over mem_limit.
+mem_limit defaults to total amount of RAM available on machine if not specified</p>
 </dd></dl>
 
 </div></blockquote>
@@ -596,7 +929,8 @@ of something like ‘class_id’, as an integer, and set that value to the class
 to the shapefile and raster in the associated model_creation.ini file, along with a path to where you want to
 store the completed model (as a .pkl file) and the name of the field used to identify the polygons (“class_id”</p>
 <blockquote>
-<div>in this example).</div></blockquote>
+<div><p>in this example).</p>
+</div></blockquote>
 <p><em>Do not make class_id = 0 in any training polygon; it will be ignored if you do</em></p>
 <p><em>At present, the raster must be projected in EPSG 4326</em></p>
 <p>For example: if you want to make a model that classifies forest and water in an image, draw some polygons
@@ -628,7 +962,8 @@ the way through will be 0 at present (nodata to be implemented).</p>
 <div><span class="target" id="module-pyeo.apps.subprocessing.extract_signatures"></span><p>Command line application for extracting signatures from a .tif
 file and a folder containing a .shp of the same name. Example of use:</p>
 <blockquote>
-<div>python extract_signatures.py in_ras ras1.tif ras2.tif out sigs.csv</div></blockquote>
+<div><p>python extract_signatures.py in_ras ras1.tif ras2.tif out sigs.csv</p>
+</div></blockquote>
 </div></blockquote>
 </div>
 </div>
@@ -643,33 +978,17 @@ file and a folder containing a .shp of the same name. Example of use:</p>
             <p class="logo"><a href="#">
               <img class="logo" src="_static/pyeologo_small.png" alt="Logo"/>
             </a></p>
-  <h3><a href="#">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Welcome to Pyeo’s documentation!</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-<li><a class="reference internal" href="#introduction">Introduction</a></li>
-<li><a class="reference internal" href="#installation">Installation</a></li>
-<li><a class="reference internal" href="#module-pyeo.core">Function reference</a><ul>
-<li><a class="reference internal" href="#file-structure-and-logging">File structure and logging</a></li>
-<li><a class="reference internal" href="#sentinel-2-data-acquisition">Sentinel 2 data acquisition</a></li>
-<li><a class="reference internal" href="#planet-data-acquisition">Planet data acquisition</a></li>
-<li><a class="reference internal" href="#sentinel-2-preprocessing">Sentinel 2 preprocessing</a></li>
-<li><a class="reference internal" href="#raster-processing">Raster processing</a></li>
-<li><a class="reference internal" href="#geometry-processing">Geometry processing</a></li>
-<li><a class="reference internal" href="#raster-geometry-interactions">Raster/Geometry interactions</a></li>
-<li><a class="reference internal" href="#masking-functions">Masking functions</a></li>
-<li><a class="reference internal" href="#machine-learning-functions">Machine learning functions</a></li>
-<li><a class="reference internal" href="#exception-objects">Exception objects</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#example-scripts">Example scripts</a><ul>
-<li><a class="reference internal" href="#simple-s2-change-detection-py">simple_s2_change_detection.py</a></li>
-<li><a class="reference internal" href="#create-model-from-shapefile-and-raster-py">create_model_from_shapefile_and_raster.py</a></li>
-<li><a class="reference internal" href="#composite-directory-py">composite_directory.py</a></li>
-<li><a class="reference internal" href="#extract-signatures-py">extract_signatures.py</a></li>
-</ul>
-</li>
-</ul>
+<h1 class="logo"><a href="#">Pyeo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -677,25 +996,24 @@ file and a folder containing a .shp of the same name. Example of use:</p>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/index.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -704,8 +1022,8 @@ file and a folder containing a .shp of the same name. Example of use:</p>
       &copy;2018, John Roberts.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/index.rst.txt"
