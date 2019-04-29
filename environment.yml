@@ -43,7 +43,7 @@ dependencies:
   - gtk2=2.24.31=h5baeb44_1000
   - harfbuzz=1.9.0=he243708_1001
   - hdf4=4.2.13=h9a582f1_1002
-  - hdf5=1.10.4=nompi_h11e915b_1105
+  - hdf5
   - icu=58.2=hf484d3e_1000
   - idna=2.8=py36_1000
   - imageio=2.4.1=py36_1000
