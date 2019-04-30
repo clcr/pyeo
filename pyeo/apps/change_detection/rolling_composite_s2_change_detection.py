@@ -42,6 +42,9 @@ if __name__ == "__main__":
                              "config file.")
     parser.add_argument("--chunks", dest="num_chunks", type=int, default=10, help="Sets the number of chunks to split "
                                                                                   "images to in ml processing")
+    parser.add_argument('--download_source', default="scihub", help="Sets the download source, can be scihub"
+                                                                    "(default) or aws")
+
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
     parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
@@ -59,7 +62,7 @@ if __name__ == "__main__":
     if (args.do_download or args.do_preprocess or args.do_merge or args.do_stack or args.do_classify) == True:
         do_all = False
 
-    conf = configparser.ConfigParser(allow_no_value=False)
+    conf = configparser.ConfigParser(allow_no_value=True)
     conf.read(args.config_path)
 
     sen_user = conf['sent_2']['user']
@@ -116,8 +119,8 @@ if __name__ == "__main__":
                 composite_start_date, composite_end_date, cloud_cover))
             composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
                                                              conf, cloud_cover=cloud_cover)
-            pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir, source='scihub',
-                                  user=sen_user, passwd=sen_pass)
+            pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir,
+                                  source=args.download_source, user=sen_user, passwd=sen_pass)
         if args.do_preprocess or do_all:
             log.info("Preprocessing composite products")
             pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
@@ -133,7 +136,7 @@ if __name__ == "__main__":
     if args.do_download or do_all:
         products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=cloud_cover)
         log.info("Downloading")
-        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, "scihub", user=sen_user, passwd=sen_pass)
+        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, args.download_source, user=sen_user, passwd=sen_pass)
 
     # Atmospheric correction
     if args.do_preprocess or do_all:
