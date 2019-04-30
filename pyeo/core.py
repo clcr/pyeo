@@ -77,7 +77,7 @@ class FMaskException(ForestSentinelException):
     pass
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, product="S2MSI1C"):
     """
 
 
@@ -120,7 +120,8 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
                          date=(start_date, end_date), platformname="Sentinel-2",
-                         cloudcoverpercentage="[0 TO {}]".format(cloud))
+                         cloudcoverpercentage="[0 TO {}]".format(cloud),
+                         producttype=product)
     return products
 
 
