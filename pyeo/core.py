@@ -181,29 +181,6 @@ def read_aoi(aoi_path):
         return aoi_dict
 
 
-def check_for_new_s2_data(aoi_path, aoi_image_dir, conf):
-    """Checks the S2 API for new data; if it's there, return the result"""
-    # set up API for query
-    log = logging.getLogger(__name__)
-    user = conf['sent_2']['user']
-    password = conf['sent_2']['pass']
-    # Get last downloaded map date
-    file_list = os.listdir(aoi_image_dir)
-    datetime_regex = r"\d{8}T\d{6}"     # Regex that matches an S2 timestamp
-    date_matches = re.finditer(datetime_regex, file_list.__str__())
-    try:
-        dates = [dt.datetime.strptime(date.group(0), '%Y%m%dT%H%M%S') for date in date_matches]
-        last_date = max(dates)
-        # Do the query
-        result = sent2_query(user, password, aoi_path,
-                             last_date.isoformat(timespec='seconds')+'Z',
-                             dt.datetime.today().isoformat(timespec='seconds')+'Z')
-        return result
-    except ValueError:
-        log.error("aoi_image_dir empty, please add a starting image")
-        sys.exit(1)
-
-
 def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
     log = logging.getLogger(__name__)
     log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
