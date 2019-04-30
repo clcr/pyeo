@@ -44,6 +44,9 @@ if __name__ == "__main__":
                                                                                   "images to in ml processing")
     parser.add_argument('--download_source', default="scihub", help="Sets the download source, can be scihub"
                                                                     "(default) or aws")
+    parser.add_argument('--flip_stacks', action='store_true', default=False,
+                        help="If present, stasks the classification stack as new(bgr), old(bgr). Default is"
+                             "old(bgr), new(bgr). For compatability with old models.")
 
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
@@ -176,7 +179,8 @@ if __name__ == "__main__":
         if args.do_stack or do_all:
             latest_composite_path = pyeo.get_preceding_image_path(new_image_path, composite_dir)
             log.info("Stacking {} with composite {}".format(new_image_path, latest_composite_path))
-            new_stack_path = pyeo.stack_image_with_composite(new_image_path, latest_composite_path, stacked_image_dir)
+            new_stack_path = pyeo.stack_image_with_composite(new_image_path, latest_composite_path, stacked_image_dir,
+                                                             invert_stack=args.flip_stack)
 
         # Classify with composite
         if args.do_classify or do_all:
