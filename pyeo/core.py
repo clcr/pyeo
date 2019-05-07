@@ -205,13 +205,16 @@ def filter_non_matching_s2_data(query_output):
     #    Intake date (FIRST timestamp)
     #    Orbit number (Rxxx)
     #    Granule ID (Txxaaa)
-    # So if we succeviely partition the query output by those, it should eventually shake down into a set of lists
-    # with either 1 or 2 members each
+    # So if we succeviely partition the query by
+    sorted_query = sorted(query_output.values(), key=get_query_granule)
+    granule_groups = {str(key): list(group) for key, group in itertools.groupby(sorted_query, key=get_query_granule)}
+    gran_date_groups = {}
+    for granule, item_list in granule_groups.items():
+        item_list.sort(key=get_query_datatake)
+        gran_date_groups.update(
+            {str(granule)+str(key): list(group) for key, group in itertools.groupby(item_list, key=get_query_datatake)})
+    pass
 
-    filter_funcs = [get_query_datatake, get_query_granule]
-    latest_partitioned_dict = {}
-    for func in filter_funcs:
-        sorted_query = sorted(query_output.values(), key=func)
 
 
 def get_query_datatake(query_item):
