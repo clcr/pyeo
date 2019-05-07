@@ -77,7 +77,7 @@ class FMaskException(ForestSentinelException):
     pass
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, product="S2MSI1C"):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
 
 
@@ -123,8 +123,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, produ
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
                          date=(start_date, end_date), platformname="Sentinel-2",
-                         cloudcoverpercentage="[0 TO {}]".format(cloud),
-                         producttype=product)
+                         cloudcoverpercentage="[0 TO {}]".format(cloud))
     return products
 
 
@@ -195,6 +194,10 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
     result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp, cloud=cloud_cover)
     log.info("Search returned {} images".format(len(result)))
     return result
+
+
+def filter_non_matching_s2_data():
+    """Removes any L2/L1 query, """
 
 
 def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passwd=None):
