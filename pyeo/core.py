@@ -196,8 +196,29 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
     return result
 
 
-def filter_non_matching_s2_data():
-    """Removes any L2/L1 query, """
+def filter_non_matching_s2_data(query_output):
+    """Removes any L2/L1 product that does not have a corresponding L1/L2 data"""
+
+    # A L1 and L2 image are related iff the following fields match:
+    #    Satellite (S2[A|B])
+    #    Intake date (FIRST timestamp)
+    #    Orbit number (Rxxx)
+    #    Granule ID (Txxaaa)
+
+    l1_image_ids = []
+    l2_image_ids = []
+    for image in query_output.values():
+        safe_name = image["identifier"]
+        if "L1C" in safe_name:
+            l1_image_ids.append(safe_name)
+        elif "L2A" in safe_name:
+            l2_image_ids.append(safe_name)
+
+
+def get_granule_identifiers(safe_product_id):
+    """Returns the parts of a S2 name that uniquely identify that granulate at a moment in time"""
+    satellite, _, intake_date, _, orbit_number, granule, _ = safe_product_id.split('_')
+    return satellite, intake_date, orbit_number, granule
 
 
 def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passwd=None):
@@ -549,7 +570,7 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
     Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
     log = logging.getLogger(__name__)
     if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
-        log.info("{} is not a valid L2 file")
+        log.info("{} does not exist.".format(l2_SAFE_file))
         return 2
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
@@ -566,7 +587,7 @@ def check_for_invalid_l1_data(l1_SAFE_file):
     Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
     log = logging.getLogger(__name__)
     if not l1_SAFE_file.endswith(".SAFE") or "L1C" not in l1_SAFE_file:
-        log.info("{} is not a valid L1 file")
+        log.info("{} does not exist.".format(l1_SAFE_file))
         return 2
     log.info("Checking {} for incomplete imagery".format(l1_SAFE_file))
     granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_*.jp2"

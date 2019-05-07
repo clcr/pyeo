@@ -32,6 +32,7 @@ import numpy as np
 import pytest
 import configparser
 import glob
+from sklearn.externals import joblib
 
 gdal.UseExceptions()
 
@@ -405,6 +406,11 @@ def test_raster_sum():
     test_image_list = glob.glob(os.path.join(test_dir, test_pattern))
     pyeo.raster_sum(inRstList=test_image_list, outFn=out_fn)
 
+
+def test_list_filter():
+    input = joblib.load("test_data/test_query.pkl")
+    out = pyeo.filter_non_matching_s2_data(input)
+    assert len(out) == 5
 
 if __name__ == "__main__":
     print(sys.path)
