@@ -203,12 +203,12 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
 
     for image_uuid in new_data:
 
-        if new_data[image_uuid]['identifier'].contains('L1C'):
+        if 'L1C' in new_data[image_uuid]['identifier']:
             out_path = os.path.join(l1_dir, new_data[image_uuid]['identifier'])
             if check_for_invalid_l1_data(out_path) == 1:
                 log.info("L1 imagery exists, skipping download")
                 continue
-        elif new_data[image_uuid]['identifier'].contains('L2A'):
+        elif 'L2A' in new_data[image_uuid]['identifier']:
             out_path = os.path.join(l2_dir, new_data[image_uuid]['identifier'])
             if check_for_invalid_l2_data(out_path) == 1:
                 log.info("L2 imagery exists, skipping download")
