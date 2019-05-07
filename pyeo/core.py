@@ -25,6 +25,7 @@ import joblib
 import shutil
 import zipfile
 import matplotlib.pyplot as plt
+import itertools
 
 import json
 import csv
@@ -198,22 +199,29 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
 
 def filter_non_matching_s2_data(query_output):
     """Removes any L2/L1 product that does not have a corresponding L1/L2 data"""
-
+    # Here be algorithms
     # A L1 and L2 image are related iff the following fields match:
     #    Satellite (S2[A|B])
     #    Intake date (FIRST timestamp)
     #    Orbit number (Rxxx)
     #    Granule ID (Txxaaa)
+    # So if we succeviely partition the query output by those, it should eventually shake down into a set of lists
+    # with either 1 or 2 members each
 
-    l1_image_ids = []
-    l2_image_ids = []
-    for image in query_output.values():
-        safe_name = image["identifier"]
-        if "L1C" in safe_name:
-            l1_image_ids.append(safe_name)
-        elif "L2A" in safe_name:
-            l2_image_ids.append(safe_name)
+    filter_funcs = [get_query_datatake, get_query_granule]
+    latest_partitioned_dict = {}
+    for func in filter_funcs:
+        sorted_query = sorted(query_output.values(), key=func)
 
+
+def get_query_datatake(query_item):
+    return query_item['beginposition']
+
+def get_query_granule(query_item):
+    return query_item["title"].split("_")[5]
+
+def get_query_level(query_item):
+    return query_item["processinglevel"]
 
 def get_granule_identifiers(safe_product_id):
     """Returns the parts of a S2 name that uniquely identify that granulate at a moment in time"""
