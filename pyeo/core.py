@@ -205,15 +205,23 @@ def filter_non_matching_s2_data(query_output):
     #    Intake date (FIRST timestamp)
     #    Orbit number (Rxxx)
     #    Granule ID (Txxaaa)
-    # So if we succeviely partition the query by
+    # So if we succeviely partition the query, we should get a set of products with either 1 or
+    # 2 entries per granule / timestamp combination
     sorted_query = sorted(query_output.values(), key=get_query_granule)
     granule_groups = {str(key): list(group) for key, group in itertools.groupby(sorted_query, key=get_query_granule)}
-    gran_date_groups = {}
+    granule_date_groups = {}
+
+    # Partition as above.
+    # We can probably expand this to arbitrary lengths of queries. If you catch me doing this, please restrain me.
     for granule, item_list in granule_groups.items():
         item_list.sort(key=get_query_datatake)
-        gran_date_groups.update(
+        granule_date_groups.update(
             {str(granule)+str(key): list(group) for key, group in itertools.groupby(item_list, key=get_query_datatake)})
-    pass
+
+    # On debug inspection, turns out sometimes S2 products get replicated. Lets filter those.
+    for image_set in granule_date_groups.values():
+        if sum(1 for image in image_set if get_query_level(image) == "Level2") <= 2:
+            image_set.sort(key=get_)
 
 
 
@@ -225,6 +233,9 @@ def get_query_granule(query_item):
 
 def get_query_level(query_item):
     return query_item["processinglevel"]
+
+def get_query_processing_time(query_item):
+    return query_item["endposition"]
 
 def get_granule_identifiers(safe_product_id):
     """Returns the parts of a S2 name that uniquely identify that granulate at a moment in time"""
