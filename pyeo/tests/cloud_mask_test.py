@@ -55,8 +55,7 @@ def test_combination_mask():
     pyeo.create_mask_from_sen2cor_and_fmask(
         "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
         "test_data/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
-        "test_outputs/masks/combined_mask.tif"
-    )
+        "test_outputs/masks/combined_mask.tif")
 
 
 def test_mask_joining():

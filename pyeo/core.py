@@ -110,6 +110,9 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, produ
     cloud : string (optional)
             include a cloud filter in the search
 
+    product : string (optional)
+            Product type for Sentinel 2. Valid values are S2MSI1C and S2MS2Ap
+
 
     """
     ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
@@ -194,28 +197,33 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
     return result
 
 
-def download_s2_data(new_data, out_folder, l2_dir=None, source='scihub', user=None, passwd=None):
-    """Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2. If l2_dir is given,
-    will check that directory for existing imagery and skip if exists."""
+def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passwd=None):
+    """Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2."""
     log = logging.getLogger(__name__)
+
     for image_uuid in new_data:
-        l1_path = os.path.join(out_folder, new_data[image_uuid]['identifier'])
-        if check_for_invalid_l1_data(l1_path) == 1:
-            log.info("L1 imagery exists, skipping download")
-            continue
-        if l2_dir:
-            l2_path = os.path.join(l2_dir, new_data[image_uuid]['identifier'].replace("MSIL1C", "MSIL2A")+".SAFE")
-            log.info("Checking {} for existing L2 imagery".format(l2_path))
-            if os.path.isdir(l2_path):
-                log.info("L2 imagery exists, skipping download.")
+
+        if new_data[image_uuid]['identifier'].contains('L1C'):
+            out_path = os.path.join(l1_dir, new_data[image_uuid]['identifier'])
+            if check_for_invalid_l1_data(out_path) == 1:
+                log.info("L1 imagery exists, skipping download")
                 continue
-        log.info("Downloading {} from {}".format(new_data[image_uuid]['identifier'], source))
+        elif new_data[image_uuid]['identifier'].contains('L2A'):
+            out_path = os.path.join(l2_dir, new_data[image_uuid]['identifier'])
+            if check_for_invalid_l2_data(out_path) == 1:
+                log.info("L2 imagery exists, skipping download")
+                continue
+        else:
+            log.error("{} is not a Sentinel 2 product")
+            raise BadDataSourceExpection
+
+        log.info("Downloading {} from {} to {}".format(new_data[image_uuid]['identifier'], source, out_path))
         if source=='aws':
-            download_safe_format(product_id=new_data[image_uuid]['identifier'], folder=out_folder)
+            download_safe_format(product_id=new_data[image_uuid]['identifier'], folder=out_path)
         elif source=='google':
-            download_from_google_cloud([new_data[image_uuid]['identifier']], out_folder=out_folder)
+            download_from_google_cloud([new_data[image_uuid]['identifier']], out_folder=out_path)
         elif source=="scihub":
-            download_from_scihub(image_uuid, out_folder, user, passwd)
+            download_from_scihub(image_uuid, out_path, user, passwd)
         else:
             log.error("Invalid data source; valid values are 'aws', 'google' and 'scihub'")
             raise BadDataSourceExpection
@@ -285,7 +293,7 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
 #     retry=tenacity.retry_if_exception_type(ServiceUnavailable)
 # )
 def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
-
+    log = logging.getLogger(__name__)
     blob = bucket.get_blob(s2_object.name)
     object_out_path = os.path.join(
         os.path.abspath(out_folder),
@@ -295,7 +303,6 @@ def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
     log.info("Downloading from {} to {}".format(s2_object, object_out_path))
     with open(object_out_path, 'w+b') as f:
         blob.download_to_file(f)
-
 
 
 def load_api_key(path_to_api):
@@ -709,7 +716,7 @@ def get_image_acquisition_time(image_name):
 def get_preceding_image_path(target_image_name, search_dir):
     """Gets the path to the image in search_dir preceding the image called image_name"""
     target_time = get_image_acquisition_time(target_image_name)
-    image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=True) # Sort image list newest first
+    image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=True)  # Sort image list newest first
     image_paths = filter(is_tif, image_paths)
     for image_path in image_paths:   # Walk through newest to oldest
         accq_time = get_image_acquisition_time(image_path)   # Get this image time
@@ -855,7 +862,7 @@ def get_l1_safe_file(image_name, l1_dir):
 
 
 def get_l2_safe_file(image_name, l2_dir):
-    """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+    """Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
     a filename"""
     timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
     granule = get_sen_2_image_tile(os.path.basename(image_name))
@@ -1519,12 +1526,12 @@ def create_mask_from_fmask(in_l1_dir, out_path):
         resample_image_in_place(out_path, 10)
 
 
-def create_mask_from_sen2cor_and_fmask(l1_dir, l2_dir, out_mask_path, buffer_size=0):
+def create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, out_mask_path, buffer_size=0):
     with TemporaryDirectory() as td:
         s2c_mask_path = os.path.join(td, "s2_mask.tif")
         fmask_mask_path = os.path.join(td, "fmask.tif")
-        create_mask_from_confidence_layer(l2_dir, s2c_mask_path, buffer_size=buffer_size)
-        create_mask_from_fmask(l1_dir, fmask_mask_path)
+        create_mask_from_confidence_layer(l2_safe_file, s2c_mask_path, buffer_size=buffer_size)
+        create_mask_from_fmask(l1_safe_file, fmask_mask_path)
         combine_masks([s2c_mask_path, fmask_mask_path], out_mask_path, combination_func="and", geometry_func="union")
 
 
@@ -2000,7 +2007,7 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
     empty_arr = np.empty(rst_dim, dtype=np.uint8)
 
     for i, rst in enumerate(inRstList):
-        #Todo: Check that dimensions and shape of both arrays are the same in the first loop.
+        # Todo: Check that dimensions and shape of both arrays are the same in the first loop.
         ds = gdal.Open(rst)
         bnd = ds.GetRasterBand(1)
         arr = bnd.ReadAsArray()
@@ -2027,7 +2034,6 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
     out_ds = None
 
     log.info('Finished summing up of raster layers.')
-
 
 
 def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_interest, out_resolution=10):
