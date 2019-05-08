@@ -219,26 +219,34 @@ def filter_non_matching_s2_data(query_output):
             {str(granule)+str(key): list(group) for key, group in itertools.groupby(item_list, key=get_query_datatake)})
 
     # On debug inspection, turns out sometimes S2 products get replicated. Lets filter those.
-    for image_set in granule_date_groups.values():
+    out_set = {}
+    for key, image_set in granule_date_groups.items():
         #if sum(1 for image in image_set if get_query_level(image) == "Level-2A") <= 2:
             #list(filter(lambda x: get_query_level(x) == "Level-2A", image_set)).sort(key=get_query_processing_time)[0].pop()
-        if not(sum(1 for image in image_set if get_query_level(image) == "Level-2A") == 1 \
+        if (sum(1 for image in image_set if get_query_level(image) == "Level-2A") == 1
         and sum(1 for image in image_set if get_query_level(image) == "Level-1C") == 1):
-            image_set.pop()
-    return image_set
+            out_set.update({image["uuid"]: image for image in image_set})
+
+    #Now rebuild into uuid:data_object format
+    return out_set
+
 
 def get_query_datatake(query_item):
     return query_item['beginposition']
 
+
 def get_query_granule(query_item):
     return query_item["title"].split("_")[5]
+
 
 def get_query_processing_time(query_item):
     ingestion_string = query_item["title"].split("_")[6]
     return dt.datetime.strptime(ingestion_string, "%Y%m%dT%H%M%S")
 
+
 def get_query_level(query_item):
     return query_item["processinglevel"]
+
 
 def get_granule_identifiers(safe_product_id):
     """Returns the parts of a S2 name that uniquely identify that granulate at a moment in time"""

@@ -410,7 +410,7 @@ def test_raster_sum():
 def test_list_filter():
     input = joblib.load("test_data/test_query.pkl")
     out = pyeo.filter_non_matching_s2_data(input)
-    assert len(out) == 5
+    assert len(out) == 10
 
 if __name__ == "__main__":
     print(sys.path)
