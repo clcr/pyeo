@@ -170,7 +170,7 @@ def create_file_structure(root):
 
 def validate_config_file(config_path):
     #TODO: fill
-    ...
+    pass
 
 
 def read_aoi(aoi_path):
