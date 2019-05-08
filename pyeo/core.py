@@ -1005,7 +1005,7 @@ def stack_images(raster_paths, out_raster_path,
                     in_y_min: in_y_max,
                     in_x_min: in_x_max
                     ]
-        np.copyto(out_raster_view, in_raster_view)
+        out_raster_view[...] = in_raster_view
         out_raster_view = None
         in_raster_view = None
         present_layer += in_raster.RasterCount
