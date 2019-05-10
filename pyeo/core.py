@@ -1771,7 +1771,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     n_samples = image_array.shape[0]  # gives x * y dimension of the whole image
     if 0 in image_array:  # a quick pre-check
         good_samples = image_array[np.all(image_array != nodata, axis=1), :]
-        good_indices = [i for (i, j) in enumerate(image_array) if np.all(j != nodata)] # This is slowing things down too much
+        good_indices = [i for (i, j) in enumerate(image_array) if np.all(j != nodata)] # This is slowing things down too much. Maybe move into chunked section?
         n_good_samples = len(good_samples)
     else:
         good_samples = image_array
