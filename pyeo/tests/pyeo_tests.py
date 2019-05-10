@@ -1,8 +1,9 @@
-import os
+import os, sys
 from tempfile import TemporaryDirectory
 import numpy as np
 import gdal, ogr
-from .context import core as pyeo
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
+import pyeo.core as pyeo
 
 
 # see conftest.py for definition of managed_multiple_geotiff_dir
@@ -173,7 +174,7 @@ def test_get_training_data(managed_ml_geotiff_dir):
     training_image = os.path.join(test_dir.path, "training_image")
     training_shapes = os.path.join(test_dir.path, "training_shape/geometry.shp")
     out = pyeo.get_training_data(training_image, training_shapes)
-    assert out.shape == (2, 100)
+    assert out[0].shape == (2, 100)
 
 
 def test_sort_by_timestamp():
@@ -184,5 +185,9 @@ def test_sort_by_timestamp():
         image_1 = os.path.join(td, r"S2A_MSIL1C_20180703T073611_N0206_R092_T37NBA_20180703T094637.SAFE")
         input = [image_2, image_3, image_4, image_1]
         target = [image_1, image_2, image_3, image_4]
-        out_paths = pyeo.sort_by_timestamp(input)
+        out_paths = pyeo.sort_by_s2_timestamp(input)
         assert out_paths == target
+
+
+#def test_combine_masks_or():
+#    with Tempor

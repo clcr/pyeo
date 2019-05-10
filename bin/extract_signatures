@@ -1,0 +1,5 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+python "$PYEO"/pyeo/apps/subprocessing/extract_signatures.py "$@"

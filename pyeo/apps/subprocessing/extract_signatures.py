@@ -1,26 +1,32 @@
-import submodules as pc
+"""Command line application for extracting signatures from a .tif
+ file and a folder containing a .shp of the same name. Example of use:
+    python extract_signatures.py in_ras ras1.tif ras2.tif out sigs.csv
+ """
+
+import os, sys
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
+import pyeo.core as pc
 import csv
 import os
 import glob
 import numpy as np
+import argparse
 
-path_to_region = r"/home/ubuntu/caqueta/training_data"
+if __name__ == "__main__":
 
-image_glob = os.path.join(path_to_region, r"*.tif")
-image_list = glob.glob(image_glob)
-#image_list = [r"/home/ubuntu/caqueta/training_data/colombia_cartagena__20170302_20161222.tif"]
+    parser = argparse.ArgumentParser(description='Extracts the signatures from a list of .tif files')
+    parser.add_argument('in_ras', action='store', help="List of tif files to read", nargs="+")
+    parser.add_argument("out", action='store', help="Path of the output .csv file")
+    args = parser.parse_args()
 
+    for training_image_file_path in args.in_ras:
+        training_image_folder, training_image_name = os.path.split(training_image_file_path)
+        training_image_name = training_image_name[:-4]  # Strip the file extension
+        shape_path = os.path.join(training_image_folder, training_image_name, training_image_name + '.shp')
+        this_training_data, this_classes = pc.get_training_data(training_image_file_path, shape_path)
 
-for training_image_file_path in image_list:
-    training_image_folder, training_image_name = os.path.split(training_image_file_path)
-    training_image_name = training_image_name[:-4]  # Strip the file extension
-    shape_path = os.path.join(training_image_folder, training_image_name, training_image_name + '.shp')
-    this_training_data, this_classes = pc.get_training_data(training_image_file_path, shape_path)
+        sigs=np.vstack((this_classes, this_training_data.T))
 
-    sigs=np.vstack((this_classes, this_training_data.T))
-
-    sig_out_path = r"/home/ubuntu/caqueta/training_data/signatures/{}_signatures.csv".format(training_image_name)
-
-    with open(sig_out_path, 'w', newline='') as outfile:
-        writer = csv.writer(outfile)
-        writer.writerows(sigs.T)
+        with open(args.out, 'w', newline='') as outfile:
+            writer = csv.writer(outfile)
+            writer.writerows(sigs.T)

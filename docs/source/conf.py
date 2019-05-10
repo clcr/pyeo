@@ -106,6 +106,8 @@ html_static_path = ['static']
 #
 # html_sidebars = {}
 
+# The logo
+html_logo = r"../../pyeo/assets/pyeologo_small.png"
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

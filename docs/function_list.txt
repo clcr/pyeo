@@ -11,7 +11,7 @@ File structure and logging
 
 Sentinel 2 data acquisition 
   check_for_new_s2_data
-  download_new_s2_data
+  download_s2_data
   sent2_query (from geospatial_learn)
 
 Planet data acquisition
@@ -27,7 +27,7 @@ Sentinel 2 preprocessing
   sort_by_timestamp
   get_image_acquisition_time
   open_dataset_from_safe
-  aggregate_and_mask_10m_bands
+  preprocess_sen2_images
   stack_sentinel_2_bands
   get_sen_2_image_timestamp
 
@@ -63,7 +63,7 @@ Raster/Geometry interactions
   get_local_top_left
 
 Masking functions
-  create_cloud_mask
+  create_mask_from_model
   create_mask_from_confidence_layer
   get_mask_path
   combine_masks

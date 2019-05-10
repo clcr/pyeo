@@ -102,8 +102,18 @@ ENV/
 
 # Pycharm
 .idea/*
+
+# Kate
+**.kate-swp
+
+# Pyeo
 /pyeo/conf.ini
 /pyeo/apps/change_detection/local_profile.ini
 !docs/build/
 !docs/build/html/
-!docs/build/html/static
+!docs/build/html/_static
+/pyeo/tests/test_data/
+/pyeo/tests/test_outputs/
+/pyeo/tests/*.img*
+/pyeo/tests/*.vrt
+**.zip

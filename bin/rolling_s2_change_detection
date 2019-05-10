@@ -1,0 +1,5 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+python "$PYEO"/pyeo/apps/change_detection/rolling_composite_s2_change_detection.py "$@"

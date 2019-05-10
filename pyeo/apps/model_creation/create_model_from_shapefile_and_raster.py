@@ -21,7 +21,8 @@ At present, the model created is a balanced random forest classifier; there are 
 to take the model as an augment, but these are not yet implemented.
 
 You can call this script from the command with a .ini file as an argument"""
-
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import pyeo.core as pc
 import configparser
 import argparse
@@ -48,9 +49,8 @@ if __name__=="__main__":
 
     # This will be changed in the near future as I'm planning to refactor core soon
     #  to make the ML model building functions more granular
-    learning_data, classes = pc.get_training_data(training_shape_path, training_raster_path, class_field)
+    learning_data, classes = pc.get_training_data(training_raster_path, training_shape_path, class_field)
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
     model.fit(learning_data, classes)
     joblib.dump(model, model_out_path)
-

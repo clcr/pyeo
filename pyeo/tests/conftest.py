@@ -77,10 +77,10 @@ class TestGeodataManager:
         self.images.append(new_image)
         self.image_paths.append(path)
 
-    def create_temp_shp(self, name):
+    def create_100x100_shp(self, name):
         """Cretes  a shapefile with a vector layer named "geometry" containing a 100mx100m square , top left corner
         being at wgs coords 10,10.
-        This polygon has a field, 'class' with a value of 3."""
+        This polygon has a field, 'class' with a value of 3. Left in for back-compatability"""
         # TODO Generalise this
         vector_file = os.path.join(self.temp_dir.name, name)
         shape_driver = ogr.GetDriverByName("ESRI Shapefile")  # Depreciated; replace at some point
@@ -105,6 +105,30 @@ class TestGeodataManager:
         vector_data_source.FlushCache()
         self.vectors.append(vector_data_source)  # Check this is the right thing to be saving here
         self.vector_paths.append(vector_file)
+
+
+    def create_temp_shape(self, name, point_list):
+        vector_file = os.path.join(self.temp_dir.name, name)
+        shape_driver = ogr.GetDriverByName("ESRI Shapefile")  # Depreciated; replace at some point
+        vector_data_source = shape_driver.CreateDataSource(vector_file)
+        vector_layer = vector_data_source.CreateLayer("geometry", self.srs, geom_type=ogr.wkbPolygon)
+        ring = ogr.Geometry(ogr.wkbLinearRing)
+        for point in point_list:
+            ring.AddPoint(point[0], point[1])
+        poly = ogr.Geometry(ogr.wkbPolygon)
+        poly.AddGeometry(ring)
+        vector_feature_definition = vector_layer.GetLayerDefn()
+        vector_feature = ogr.Feature(vector_feature_definition)
+        vector_feature.SetGeometry(poly)
+        vector_layer.CreateFeature(vector_feature)
+        vector_layer.CreateField(ogr.FieldDefn("class", ogr.OFTInteger))
+        feature = ogr.Feature(vector_layer.GetLayerDefn())
+        feature.SetField("class", 3)
+
+        vector_data_source.FlushCache()
+        self.vectors.append(vector_data_source)  # Check this is the right thing to be saving here
+        self.vector_paths.append(vector_file)
+
 
     def __init__(self, srs=4326):
         self.srs = osr.SpatialReference()
@@ -150,7 +174,7 @@ def managed_geotiff_shapefile_dir():
                            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]], dtype=np.byte)
         tgm.create_temp_tiff("temp.tif", np.transpose(array, (0, 2, 1)))
-        tgm.create_temp_shp("temp.shp")
+        tgm.create_100x100_shp("temp.shp")
         yield tgm
 
 
@@ -192,7 +216,7 @@ def managed_noncontiguous_geotiff_dir():
     test_data = np.array(range(660))
     test_data = test_data.reshape([5, 11, 12])
     with TestGeodataManager() as tgm:
-        tgm.create_temp_shp("aoi")
+        tgm.create_100x100_shp("aoi")
         tgm.create_temp_tiff(name="se_test", content=test_data, geotransform=(10, 10, 0, 10, 0, -10))
         tgm.create_temp_tiff(name="ne_test", content=test_data, geotransform=(0, 10, 0, 0, 0, -10))
         yield tgm
@@ -209,7 +233,7 @@ def managed_ml_geotiff_dir():
             for x in range(10):
                 test_data[:, y, x] = x*12 + y
         tgm.create_temp_tiff(name="training_image", content=test_data)
-        tgm.create_temp_shp("training_shape")
+        tgm.create_100x100_shp("training_shape")
         yield tgm
 
 
