@@ -50,6 +50,8 @@ if __name__ == "__main__":
     parser.add_argument('--download_l2_data', action='store_true', default=False,
                         help="If present, skips sen2cor and instead downloads every image in the query with"
                              "both a L1 and L2 product")
+    parser.add_argument('--build_prob_image', action='store_true', default=False,
+                        help="If present, build a confidence map of pixels. These tend to be large.")
 
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
@@ -197,7 +199,10 @@ if __name__ == "__main__":
         if args.do_classify or do_all:
             log.info("Classifying with composite")
             new_class_image = os.path.join(catagorised_image_dir, "class_{}".format(os.path.basename(new_stack_path)))
-            new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
+            if args.build_prob_image:
+                new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
+            else:
+                new_prob_image = None
             pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10,
                                 skip_existing=True, apply_mask=True)
 
