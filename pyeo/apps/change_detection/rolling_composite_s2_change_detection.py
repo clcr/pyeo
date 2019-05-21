@@ -47,6 +47,11 @@ if __name__ == "__main__":
     parser.add_argument('--flip_stacks', action='store_true', default=False,
                         help="If present, stasks the classification stack as new(bgr), old(bgr). Default is"
                              "old(bgr), new(bgr). For compatability with old models.")
+    parser.add_argument('--download_l2_data', action='store_true', default=False,
+                        help="If present, skips sen2cor and instead downloads every image in the query with"
+                             "both a L1 and L2 product")
+    parser.add_argument('--build_prob_image', action='store_true', default=False,
+                        help="If present, build a confidence map of pixels. These tend to be large.")
 
     parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
     parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
@@ -122,9 +127,13 @@ if __name__ == "__main__":
                 composite_start_date, composite_end_date, cloud_cover))
             composite_products = pyeo.check_for_s2_data_by_date(aoi_path, composite_start_date, composite_end_date,
                                                              conf, cloud_cover=cloud_cover)
+            if args.download_l2_data:
+                log.info("Filtering query results for matching L1 and L2 products")
+                composite_products = pyeo.filter_non_matching_s2_data(composite_products)
+                log.info("{} products remain".format(len(composite_products)))
             pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir,
                                   source=args.download_source, user=sen_user, passwd=sen_pass)
-        if args.do_preprocess or do_all:
+        if args.do_preprocess or do_all and not args.download_l2_data:
             log.info("Preprocessing composite products")
             pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
                                         delete_unprocessed_image=False)
@@ -138,11 +147,15 @@ if __name__ == "__main__":
     # Query and download all images since last composite
     if args.do_download or do_all:
         products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=cloud_cover)
+        if args.download_l2_data:
+            log.info("Filtering query results for matching L1 and L2 products")
+            products = pyeo.filter_non_matching_s2_data(products)
+            log.info("{} products remain".format(len(products)))
         log.info("Downloading")
         pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, args.download_source, user=sen_user, passwd=sen_pass)
 
     # Atmospheric correction
-    if args.do_preprocess or do_all:
+    if args.do_preprocess or do_all and not args.download_l2_data:
         log.info("Applying sen2cor")
         pyeo.atmospheric_correction(l1_image_dir, l2_image_dir, sen2cor_path, delete_unprocessed_image=False)
 
@@ -180,13 +193,16 @@ if __name__ == "__main__":
             latest_composite_path = pyeo.get_preceding_image_path(new_image_path, composite_dir)
             log.info("Stacking {} with composite {}".format(new_image_path, latest_composite_path))
             new_stack_path = pyeo.stack_image_with_composite(new_image_path, latest_composite_path, stacked_image_dir,
-                                                             invert_stack=args.flip_stack)
+                                                             invert_stack=args.flip_stacks)
 
         # Classify with composite
         if args.do_classify or do_all:
             log.info("Classifying with composite")
             new_class_image = os.path.join(catagorised_image_dir, "class_{}".format(os.path.basename(new_stack_path)))
-            new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
+            if args.build_prob_image:
+                new_prob_image = os.path.join(probability_image_dir, "prob_{}".format(os.path.basename(new_stack_path)))
+            else:
+                new_prob_image = None
             pyeo.classify_image(new_stack_path, model_path, new_class_image, new_prob_image, num_chunks=10,
                                 skip_existing=True, apply_mask=True)
 
