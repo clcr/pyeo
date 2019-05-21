@@ -1511,19 +1511,6 @@ def get_poly_size(poly):
     return out
 
 
-<<<<<<< HEAD
-def create_cloud_mask(image_path, mask_out_path, model_nodata = 1):
-
-    log = logging.getLogger(__name__)
-    log.info("Building cloud mask for {}".format(image_path))
-    mask_path = get_mask_path(image_path)
-    classify_image(image_path, model_path, mask_path, None)
-    mask = gdal.Open(mask_path, gdal.GA_Update)
-    mask.SetNoDataValue(model_nodata)
-    mask = None
-    log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
-    return mask_path
-=======
 def get_poly_bounding_rect(poly):
     """Returns a polygon of the bounding rectangle of input polygon. Can probably be combined with
     get_aoi_bounds."""
@@ -1560,7 +1547,6 @@ def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10,
             buffer_mask_in_place(mask_path, buffer_size)
         log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
         return mask_path
->>>>>>> origin/master
 
 
 def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_threshold=0, buffer_size=3):
@@ -1765,11 +1751,6 @@ def apply_array_image_mask(array, mask, fill_value=0):
     return np.where(stacked_mask == 1, array, fill_value)
 
 
-<<<<<<< HEAD
-def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2,mask_tif=''):
-    """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
-    with a ~15GB machine)"""
-=======
 def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
                    apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0, skip_existing = False):
     """
@@ -1777,7 +1758,6 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
->>>>>>> origin/master
     log = logging.getLogger(__name__)
     if skip_existing:
         log.info("Checking for existing classification {}".format(class_out_path))
@@ -1787,11 +1767,6 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     log.info("Classifying file: {}".format(image_path))
     log.info("Saved model     : {}".format(model_path))
     image = gdal.Open(image_path)
-<<<<<<< HEAD
-    model = joblib.load(model_path)
-    map_out_image = create_matching_dataset(image, class_out_dir)
-    #prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
-=======
     if num_chunks == None:
         log.info("No chunk size given, attempting autochunk.")
         num_chunks = autochunk(image)
@@ -1810,12 +1785,11 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
             log.warning("Model has no n_classes_ attribute (known issue with GridSearch)")
         prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
         log.info("Created probability image file: {}".format(prob_out_path))
->>>>>>> origin/master
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
 
     if apply_mask:
-        mask_path = mask_tif
+        mask_path = get_mask_path(image_path)
         log.info("Applying mask at {}".format(mask_path))
         mask = gdal.Open(mask_path)
         mask_array = mask.GetVirtualMemArray()
@@ -1827,32 +1801,6 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     # at this point, image_array has dimensions [band, y, x]
     log.info("Reshaping image from GDAL to Scikit-Learn dimensions")
     image_array = reshape_raster_for_ml(image_array)
-<<<<<<< HEAD
-    n_samples = image_array.shape[0]
-    classes = np.empty(n_samples, dtype=np.int16)
-    #probs = np.zeros((n_samples, model.n_classes_), dtype=np.float32)
-    if n_samples % num_chunks != 0:
-        raise ForestSentinelException("Please pick a chunk size that divides evenly")
-    chunk_size = int(n_samples / num_chunks)
-    for chunk_id in range(num_chunks):
-        log.info("Processing chunk {}".format(chunk_id))
-        chunk_view = image_array[
-            chunk_id*chunk_size: chunk_id * chunk_size + chunk_size, :
-        ]
-        out_view = classes[
-            chunk_id * chunk_size: chunk_id * chunk_size + chunk_size
-        ]
-     #   prob_view = probs[
-     #       chunk_id * chunk_size: chunk_id * chunk_size + chunk_size, :
-     #   ]
-        out_view[:] = model.predict(chunk_view)
-      #  prob_view[:, :] = model.predict_proba(chunk_view)
-    map_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :] = reshape_ml_out_to_raster(classes, image.RasterXSize, image.RasterYSize)
-    #prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = reshape_prob_out_to_raster(probs, image.RasterXSize, image.RasterYSize)
-    map_out_image = None
-    prob_out_image = None
-    return class_out_dir, prob_out_path
-=======
     # Now it has dimensions [x * y, band] as needed for Scikit-Learn
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
@@ -1887,7 +1835,6 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
         #indices_view = good_indices[offset : offset + chunk_size]
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
->>>>>>> origin/master
 
         if prob_out_path:
             log.info("   Calculating probabilities")
@@ -1984,7 +1931,7 @@ def reshape_prob_out_to_raster(probs, width, height):
     return image_array
 
 
-def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attribute="CODE",stat_out = True, plot_stat= False):
+def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attribute="CODE"):
     """Returns a trained random forest model from the training data. This
     assumes that image and model are in the same directory, with a shapefile.
     Give training_image_path a path to a list of .tif files. See spec in the R drive for data structure.
@@ -2047,9 +1994,6 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
         score_file.write(str(scores))
 
 
-<<<<<<< HEAD
-def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id = 4326, all_touched = True):
-=======
 def create_model_from_signatures(sig_csv_path, model_out):
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
@@ -2058,15 +2002,13 @@ def create_model_from_signatures(sig_csv_path, model_out):
     joblib.dump(model, model_out)
 
 
-def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326):
->>>>>>> origin/master
+def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326, all_touched=True):
     """Given an image and a shapefile with categories, return x and y suitable
     for feeding into random_forest.fit.
     Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'
     WRITE A TEST FOR THIS TOO; if this goes wrong, it'll go wrong quietly and in a way that'll cause the most issues
      further on down the line."""
     with TemporaryDirectory() as td:
-        #td=os.path.dirname(image_path)
         shape_projection = osr.SpatialReference()
         shape_projection.ImportFromEPSG(shape_projection_id)
         image = gdal.Open(image_path)
@@ -2081,11 +2023,9 @@ def get_training_data(image_path, shape_path, attribute="CODE", shape_projection
             outputType=gdal.GDT_Int16,
             outputSRS=shape_projection,
             allTouched=all_touched,
-        #    layers=os.path.basename(shape_path)[:-4]
         )
         # This produces a rasterised geotiff that's right, but not perfectly aligned to pixels.
         # This can probably be fixed.
-        #vector_ds = gdal.OpenEx(shape_path, gdal.OF_VECTOR)
         gdal.Rasterize(ras_path, shape_path, options=ras_params)
 
         rasterised_shapefile = gdal.Open(ras_path)
