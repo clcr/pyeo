@@ -412,6 +412,10 @@ def test_list_filter():
     out = pyeo.filter_non_matching_s2_data(input)
     assert len(out) == 10
 
+def test_trim():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+
 if __name__ == "__main__":
     print(sys.path)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))

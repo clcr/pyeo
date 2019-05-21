@@ -26,6 +26,7 @@ import shutil
 import zipfile
 import matplotlib.pyplot as plt
 import itertools
+from functools import lru_cache
 
 import json
 import csv
@@ -1013,6 +1014,43 @@ def stack_images(raster_paths, out_raster_path,
         in_raster = None
     out_raster_array = None
     out_raster = None
+
+
+@lru_cache(maxsize=2048)
+def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
+    """Trims image to polygon"""
+    with TemporaryDirectory() as td:
+        in_raster = gdal.Open(in_raster_path)
+        in_gt = in_raster.GetGeoTransform()
+        x_res = in_gt[1]
+        y_res = in_gt[5] * -1
+        temp_band = in_raster.GetRasterBand(1)
+        datatype = temp_band.DataType
+        out_raster = create_new_image_from_polygon(polygon, out_raster_path, x_res, y_res,
+                                                  in_raster.RasterCount, in_raster.GetProjection(),
+                                                  format, datatype)
+        out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, polygon)
+        in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, polygon)
+        out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+        in_raster_array = in_raster.GetVirtualMemArray()
+        out_raster_view = out_raster_array[
+                      :,
+                      out_y_min: out_y_max,
+                      out_x_min: out_x_max
+                      ]
+        in_raster_view = in_raster_array[
+                    :,
+                    in_y_min: in_y_max,
+                    in_x_min: in_x_max
+                    ]
+        out_raster_view[...] = in_raster_view
+        out_raster_view = None
+        in_raster_view = None
+        out_raster_array = None
+        in_raster_array = None
+        out_raster = None
+        in_raster = None
+
 
 
 def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.GDT_Int32, nodata = 0):
