@@ -65,7 +65,7 @@ def calculate_declination_angle(gamma):
     See https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
     decl = 0.006918 - 0.399912 * np.cos(gamma) + 0.070257 * np.sin(gamma) - 0.006758 * np.cos(2 * gamma) \
            + 0.000907 * np.sin(2 * gamma) - 0.002697 * np.cos(3 * gamma) + 0.00148 * np.sin(3 * gamma)  # radians
-    decl_deg = (360 / (2 * np.pi)) * decl
+    decl_deg = np.rad2deg(decl)
     return decl_deg
 
 
@@ -80,12 +80,12 @@ def calculate_sun_zenith(latitude, longitude, decl_deg, eqtime, sensing_dt):
 
 
 def calculate_eqtime(gamma):
-    """Given a fractional year in degrees (gamma), calulates the equation of time in minutes.
+    """Given a fractional year in radians (gamma), calulates the equation of time in minutes.
     See  https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
-    gamma = np.deg2rad(gamma)  # np trig funcs expect radians
+    # np trig funcs expect radians
     eqtime = 229.18 * (0.000075 + 0.001868 * np.cos(gamma) - 0.032077 * np.sin(gamma) - 0.014615 * np.cos(2 * gamma)
                        - 0.040849 * np.sin(2 * gamma))
-    return np.rad2deg(eqtime)
+    return eqtime
 
 
 def days_in_year(year):
