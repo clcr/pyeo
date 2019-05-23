@@ -77,9 +77,10 @@ def leap(dt):
     else:
         a= int(365)
     return a
+
 def cos(x):
     cos= np.cos(np.deg2rad(x))
-    return  cos
+    return cos
 def sin(x):
     sin=np.sin(np.deg2rad(x))
     return sin
