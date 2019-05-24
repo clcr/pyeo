@@ -42,7 +42,7 @@ def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
     gdal.DEMProcessing(aspect_out_path, dem, "aspect")
 
 
-def calculate_granule_solar_position(safe_file):
+def calculate_granule_solar_positions(safe_file):
     """Returns the sun zenith angle and azimuth angle from a L2 .SAFE file.
     NOTE: Only difference between this and Landsat seems to be that Landsat uses UTC"""
     sensing_dt = core.get_image_acquisition_time(p.basename(safe_file))  # Keep a close eye on the timezone
@@ -69,16 +69,6 @@ def calculate_declination_angle(gamma):
     return decl_deg
 
 
-def calculate_sun_zenith(latitude, longitude, decl_deg, eqtime, sensing_dt):
-    """Returns the sun zenith angle in degrees"""
-    time_offset = eqtime + 4*longitude  # minutes. Can ignore timezone as S2 stamps are in UTC
-    true_solar_time = sensing_dt.hour*60 + sensing_dt.minute - sensing_dt.second/60 + time_offset
-    solar_hour_angle = (true_solar_time/4) - 180
-    zenit1 = np.sin(latitude) * np.sin(decl_deg) + np.cos(latitude) * np.cos(decl_deg) * np.cos(solar_hour_angle)
-    zenit2 = np.arccos(zenit1)  # radians
-    return np.rad2deg(zenit2)
-
-
 def calculate_eqtime(gamma):
     """Given a fractional year in radians (gamma), calulates the equation of time in minutes.
     See  https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
@@ -86,6 +76,36 @@ def calculate_eqtime(gamma):
     eqtime = 229.18 * (0.000075 + 0.001868 * np.cos(gamma) - 0.032077 * np.sin(gamma) - 0.014615 * np.cos(2 * gamma)
                        - 0.040849 * np.sin(2 * gamma))
     return eqtime
+
+
+def calculate_time_offset(eqtime, longitude):
+    """Given the equation of time in minutes and the longitude in degrees (east +ve), returns the
+    time offset in minutes. Since this is for S2, all times are in UTC: hence no timezone offset needed."""
+    return eqtime + 4*longitude
+
+
+def calculate_true_solar_time(sensing_dt, time_offset):
+    """Given the datetime object and a time offset, returns the true solar time in minutes"""
+    return sensing_dt.hour*60 + sensing_dt.minute + sensing_dt.second/60 + time_offset
+
+
+def calculate_hour_angle(true_solar_time):
+    """Given the true solar time in minutes, calulates the solar hour angle in degrees"""
+    return (true_solar_time/4)-180
+
+
+def calculate_solar_zenith(hour_angle, latitude, solar_declination):
+    """Given the hour angle, latitude and solar declination (all in degrees), returns the solar
+    zenith angle in degrees."""
+    latitude = np.deg2rad(latitude)
+    hour_angle = np.deg2rad(hour_angle)
+    solar_declination = np.deg2rad(solar_declination)
+    A = np.sin(latitude) * np.sin(solar_declination)
+    B = np.cos(latitude) * np.cos(solar_declination) * np.cos(hour_angle)
+    theta = np.arccos(A+B)
+    return np.rad2deg(theta)
+
+
 
 
 def days_in_year(year):
