@@ -8,7 +8,7 @@ import glob
 import re
 import configparser
 from sentinelhub import download_safe_format
-from sentinelhub.botocore.exceptions import ClientError
+from botocore.exceptions import ClientError
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 import subprocess
 import gdal
