@@ -8,6 +8,7 @@ import glob
 import re
 import configparser
 from sentinelhub import download_safe_format
+from sentinelhub.botocore.exceptions import ClientError
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 import subprocess
 import gdal
@@ -255,7 +256,7 @@ def get_granule_identifiers(safe_product_id):
     return satellite, intake_date, orbit_number, granule
 
 
-def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passwd=None):
+def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passwd=None, try_scihub_on_fail=False):
     """Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2."""
     log = logging.getLogger(__name__)
 
@@ -277,7 +278,11 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
 
         log.info("Downloading {} from {} to {}".format(new_data[image_uuid]['identifier'], source, out_path))
         if source=='aws':
-            download_safe_format(product_id=new_data[image_uuid]['identifier'], folder=out_path)
+            if try_scihub_on_fail:
+                download_from_aws_with_rollback(product_id=new_data[image_uuid]['identifier'], folder=out_path,
+                                                uuid=image_uuid, user=user, passwd=passwd)
+            else:
+                download_safe_format(product_id=new_data[image_uuid]['identifier'], folder=out_path)
         elif source=='google':
             download_from_google_cloud([new_data[image_uuid]['identifier']], out_folder=out_path)
         elif source=="scihub":
@@ -285,6 +290,16 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
         else:
             log.error("Invalid data source; valid values are 'aws', 'google' and 'scihub'")
             raise BadDataSourceExpection
+
+
+def download_from_aws_with_rollback(product_id, folder, uuid, user, passwd):
+    """Attempts to download product from AWS using product_id; if not found, rolls back to Scihub using uuid"""
+    log = logging.getLogger(__file__)
+    try:
+        download_safe_format(product_id=product_id, folder=folder)
+    except ClientError:
+        log.warning("Something wrong with AWS; rolling back to Scihub using {}".format(uuid))
+        download_from_scihub(uuid, folder, user, passwd)
 
 
 def download_from_scihub(product_uuid, out_folder, user, passwd):
