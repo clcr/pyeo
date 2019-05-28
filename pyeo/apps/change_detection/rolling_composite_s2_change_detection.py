@@ -132,7 +132,7 @@ if __name__ == "__main__":
                 composite_products = pyeo.filter_non_matching_s2_data(composite_products)
                 log.info("{} products remain".format(len(composite_products)))
             pyeo.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir,
-                                  source=args.download_source, user=sen_user, passwd=sen_pass)
+                                  source=args.download_source, user=sen_user, passwd=sen_pass, try_scihub_on_fail=True)
         if args.do_preprocess or do_all and not args.download_l2_data:
             log.info("Preprocessing composite products")
             pyeo.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
@@ -152,7 +152,7 @@ if __name__ == "__main__":
             products = pyeo.filter_non_matching_s2_data(products)
             log.info("{} products remain".format(len(products)))
         log.info("Downloading")
-        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, args.download_source, user=sen_user, passwd=sen_pass)
+        pyeo.download_s2_data(products, l1_image_dir, l2_image_dir, args.download_source, user=sen_user, passwd=sen_pass, try_scihub_on_fail=True)
 
     # Atmospheric correction
     if args.do_preprocess or do_all and not args.download_l2_data:
