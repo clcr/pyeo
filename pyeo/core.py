@@ -175,7 +175,7 @@ def create_file_structure(root):
 
 def validate_config_file(config_path):
     #TODO: fill
-    ...
+    pass
 
 
 def read_aoi(aoi_path):
@@ -298,7 +298,7 @@ def download_from_aws_with_rollback(product_id, folder, uuid, user, passwd):
     try:
         download_safe_format(product_id=product_id, folder=folder)
     except ClientError:
-        log.warning("Something wrong with AWS; rolling back to Scihub using {}".format(uuid))
+        log.warning("Something wrong with AWS for products id {}; rolling back to Scihub using uuid {}".format(product_id, uuid))
         download_from_scihub(uuid, folder, user, passwd)
 
 
