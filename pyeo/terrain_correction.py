@@ -73,9 +73,9 @@ def calculate_eqtime(gamma):
     """Given a fractional year in radians (gamma), calulates the equation of time in minutes.
     See  https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
     # np trig funcs expect radians
-    eqtime = 229.18 * (0.000075 + 0.001868 * np.cos(gamma) - 0.032077 * np.sin(gamma) - 0.014615 * np.cos(2 * gamma)
-                       - 0.040849 * np.sin(2 * gamma))
-    return eqtime
+    eqtime = 229.18 * (0.000075 + (0.001868 * np.cos(gamma)) - (0.032077 * np.sin(gamma)) - (0.014615 * np.cos(2 * gamma))
+                       - (0.040849 * np.sin(2 * gamma)))
+    return np.rad2deg(eqtime)*4
 
 
 def calculate_time_offset(eqtime, longitude):
@@ -90,7 +90,7 @@ def calculate_true_solar_time(sensing_dt, time_offset):
 
 
 def calculate_hour_angle(true_solar_time):
-    """Given the true solar time in minutes, calulates the solar hour angle in degrees"""
+    """Given the true solar time in minutes, calculates the solar hour angle in degrees"""
     return (true_solar_time/4)-180
 
 
@@ -104,8 +104,6 @@ def calculate_solar_zenith(hour_angle, latitude, solar_declination):
     B = np.cos(latitude) * np.cos(solar_declination) * np.cos(hour_angle)
     theta = np.arccos(A+B)
     return np.rad2deg(theta)
-
-
 
 
 def days_in_year(year):
