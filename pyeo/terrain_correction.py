@@ -75,7 +75,7 @@ def calculate_eqtime(gamma):
     # np trig funcs expect radians
     eqtime = 229.18 * (0.000075 + (0.001868 * np.cos(gamma)) - (0.032077 * np.sin(gamma)) - (0.014615 * np.cos(2 * gamma))
                        - (0.040849 * np.sin(2 * gamma)))
-    return np.rad2deg(eqtime)*4
+    return eqtime
 
 
 def calculate_time_offset(eqtime, longitude):
