@@ -1,7 +1,8 @@
 """Removes all but the most recent n images from the filetree"""
 
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import pyeo.core as pyeo
-import os
 import shutil
 import argparse
 
