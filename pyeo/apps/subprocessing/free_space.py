@@ -5,6 +5,7 @@ import os
 import shutil
 import argparse
 
+
 def free_space(aoi_dir, images_to_keep, with_warning=True):
     directory_list = [
         "images/L1/",
@@ -22,12 +23,12 @@ def free_space(aoi_dir, images_to_keep, with_warning=True):
         remove_latest_images(to_be_cleaned, images_to_keep, with_warning)
 
 
-def remove_latest_images(dir, images_to_keep, with_warning=True):
-    images = pyeo.sort_by_timestamp(os.listdir(dir))
+def remove_latest_images(aoi_dir, images_to_keep, with_warning=True):
+    images = pyeo.sort_by_timestamp(os.listdir(aoi_dir))
     if with_warning:
         if not input(
-                "About to delete {} files from {}: Y/N?".format(len(images[images_to_keep:]), dir)).upper().startswith(
-                "Y"):
+                "About to delete {} files from {}: Y/N?".format(len(images[images_to_keep:]), aoi_dir)).upper().\
+                startswith("Y"):
             return
     for image in images[images_to_keep:]:
         if os.path.isfile(image):
