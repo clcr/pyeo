@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument("aoi_dir", help="The root of the directory containing the composite, images and "
                                         "output folders")
     parser.add_argument("images_to_keep", type=int, help="The number of images to keep")
-    parser.add_argument("do_warning", type=bool, default=True, help="If false, skips the warning. Use with care")
+    parser.add_argument("--do_warning", type=bool, default=True, help="If false, skips the warning. Use with care")
     # and if you're reading this, don't come crying to me if it goes wrong.
 
     args = parser.parse_args()
