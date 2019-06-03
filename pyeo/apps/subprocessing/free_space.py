@@ -31,11 +31,12 @@ def remove_latest_images(aoi_dir, images_to_keep, with_warning=True):
                 "About to delete {} files from {}: Y/N?".format(len(images[images_to_keep:]), aoi_dir)).upper().\
                 startswith("Y"):
             return
-    for image in images[images_to_keep:]:
-        if os.path.isfile(image):
-            os.remove(image)
+    for image_name in images[images_to_keep:]:
+        image_path = os.path.join(aoi_dir, image_name)
+        if os.path.isfile(image_path):
+            os.remove(image_path)
         else:
-            shutil.rmtree(image)
+            shutil.rmtree(image_path)
 
 
 if __name__ == "__main__":
