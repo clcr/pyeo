@@ -21,18 +21,19 @@ def free_space(aoi_dir, images_to_keep, with_warning=True):
     ]
     for directory in directory_list:
         to_be_cleaned = os.path.join(aoi_dir, directory)
-        remove_latest_images(to_be_cleaned, images_to_keep, with_warning)
+        remove_old_images(to_be_cleaned, images_to_keep, with_warning)
 
 
-def remove_latest_images(aoi_dir, images_to_keep, with_warning=True):
-    images = pyeo.sort_by_timestamp(os.listdir(aoi_dir))
+def remove_old_images(image_dir, images_to_keep, with_warning=True):
+    """Removes all but the latest images from image_dir."""
+    images = pyeo.sort_by_timestamp(os.listdir(image_dir))
     if with_warning:
         if not input(
-                "About to delete {} files from {}: Y/N?".format(len(images[images_to_keep:]), aoi_dir)).upper().\
+                "About to delete {} files from {}: Y/N?".format(len(images[images_to_keep:]), image_dir)).upper().\
                 startswith("Y"):
             return
     for image_name in images[images_to_keep:]:
-        image_path = os.path.join(aoi_dir, image_name)
+        image_path = os.path.join(image_dir, image_name)
         if os.path.isfile(image_path):
             os.remove(image_path)
         else:
