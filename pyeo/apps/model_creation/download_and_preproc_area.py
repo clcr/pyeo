@@ -2,6 +2,7 @@ import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import pyeo.core as pyeo
 import argparse
+import configparser
 
 if __name__ == "__main__":
 
@@ -17,6 +18,9 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--filter", action="store_true")
 
     args=parser.parse_args()
+
+    conf = configparser.ConfigParser()
+    conf.read(args.conf)
 
     products = pyeo.check_for_s2_data_by_date(args.aoi_path, args.start_date, args.end_date, args.conf)
     if args.filter:
