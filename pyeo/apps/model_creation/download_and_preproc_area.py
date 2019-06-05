@@ -16,8 +16,11 @@ if __name__ == "__main__":
     parser.add_argument("stack_dir")
     parser.add_argument("conf")
     parser.add_argument("-f", "--filter", action="store_true")
+    parser.add_argument("--log_path", default="download_and_preproc.log")
 
     args=parser.parse_args()
+
+    pyeo.init_log(args.log_path)
 
     conf = configparser.ConfigParser()
     conf.read(args.conf)
