@@ -76,6 +76,10 @@ class BadDataSourceExpection(ForestSentinelException):
     pass
 
 
+class NoL2DataAvailableException(ForestSentinelException):
+    pass
+
+
 class FMaskException(ForestSentinelException):
     pass
 
@@ -209,6 +213,7 @@ def filter_non_matching_s2_data(query_output):
     #    Granule ID (Txxaaa)
     # So if we succeviely partition the query, we should get a set of products with either 1 or
     # 2 entries per granule / timestamp combination
+    log = logging.getLogger(__name__)
     sorted_query = sorted(query_output.values(), key=get_query_granule)
     granule_groups = {str(key): list(group) for key, group in itertools.groupby(sorted_query, key=get_query_granule)}
     granule_date_groups = {}
@@ -230,6 +235,9 @@ def filter_non_matching_s2_data(query_output):
             out_set.update({image["uuid"]: image for image in image_set})
 
     #Now rebuild into uuid:data_object format
+    if len(out_set) == 0:
+        log.error("No L2 data detected for query. Please remove the --download_l2_data flag or request more recent images.")
+        raise NoL2DataAvailableException
     return out_set
 
 

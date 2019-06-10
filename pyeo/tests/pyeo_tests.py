@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..','..')))
 import pyeo.core as pyeo
 
 
-# see conftest.py for definition of managed_multiple_geotiff_dir
+# see _conftest.py for definition of managed_multiple_geotiff_dir
 def test_stack_images(managed_multiple_geotiff_dir):
     test_dir = managed_multiple_geotiff_dir
     images = [os.path.join(test_dir.path, image) for image in os.listdir(test_dir.path)]
