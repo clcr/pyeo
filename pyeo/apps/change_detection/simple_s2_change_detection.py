@@ -18,6 +18,7 @@ import pyeo.core as pyeo
 import configparser
 import argparse
 import os
+import gdal
 
 if __name__ == "__main__":
 
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     # Mosaic stacked layers
     if args.do_stack or do_all:
         log.info("Mosaicking stacked multitemporal images across tiles")
-        pyeo.mosaic_images(stacked_image_path, mosaic_image_path, format="GTiff", datatype=gdal.GDT_Int32, nodata = 0)
+        pyeo.mosaic_images(stacked_image_path, mosaic_image_path, format="GTiff", datatype=gdal.GDT_Int32, nodata=0)
 
     # Classify stacks
     if args.do_classify or do_all:

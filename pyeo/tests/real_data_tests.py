@@ -322,7 +322,7 @@ def test_mask_combination():
     mask_1 = gdal.Open("test_outputs/union_or_combination.tif")
     assert not mask_1.GetVirtualMemArray().all == False
     mask_2 = gdal.Open("test_outputs/intersection_and_combination.tif")
-    assert not mask_1.GetVirtualMemArray().all == False
+    assert not mask_2.GetVirtualMemArray().all == False
 
 
 def test_composite_off_by_one():
@@ -411,6 +411,7 @@ def test_list_filter():
     input = joblib.load("test_data/test_query.pkl")
     out = pyeo.filter_non_matching_s2_data(input)
     assert len(out) == 10
+
 
 def test_trim():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))

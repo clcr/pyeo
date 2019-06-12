@@ -194,6 +194,7 @@ if __name__ == "__main__":
             log.info("Stacking {} with composite {}".format(new_image_path, latest_composite_path))
             new_stack_path = pyeo.stack_image_with_composite(new_image_path, latest_composite_path, stacked_image_dir,
                                                              invert_stack=args.flip_stacks)
+        #else new_stack_path =
 
         # Classify with composite
         if args.do_classify or do_all:

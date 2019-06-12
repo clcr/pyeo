@@ -12,7 +12,7 @@ from botocore.exceptions import ClientError
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 import subprocess
 import gdal
-from osgeo import ogr, osr
+from osgeo import ogr, osr, gdal_array
 import numpy as np
 import numpy.ma as ma
 import tempfile
@@ -710,6 +710,24 @@ def create_matching_dataset(in_dataset, out_path,
     return out_dataset
 
 
+def save_array_as_image(array, path, geotransform, projection, format = "GTiff"):
+    """Saves a given array as a geospatial image in the format 'format'
+    Array must be gdal format: [bands, y, x]"""
+    driver = gdal.GetDriverByName(format)
+    type_code = gdal_array.NumericTypeCodeToGDALTypeCode(array.dtype)
+    out_dataset = driver.Create(
+        path,
+        xsize = array.shape[2],
+        ysize = array.shape[1],
+        bands = array.shape[0],
+        eType = type_code
+    )
+    out_dataset.SetGeoTransform(geotransform)
+    out_dataset.SetProjection(projection)
+    out_dataset.FlushCache()
+    return path
+
+
 def create_new_stacks(image_dir, stack_dir):
     """
     Creates new stacks with with adjacent image acquisition dates. Threshold; how small a part
@@ -804,6 +822,13 @@ def is_tif(image_string):
         return True
     else:
         return False
+
+
+def get_related_images(target_image_name, project_dir):
+    """Gets the paths of all images related to that one in a project, by timestamp"""
+    timestamp = get_sen_2_image_timestamp(target_image_name)
+    image_glob = r"*{}*".format(timestamp)
+    return glob.glob(image_glob, project_dir)
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
