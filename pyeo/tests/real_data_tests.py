@@ -44,7 +44,7 @@ def setup_module():
 
 def load_test_conf():
     test_conf = configparser.ConfigParser()
-    test_conf.read("test_data/test_creds.ini")
+    test_conf.read("test_data/test_creds.ini.ignoreme")
     return test_conf
 
 
@@ -95,6 +95,19 @@ def test_old_format_google_cloud_dl():
     pyeo.download_from_google_cloud(product_ids, "test_outputs/google_data")
     for id in product_ids:
         assert os.path.exists("test_outputs/google_data/{}".format(id))
+
+
+@pytest.mark.webtest
+def test_pair_filter_with_dl():
+    # Pickle this at some point so it down't depend on having a download
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_aoi = r"test_data/marque_de_com_really_simple.geojson"
+    start = "20170101"
+    end = "20171231"
+    conf = load_test_conf()
+    test_results = pyeo.check_for_s2_data_by_date(test_aoi, start, end, conf)
+    filtered_test_results = pyeo.filter_non_matching_s2_data(test_results)
+    assert len(filtered_test_results) != 0
 
 
 def test_mask_buffering():
