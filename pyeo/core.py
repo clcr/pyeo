@@ -1039,7 +1039,6 @@ def stack_images(raster_paths, out_raster_path,
     out_raster = None
 
 
-@lru_cache(maxsize=2048)
 def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
     """Trims image to polygon"""
     with TemporaryDirectory() as td:
