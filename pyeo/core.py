@@ -725,14 +725,17 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
     type_code = gdal_array.NumericTypeCodeToGDALTypeCode(array.dtype)
     out_dataset = driver.Create(
         path,
-        xsize = array.shape[2],
-        ysize = array.shape[1],
-        bands = array.shape[0],
-        eType = type_code
+        xsize=array.shape[2],
+        ysize=array.shape[1],
+        bands=array.shape[0],
+        eType=type_code
     )
     out_dataset.SetGeoTransform(geotransform)
     out_dataset.SetProjection(projection)
-    out_dataset.FlushCache()
+    out_array = out_dataset.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    out_array[...] = array
+    out_array = None
+    out_dataset = None
     return path
 
 
@@ -1413,7 +1416,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
         width_pix = int(np.floor(max_x_geo - min_x_geo)/in_gt[1])
         height_pix = int(np.floor(max_y_geo - min_y_geo)/np.absolute(in_gt[5]))
         new_geotransform = (min_x_geo, in_gt[1], 0, min_y_geo, 0, in_gt[5])
-        write_polygon(intersection, intersection_path)
+        write_geometry(intersection, intersection_path)
         clip_spec = gdal.WarpOptions(
             format="GTiff",
             cutlineDSName=intersection_path,
@@ -1428,7 +1431,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
         out = None
 
 
-def write_polygon(polygon, out_path, srs_id=4326):
+def write_geometry(geometry, out_path, srs_id=4326):
     """Saves a polygon to a shapefile"""
     driver = ogr.GetDriverByName("ESRI Shapefile")
     data_source = driver.CreateDataSource(out_path)
@@ -1437,10 +1440,10 @@ def write_polygon(polygon, out_path, srs_id=4326):
     layer = data_source.CreateLayer(
         "geometry",
         srs,
-        geom_type=ogr.wkbPolygon)
+        geom_type=geometry.GetGeometryType())
     feature_def = layer.GetLayerDefn()
     feature = ogr.Feature(feature_def)
-    feature.SetGeometry(polygon)
+    feature.SetGeometry(geometry)
     layer.CreateFeature(feature)
     data_source.FlushCache()
     data_source = None

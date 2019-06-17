@@ -45,7 +45,7 @@ Geometry processing
   get_combined_polygon
   multiple_union
   multiple_intersection
-  write_polygon
+  write_geometry
   check_overlap
   get_aoi_bounds
   get_aoi_size

@@ -222,7 +222,7 @@ Geometry processing
 
  .. autofunction:: multiple_intersection
 
- .. autofunction:: write_polygon
+ .. autofunction:: write_geometry
 
  .. autofunction:: check_overlap
 
