@@ -8,15 +8,14 @@ from pyeo import core
 
 gdal.UseExceptions()
 
-def random_sample(map_path, n_points):
-    """Produces a random set of points from a map"""
 
+def produce_stratifed_validation_points(map_path, n_points, out_path, no_data=None):
     map = gdal.Open(map_path)
-    map_array = map.ReadAsArray()
-    point_array = []
-    for point in n_points:
-        point
-
+    gt = map.GetGeoTransform()
+    proj = map.GetProjection()
+    map = None
+    point_list = stratified_random_sample(map_path, n_points, no_data)
+    save_point_list_to_shapefile(point_list, out_path, gt, proj)
 
 
 def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_wkt):
@@ -28,7 +27,8 @@ def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_
     for point in point_list:
         feature = ogr.Feature(layer.GetLayerDefn())
         coord = core.pixel_to_point_coordinates(point, geotransform)
-        wkt = "POINT({} {})".format(coord[0], coord[1])
+        offset = geotransform[1]/2   # Adds half a pixel offset so points end up in the center of pixels
+        wkt = "POINT({} {})".format(coord[0]+offset, coord[1]+offset)   # LatLon is y,x ....
         new_point = ogr.CreateGeometryFromWkt(wkt)
         feature.SetGeometry(new_point)
         layer.CreateFeature(feature)
@@ -37,11 +37,11 @@ def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_
     data_source = None
 
 
-def stratified_random_sample(map_path, n_points):
+def stratified_random_sample(map_path, n_points, no_data=None):
     """Produces a list of pixel coords. Takes about 1 minute on ~6GB RAM"""
     map = gdal.Open(map_path)
     map_array = map.ReadAsArray()
-    class_dict = build_class_dict(map_array, no_data=0)
+    class_dict = build_class_dict(map_array, no_data)
     map_array = None
     n_pixels = sum(len(coord_list) for coord_list in class_dict.values())
     out_coord_list = []
@@ -52,7 +52,7 @@ def stratified_random_sample(map_path, n_points):
     return out_coord_list
 
 
-def build_class_dict(class_array, no_data = None):
+def build_class_dict(class_array, no_data=None):
     """Returns a dict of coordinates of the following shape:
     [class, coord]"""
     out_dict = {}
@@ -61,6 +61,7 @@ def build_class_dict(class_array, no_data = None):
         this_class = int(it.value)
         if this_class == no_data:
             it.iternext()
+            continue
         if this_class in out_dict.keys():
             out_dict[this_class].append(it.multi_index)
         else:
