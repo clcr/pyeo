@@ -720,7 +720,7 @@ def create_matching_dataset(in_dataset, out_path,
 
 def save_array_as_image(array, path, geotransform, projection, format = "GTiff"):
     """Saves a given array as a geospatial image in the format 'format'
-    Array must be gdal format: [bands, y, x]"""
+    Array must be gdal format: [bands, y, x]. Returns the gdal object"""
     driver = gdal.GetDriverByName(format)
     type_code = gdal_array.NumericTypeCodeToGDALTypeCode(array.dtype)
     out_dataset = driver.Create(
