@@ -1,8 +1,14 @@
 from pyeo import validation
+from pyeo.core import init_log
 import numpy as np
 import gdal
 import os
 import pytest
+
+
+def setup_module():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    init_log("validation_test_log.log")
 
 
 @pytest.mark.skip
@@ -10,7 +16,8 @@ def test_stratified_random_sample():
     image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621.tif"
     points = validation.stratified_random_sample(
         map_path = image_path,
-        n_points = 100
+        n_points = 100,
+        no_data=0
     )
     assert len(points) == 100
     assert len(points[50]) == 2
@@ -23,8 +30,8 @@ def test_produce_stratifed_validation_points():
 
 
 def test_get_class_point_lists():
-    image_array = np.array([0, 1, 2, 4]*6)
-    image_array = np.reshape(image_array, (6, 4))
+    image_array = np.array([0, 1, 2, 4]*600)
+    image_array = np.reshape(image_array, (600, 4))
     class_point_dict = validation.build_class_dict(image_array)
     assert class_point_dict
     print(class_point_dict)

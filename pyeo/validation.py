@@ -1,31 +1,30 @@
 """A small set of functions for producing validation points from maps"""
 
-import sys
-sys.path.append("/home/leicester1/")
-
 import numpy as np
 import gdal
 import random
 import ogr, osr
 from pyeo import core
-import sys
-import memory_profiler
-
-import pdb
 
 gdal.UseExceptions()
 
 
-def produce_stratifed_validation_points(map_path, n_points, out_path, no_data=None):
+def produce_stratifed_validation_points(map_path, n_points, out_path, no_data=None, seed=None):
+    log = logging.getLogger(__name__)
+    log.info("Producing random sampling of {} with {} points.".format(map_path, n_points))
     map = gdal.Open(map_path)
     gt = map.GetGeoTransform()
     proj = map.GetProjection()
     map = None
-    point_list = stratified_random_sample(map_path, n_points, no_data)
+    point_list = stratified_random_sample(map_path, n_points, no_data, seed)
     save_point_list_to_shapefile(point_list, out_path, gt, proj)
+    log.info("Complete. Output saved at {}.".format(out_path))
 
 
 def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_wkt):
+    log = logging.getLogger(__name__)
+    log.info("Saving point list to shapefile")
+    log.debug("GT: {}\nProjection: {}".format(geotransform, projection_wkt))
     driver = ogr.GetDriverByName("ESRI Shapefile")
     data_source = driver.CreateDataSource(out_path)
     srs = osr.SpatialReference()
@@ -35,7 +34,7 @@ def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_
         feature = ogr.Feature(layer.GetLayerDefn())
         coord = core.pixel_to_point_coordinates(point, geotransform)
         offset = geotransform[1]/2   # Adds half a pixel offset so points end up in the center of pixels
-        wkt = "POINT({} {})".format(coord[0]+offset, coord[1]+offset)   # LatLon is y,x ....
+        wkt = "POINT({} {})".format(coord[0]+offset, coord[1]+offset)
         new_point = ogr.CreateGeometryFromWkt(wkt)
         feature.SetGeometry(new_point)
         layer.CreateFeature(feature)
@@ -44,10 +43,12 @@ def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_
     data_source = None
 
 
-def stratified_random_sample(map_path, n_points, no_data=None):
+def stratified_random_sample(map_path, n_points, no_data=None, seed = None):
     """Produces a list of pixel coords. Takes about 1 minute on ~6GB RAM"""
+    if not seed:
+        seed = datetime.datetime.now().timestamp()
     map = gdal.Open(map_path)
-    map_array = map.ReadAsArray()
+    map_array = map.GetVirtualMemArray()
     class_dict = build_class_dict(map_array, no_data)
     map_array = None
     n_pixels = sum(len(coord_list) for coord_list in class_dict.values())
@@ -75,11 +76,3 @@ def build_class_dict(class_array, no_data=None):
             out_dict.update({this_class: [it.multi_index]})
         it.iternext()
     return out_dict
-
-if __name__ == "__main__":
-    map_path = "/home/localadmin1/maps/kenya/kinangop/class_composite_T36MZE_20181130T074251_20181125T074239.tif"
-    n_points = 100
-    out_path = "/home/localadmin1/maps/kenya/kinangop/validation/valid_points.shp"
-    no_data = 0
-    produce_stratifed_validation_points(map_path, n_points, out_path, no_data)
-    
