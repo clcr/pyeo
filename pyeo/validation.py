@@ -1,10 +1,17 @@
 """A small set of functions for producing validation points from maps"""
 
+import sys
+sys.path.append("/home/leicester1/")
+
 import numpy as np
 import gdal
 import random
 import ogr, osr
 from pyeo import core
+import sys
+import memory_profiler
+
+import pdb
 
 gdal.UseExceptions()
 
@@ -68,3 +75,11 @@ def build_class_dict(class_array, no_data=None):
             out_dict.update({this_class: [it.multi_index]})
         it.iternext()
     return out_dict
+
+if __name__ == "__main__":
+    map_path = "/home/localadmin1/maps/kenya/kinangop/class_composite_T36MZE_20181130T074251_20181125T074239.tif"
+    n_points = 100
+    out_path = "/home/localadmin1/maps/kenya/kinangop/validation/valid_points.shp"
+    no_data = 0
+    produce_stratifed_validation_points(map_path, n_points, out_path, no_data)
+    
