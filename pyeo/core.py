@@ -1436,7 +1436,10 @@ def write_geometry(geometry, out_path, srs_id=4326):
     driver = ogr.GetDriverByName("ESRI Shapefile")
     data_source = driver.CreateDataSource(out_path)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(srs_id)
+    if type(srs_id) is int:
+        srs.ImportFromEPSG(srs_id)
+    if type(srs_id) is str:
+        srs.ImportFromWkt(srs_id)
     layer = data_source.CreateLayer(
         "geometry",
         srs,
