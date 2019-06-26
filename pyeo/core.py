@@ -28,6 +28,7 @@ import zipfile
 import matplotlib.pyplot as plt
 import itertools
 from functools import lru_cache
+import datetime
 
 import json
 import csv
@@ -813,6 +814,15 @@ def get_image_acquisition_time(image_name):
         return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
     except AttributeError:
         return None
+
+
+def get_change_detection_dates(image_name):
+    """Takes the source filepath and extracts the before_date and after_date dates from in, in that order."""
+    date_regex = r"\d\d\d\d\d\d\d\dT\d\d\d\d\d\d"
+    timestamps = re.findall(date_regex, image_name)
+    date_times = [datetime.datetime.strptime(timestamp, r"%Y%m%dT%H%M%S") for timestamp in timestamps]
+    date_times.sort()
+    return date_times
 
 
 def get_preceding_image_path(target_image_name, search_dir):
