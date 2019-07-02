@@ -8,8 +8,6 @@ from pyeo import core
 import logging
 import datetime
 
-from pyeo.apps.validation.sample_allocation import U
-
 gdal.UseExceptions()
 
 
@@ -50,8 +48,9 @@ def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_
     data_source = None
 
 
-def stratified_random_sample(map_path, n_points, no_data=None, seed = None):
-    """Produces a stratified list of pixel coordinates. WARNING:"""
+def stratified_random_sample(map_path, n_points, minimum_class_pixels=None, no_data=None, seed = None):
+    """Produces a stratified list of pixel coordinates. WARNING: high mem!"""
+    log = logging.getLogger(__name__)
     if not seed:
         seed = datetime.datetime.now().timestamp()
     map = gdal.Open(map_path)
@@ -63,6 +62,9 @@ def stratified_random_sample(map_path, n_points, no_data=None, seed = None):
     for pixel_class, coord_list in class_dict.items():
         proportion = len(coord_list)/n_pixels
         n_sample_pixels = int(np.round(proportion*n_points))
+        if minimum_class_pixels:
+            if n_sample_pixels < minimum_class_pixels[pixel_class]:
+                n_sample_pixels = minimum_class_pixels[pixel_class]
         out_coord_list.extend(random.sample(coord_list, n_sample_pixels))
     return out_coord_list
 
@@ -84,6 +86,10 @@ def build_class_dict(class_array, no_data=None):
             out_dict.update({this_class: [it.multi_index]})
         it.iternext()
     return out_dict
+
+
+def create_validation_set(map_path, ):
+    pass
 
 
 def cal_si(ui):
@@ -139,13 +145,26 @@ def cal_sd_for_user_accuracy(u_i,sample_size_i):
     return sd_user
 
 
-def cal_total_sample_size(se_expected_overall, U, pixel_numbers, type = 'simple'):
+def cal_total_sample_size(se_expected_overall, user_accuracy, pixel_numbers, type ='simple'):
+    """
+    Calculates the total sample size between all classes
+    Parameters
+    ----------
+    se_expected_overall: The standard error
+    user_accuracy
+    pixel_numbers
+    type
+
+    Returns
+    -------
+
+    """
     total_pixel = (sum(pixel_numbers.values()))
     if type == 'simple':
         weighted_U_sum = 0
         # weight are equal between different classes
-        for key in U:
-            S_i = cal_si(U[key])
+        for key in user_accuracy:
+            S_i = cal_si(user_accuracy[key])
             Wi = cal_wi(n= pixel_numbers[key], total_n=total_pixel)# proportion of each class
             weighted_U_sum += S_i*Wi
         n = (weighted_U_sum/se_expected_overall)**2
@@ -153,8 +172,8 @@ def cal_total_sample_size(se_expected_overall, U, pixel_numbers, type = 'simple'
         weighted_U_sum2 = 0
         weighted_U_sum = 0
         # weight are equal between different classes
-        for key in U:
-            S_i = cal_si(U[key])
+        for key in user_accuracy:
+            S_i = cal_si(user_accuracy[key])
             Wi = cal_wi(n= pixel_numbers[key], total_n=total_pixel)  # proportion of each class
             weighted_U_sum2 += S_i * Wi
             weighted_U_sum += (S_i ** 2) * Wi
@@ -167,6 +186,7 @@ def cal_total_sample_size(se_expected_overall, U, pixel_numbers, type = 'simple'
 
 
 def cal_minum_n(expected_accuracy,required_val):
+    """CHECK THIS: Calculates the minimum number of pixels for a class"""
     n = expected_accuracy*(1-expected_accuracy)/required_val
     return n
 
@@ -188,16 +208,17 @@ def allocate(total_sample_size, user_accuracy, pixel_numbers, required_val, allo
     A dictionary of classes and no. pixels per class.
 
     """
+    log = logging.getLogger(__name__)
     minimum_n = {}
     allocated_n = {}
     weight = cal_w_all(pixel_numbers)
-    print('the weight for each class is: ')
-    print(weight)
-    print('-----------------')
-    print('the minimum sampling number for : ')
+    log.info('the weight for each class is: ')
+    log.info(weight)
+    log.info('-----------------')
+    log.info('the minimum sampling number for : ')
     for key in user_accuracy:
-        minum_n_i = cal_minum_n(expected_accuracy=U[key], required_val=required_val)
-        print('      ' + key + ' is: ' + str(round(minum_n_i)))
+        minum_n_i = cal_minum_n(expected_accuracy=user_accuracy[key], required_val=required_val)
+        log.info('      ' + key + ' is: ' + str(round(minum_n_i)))
         minimum_n[key] = minum_n_i
 
     if allocate_type == 'equal' or allocate_type == 'prop':
@@ -209,7 +230,7 @@ def allocate(total_sample_size, user_accuracy, pixel_numbers, required_val, allo
             else:
                 continue
             allocated_n[key] = n
-            print('allocated sampling number for ' + key + ' is: ' + str(allocated_n[key]))
+            log.info('allocated sampling number for ' + key + ' is: ' + str(allocated_n[key]))
 
     if allocate_type == 'olofsson':
         pre_allocated_n = {'alloc1': {'defore': 100, 'gain': 100},
@@ -227,6 +248,6 @@ def allocate(total_sample_size, user_accuracy, pixel_numbers, required_val, allo
             pre_allocated_n[method]['stable_nonforest'] = cal_n_by_prop(w_stable_nonforest, remaining_sample_size)
 
             allocated_n[method] = pre_allocated_n[method]
-        print('allocated sample number under different scenario is: ')
-        print(allocated_n)
+        log.info('allocated sample number under different scenario is: ')
+        log.info(allocated_n)
     return allocated_n

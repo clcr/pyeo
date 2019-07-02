@@ -57,4 +57,16 @@ def test_convert_point_list_to_shapefile():
 
 def test_point_allocation():
     #TODO: Get some working numbers for this from Qing.
+    se_expected_overall = 0.01  # the standard error of the estimated overall accuracy that we would like to achieve
+    U = {'defore': 0.7, 'gain': 0.6, 'stable_forest': 0.9,
+         'stable_nonforest': 0.95}  # user's uncertainty for each class (estimated)
+    pixel_numbers = {'defore': 200000, 'gain': 150000, 'stable_forest': 3200000, 'stable_nonforest': 6450000}
+    total_sample_size = 641
+    required_sd = 0.05  # expected user's accuracy for each class - this is larger than the sd of overall accuracy
+    required_val = required_sd ** 2  # variance is the root of standard error
+    allocate_sample = validation.allocate(total_sample_size=total_sample_size, user_accuracy=U,
+                                          pixel_numbers=pixel_numbers, required_val=required_val,
+                                          allocate_type='olofsson')
+    assert allocate_sample
+    print(allocate_sample)
 
