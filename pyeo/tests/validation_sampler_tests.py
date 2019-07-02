@@ -11,7 +11,7 @@ def setup_module():
     init_log("validation_test_log.log")
 
 
-@pytest.mark.skip
+@pytest.mark.hi_mem
 def test_stratified_random_sample():
     image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621.tif"
     points = validation.stratified_random_sample(
@@ -23,12 +23,14 @@ def test_stratified_random_sample():
     assert len(points[50]) == 2
 
 
+@pytest.mark.hi_mem
 def test_produce_stratifed_validation_points():
     image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621.tif"
     out_path = r"test_outputs/strat_sample_test/strat_sample_test.shp"
     validation.produce_stratifed_validation_points(image_path, 500, out_path, no_data=0)
 
 
+@pytest.mark.hi_mem
 def test_get_class_point_lists():
     image_array = np.array([0, 1, 2, 4]*600)
     image_array = np.reshape(image_array, (600, 4))
@@ -51,3 +53,8 @@ def test_convert_point_list_to_shapefile():
     proj = image.GetProjection()
     validation.save_point_list_to_shapefile(point_list, out_path, gt, proj)
     assert os.path.exists(out_path)
+
+
+def test_point_allocation():
+    #TODO: Get some working numbers for this from Qing.
+
