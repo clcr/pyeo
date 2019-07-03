@@ -90,3 +90,18 @@ def test_calculate_solar_zenith():
 
     out = terrain_correction.calculate_solar_zenith(ha, lat, dec)
     np.testing.assert_allclose(out, target, 1e-1)
+
+
+def test_calculate_sun_position():
+    expected_output = {
+        "solar_zenith_angle" : 45.627,
+        "solar_azimuth_angle" : 142.83,
+        "solar_elevation_angle" : 44.39
+    }
+    actual_output = terrain_correction.calculate_sun_position(
+        latitude=13.0421,
+        longitude=100.4726,
+        time_zone=7,
+        local_datetime=dt.datetime(2008, 2, 30, 10, 22, 28)
+    )
+    assert expected_output == actual_output

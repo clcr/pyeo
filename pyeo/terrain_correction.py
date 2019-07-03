@@ -60,11 +60,11 @@ def calculate_fractional_year(sensing_dt):
     return gamma
 
 
-def calculate_declination_angle(gamma):
+def calculate_declination_angle(fractional_year):
     """Given a fractional year in radians (gamma) calculates the sun declination angle in degrees.
     See https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
-    decl = 0.006918 - 0.399912 * np.cos(gamma) + 0.070257 * np.sin(gamma) - 0.006758 * np.cos(2 * gamma) \
-           + 0.000907 * np.sin(2 * gamma) - 0.002697 * np.cos(3 * gamma) + 0.00148 * np.sin(3 * gamma)  # radians
+    decl = 0.006918 - 0.399912 * np.cos(fractional_year) + 0.070257 * np.sin(fractional_year) - 0.006758 * np.cos(2 * fractional_year) \
+           + 0.000907 * np.sin(2 * fractional_year) - 0.002697 * np.cos(3 * fractional_year) + 0.00148 * np.sin(3 * fractional_year)  # radians
     decl_deg = np.rad2deg(decl)
     return decl_deg
 
@@ -104,6 +104,40 @@ def calculate_solar_zenith(hour_angle, latitude, solar_declination):
     B = np.cos(latitude) * np.cos(solar_declination) * np.cos(hour_angle)
     theta = np.arccos(A+B)
     return np.rad2deg(theta)
+
+
+def calculate_solar_azimuth(solar_zenith, latitude, solar_declination):
+    """Given the solar zenith in degrees, east-positive latitude and solar declination in degrees"""
+    # Again, work in rads
+    lat_rad = np.deg2rad(latitude)
+    zen_rad = np.deg2rad(solar_zenith)
+    dec_rad = np.deg2rad(solar_declination)
+    A = (np.sin(lat_rad)*np.cos(zen_rad)) - np.sin(dec_rad)
+    B = np.cos(lat_rad)*np.sin(zen_rad)
+    C = -1*(A/B)
+    D = np.arccos((np.pi) - C)
+    out = np.rad2deg(D)
+    return out
+
+
+def calculate_sun_position(latitude, time_zone, local_datetime):
+
+    fractional_year = calculate_fractional_year(local_datetime)
+    true_solar_time = calculate_true_solar_time(local_datetime, time_zone)
+    hour_angle = calculate_hour_angle(true_solar_time)
+    solar_declination = calculate_declination_angle(fractional_year)
+
+    solar_zenith = calculate_solar_zenith(hour_angle, latitude, solar_declination)
+    solar_azimuth = calculate_solar_azimuth(solar_zenith, latitude, solar_declination)
+
+
+    out = {
+        "solar_zenith_angle": solar_zenith,
+        "solar_azimuth_angle": solar_azimuth,
+        "solar_elevation_angle": solar_declination
+    }
+
+    return out
 
 
 def days_in_year(year):
