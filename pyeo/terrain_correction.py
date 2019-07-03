@@ -115,9 +115,14 @@ def calculate_solar_azimuth(solar_zenith, latitude, solar_declination):
     A = (np.sin(lat_rad)*np.cos(zen_rad)) - np.sin(dec_rad)
     B = np.cos(lat_rad)*np.sin(zen_rad)
     C = -1*(A/B)
-    D = np.arccos((np.pi) - C)
-    out = np.rad2deg(D)
+    theta = np.pi-np.arccos(C)
+    out = np.rad2deg(theta)
     return out
+
+
+def calculate_solar_elevation(solar_declination):
+    """Trivial function"""
+    return 90 - solar_declination
 
 
 def calculate_sun_position(latitude, time_zone, local_datetime):
@@ -129,12 +134,12 @@ def calculate_sun_position(latitude, time_zone, local_datetime):
 
     solar_zenith = calculate_solar_zenith(hour_angle, latitude, solar_declination)
     solar_azimuth = calculate_solar_azimuth(solar_zenith, latitude, solar_declination)
+    solar_elevation = calculate_solar_elevation(solar_declination)
 
-
-    out = {
+    out={
         "solar_zenith_angle": solar_zenith,
         "solar_azimuth_angle": solar_azimuth,
-        "solar_elevation_angle": solar_declination
+        "solar_elevation_angle": solar_elevation
     }
 
     return out
