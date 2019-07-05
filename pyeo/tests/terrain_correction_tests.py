@@ -59,13 +59,14 @@ def test_calculate_declination_angle():
 def test_calculate_eqtime():
     # Equation of time for noon on the 1st Jan 1990 (fractional_year = 0)
     # Target value from https://www.esrl.noaa.gov/gmd/grad/solcalc on the 1st Jan 1990
+    #NOTE: Sahid said there was a discrepency between eqtime from paper and eqtime from solarcalc
     np.testing.assert_allclose(terrain_correction.calculate_eqtime(0), -3.53, 1e-1)
 
 
 def test_calculate_time_offset():
     # Time offset at 0,0 on the 1st Jan, 1990.
     # This should be degenerate, and shake out to eqtime: everything else is 0
-    assert terrain_correction.calculate_time_offset(-3.53, 0) == -3.53
+    assert terrain_correction.calculate_time_offset(-3.53, 0, 0) == -3.53
 
 
 def test_calculate_true_solar_time():
@@ -100,8 +101,8 @@ def test_calculate_sun_position():
     }
     actual_output = terrain_correction.calculate_sun_position(
         latitude=13.0421,
-        #longitude=100.4726,
-        time_zone=7,
-        local_datetime=dt.datetime(2008, 6, 27, 10, 22, 28)
+        longitude=100.4726,
+        timezone=7,
+        local_datetime=dt.datetime(2008, 12, 18, 10, 22, 28)
     )
     assert expected_output == actual_output

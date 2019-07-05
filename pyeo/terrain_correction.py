@@ -78,10 +78,10 @@ def calculate_eqtime(gamma):
     return eqtime
 
 
-def calculate_time_offset(eqtime, longitude):
-    """Given the equation of time in minutes and the longitude in degrees (east +ve), returns the
-    time offset in minutes. Since this is for S2, all times are in UTC: hence no timezone offset needed."""
-    return eqtime + 4*longitude
+def calculate_time_offset(eqtime, longitude, timezone):
+    """Given the equation of time in minutes, the longitude in degrees (east +ve) and timezone in hours returns the
+    time offset in minutes."""
+    return eqtime + 4*longitude - 60*timezone
 
 
 def calculate_true_solar_time(sensing_dt, time_offset):
@@ -125,18 +125,21 @@ def calculate_solar_elevation(solar_declination):
     return 90 - solar_declination
 
 
-def calculate_sun_position(latitude, time_zone, local_datetime):
+def calculate_sun_position(latitude, longitude, timezone, local_datetime):
 
-    fractional_year = calculate_fractional_year(local_datetime)
-    true_solar_time = calculate_true_solar_time(local_datetime, time_zone)
-    hour_angle = calculate_hour_angle(true_solar_time)
+    fractional_year = calculate_fractional_year(local_datetime) # Should this be local or UTC?
+    eqtime = calculate_eqtime(fractional_year)
     solar_declination = calculate_declination_angle(fractional_year)
+    offset = calculate_time_offset(eqtime, longitude, timezone)
+
+    true_solar_time = calculate_true_solar_time(local_datetime, offset)
+    hour_angle = calculate_hour_angle(true_solar_time)
 
     solar_zenith = calculate_solar_zenith(hour_angle, latitude, solar_declination)
     solar_azimuth = calculate_solar_azimuth(solar_zenith, latitude, solar_declination)
     solar_elevation = calculate_solar_elevation(solar_declination)
 
-    out={
+    out = {
         "solar_zenith_angle": solar_zenith,
         "solar_azimuth_angle": solar_azimuth,
         "solar_elevation_angle": solar_elevation
