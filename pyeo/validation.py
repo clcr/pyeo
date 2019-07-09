@@ -9,7 +9,7 @@ from pyeo import core
 gdal.UseExceptions()
 
 
-def produce_stratifed_validation_points(map_path, n_points, out_path, no_data=None):
+def produce_stratified_validation_points(map_path, n_points, out_path, no_data=None):
     map = gdal.Open(map_path)
     gt = map.GetGeoTransform()
     proj = map.GetProjection()

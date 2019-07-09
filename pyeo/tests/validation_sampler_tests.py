@@ -19,7 +19,7 @@ def test_stratified_random_sample():
 def test_produce_stratifed_validation_points():
     image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621.tif"
     out_path = r"test_outputs/strat_sample_test/strat_sample_test.shp"
-    validation.produce_stratifed_validation_points(image_path, 500, out_path, no_data=0)
+    validation.produce_stratified_validation_points(image_path, 500, out_path, no_data=0)
 
 
 def test_get_class_point_lists():
