@@ -201,7 +201,7 @@ def calc_minimum_n(expected_accuracy, variance_tolerance):
     return n
 
 
-def allocate_category_sample_sizes(total_sample_size, user_accuracy, pixel_numbers, variance_tolerance,
+def allocate_category_sample_sizes(total_sample_size, user_accuracy, class_total_sizes, variance_tolerance,
                                    allocate_type='olofsson'):
     """
     Allocates a number of pixels to sample per class that will fulfil the parameters given
@@ -210,7 +210,7 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, pixel_numbe
     ----------
     total_sample_size: The total number of validation points requested (from cal_total_sample_size)
     user_accuracy: Dictionary of estimated user accuracies for classes in map (between 0 and 1)
-    pixel_numbers: Dictionary of total pixels for each class in user_accuracy
+    class_total_sizes: Dictionary of total pixels for each class in user_accuracy
     variance_tolerance: Acceptable vairance between the sample accuary and the data accuracy with a certain sample size
     allocate_type: The allocation strategy to be used. Can be 'equal', 'prop' or 'olofsson'.
 
@@ -222,7 +222,7 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, pixel_numbe
     log = logging.getLogger(__name__)
     minimum_n = {}
     allocated_n = {}
-    weight = cal_w_all(pixel_numbers)
+    weight = cal_w_all(class_total_sizes)
     log.info('the weight for each class is: ')
     log.info(weight)
     log.info('-----------------')
@@ -254,26 +254,29 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, pixel_numbe
 
 def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sample_size):
     """
-    Given a dictionary of classes in
+
     Parameters
     ----------
-    class_sample_numbers: Dictionary of class label and pinned sample numbers or 'None'.
+    pinned_sample_numbers
+    class_total_sizes
     total_sample_size
-    weight
 
     Returns
     -------
 
     """
     pinned_sample_total = sum(sample_size for sample_size in pinned_sample_numbers.values() if sample_size is not None)
+    pinned_map_total = sum(map_sample_size for map_class, map_sample_size
+                           in class_total_sizes.items() if pinned_sample_numbers[map_class] is not None)
     total_map_size = sum(class_total_sizes.values())
+    remaining_map_size = total_map_size - pinned_map_total
     remaining_samples = total_sample_size - pinned_sample_total
     out_values = {}
     for map_class, sample_points in pinned_sample_numbers.items():
         if sample_points is not None:
             out_values.update({map_class: sample_points})
         else:
-            weight = class_total_sizes[map_class]/total_map_size
-            sample_points = weight*remaining_samples
+            class_proportion = class_total_sizes[map_class]/remaining_map_size
+            sample_points = int(np.round(class_proportion*remaining_samples))
             out_values.update({map_class: sample_points})
     return out_values
