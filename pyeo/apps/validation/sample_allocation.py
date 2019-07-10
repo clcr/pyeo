@@ -12,18 +12,21 @@ def main():
     conf = configparser.ConfigParser()
     conf.read(args.conf_path)
 
-    user_accuracies = conf["user_accuracy"]
-    pinned_samples = conf["pinned_samples"]
+    user_accuracies = conf._sections["user_accuracy"]
+    pinned_samples = conf._sections["pinned_samples"]
+    pinned_samples = {map_class: int(number) for map_class, number in pinned_samples.items()}
+    user_accuracies = {map_class: float(number) for map_class, number in user_accuracies.items()}
     for map_class in user_accuracies:
         if map_class not in pinned_samples:
             pinned_samples.update({map_class: None})
 
     validation.create_validation_scenario(
-        in_map=conf["paths"]["input_path"],
-        out_shapefile=conf["paths"]["output_path"],
-        target_standard_error=conf["augments"]["target_standard_error"],
+        in_map_path=conf["paths"]["input_path"],
+        out_shapefile_path=conf["paths"]["output_path"],
+        target_standard_error=float(conf["augments"]["target_standard_error"]),
         user_accuracies=user_accuracies,
-        pinned_samples=pinned_samples
+        pinned_samples=pinned_samples,
+        no_data_class=conf["augments"]["no_data_class"]
     )
 
 

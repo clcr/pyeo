@@ -12,13 +12,13 @@ import json
 gdal.UseExceptions()
 
 
-def create_validation_scenario(in_map_path, out_shape_path, target_standard_error, user_accuracies,
+def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None):
     class_counts = count_pixel_classes(in_map_path, no_data_class)
     sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
     class_sample_counts = part_fixed_value_sampling(pinned_samples, class_counts, sample_size)
-    produce_stratifed_validation_points(in_map_path, out_shape_path, class_sample_counts, no_data_class)
-    manifest_path = out_shape_path.rsplit(".")[0]+"_manifest.json"
+    produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class)
+    manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
     save_validation_maifest(manifest_path, class_counts, sample_size, class_sample_counts, target_standard_error,
                             user_accuracies)
 
@@ -38,8 +38,8 @@ def count_pixel_classes(map_path, no_data=None):
     map = gdal.Open(map_path)
     map_array = map.GetVirtualMemArray()
     unique, counts = np.unique(map_array, return_counts=True)
-    out = dict(zip(unique, counts))
-    out.pop(no_data)
+    out = dict(zip([str(val) for val in unique], counts))
+    out.pop(no_data, "_")   # pop the no data value, but don't worry if there's nothing there.
     map_array=None
     map=None
     return out
