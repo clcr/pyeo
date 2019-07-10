@@ -145,27 +145,27 @@ def cal_sd_for_user_accuracy(u_i,sample_size_i):
     return sd_user
 
 
-def cal_total_sample_size(se_expected_overall, user_accuracy, pixel_numbers, type ='simple'):
+def cal_total_sample_size(se_expected_overall, user_accuracy, total_class_sizes, type ='simple'):
     """
     Calculates the total sample size between all classes
     Parameters
     ----------
     se_expected_overall: The standard error
     user_accuracy
-    pixel_numbers
+    total_class_sizes
     type
 
     Returns
     -------
     The minimum sample size
     """
-    total_pixel = (sum(pixel_numbers.values()))
+    total_pixel = (sum(total_class_sizes.values()))
     if type == 'simple':
         weighted_U_sum = 0
         # weight are equal between different classes
         for key in user_accuracy:
             S_i = cal_si(user_accuracy[key])
-            Wi = cal_wi(n= pixel_numbers[key], total_n=total_pixel)# proportion of each class
+            Wi = cal_wi(n= total_class_sizes[key], total_n=total_pixel)# proportion of each class
             weighted_U_sum += S_i*Wi
         n = (weighted_U_sum/se_expected_overall)**2
     elif type == 'full':
@@ -174,7 +174,7 @@ def cal_total_sample_size(se_expected_overall, user_accuracy, pixel_numbers, typ
         # weight are equal between different classes
         for key in user_accuracy:
             S_i = cal_si(user_accuracy[key])
-            Wi = cal_wi(n= pixel_numbers[key], total_n=total_pixel)  # proportion of each class
+            Wi = cal_wi(n= total_class_sizes[key], total_n=total_pixel)  # proportion of each class
             weighted_U_sum2 += S_i * Wi
             weighted_U_sum += (S_i ** 2) * Wi
         up = (weighted_U_sum2) ** 2
@@ -182,7 +182,7 @@ def cal_total_sample_size(se_expected_overall, user_accuracy, pixel_numbers, typ
 
         n = (up / (se_expected_overall ** 2 + bottom_right))
     print('suggested total sample size are:' + str(n))
-    return n
+    return int(np.round(n))
 
 
 def calc_minimum_n(expected_accuracy, variance_tolerance):

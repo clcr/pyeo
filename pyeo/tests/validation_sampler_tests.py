@@ -71,7 +71,30 @@ def test_point_allocation():
     print(allocate_sample)
 
 
+def test_cal_total_sample_size():
+    """Test samples are from P. Olofsson et al: Good Practices for estimating area and assessing accuracy
+    of land change, last paragraph of section 5.1.1"""
+    target_se = 0.01
+    user_accuracy = {
+        "foo": 0.7,
+        "bar": 0.6,
+        "baz": 0.9,
+        "blob": 0.95
+    }
+    total_class_sizes = {
+        "foo": 200000,
+        "bar": 150000,
+        "baz": 3200000,
+        "blob": 6450000
+    }
+    target = 641
+    out = validation.cal_total_sample_size(target_se, user_accuracy, total_class_sizes)
+    assert out == target
+
+
 def test_part_fixed_value_sampling():
+    """Test samples are from P. Olofsson et al: Good Practices for estimating area and assessing accuracy
+    of land change, table 5/section 5.1.2, 2nd paragrah"""
     class_samples = {
         "foo": 100,
         "bar": 100,
@@ -94,5 +117,3 @@ def test_part_fixed_value_sampling():
     out = validation.part_fixed_value_sampling(class_samples, total_class_sizes, target_points)
     assert sum(out.values()) == target_points
     assert target == out
-
-
