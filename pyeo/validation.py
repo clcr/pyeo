@@ -11,7 +11,37 @@ import datetime
 gdal.UseExceptions()
 
 
-def produce_stratifed_validation_points(map_path, n_points, out_path, no_data=None, seed=None):
+def create_validation_scenario(in_map_path, out_shape_path, target_standard_error, user_accuracies,
+                               no_data_class=None, pinned_samples=None):
+    class_count = count_pixel_classes(in_map_path, no_data_class)
+    sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_count)
+
+
+
+def count_pixel_classes(map_path, no_data = None):
+    """
+    Counts pixels in a map. Returns a dictionary of pixels.
+    Parameters
+    ----------
+    map_path: Path to the map to count
+    no_data: A value to ignore
+
+    Returns
+    -------
+    A dictionary of class:count
+    """
+    map = gdal.Open(map_path)
+    map_array = map.GetVirtualMemArray()
+    unique, counts = np.unique(map_array, return_counts=True)
+    out = dict(zip(unique, counts))
+    out.pop(no_data)
+    map_array=None
+    map=None
+    return out
+
+
+def produce_stratifed_validation_points(map_path, n_points, out_path, minimum_class_samples=None,
+                                        no_data=None, seed=None):
     """Produces a set of stratified validation points from map_path"""
     log = logging.getLogger(__name__)
     log.info("Producing random sampling of {} with {} points.".format(map_path, n_points))
@@ -19,7 +49,7 @@ def produce_stratifed_validation_points(map_path, n_points, out_path, no_data=No
     gt = map.GetGeoTransform()
     proj = map.GetProjection()
     map = None
-    point_list = stratified_random_sample(map_path, n_points, no_data, seed)
+    point_list = stratified_random_sample(map_path, n_points, minimum_class_samples, no_data, seed)
     save_point_list_to_shapefile(point_list, out_path, gt, proj)
     log.info("Complete. Output saved at {}.".format(out_path))
 
@@ -48,7 +78,7 @@ def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_
     data_source = None
 
 
-def stratified_random_sample(map_path, n_points, minimum_class_pixels=None, no_data=None, seed = None):
+def stratified_random_sample(map_path, class_sample_count, no_data=None, seed = None):
     """Produces a stratified list of pixel coordinates. WARNING: high mem!"""
     log = logging.getLogger(__name__)
     if not seed:
@@ -57,15 +87,9 @@ def stratified_random_sample(map_path, n_points, minimum_class_pixels=None, no_d
     map_array = map.GetVirtualMemArray()
     class_dict = build_class_dict(map_array, no_data)
     map_array = None
-    n_pixels = sum(len(coord_list) for coord_list in class_dict.values())
     out_coord_list = []
     for pixel_class, coord_list in class_dict.items():
-        proportion = len(coord_list)/n_pixels
-        n_sample_pixels = int(np.round(proportion*n_points))
-        if minimum_class_pixels:
-            if n_sample_pixels < minimum_class_pixels[pixel_class]:
-                n_sample_pixels = minimum_class_pixels[pixel_class]
-        out_coord_list.extend(random.sample(coord_list, n_sample_pixels))
+        out_coord_list.extend(random.sample(coord_list, class_sample_count[pixel_class]))
     return out_coord_list
 
 
@@ -145,19 +169,19 @@ def cal_sd_for_user_accuracy(u_i,sample_size_i):
     return sd_user
 
 
-def cal_total_sample_size(se_expected_overall, user_accuracy, total_class_sizes, type ='simple'):
+def cal_total_sample_size(desired_standard_error, user_accuracy, total_class_sizes, type ='simple'):
     """
-    Calculates the total sample size between all classes
+    Calculates the number of sample points for a map to get a specified standard error.
     Parameters
     ----------
-    se_expected_overall: The standard error
-    user_accuracy
-    total_class_sizes
-    type
+    desired_standard_error: The desired standard error (between 0 and 1)
+    user_accuracy: A dictionary of user accuracies from apriori knowledge
+    total_class_sizes: The total number of pixels for each class
+    type: whether to use the simple approximation or the full expession from Olofsson eq 13
 
     Returns
     -------
-    The minimum sample size
+    The total number of sample points to achieve the specified error
     """
     total_pixel = (sum(total_class_sizes.values()))
     if type == 'simple':
@@ -165,9 +189,9 @@ def cal_total_sample_size(se_expected_overall, user_accuracy, total_class_sizes,
         # weight are equal between different classes
         for key in user_accuracy:
             S_i = cal_si(user_accuracy[key])
-            Wi = cal_wi(n= total_class_sizes[key], total_n=total_pixel)# proportion of each class
+            Wi = cal_wi(n= total_class_sizes[key], total_n=total_pixel)  # proportion of each class
             weighted_U_sum += S_i*Wi
-        n = (weighted_U_sum/se_expected_overall)**2
+        n = (weighted_U_sum / desired_standard_error) ** 2
     elif type == 'full':
         weighted_U_sum2 = 0
         weighted_U_sum = 0
@@ -180,7 +204,7 @@ def cal_total_sample_size(se_expected_overall, user_accuracy, total_class_sizes,
         up = (weighted_U_sum2) ** 2
         bottom_right = (1 / total_pixel) * weighted_U_sum
 
-        n = (up / (se_expected_overall ** 2 + bottom_right))
+        n = (up / (desired_standard_error ** 2 + bottom_right))
     print('suggested total sample size are:' + str(n))
     return int(np.round(n))
 

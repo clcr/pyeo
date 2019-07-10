@@ -95,6 +95,8 @@ def test_cal_total_sample_size():
 def test_part_fixed_value_sampling():
     """Test samples are from P. Olofsson et al: Good Practices for estimating area and assessing accuracy
     of land change, table 5/section 5.1.2, 2nd paragrah"""
+    # NOTE: This fails for both me and Qing, and we can't figure out why. It's close, though; within a few points.
+    #-John
     class_samples = {
         "foo": 100,
         "bar": 100,
@@ -102,17 +104,17 @@ def test_part_fixed_value_sampling():
         "blob": None
     }
     total_class_sizes = {
-        "foo":200000,
-        "bar":150000,
-        "baz":3200000,
-        "blob":6450000
+        "foo": 200000,
+        "bar": 150000,
+        "baz": 3200000,
+        "blob": 6450000
     }
     target_points = 641
     target = {
-        "foo":100,
-        "bar":100,
-        "baz":149,
-        "blob":292
+        "foo": 100,
+        "bar": 100,
+        "baz": 149,
+        "blob": 292
     }
     out = validation.part_fixed_value_sampling(class_samples, total_class_sizes, target_points)
     assert sum(out.values()) == target_points
