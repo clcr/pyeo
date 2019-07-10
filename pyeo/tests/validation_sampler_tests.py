@@ -64,9 +64,33 @@ def test_point_allocation():
     total_sample_size = 641
     required_sd = 0.05  # expected user's accuracy for each class - this is larger than the sd of overall accuracy
     required_val = required_sd ** 2  # variance is the root of standard error
-    allocate_sample = validation.allocate(total_sample_size=total_sample_size, user_accuracy=U,
-                                          pixel_numbers=pixel_numbers, required_val=required_val,
-                                          allocate_type='olofsson')
-    assert allocate_sample
+    allocate_sample = validation.allocate_category_sample_sizes(total_sample_size=total_sample_size, user_accuracy=U,
+                                                                pixel_numbers=pixel_numbers, variance_tolerance=required_val,
+                                                                allocate_type='olofsson')
+    assert allocate_sample   #
     print(allocate_sample)
+
+
+def test_part_fixed_value_sampling():
+    class_samples = {
+        1:100,
+        2:100,
+        3:None,
+        4:None
+    }
+    total_class_sizes = {
+        1:200000,
+        2:150000,
+        3:3200000,
+        4:6450000
+    }
+    target_points = 641
+    target = {
+        1:100,
+        2:100,
+        3:149,
+        4:292
+    }
+    out = validation.part_fixed_value_sampling(class_samples, total_class_sizes, target_points)
+    assert target == out
 

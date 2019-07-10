@@ -1,4 +1,4 @@
-from pyeo.validation import allocate, cal_w_all, cal_sd_for_overall_accruacy, cal_sd_for_user_accuracy
+from pyeo.validation import allocate_category_sample_sizes, cal_w_all, cal_sd_for_overall_accruacy, cal_sd_for_user_accuracy
 
 
 
@@ -8,8 +8,8 @@ pixel_numbers = {'defore': 200000, 'gain':150000,'stable_forest':3200000,'stable
 total_sample_size= 641
 required_sd = 0.05 #expected user's accuracy for each class - this is larger than the sd of overall accuracy
 required_val = required_sd ** 2 #variance is the root of standard error
-allocate_sample = allocate(total_sample_size=total_sample_size, user_accuracy=U, pixel_numbers = pixel_numbers,
-                           required_val = required_val, allocate_type='olofsson')
+allocate_sample = allocate_category_sample_sizes(total_sample_size=total_sample_size, user_accuracy=U, pixel_numbers = pixel_numbers,
+                                                 variance_tolerance= required_val, allocate_type='olofsson')
 weight = cal_w_all(pixel_numbers)
 sd_overall = cal_sd_for_overall_accruacy(weight_dict=weight, u_dict = U, sample_size_dict= allocate_sample[method])
 sd_u_i = cal_sd_for_user_accuracy(u_i=U[key], sample_size_i=allocate_sample[method][key])

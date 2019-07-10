@@ -157,7 +157,7 @@ def cal_total_sample_size(se_expected_overall, user_accuracy, pixel_numbers, typ
 
     Returns
     -------
-
+    The minimum sample size
     """
     total_pixel = (sum(pixel_numbers.values()))
     if type == 'simple':
@@ -185,22 +185,33 @@ def cal_total_sample_size(se_expected_overall, user_accuracy, pixel_numbers, typ
     return n
 
 
-def cal_minum_n(expected_accuracy,required_val):
-    """CHECK THIS: Calculates the minimum number of pixels for a class"""
-    n = expected_accuracy*(1-expected_accuracy)/required_val
+def calc_minimum_n(expected_accuracy, variance_tolerance):
+    """
+    Calculates the rminimum number of points required to achieve the specified accuracy
+    Parameters
+    ----------
+    expected_accuracy: Between 0 and 1
+    variance_tolerance:
+
+    Returns
+    -------
+
+    """
+    n = expected_accuracy * (1-expected_accuracy) / variance_tolerance
     return n
 
 
-def allocate(total_sample_size, user_accuracy, pixel_numbers, required_val, allocate_type= 'olofsson'):
+def allocate_category_sample_sizes(total_sample_size, user_accuracy, pixel_numbers, variance_tolerance,
+                                   allocate_type='olofsson'):
     """
     Allocates a number of pixels to sample per class that will fulfil the parameters given
 
     Parameters
     ----------
-    total_sample_size: The total number of validation points requested
+    total_sample_size: The total number of validation points requested (from cal_total_sample_size)
     user_accuracy: Dictionary of estimated user accuracies for classes in map (between 0 and 1)
     pixel_numbers: Dictionary of total pixels for each class in user_accuracy
-    required_val: ???? Qing, please help here. What does this mean?
+    variance_tolerance: Acceptable vairance between the sample accuary and the data accuracy with a certain sample size
     allocate_type: The allocation strategy to be used. Can be 'equal', 'prop' or 'olofsson'.
 
     Returns
@@ -217,9 +228,9 @@ def allocate(total_sample_size, user_accuracy, pixel_numbers, required_val, allo
     log.info('-----------------')
     log.info('the minimum sampling number for : ')
     for key in user_accuracy:
-        minum_n_i = cal_minum_n(expected_accuracy=user_accuracy[key], required_val=required_val)
-        log.info('      ' + key + ' is: ' + str(round(minum_n_i)))
-        minimum_n[key] = minum_n_i
+        minimum_n_i = calc_minimum_n(expected_accuracy=user_accuracy[key], variance_tolerance=variance_tolerance)
+        log.info('      ' + key + ' is: ' + str(round(minimum_n_i)))
+        minimum_n[key] = minimum_n_i
 
     if allocate_type == 'equal' or allocate_type == 'prop':
         for key in user_accuracy:
@@ -232,22 +243,37 @@ def allocate(total_sample_size, user_accuracy, pixel_numbers, required_val, allo
             allocated_n[key] = n
             log.info('allocated sampling number for ' + key + ' is: ' + str(allocated_n[key]))
 
-    if allocate_type == 'olofsson':
-        pre_allocated_n = {'alloc1': {'defore': 100, 'gain': 100},
-                           'alloc2': {'defore': 75, 'gain': 75},
-                           'alloc3': {'defore': 50, 'gain': 50}}
-
-        for method in pre_allocated_n:  # for each allocation method
-            already_allocated = sum(pre_allocated_n[method].values())
-            remaining_sample_size = total_sample_size - already_allocated
-
-            w_stable_forest = weight['stable_forest']/(weight['stable_forest'] + weight['stable_nonforest'] )
-
-            w_stable_nonforest = weight['stable_nonforest']/(weight['stable_nonforest'] + weight['stable_forest'])
-            pre_allocated_n[method]['stable_forest'] = cal_n_by_prop(w_stable_forest, remaining_sample_size)
-            pre_allocated_n[method]['stable_nonforest'] = cal_n_by_prop(w_stable_nonforest, remaining_sample_size)
-
-            allocated_n[method] = pre_allocated_n[method]
+    elif allocate_type == 'olofsson':
+        allocated_n = part_fixed_value_sampling(allocated_n,  total_sample_size, weight)
         log.info('allocated sample number under different scenario is: ')
         log.info(allocated_n)
+    else:
+        raise core.ForestSentinelException("Invalid allocation type: valid values are 'equal', 'prop' or 'olofsson")
     return allocated_n
+
+
+def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sample_size):
+    """
+    Given a dictionary of classes in
+    Parameters
+    ----------
+    class_sample_numbers: Dictionary of class label and pinned sample numbers or 'None'.
+    total_sample_size
+    weight
+
+    Returns
+    -------
+
+    """
+    pinned_sample_total = sum(sample_size for sample_size in pinned_sample_numbers.values() if sample_size is not None)
+    total_map_size = sum(class_total_sizes.values())
+    remaining_samples = total_sample_size - pinned_sample_total
+    out_values = {}
+    for map_class, sample_points in pinned_sample_numbers.items():
+        if sample_points is not None:
+            out_values.update({map_class: sample_points})
+        else:
+            weight = class_total_sizes[map_class]/total_map_size
+            sample_points = weight*remaining_samples
+            out_values.update({map_class: sample_points})
+    return out_values
