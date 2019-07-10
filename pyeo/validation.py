@@ -7,18 +7,23 @@ import ogr, osr
 from pyeo import core
 import logging
 import datetime
+import json
 
 gdal.UseExceptions()
 
 
 def create_validation_scenario(in_map_path, out_shape_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None):
-    class_count = count_pixel_classes(in_map_path, no_data_class)
-    sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_count)
+    class_counts = count_pixel_classes(in_map_path, no_data_class)
+    sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
+    class_sample_counts = part_fixed_value_sampling(pinned_samples, class_counts, sample_size)
+    produce_stratifed_validation_points(in_map_path, out_shape_path, class_sample_counts, no_data_class)
+    manifest_path = out_shape_path.rsplit(".")[0]+"_manifest.json"
+    save_validation_maifest(manifest_path, class_counts, sample_size, class_sample_counts, target_standard_error,
+                            user_accuracies)
 
 
-
-def count_pixel_classes(map_path, no_data = None):
+def count_pixel_classes(map_path, no_data=None):
     """
     Counts pixels in a map. Returns a dictionary of pixels.
     Parameters
@@ -40,16 +45,17 @@ def count_pixel_classes(map_path, no_data = None):
     return out
 
 
-def produce_stratifed_validation_points(map_path, n_points, out_path, minimum_class_samples=None,
+def produce_stratifed_validation_points(map_path, out_path, class_sample_counts,
                                         no_data=None, seed=None):
     """Produces a set of stratified validation points from map_path"""
     log = logging.getLogger(__name__)
-    log.info("Producing random sampling of {} with {} points.".format(map_path, n_points))
+    log.info("Producing random sampling of {}.".format(map_path))
+    log.info("Class sample count: {}".format(class_sample_counts))
     map = gdal.Open(map_path)
     gt = map.GetGeoTransform()
     proj = map.GetProjection()
     map = None
-    point_list = stratified_random_sample(map_path, n_points, minimum_class_samples, no_data, seed)
+    point_list = stratified_random_sample(map_path, class_sample_counts, no_data, seed)
     save_point_list_to_shapefile(point_list, out_path, gt, proj)
     log.info("Complete. Output saved at {}.".format(out_path))
 
@@ -304,3 +310,18 @@ def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sa
             sample_points = int(np.round(class_proportion*remaining_samples))
             out_values.update({map_class: sample_points})
     return out_values
+
+
+def save_validation_maifest(out_path, class_counts, sample_size, class_sample_counts, target_standard_error,
+                            user_accuracies):
+    """Creates a json file containing the parameters used to produce this validation set"""
+    out_dict = {
+        "class_counts": class_counts,
+        "sample_size": sample_size,
+        "samples_per_class": class_sample_counts,
+        "target_error": target_standard_error,
+        "user accuracies": user_accuracies
+    }
+    with open(out_path, "w") as fp:
+        json.dump(out_dict, fp)
+
