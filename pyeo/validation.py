@@ -55,7 +55,7 @@ def produce_stratifed_validation_points(map_path, out_path, class_sample_counts,
     gt = map.GetGeoTransform()
     proj = map.GetProjection()
     map = None
-    point_list = stratified_random_sample(map_path, class_sample_counts, no_data, seed)
+    point_list = stratified_random_sample(map_path, class_sample_counts, int(no_data), seed)
     save_point_list_to_shapefile(point_list, out_path, gt, proj)
     log.info("Complete. Output saved at {}.".format(out_path))
 
