@@ -14,11 +14,16 @@ gdal.UseExceptions()
 
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None):
+    log = logging.getLogger(__name__)
     class_counts = count_pixel_classes(in_map_path, no_data_class)
+    log.info("Class counts: {}").format(class_counts)
     sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
+    log.info("Sample sizes: {}".format(sample_size))
     class_sample_counts = part_fixed_value_sampling(pinned_samples, class_counts, sample_size)
+    log.info("Sample counts per class: {}".format(class_sample_counts))
     produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class)
-    manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
+    log.info("Validation points at out: {}".format(out_shapefile_path))
+    # manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
     # save_validation_maifest(manifest_path, class_counts, sample_size, class_sample_counts, target_standard_error,
     #                        user_accuracies)
 
