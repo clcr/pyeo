@@ -16,7 +16,7 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
                                no_data_class=None, pinned_samples=None):
     log = logging.getLogger(__name__)
     class_counts = count_pixel_classes(in_map_path, no_data_class)
-    log.info("Class counts: {}").format(class_counts)
+    log.info("Class counts: {}".format(class_counts))
     sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
     log.info("Sample sizes: {}".format(sample_size))
     class_sample_counts = part_fixed_value_sampling(pinned_samples, class_counts, sample_size)
@@ -60,12 +60,12 @@ def produce_stratifed_validation_points(map_path, out_path, class_sample_counts,
     gt = map.GetGeoTransform()
     proj = map.GetProjection()
     map = None
-    point_list = stratified_random_sample(map_path, class_sample_counts, int(no_data), seed)
-    save_point_list_to_shapefile(point_list, out_path, gt, proj)
+    point_dict = stratified_random_sample(map_path, class_sample_counts, int(no_data), seed)
+    save_point_list_to_shapefile(point_dict, out_path, gt, proj)
     log.info("Complete. Output saved at {}.".format(out_path))
 
 
-def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_wkt):
+def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform, projection_wkt):
     """Saves a list of points to a shapefile at out_path. Need the gt and projection of the raster.
     GT is needed to move each point to the centre of the pixel."""
     log = logging.getLogger(__name__)
@@ -76,15 +76,20 @@ def save_point_list_to_shapefile(point_list, out_path, geotransform, projection_
     srs = osr.SpatialReference()
     srs.ImportFromWkt(projection_wkt)
     layer = data_source.CreateLayer("validation_points", srs, ogr.wkbPoint)
-    for point in point_list:
-        feature = ogr.Feature(layer.GetLayerDefn())
-        coord = core.pixel_to_point_coordinates(point, geotransform)
-        offset = geotransform[1]/2   # Adds half a pixel offset so points end up in the center of pixels
-        wkt = "POINT({} {})".format(coord[0]+offset, coord[1]+offset)
-        new_point = ogr.CreateGeometryFromWkt(wkt)
-        feature.SetGeometry(new_point)
-        layer.CreateFeature(feature)
-        feature = None
+    class_field = ogr.FieldDefn("class", ogr.OFTString)
+    class_field.SetWidth(24)
+    layer.CreateField(class_field)
+    for map_class, point_list in class_sample_point_dict.items():
+        for point in point_list:
+            feature = ogr.Feature(layer.GetLayerDefn())
+            coord = core.pixel_to_point_coordinates(point, geotransform)
+            offset = geotransform[1]/2   # Adds half a pixel offset so points end up in the center of pixels
+            wkt = "POINT({} {})".format(coord[0]+offset, coord[1]-offset) # Never forget about negative y values in gts.
+            new_point = ogr.CreateGeometryFromWkt(wkt)
+            feature.SetGeometry(new_point)
+            feature.SetField("class", map_class)
+            layer.CreateFeature(feature)
+            feature = None
     layer = None
     data_source = None
 
@@ -98,12 +103,11 @@ def stratified_random_sample(map_path, class_sample_count, no_data=None, seed = 
     map_array = map.GetVirtualMemArray()
     class_dict = build_class_dict(map_array, no_data)
     map_array = None
-    out_coord_list = []
-    for pixel_class, coord_list in class_dict.items():
-        pixel_class = str(pixel_class)
-        if pixel_class in class_sample_count.keys():
-            out_coord_list.extend(random.sample(coord_list, class_sample_count[pixel_class]))
-    return out_coord_list
+    out_coord_dict = {}
+    for map_class, sample_count in class_sample_count.items():
+        map_class_samples = random.sample(class_dict[int(map_class)], class_sample_count[map_class])
+        out_coord_dict.update({map_class: map_class_samples})
+    return out_coord_dict
 
 
 def build_class_dict(class_array, no_data=None):

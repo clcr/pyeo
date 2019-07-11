@@ -12,6 +12,8 @@ def main():
     conf = configparser.ConfigParser()
     conf.read(args.conf_path)
 
+    init_log("validation_log.log")
+
     user_accuracies = conf._sections["user_accuracy"]
     pinned_samples = conf._sections["pinned_samples"]
     pinned_samples = {map_class: int(number) for map_class, number in pinned_samples.items()}

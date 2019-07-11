@@ -13,11 +13,19 @@ def setup_module():
 
 @pytest.mark.hi_mem
 def test_stratified_random_sample():
-    image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621.tif"
+    image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif"
     points = validation.stratified_random_sample(
-        map_path = image_path,
-        n_points = 100,
-        no_data=0
+        map_path=image_path,
+        class_sample_count={
+            1: 300,
+            2: 10,
+            3: 10,
+            4: 10,
+            5: 10,
+            6: 10,
+            7: 10
+        },
+        no_data="0"
     )
     assert len(points) == 100
     assert len(points[50]) == 2
@@ -42,12 +50,12 @@ def test_get_class_point_lists():
 def test_convert_point_list_to_shapefile():
     image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621.tif"
     out_path = r"test_outputs/conversion_test/conversion_test.shp"
-    point_list = [
-        (0,50),
-        (2000, 0),
-        (1000, 500),
-        (750, 2000)
-    ]
+    point_list = {
+        1:[(0, 50)],
+        2:[(2000, 0)],
+        3:[(1000, 500)],
+        4:[(750, 2000)]
+    }
     image = gdal.Open(image_path)
     gt = image.GetGeoTransform()
     proj = image.GetProjection()
