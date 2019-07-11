@@ -1409,7 +1409,6 @@ def get_poly_size(poly):
     return out
 
 
-<<<<<<< HEAD
 def create_cloud_mask(image_path, mask_out_path, model_nodata = 1):
 
     log = logging.getLogger(__name__)
@@ -1421,7 +1420,7 @@ def create_cloud_mask(image_path, mask_out_path, model_nodata = 1):
     mask = None
     log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
     return mask_path
-=======
+
 def get_poly_bounding_rect(poly):
     """Returns a polygon of the bounding rectangle of input polygon. Can probably be combined with
     get_aoi_bounds."""
@@ -1458,7 +1457,7 @@ def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10,
             buffer_mask_in_place(mask_path, buffer_size)
         log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
         return mask_path
->>>>>>> origin/master
+
 
 
 def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_threshold=0, buffer_size=3):
@@ -1663,11 +1662,11 @@ def apply_array_image_mask(array, mask, fill_value=0):
     return np.where(stacked_mask == 1, array, fill_value)
 
 
-<<<<<<< HEAD
+
 def classify_image(image_path, model_path, class_out_dir, prob_out_path, apply_mask = False, out_type="GTiff", num_chunks=2,mask_tif=''):
     """Classifies change in an image. Images need to be chunked, otherwise they cause a memory error (~16GB of data
     with a ~15GB machine)"""
-=======
+
 def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
                    apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0, skip_existing = False):
     """
@@ -1675,7 +1674,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
->>>>>>> origin/master
+
     log = logging.getLogger(__name__)
     if skip_existing:
         log.info("Checking for existing classification {}".format(class_out_path))
@@ -1685,11 +1684,11 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     log.info("Classifying file: {}".format(image_path))
     log.info("Saved model     : {}".format(model_path))
     image = gdal.Open(image_path)
-<<<<<<< HEAD
+
     model = joblib.load(model_path)
     map_out_image = create_matching_dataset(image, class_out_dir)
     #prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
-=======
+
     if num_chunks == None:
         log.info("No chunk size given, attempting autochunk.")
         num_chunks = autochunk(image)
@@ -1708,7 +1707,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
             log.warning("Model has no n_classes_ attribute (known issue with GridSearch)")
         prob_out_image = create_matching_dataset(image, prob_out_path, bands=model.n_classes_, datatype=gdal.GDT_Float32)
         log.info("Created probability image file: {}".format(prob_out_path))
->>>>>>> origin/master
+
     model.n_cores = -1
     image_array = image.GetVirtualMemArray()
 
@@ -1725,7 +1724,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     # at this point, image_array has dimensions [band, y, x]
     log.info("Reshaping image from GDAL to Scikit-Learn dimensions")
     image_array = reshape_raster_for_ml(image_array)
-<<<<<<< HEAD
+
     n_samples = image_array.shape[0]
     classes = np.empty(n_samples, dtype=np.int16)
     #probs = np.zeros((n_samples, model.n_classes_), dtype=np.float32)
@@ -1750,7 +1749,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     map_out_image = None
     prob_out_image = None
     return class_out_dir, prob_out_path
-=======
+
     # Now it has dimensions [x * y, band] as needed for Scikit-Learn
 
     # Determine where in the image array there are no missing values in any of the bands (axis 1)
@@ -1785,7 +1784,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
         #indices_view = good_indices[offset : offset + chunk_size]
         out_view = classes[offset : offset + chunk_size]  # dimensions [chunk_size]
         out_view[:] = model.predict(chunk_view)
->>>>>>> origin/master
+
 
         if prob_out_path:
             log.info("   Calculating probabilities")
@@ -1945,9 +1944,6 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
         score_file.write(str(scores))
 
 
-<<<<<<< HEAD
-def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id = 4326, all_touched = True):
-=======
 def create_model_from_signatures(sig_csv_path, model_out):
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
@@ -1957,7 +1953,6 @@ def create_model_from_signatures(sig_csv_path, model_out):
 
 
 def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326):
->>>>>>> origin/master
     """Given an image and a shapefile with categories, return x and y suitable
     for feeding into random_forest.fit.
     Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'
