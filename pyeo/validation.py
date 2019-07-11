@@ -21,7 +21,19 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
     log.info("Sample sizes: {}".format(sample_size))
     class_sample_counts = part_fixed_value_sampling(pinned_samples, class_counts, sample_size)
     log.info("Sample counts per class: {}".format(class_sample_counts))
+
+    sample_weights = cal_w_all(class_counts)
+    overall_accuracy = cal_sd_for_overall_accuracy(
+        weight_dict=sample_weights,
+        u_dict=user_accuracies,
+        sample_size_dict=class_sample_counts
+    )
+    for map_class, accuracy in user_accuracies.items():
+        ua = cal_sd_for_user_accuracy(accuracy, class_sample_counts[map_class])
+        log.info("Accuracy for class {}: {}".format(map_class, ua))
+    log.info("Overall accuracy: {}".format(overall_accuracy))
     produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class)
+
     log.info("Validation points at out: {}".format(out_shapefile_path))
     # manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
     # save_validation_maifest(manifest_path, class_counts, sample_size, class_sample_counts, target_standard_error,
@@ -129,9 +141,6 @@ def build_class_dict(class_array, no_data=None):
     return out_dict
 
 
-def create_validation_set(map_path, ):
-    pass
-
 
 def cal_si(ui):
     si = np.sqrt(ui * (1 - ui))
@@ -174,7 +183,7 @@ def cal_val_for_user_accuracy(u_i,sample_size_i):
     return val_user
 
 
-def cal_sd_for_overall_accruacy(weight_dict,u_dict,sample_size_dict):
+def cal_sd_for_overall_accuracy(weight_dict, u_dict, sample_size_dict):
     val_overall = cal_val_for_overall_accruacy(weight_dict=weight_dict,u_dict=u_dict,sample_size_dict=sample_size_dict)
     sd_overall = val_to_sd(val_overall)
     return sd_overall
@@ -313,6 +322,7 @@ def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sa
     remaining_map_size = total_map_size - pinned_map_total
     remaining_samples = total_sample_size - pinned_sample_total
     out_values = {}
+    weights = {}
     for map_class, sample_points in pinned_sample_numbers.items():
         if sample_points is not None:
             out_values.update({map_class: sample_points})
@@ -320,6 +330,7 @@ def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sa
             class_proportion = class_total_sizes[map_class]/remaining_map_size
             sample_points = int(np.round(class_proportion*remaining_samples))
             out_values.update({map_class: sample_points})
+
     return out_values
 
 

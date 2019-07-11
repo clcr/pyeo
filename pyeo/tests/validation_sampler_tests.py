@@ -8,7 +8,7 @@ import pytest
 
 def setup_module():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    init_log("validation_test_log.log")
+
 
 
 @pytest.mark.hi_mem
@@ -127,3 +127,49 @@ def test_part_fixed_value_sampling():
     out = validation.part_fixed_value_sampling(class_samples, total_class_sizes, target_points)
     assert sum(out.values()) == target_points
     assert target == out
+
+
+def test_maths():
+    class_samples = {
+        "foo": 100,
+        "bar": 100,
+        "baz": None,
+        "blob": None
+    }
+    total_class_sizes = {
+        "foo": 200000,
+        "bar": 150000,
+        "baz": 3200000,
+        "blob": 6450000
+    }
+    user_accuracies = {
+        "foo": 0.7,
+        "bar": 0.6,
+        "baz": 0.9,
+        "blob": 0.95
+    }
+    class_sample_counts = {
+        "foo": 100,
+        "bar": 100,
+        "baz": 149,
+        "blob": 292
+    }
+
+    sample_weights = validation.cal_w_all(total_class_sizes)
+    overall_accuracy = validation.cal_sd_for_overall_accuracy(
+        weight_dict=sample_weights,
+        u_dict=user_accuracies,
+        sample_size_dict=class_sample_counts
+    )
+    np.testing.assert_allclose(overall_accuracy, 0.011, atol=1e-3)
+    foo_accuracy = validation.cal_sd_for_user_accuracy(
+        user_accuracies["foo"],
+        class_sample_counts["foo"]
+    )
+    baz_accuracy = validation.cal_sd_for_user_accuracy(
+        user_accuracies["baz"],
+        class_sample_counts["baz"]
+    )
+    # Values from Olafsson table 7
+    np.testing.assert_allclose(foo_accuracy, 0.046, atol=1e-3)
+    np.testing.assert_allclose(baz_accuracy, 0.025, atol=1e-3)
