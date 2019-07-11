@@ -1387,6 +1387,18 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
     return x_pixel, y_pixel
 
 
+def pixel_to_point_coordinates(pixel, GT):
+    """Converts a pixel to it's coords implied by geotransform GT.
+    NOTE: This will not give the pixels precise location on the earth's surface;
+    you'll also need to make sure tha this is in the correct projection"""
+    Xpixel = pixel[1]
+    Yline = pixel[0]
+    Xgeo = GT[0] + Xpixel * GT[1] + Yline * GT[2]
+    Ygeo = GT[3] + Xpixel * GT[4] + Yline * GT[5]
+    return Xgeo, Ygeo
+
+
+
 def multiple_intersection(polygons):
     """Takes a list of polygons and returns a geometry representing the intersection of all of them"""
     running_intersection = polygons[0]
