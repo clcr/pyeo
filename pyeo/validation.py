@@ -14,7 +14,7 @@ gdal.UseExceptions()
 
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None):
-    log = logging.getLogger(__name__)
+    log = core.init_log("validation_log.log")
     class_counts = count_pixel_classes(in_map_path, no_data_class)
     log.info("Class counts: {}".format(class_counts))
     sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
@@ -331,7 +331,7 @@ def save_validation_maifest(out_path, class_counts, sample_size, class_sample_co
         "sample_size": sample_size,
         "samples_per_class": class_sample_counts,
         "target_error": target_standard_error,
-        "user accuracies": user_accuracies
+        "user_accuracies": user_accuracies
     }
     with open(out_path, "w") as fp:
         json.dump(out_dict, fp)
