@@ -19,8 +19,8 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
     class_sample_counts = part_fixed_value_sampling(pinned_samples, class_counts, sample_size)
     produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class)
     manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
-    save_validation_maifest(manifest_path, class_counts, sample_size, class_sample_counts, target_standard_error,
-                            user_accuracies)
+    # save_validation_maifest(manifest_path, class_counts, sample_size, class_sample_counts, target_standard_error,
+    #                        user_accuracies)
 
 
 def count_pixel_classes(map_path, no_data=None):
@@ -95,7 +95,9 @@ def stratified_random_sample(map_path, class_sample_count, no_data=None, seed = 
     map_array = None
     out_coord_list = []
     for pixel_class, coord_list in class_dict.items():
-        out_coord_list.extend(random.sample(coord_list, class_sample_count[pixel_class]))
+        pixel_class = str(pixel_class)
+        if pixel_class in class_sample_count.keys():
+            out_coord_list.extend(random.sample(coord_list, class_sample_count[pixel_class]))
     return out_coord_list
 
 
