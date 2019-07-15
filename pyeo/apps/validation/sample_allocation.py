@@ -27,7 +27,8 @@ def main():
         target_standard_error=float(conf["augments"]["target_standard_error"]),
         user_accuracies=user_accuracies,
         pinned_samples=pinned_samples,
-        no_data_class=conf["augments"]["no_data_class"]
+        no_data_class=conf["augments"]["no_data_class"],
+        produce_csv=True
     )
 
 

@@ -8,12 +8,14 @@ from pyeo import core
 import logging
 import datetime
 import json
+import csv
+import itertools
 
 gdal.UseExceptions()
 
 
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
-                               no_data_class=None, pinned_samples=None):
+                               no_data_class=None, pinned_samples=None, produce_csv=False):
     log = core.init_log("validation_log.log")
     class_counts = count_pixel_classes(in_map_path, no_data_class)
     log.info("Class counts: {}".format(class_counts))
@@ -32,7 +34,8 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
         ua = cal_sd_for_user_accuracy(accuracy, class_sample_counts[map_class])
         log.info("Accuracy for class {}: {}".format(map_class, ua))
     log.info("Overall accuracy: {}".format(overall_accuracy))
-    produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class)
+    produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class,
+                                        produce_csv=produce_csv)
 
     log.info("Validation points at out: {}".format(out_shapefile_path))
     # manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
@@ -63,7 +66,7 @@ def count_pixel_classes(map_path, no_data=None):
 
 
 def produce_stratifed_validation_points(map_path, out_path, class_sample_counts,
-                                        no_data=None, seed=None):
+                                        no_data=None, seed=None, produce_csv=False):
     """Produces a set of stratified validation points from map_path"""
     log = logging.getLogger(__name__)
     log.info("Producing random sampling of {}.".format(map_path))
@@ -73,13 +76,13 @@ def produce_stratifed_validation_points(map_path, out_path, class_sample_counts,
     proj = map.GetProjection()
     map = None
     point_dict = stratified_random_sample(map_path, class_sample_counts, int(no_data), seed)
-    save_point_list_to_shapefile(point_dict, out_path, gt, proj)
+    save_point_list_to_shapefile(point_dict, out_path, gt, proj, produce_csv)
     log.info("Complete. Output saved at {}.".format(out_path))
 
 
-def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform, projection_wkt):
+def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform, projection_wkt, produce_csv=False):
     """Saves a list of points to a shapefile at out_path. Need the gt and projection of the raster.
-    GT is needed to move each point to the centre of the pixel."""
+    GT is needed to move each point to the centre of the pixel. Can also produce a .csv file for CoolEarth"""
     log = logging.getLogger(__name__)
     log.info("Saving point list to shapefile")
     log.debug("GT: {}\nProjection: {}".format(geotransform, projection_wkt))
@@ -91,6 +94,7 @@ def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform
     class_field = ogr.FieldDefn("class", ogr.OFTString)
     class_field.SetWidth(24)
     layer.CreateField(class_field)
+
     for map_class, point_list in class_sample_point_dict.items():
         for point in point_list:
             feature = ogr.Feature(layer.GetLayerDefn())
@@ -102,8 +106,24 @@ def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform
             feature.SetField("class", map_class)
             layer.CreateFeature(feature)
             feature = None
+
     layer = None
     data_source = None
+
+    if produce_csv:
+        csv_out_path = out_path.rsplit('.')[0] + ".csv"
+        with open(csv_out_path, "w") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(["id", "yCoordinate", "xCoordinate"])
+
+            # Join all points create single dimesional list of points (and revise the '*' operator)
+            for id,  point in enumerate(itertools.chain(*class_sample_point_dict.values())):
+                coord = core.pixel_to_point_coordinates(point, geotransform)
+                offset = geotransform[1] / 2  # Adds half a pixel offset so points end up in the center of pixels
+                lat = coord[0] + offset
+                lon = coord[1] - offset
+                writer.writerow([id, lon, lat])
+        log.info("CSV out at: {}".format(csv_out_path))
 
 
 def stratified_random_sample(map_path, class_sample_count, no_data=None, seed = None):
