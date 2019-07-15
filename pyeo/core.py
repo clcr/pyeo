@@ -1882,12 +1882,16 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     log.info("Finding good pixels without missing values")
     log.info("image_array.shape = {}".format(image_array.shape))
     n_samples = image_array.shape[0]  # gives x * y dimension of the whole image
-    if 0 in image_array:  # a quick pre-check
-        good_mask = np.all(image_array != nodata, axis=1)
+    good_mask = np.all(image_array != nodata, axis=1)
+    good_sample_count = np.count_nonzero(good_mask)
+    log.info("No. good values: {}".format(good_sample_count))
+    if good_sample_count <= 0.7*len(good_mask):  # If the images is less than 70% good pixels, do filtering
+        log.info("Filtering nodata values")
         good_indices = np.nonzero(good_mask)
         good_samples = np.take(image_array, good_indices, axis=0).squeeze()
         n_good_samples = len(good_samples)
     else:
+        log.info("Not worth filtering nodata, skipping.")
         good_samples = image_array
         good_indices = range(0, n_samples)
         n_good_samples = n_samples
