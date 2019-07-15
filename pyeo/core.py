@@ -1751,11 +1751,11 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
             out_mask_view[:,:] = in_mask_view
         else:
             if combination_func is 'or':
-                out_mask_view[:,:] = np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8)
+                out_mask_view[:, :] = np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8)
             elif combination_func is 'and':
-                out_mask_view[:,:] = np.bitwise_and(out_mask_view, in_mask_view, dtype=np.uint8)
+                out_mask_view[:, :] = np.bitwise_and(out_mask_view, in_mask_view, dtype=np.uint8)
             elif combination_func is 'nor':
-                out_mask_view[:,:] = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8), dtype=np.uint8)
+                out_mask_view[:, :] = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8), dtype=np.uint8)
             else:
                 raise Exception("Invalid combination_func; valid values are 'or', 'and', and 'nor'")
         in_mask_view = None
@@ -1883,8 +1883,9 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     log.info("image_array.shape = {}".format(image_array.shape))
     n_samples = image_array.shape[0]  # gives x * y dimension of the whole image
     if 0 in image_array:  # a quick pre-check
-        good_samples = image_array[np.all(image_array != nodata, axis=1), :]
-        good_indices = [i for (i, j) in enumerate(image_array) if np.all(j != nodata)] # This is slowing things down too much. Maybe move into chunked section?
+        good_mask = np.all(image_array != nodata, axis=1)
+        good_indices = np.nonzero(good_mask)
+        good_samples = np.take(image_array, good_indices, axis=0).squeeze()
         n_good_samples = len(good_samples)
     else:
         good_samples = image_array
