@@ -24,10 +24,6 @@ if __name__ == "__main__":
 
     with TemporaryDirectory() as td:
         stacked_path = os.path.join(td, "stacked.tif")
-        pyeo.stack_images([args.old_image, args.new_image], stacked_path, geometry_mode="intersect")
-
+        pyeo.stack_old_and_new_images(args.old_image, args.new_image, td)
         pyeo.classify_image(stacked_path, args.model, args.output, prob_out_path=None,
                             num_chunks=args.chunks, apply_mask=args.mask)
-
-
-

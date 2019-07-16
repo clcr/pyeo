@@ -116,4 +116,6 @@ ENV/
 /pyeo/tests/test_outputs/
 /pyeo/tests/*.img*
 /pyeo/tests/*.vrt
+pyeo/.idea/vcs.xml
+/pyeo/.idea/vcs.xml
 **.zip
