@@ -1817,12 +1817,9 @@ def resample_image_in_place(image_path, new_res):
 
 
 def apply_array_image_mask(array, mask, fill_value=0):
-    """Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value"""
-    if array.ndim == 2:
-        band_count = 1
-    else:
-        band_count = array.shape[0]
-    stacked_mask = np.stack([mask]*band_count, axis=0)
+    """Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value
+    Mask is an a 2 dimensional array of 1 ( unmasked) and 0 (masked)"""
+    stacked_mask = np.broadcast_to(mask, array.shape)
     return np.where(stacked_mask == 1, array, fill_value)
 
 
