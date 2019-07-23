@@ -1,6 +1,10 @@
 import sys, os
+
+import pyeo.queries_and_downloads
+import pyeo.sen2_funcs
+import pyeo.filesystem_utilities
+
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-import pyeo.core as pyeo
 import argparse
 import configparser
 
@@ -20,13 +24,13 @@ if __name__ == "__main__":
 
     args=parser.parse_args()
 
-    pyeo.init_log(args.log_path)
+    pyeo.filesystem_utilities.init_log(args.log_path)
 
     conf = configparser.ConfigParser()
     conf.read(args.conf)
 
-    products = pyeo.check_for_s2_data_by_date(args.aoi_path, args.start_date, args.end_date,conf)
+    products = pyeo.queries_and_downloads.check_for_s2_data_by_date(args.aoi_path, args.start_date, args.end_date, conf)
     if args.filter:
-        products = pyeo.filter_non_matching_s2_data(products)
-    pyeo.download_s2_data(products, args.l1_dir, args.l2_dir, user=conf["sent_2"]["user"], passwd=conf["sent_2"]["pass"])
-    pyeo.preprocess_sen2_images(args.l2_dir, args.merge_dir, args.l1_dir, cloud_threshold=0, buffer_size=5)
+        products = pyeo.queries_and_downloads.filter_non_matching_s2_data(products)
+    pyeo.queries_and_downloads.download_s2_data(products, args.l1_dir, args.l2_dir, user=conf["sent_2"]["user"], passwd=conf["sent_2"]["pass"])
+    pyeo.sen2_funcs.preprocess_sen2_images(args.l2_dir, args.merge_dir, args.l1_dir, cloud_threshold=0, buffer_size=5)

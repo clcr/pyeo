@@ -53,6 +53,11 @@ Include the following lines at the start of your Python scripts:
 
 You may see a warning about scikit versions; this is normal.
 
+Filenaming, assumptions and structure
+=====================================
+
+Pyeo is divided into high-level and low-level fucntions.
+
 Function reference
 ==================
 
@@ -63,7 +68,6 @@ A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for 
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.
 
-Conven
 
 
 File structure and logging

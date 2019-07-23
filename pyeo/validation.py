@@ -4,7 +4,10 @@ import numpy as np
 import gdal
 import random
 import ogr, osr
-from pyeo import core
+
+import pyeo.coordinate_manipulation
+import pyeo.exceptions
+import pyeo.filesystem_utilities
 import logging
 import datetime
 import json
@@ -16,7 +19,7 @@ gdal.UseExceptions()
 
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None, produce_csv=False):
-    log = core.init_log("validation_log.log")
+    log = pyeo.filesystem_utilities.init_log("validation_log.log")
     class_counts = count_pixel_classes(in_map_path, no_data_class)
     log.info("Class counts: {}".format(class_counts))
     sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
@@ -98,7 +101,7 @@ def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform
     for map_class, point_list in class_sample_point_dict.items():
         for point in point_list:
             feature = ogr.Feature(layer.GetLayerDefn())
-            coord = core.pixel_to_point_coordinates(point, geotransform)
+            coord = pyeo.coordinate_manipulation.pixel_to_point_coordinates(point, geotransform)
             offset = geotransform[1]/2   # Adds half a pixel offset so points end up in the center of pixels
             wkt = "POINT({} {})".format(coord[0]+offset, coord[1]-offset) # Never forget about negative y values in gts.
             new_point = ogr.CreateGeometryFromWkt(wkt)
@@ -118,7 +121,7 @@ def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform
 
             # Join all points create single dimesional list of points (and revise the '*' operator)
             for id,  point in enumerate(itertools.chain(*class_sample_point_dict.values())):
-                coord = core.pixel_to_point_coordinates(point, geotransform)
+                coord = pyeo.coordinate_manipulation.pixel_to_point_coordinates(point, geotransform)
                 offset = geotransform[1] / 2  # Adds half a pixel offset so points end up in the center of pixels
                 lat = coord[0] + offset
                 lon = coord[1] - offset
@@ -318,7 +321,7 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, class_total
         log.info('allocated sample number under different scenario is: ')
         log.info(allocated_n)
     else:
-        raise core.ForestSentinelException("Invalid allocation type: valid values are 'equal', 'prop' or 'olofsson")
+        raise pyeo.exceptions.ForestSentinelException("Invalid allocation type: valid values are 'equal', 'prop' or 'olofsson")
     return allocated_n
 
 

@@ -1,6 +1,6 @@
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-import pyeo.core
+import os
+import pyeo.preprocessing
+import pyeo.filesystem_utilities
 import argparse
 import shutil
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     sen_2_cor_home = os.getenv("SEN2COR_HOME")
     args = parser.parse_args()
 
-    log = pyeo.core.init_log("sen2cor_{}.log".format(array_id))
+    log = pyeo.filesystem_utilities.init_log("sen2cor_{}.log".format(array_id))
 
     new_home = os.path.join((sen_2_cor_home), str(array_id))
     log.info("Setting SEN2COR_HOME to {}".format(new_home))
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     file_list = [os.path.join(args.l1_dir, l1_filename) for l1_filename in sorted(os.listdir(args.l1_dir))]
 
-    l2_name = pyeo.core.apply_sen2cor(file_list[array_id],
+    l2_name = pyeo.preprocessing.apply_sen2cor(file_list[array_id],
                                       r"/scratch/clcr/shared/Sen2Cor-02.05.05-Linux64/bin/L2A_Process")
     from_path = os.path.join(args.l1_dir, os.path.basename(l2_name))
     to_path = os.path.join(args.l2_dir, os.path.basename(l2_name))

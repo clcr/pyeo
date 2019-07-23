@@ -1,5 +1,5 @@
 from pyeo import validation
-from pyeo.core import init_log
+from pyeo.filesystem_utilities import init_log
 import numpy as np
 import gdal
 import os
