@@ -1,3 +1,9 @@
+"""
+Contains functions for creating, manipulating and applying masks.
+Unless otherwise stated, each mask is a binary multiplicative mask; pixels with the value 0 are masked and pixels
+with the value 1 are not masked.
+"""
+
 import glob
 import logging
 import os
@@ -10,7 +16,7 @@ from skimage import morphology as morph
 from pyeo.coordinate_manipulation import align_bounds_to_whole_number, get_combined_polygon, pixel_bounds_from_polygon, \
     get_raster_bounds
 from pyeo.classification import classify_image
-from pyeo.preprocessing import apply_fmask
+from pyeo.sen2_funcs import apply_fmask
 from pyeo.raster_manipulation import create_matching_dataset, create_new_image_from_polygon, resample_image_in_place
 
 

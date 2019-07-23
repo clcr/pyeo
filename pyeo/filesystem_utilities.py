@@ -1,3 +1,8 @@
+"""
+Contains functions for sorting, creating and comparing images as part of the filesystem. Includes any function
+that works on a generic pyeo timestamp.
+"""
+
 import datetime
 import glob
 import logging

@@ -1,3 +1,5 @@
+"""A very small plotting library."""
+
 import gdal
 from matplotlib import pyplot as plt
 

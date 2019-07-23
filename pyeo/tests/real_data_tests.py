@@ -271,8 +271,8 @@ def test_preprocessing():
     except FileNotFoundError:
         pass
     conf = load_test_conf()
-    pyeo.preprocessing.atmospheric_correction("test_data/L1", "test_outputs/L2",
-                                              conf['sen2cor']['path'])
+    pyeo.sen2_funcs.atmospheric_correction("test_data/L1", "test_outputs/L2",
+                                           conf['sen2cor']['path'])
     assert os.path.isfile(
         "test_outputs/L2/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m/T13QFB_20180103T172709_B08_10m.jp2"
     )

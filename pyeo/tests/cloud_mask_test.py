@@ -5,6 +5,7 @@ import shutil
 
 import pyeo.masks
 import pyeo.preprocessing
+import pyeo.sen2_funcs
 
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
 import pyeo.core as pyeo
@@ -31,7 +32,7 @@ def test_fmask():
         os.remove("test_outputs/masks/fmask.tif")
     except FileNotFoundError:
         pass
-    pyeo.preprocessing.apply_fmask(
+    pyeo.sen2_funcs.apply_fmask(
         "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
         "test_outputs/masks/fmask.tif"
     )

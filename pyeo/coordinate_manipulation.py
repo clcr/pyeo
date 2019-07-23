@@ -1,3 +1,7 @@
+"""
+Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.
+"""
+
 import numpy as np
 from osgeo import osr, ogr
 

@@ -1,3 +1,7 @@
+"""
+Contains ForestSentinel exception classes.
+"""
+
 import requests
 
 

@@ -1,3 +1,7 @@
+"""
+Functions for querying, filtering and downloading data.
+"""
+
 import datetime as dt
 import glob
 import itertools

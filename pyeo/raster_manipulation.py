@@ -1,3 +1,5 @@
+"""Functions for working with raster data"""
+
 import glob
 import logging
 import os

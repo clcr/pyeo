@@ -1,3 +1,7 @@
+"""
+Contains routines for manipulating arrays.
+"""
+
 import numpy as np
 
 

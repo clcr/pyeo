@@ -139,8 +139,8 @@ if __name__ == "__main__":
                                                         source=args.download_source, user=sen_user, passwd=sen_pass, try_scihub_on_fail=True)
         if args.do_preprocess or do_all and not args.download_l2_data:
             log.info("Preprocessing composite products")
-            pyeo.preprocessing.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
-                                                      delete_unprocessed_image=False)
+            pyeo.sen2_funcs.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
+                                                   delete_unprocessed_image=False)
         if args.do_merge or do_all:
             log.info("Aggregating composite layers")
             pyeo.sen2_funcs.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     # Atmospheric correction
     if args.do_preprocess or do_all and not args.download_l2_data:
         log.info("Applying sen2cor")
-        pyeo.preprocessing.atmospheric_correction(l1_image_dir, l2_image_dir, sen2cor_path, delete_unprocessed_image=False)
+        pyeo.sen2_funcs.atmospheric_correction(l1_image_dir, l2_image_dir, sen2cor_path, delete_unprocessed_image=False)
 
     # Aggregating layers into single image
     if args.do_merge or do_all:
