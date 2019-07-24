@@ -12,12 +12,14 @@ import pyeo.classification
 def test_classification():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:
-        os.remove("test_outputs/class_20180103T172709_20180319T172021.tif")
+        os.remove("test_outputs/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif")
     except FileNotFoundError:
         pass
-    pyeo.classification.classify_image("test_data/T13QFB_20180103T172709_20180329T171921.tif", "test_data/manantlan_v1.pkl",
-                        "test_outputs/class_T13QFB_20180103T172709_20180319T172021.tif", num_chunks=4)
-    image = gdal.Open("test_outputs/class_T13QFB_20180103T172709_20180319T172021.tif")
+    pyeo.classification.classify_image("test_data/composite_T36MZE_20190509T073621_20190519T073621_clipped.tif",
+                                       "test_data/manantlan_v1.pkl",
+                                       "test_outputs/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif",
+                                       num_chunks=4)
+    image = gdal.Open("test_outputs/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif")
     assert image
     image_array = image.GetVirtualMemArray()
     assert not np.all(image_array == 0)

@@ -16,6 +16,7 @@ dependencies:
   - numpy
   - scikit-learn=0.19.2=py36h4989274_0
   - scipy
+  - python-fmask
   - pip:
     - geojson
     - google-cloud
