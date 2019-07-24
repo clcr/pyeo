@@ -13,9 +13,7 @@
 
 import os
 
-import pyeo.masks
 import pyeo.raster_manipulation
-import pyeo.sen2_funcs
 import pyeo.filesystem_utilities
 import argparse
 

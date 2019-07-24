@@ -17,7 +17,6 @@ import os, sys
 import pyeo.classification
 import pyeo.queries_and_downloads
 import pyeo.raster_manipulation
-import pyeo.sen2_funcs
 import pyeo.filesystem_utilities
 
 import configparser
