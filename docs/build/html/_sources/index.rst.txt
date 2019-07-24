@@ -61,7 +61,25 @@ Pyeo is divided into high-level and low-level fucntions.
 Function reference
 ==================
 
-.. automodule:: pyeo
+.. automodule:: pyeo.classification
+   :members:
+
+.. automodule:: pyeo.array_utilities
+   :members:
+
+.. automodule:: pyeo.coordinate_manipulation
+   :members:
+
+.. automodule:: pyeo.filesystems_utilities
+   :members:
+
+.. automodule:: pyeo.queries_and_downloads
+   :members:
+
+.. automodule:: pyeo.raster_manipulation
+   :members:
+
+.. automodule:: pyeo.validation
    :members:
 
 At present, all processing code is located in pyeo/core.py.
