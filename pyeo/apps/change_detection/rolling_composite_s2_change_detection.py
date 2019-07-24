@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     if args.start_date == "LATEST":
         # This isn't nice, but returns the yyyymmdd string of the latest stacked image
-        start_date = pyeo.sen2_funcs.get_image_acquisition_time(pyeo.filesystem_utilities.sort_by_timestamp(
+        start_date = pyeo.filesystem_utilities.get_image_acquisition_time(pyeo.filesystem_utilities.sort_by_timestamp(
             [image_name for image_name in os.listdir(stacked_image_dir) if image_name.endswith(".tif")],
             recent_first=True
         )[0]).strftime("%Y%m%d")
@@ -139,12 +139,12 @@ if __name__ == "__main__":
                                                         source=args.download_source, user=sen_user, passwd=sen_pass, try_scihub_on_fail=True)
         if args.do_preprocess or do_all and not args.download_l2_data:
             log.info("Preprocessing composite products")
-            pyeo.sen2_funcs.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
-                                                   delete_unprocessed_image=False)
+            pyeo.raster_manipulation.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir, sen2cor_path,
+                                                            delete_unprocessed_image=False)
         if args.do_merge or do_all:
             log.info("Aggregating composite layers")
-            pyeo.sen2_funcs.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
-                                                   cloud_certainty_threshold, epsg=epsg, buffer_size=5)
+            pyeo.raster_manipulation.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir, composite_l1_image_dir,
+                                                            cloud_certainty_threshold, epsg=epsg, buffer_size=5)
         log.info("Building initial cloud-free composite")
         pyeo.raster_manipulation.composite_directory(composite_merged_dir, composite_dir, generate_date_images=True)
 
@@ -161,13 +161,13 @@ if __name__ == "__main__":
     # Atmospheric correction
     if args.do_preprocess or do_all and not args.download_l2_data:
         log.info("Applying sen2cor")
-        pyeo.sen2_funcs.atmospheric_correction(l1_image_dir, l2_image_dir, sen2cor_path, delete_unprocessed_image=False)
+        pyeo.raster_manipulation.atmospheric_correction(l1_image_dir, l2_image_dir, sen2cor_path, delete_unprocessed_image=False)
 
     # Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Aggregating layers")
-        pyeo.sen2_funcs.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold, epsg=epsg,
-                                               buffer_size=5)
+        pyeo.raster_manipulation.preprocess_sen2_images(l2_image_dir, merged_image_dir, l1_image_dir, cloud_certainty_threshold, epsg=epsg,
+                                                        buffer_size=5)
 
     log.info("Finding most recent composite")
     latest_composite_name = \
@@ -216,7 +216,7 @@ if __name__ == "__main__":
             log.info("Updating composite")
             new_composite_path = os.path.join(
                 composite_dir, "composite_{}.tif".format(
-                    pyeo.sen2_funcs.get_sen_2_image_timestamp(os.path.basename(image))))
+                    pyeo.filesystem_utilities.get_sen_2_image_timestamp(os.path.basename(image))))
             pyeo.raster_manipulation.composite_images_with_mask(
                 (latest_composite_path, new_image_path), new_composite_path, generate_date_image=True)
             latest_composite_path = new_composite_path

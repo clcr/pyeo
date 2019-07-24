@@ -4,19 +4,20 @@ import glob
 import logging
 import os
 import shutil
+import subprocess
 from tempfile import TemporaryDirectory
 
 import gdal
 import numpy as np
 from osgeo import gdal_array, osr, ogr
+from skimage import morphology as morph
 
-from pyeo.masks import get_mask_path, combine_masks, create_mask_from_class_map, apply_array_image_mask
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect
 from pyeo.array_utilities import project_array
-from pyeo.sen2_funcs import get_sen_2_tiles, stack_old_and_new_images, get_sen_2_image_timestamp, get_sen_2_image_tile
-from pyeo.filesystem_utilities import sort_by_timestamp
-from pyeo.exceptions import CreateNewStacksException, StackImagesException
+from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1_safe_file, get_sen_2_image_timestamp, \
+    get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path
+from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception
 
 
 def create_matching_dataset(in_dataset, out_path,
@@ -580,3 +581,355 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
 
     log.info("Map filtered")
     return out_map_path
+
+
+def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
+    """Opens a dataset given a safe file. Give band as a string."""
+    image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
+    # edited by hb91
+    #image_glob = r"GRANULE/*/IMG_DATA/*_{}.jp2".format(band)
+    fp_glob = os.path.join(safe_file_path, image_glob)
+    image_file_path = glob.glob(fp_glob)
+    out = gdal.Open(image_file_path[0])
+    return out
+
+
+def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None):
+    """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
+    the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided"""
+    log = logging.getLogger(__name__)
+    safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
+    for l2_safe_file in safe_file_path_list:
+        with TemporaryDirectory() as temp_dir:
+            log.info("----------------------------------------------------")
+            log.info("Merging 10m bands in SAFE dir: {}".format(l2_safe_file))
+            temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
+            log.info("Output file: {}".format(temp_path))
+            stack_sentinel_2_bands(l2_safe_file, temp_path, band='10m')
+
+            #pdb.set_trace()
+
+            log.info("Creating cloudmask for {}".format(temp_path))
+            l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
+            mask_path = get_mask_path(temp_path)
+            create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
+            log.info("Cloudmask created")
+
+            out_path = os.path.join(out_dir, os.path.basename(temp_path))
+            out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
+
+            if epsg:
+                log.info("Reprojecting images to {}".format(epsg))
+                proj = osr.SpatialReference()
+                proj.ImportFromEPSG(epsg)
+                wkt = proj.ExportToWkt()
+                reproject_image(temp_path, out_path, wkt)
+                reproject_image(mask_path, out_mask_path, wkt)
+            else:
+                log.info("Moving images to {}".format(out_dir))
+                shutil.move(temp_path, out_path)
+                shutil.move(mask_path, out_mask_path)
+
+
+def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
+    """Stacks the contents of a .SAFE granule directory into a single geotiff"""
+    log = logging.getLogger(__name__)
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
+    image_glob = os.path.join(safe_dir, granule_path)
+    file_list = glob.glob(image_glob)
+    file_list.sort()   # Sorting alphabetically gives the right order for bands
+    if not file_list:
+        log.error("No 10m imagery present in {}".format(safe_dir))
+        raise BadS2Exception
+    stack_images(file_list, out_image_path, geometry_mode="intersect")
+    return out_image_path
+
+
+def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
+    """
+    Stacks two images with the same tile
+    Names the result with the two timestamps.
+    First, decompose the granule ID into its components:
+    e.g. S2A, MSIL2A, 20180301, T162211, N0206, R040, T15PXT, 20180301, T194348
+    are the mission ID(S2A/S2B), product level(L2A), datatake sensing start date (YYYYMMDD) and time(THHMMSS),
+    the Processing Baseline number (N0206), Relative Orbit number (RO4O), Tile Number field (T15PXT),
+    followed by processing run date and then time
+    """
+    log = logging.getLogger(__name__)
+    tile_old = get_sen_2_image_tile(old_image_path)
+    tile_new = get_sen_2_image_tile(new_image_path)
+    if (tile_old == tile_new):
+        log.info("Stacking {} and".format(old_image_path))
+        log.info("         {}".format(new_image_path))
+        old_timestamp = get_sen_2_image_timestamp(os.path.basename(old_image_path))
+        new_timestamp = get_sen_2_image_timestamp(os.path.basename(new_image_path))
+        out_path = os.path.join(out_dir, tile_new + '_' + old_timestamp + '_' + new_timestamp)
+        log.info("Output stacked file: {}".format(out_path + ".tif"))
+        stack_images([old_image_path, new_image_path], out_path + ".tif")
+        if create_combined_mask:
+            out_mask_path = out_path + ".msk"
+            old_mask_path = get_mask_path(old_image_path)
+            new_mask_path = get_mask_path(new_image_path)
+            combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
+        return out_path + ".tif"
+    else:
+        log.error("Tiles  of the two images do not match. Aborted.")
+
+
+def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
+    """Applies sen2cor to the SAFE file at image_path. Returns the path to the new product."""
+    # Here be OS magic. Since sen2cor runs in its own process, Python has to spin around and wait
+    # for it; since it's doing that, it may as well be logging the output from sen2cor. This
+    # approach can be multithreaded in future to process multiple image (1 per core) but that
+    # will take some work to make sure they all finish before the program moves on.
+    log = logging.getLogger(__name__)
+    # added sen2cor_path by hb91
+    log.info("calling subprocess: {}".format([sen2cor_path, image_path]))
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    universal_newlines=True)
+
+    while True:
+        nextline = sen2cor_proc.stdout.readline()
+        if len(nextline) > 0:
+            log.info(nextline)
+        if nextline == '' and sen2cor_proc.poll() is not None:
+            break
+        if "CRITICAL" in nextline:
+            #log.error(nextline)
+            raise subprocess.CalledProcessError(-1, "L2A_Process")
+
+    log.info("sen2cor processing finished for {}".format(image_path))
+    log.info("Validating:")
+    if not check_for_invalid_l2_data(image_path.replace("MSIL1C", "MSIL2A")):
+        log.error("10m imagery not present in {}".format(image_path.replace("MSIL1C", "MSIL2A")))
+        raise BadS2Exception
+    if delete_unprocessed_image:
+            log.info("removing {}".format(image_path))
+            shutil.rmtree(image_path)
+    return image_path.replace("MSIL1C", "MSIL2A")
+
+
+def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
+    """Applies Sen2cor cloud correction to level 1C images"""
+    log = logging.getLogger(__name__)
+    images = [image for image in os.listdir(in_directory)
+              if image.startswith('MSIL1C', 4)]
+    # Opportunity for multithreading here
+    for image in images:
+        log.info("Atmospheric correction of {}".format(image))
+        image_path = os.path.join(in_directory, image)
+        #image_timestamp = get_sen_2_image_timestamp(image)
+        if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
+            log.warning("{} exists. Skipping.".format(image.replace("MSIL1C", "MSIL2A")))
+            continue
+        try:
+            l2_path = apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=delete_unprocessed_image)
+        except (subprocess.CalledProcessError, BadS2Exception):
+            log.error("Atmospheric correction failed for {}. Moving on to next image.".format(image))
+            pass
+        else:
+            l2_name = os.path.basename(l2_path)
+            log.info("L2  path: {}".format(l2_path))
+            log.info("New path: {}".format(os.path.join(out_directory, l2_name)))
+            os.rename(l2_path, os.path.join(out_directory, l2_name))
+
+
+def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10, buffer_size=0):
+    """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path."""
+    from pyeo.classification import classify_image  # Deferred import to deal with circular reference
+    with TemporaryDirectory() as td:
+        log = logging.getLogger(__name__)
+        log.info("Building cloud mask for {} with model {}".format(image_path, model_path))
+        temp_mask_path = os.path.join(td, "cat_mask.tif")
+        classify_image(image_path, model_path, temp_mask_path, num_chunks=num_chunks)
+        temp_mask = gdal.Open(temp_mask_path, gdal.GA_Update)
+        temp_mask_array = temp_mask.GetVirtualMemArray()
+        mask_path = get_mask_path(image_path)
+        mask = create_matching_dataset(temp_mask, mask_path, datatype=gdal.GDT_Byte)
+        mask_array = mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
+        mask_array[:, :] = np.where(temp_mask_array != model_clear, 0, 1)
+        temp_mask_array = None
+        mask_array = None
+        temp_mask = None
+        mask = None
+        if buffer_size:
+            buffer_mask_in_place(mask_path, buffer_size)
+        log.info("Cloud mask for {} saved in {}".format(image_path, mask_path))
+        return mask_path
+
+
+def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_threshold=0, buffer_size=3):
+    """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1. If
+    cloud_conf_threshold = 0, use scl mask else use confidence image """
+    log = logging.getLogger(__name__)
+    log.info("Creating mask for {} with {} confidence threshold".format(l2_safe_path, cloud_conf_threshold))
+    if cloud_conf_threshold:
+        cloud_glob = "GRANULE/*/QI_DATA/*CLD*_20m.jp2"  # This should match both old and new mask formats
+        cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
+        cloud_image = gdal.Open(cloud_path)
+        cloud_confidence_array = cloud_image.GetVirtualMemArray()
+        mask_array = (cloud_confidence_array < cloud_conf_threshold)
+        cloud_confidence_array = None
+    else:
+        cloud_glob = "GRANULE/*/IMG_DATA/R20m/*SCL*_20m.jp2"  # This should match both old and new mask formats
+        cloud_path = glob.glob(os.path.join(l2_safe_path, cloud_glob))[0]
+        cloud_image = gdal.Open(cloud_path)
+        scl_array = cloud_image.GetVirtualMemArray()
+        mask_array = np.isin(scl_array, (4, 5, 6))
+
+    mask_image = create_matching_dataset(cloud_image, out_path)
+    mask_image_array = mask_image.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    np.copyto(mask_image_array, mask_array)
+    mask_image_array = None
+    cloud_image = None
+    mask_image = None
+    resample_image_in_place(out_path, 10)
+    if buffer_size:
+        buffer_mask_in_place(out_path, buffer_size)
+    log.info("Mask created at {}".format(out_path))
+    return out_path
+
+
+def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, buffer_size=0, out_resolution=None):
+    """Creates a mask from a classification mask: 1 for each pixel containing one of classes_of_interest, otherwise 0"""
+    # TODO: pull this out of the above function
+    class_image = gdal.Open(class_map_path)
+    class_array = class_image.GetVirtualMemArray()
+    mask_array = np.isin(class_array, classes_of_interest)
+    out_mask = create_matching_dataset(class_image, out_path, datatype=gdal.GDT_Byte)
+    out_array = out_mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    np.copyto(out_array, mask_array)
+    class_array = None
+    class_image = None
+    out_array = None
+    out_mask = None
+    if out_resolution:
+        resample_image_in_place(out_path, out_resolution)
+    if buffer_size:
+        buffer_mask_in_place(out_path)
+    return out_path
+
+
+def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func ="intersect"):
+    """ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
+    Python true or false. Also assumes that all masks are the same projection for now."""
+    # TODO Implement intersection and union
+    log = logging.getLogger(__name__)
+    log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
+        mask_paths, combination_func, geometry_func))
+    masks = [gdal.Open(mask_path) for mask_path in mask_paths]
+    combined_polygon = align_bounds_to_whole_number(get_combined_polygon(masks, geometry_func))
+    gt = masks[0].GetGeoTransform()
+    x_res = gt[1]
+    y_res = gt[5]*-1  # Y res is -ve in geotransform
+    bands = 1
+    projection = masks[0].GetProjection()
+    out_mask = create_new_image_from_polygon(combined_polygon, out_path, x_res, y_res,
+                                             bands, projection, datatype=gdal.GDT_Byte, nodata=0)
+
+    # This bit here is similar to stack_raster, but different enough to not be worth spinning into a combination_func
+    # I might reconsider this later, but I think it'll overcomplicate things.
+    out_mask_array = out_mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    out_mask_array[:, :] = 1
+    for i, in_mask in enumerate(masks):
+        in_mask_array = in_mask.GetVirtualMemArray()
+        if geometry_func == "intersect":
+            out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_mask, combined_polygon)
+            in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_mask, combined_polygon)
+        elif geometry_func == "union":
+            out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_mask, get_raster_bounds(in_mask))
+            in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_mask, get_raster_bounds(in_mask))
+        else:
+            raise Exception("Invalid geometry_func; can be 'intersect' or 'union'")
+        out_mask_view = out_mask_array[out_y_min: out_y_max, out_x_min: out_x_max]
+        in_mask_view = in_mask_array[in_y_min: in_y_max, in_x_min: in_x_max]
+        if i is 0:
+            out_mask_view[:,:] = in_mask_view
+        else:
+            if combination_func is 'or':
+                out_mask_view[:, :] = np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8)
+            elif combination_func is 'and':
+                out_mask_view[:, :] = np.bitwise_and(out_mask_view, in_mask_view, dtype=np.uint8)
+            elif combination_func is 'nor':
+                out_mask_view[:, :] = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8), dtype=np.uint8)
+            else:
+                raise Exception("Invalid combination_func; valid values are 'or', 'and', and 'nor'")
+        in_mask_view = None
+        out_mask_view = None
+        in_mask_array = None
+        in_mask = None
+    out_mask_array = None
+    out_mask = None
+    return out_path
+
+
+def buffer_mask_in_place(mask_path, buffer_size):
+    """Expands a mask in-place, overwriting the previous mask"""
+    log = logging.getLogger(__name__)
+    log.info("Buffering {} with buffer size {}".format(mask_path, buffer_size))
+    mask = gdal.Open(mask_path, gdal.GA_Update)
+    mask_array = mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    cache = morph.binary_erosion(mask_array, selem=morph.disk(buffer_size))
+    np.copyto(mask_array, cache)
+    mask_array = None
+    mask = None
+
+
+def apply_array_image_mask(array, mask, fill_value=0):
+    """Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value
+    Mask is an a 2 dimensional array of 1 ( unmasked) and 0 (masked)"""
+    stacked_mask = np.broadcast_to(mask, array.shape)
+    return np.where(stacked_mask == 1, array, fill_value)
+
+
+def create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, out_mask_path, buffer_size=0):
+    with TemporaryDirectory() as td:
+        s2c_mask_path = os.path.join(td, "s2_mask.tif")
+        fmask_mask_path = os.path.join(td, "fmask.tif")
+        create_mask_from_confidence_layer(l2_safe_file, s2c_mask_path, buffer_size=buffer_size)
+        create_mask_from_fmask(l1_safe_file, fmask_mask_path)
+        combine_masks([s2c_mask_path, fmask_mask_path], out_mask_path, combination_func="and", geometry_func="union")
+
+
+def create_mask_from_fmask(in_l1_dir, out_path):
+    log = logging.getLogger(__name__)
+    log.info("Creating fmask for {}".format(in_l1_dir))
+    with TemporaryDirectory() as td:
+        #pdb.set_trace()
+        temp_fmask_path = os.path.join(td, "fmask.tif")
+        apply_fmask(in_l1_dir, temp_fmask_path)
+        fmask_image = gdal.Open(temp_fmask_path)
+        fmask_array = fmask_image.GetVirtualMemArray()
+        out_image = create_matching_dataset(fmask_image, out_path, datatype=gdal.GDT_Byte)
+        out_array = out_image.GetVirtualMemArray(eAccess=gdal.GA_Update)
+        log.info("fmask created, converting to binary cloud/shadow mask")
+        out_array[:,:] = np.isin(fmask_array, (2, 3, 4), invert=True)
+        out_array = None
+        out_image = None
+        fmask_array = None
+        fmask_image = None
+        resample_image_in_place(out_path, 10)
+
+
+def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"):
+    """Calls fmask to create a new mask for L1 data"""
+    # For reasons known only to the spirits, calling subprocess.run from within this function on a HPC cause the PATH
+    # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
+    if "torque" in os.getenv("PATH"):  # Are we on a HPC? If so, give explicit path to fmask
+        fmask_command = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"
+    log = logging.getLogger(__name__)
+    args = [
+        fmask_command,
+        "-o", out_file,
+        "--safedir", in_safe_dir
+    ]
+    log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
+    # pdb.set_trace()
+    fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    while True:
+        nextline = fmask_proc.stdout.readline()
+        if len(nextline) > 0:
+            log.info(nextline)
+        if nextline == '' and fmask_proc.poll() is not None:
+            break

@@ -4,13 +4,14 @@ that works on a generic pyeo timestamp.
 """
 
 import datetime
+import datetime as dt
 import glob
 import logging
 import os
 import re
 import shutil
 
-from pyeo.sen2_funcs import get_image_acquisition_time
+from pyeo.exceptions import CreateNewStacksException
 
 
 def init_log(log_path):
@@ -183,3 +184,91 @@ def get_pyeo_timestamp(image_name):
     timestamp_re = r"\d{14}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
+
+
+def get_sen_2_tiles(image_dir):
+    """
+    gets the list of tiles present in the directory
+    """
+    image_files = glob.glob(os.path.join(image_dir, "*.tif"))
+    if len(image_files) == 0:
+        raise CreateNewStacksException("Image_dir is empty")
+    else:
+        tiles = []
+        for image_file in image_files:
+            tile = get_sen_2_image_tile(image_file)
+            tiles.append(tile)
+    return tiles
+
+
+def get_image_acquisition_time(image_name):
+    """Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present"""
+    try:
+        return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
+    except AttributeError:
+        return None
+
+
+def get_related_images(target_image_name, project_dir):
+    """Gets the paths of all images related to that one in a project, by timestamp"""
+    timestamp = get_sen_2_image_timestamp(target_image_name)
+    image_glob = r"*{}*".format(timestamp)
+    return glob.glob(image_glob, project_dir)
+
+
+def get_l1_safe_file(image_name, l1_dir):
+    """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+    a filename"""
+    timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
+    granule = get_sen_2_image_tile(os.path.basename(image_name))
+    safe_glob = "S2[A|B]_MSIL1C_{}_*_{}_*.SAFE".format(timestamp, granule)
+    out = glob.glob(os.path.join(l1_dir, safe_glob))[0]
+    return out
+
+
+def get_l2_safe_file(image_name, l2_dir):
+    """Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+    a filename"""
+    timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
+    granule = get_sen_2_image_tile(os.path.basename(image_name))
+    safe_glob = "S2[A|B]_MSIL2A_{}_*_{}_*.SAFE".format(timestamp, granule)
+    out = glob.glob(os.path.join(l2_dir, safe_glob))[0]
+    return out
+
+
+def get_sen_2_image_timestamp(image_name):
+    """Returns the timestamps part of a Sentinel 2 image"""
+    timestamp_re = r"\d{8}T\d{6}"
+    ts_result = re.search(timestamp_re, image_name)
+    return ts_result.group(0)
+
+
+def get_sen_2_image_orbit(image_name):
+    """Returns the relative orbit number of a Sentinel 2 image"""
+    tmp1 = image_name.split("/")[-1]  # remove path
+    tmp2 = tmp1.split(".")[0] # remove file extension
+    comps = tmp2.split("_") # decompose
+    return comps[4]
+
+
+def get_sen_2_image_tile(image_name):
+    """Returns the tile number of a Sentinel 2 image or path"""
+    name = os.path.basename(image_name)
+    tile = re.findall(r"T\d{2}[A-Z]{3}", name)[0]  # Matches tile ID, but not timestamp
+    return tile
+
+
+def get_sen_2_granule_id(safe_dir):
+    """Returns the unique ID of a Sentinel 2 granule from a SAFE directory path"""
+    tmp = os.path.basename(safe_dir) # removes path to SAFE directory
+    id = tmp.split(".")[0] # removes ".SAFE" from the ID name
+    return id
+
+
+def get_mask_path(image_path):
+    """A gdal mask is an image with the same name as the image it's masking, but with a .msk extension"""
+    image_name = os.path.basename(image_path)
+    image_dir = os.path.dirname(image_path)
+    mask_name = image_name.rsplit('.')[0] + ".msk"
+    mask_path = os.path.join(image_dir, mask_name)
+    return mask_path

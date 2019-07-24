@@ -18,9 +18,9 @@ from sklearn.externals import joblib as sklearn_joblib
 from sklearn.model_selection import cross_val_score
 
 from pyeo.coordinate_manipulation import get_local_top_left
-from pyeo.masks import get_mask_path, apply_array_image_mask
+from pyeo.filesystem_utilities import get_mask_path
 
-from pyeo.raster_manipulation import stack_images, create_matching_dataset
+from pyeo.raster_manipulation import stack_images, create_matching_dataset, apply_array_image_mask
 
 
 def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path):

@@ -80,14 +80,14 @@ if __name__ == "__main__":
     # Atmospheric correction
     if args.do_preprocess or do_all:
         log.info("Applying sen2cor")
-        pyeo.sen2_funcs.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
+        pyeo.raster_manipulation.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
 
     # Merging / Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Cleaning L2A directory")
         pyeo.filesystem_utilities.clean_l2_dir(l2_image_path, resolution="10m", warning=False)
         log.info("Aggregating layers")
-        pyeo.sen2_funcs.preprocess_sen2_images(l2_image_path, merged_image_path, cloud_certainty_threshold)
+        pyeo.raster_manipulation.preprocess_sen2_images(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
     # Stack layers
     if args.do_stack or do_all:

@@ -4,9 +4,9 @@ import shutil
 import gdal
 import pytest
 
-import pyeo.masks
-import pyeo.sen2_funcs
-from pyeo.tests.real_data_tests import load_test_conf
+import pyeo.filesystem_utilities
+import pyeo.raster_manipulation
+from pyeo.tests.utilities import load_test_conf
 
 
 @pytest.mark.slow
@@ -17,8 +17,8 @@ def test_preprocessing():
     except FileNotFoundError:
         pass
     conf = load_test_conf()
-    pyeo.sen2_funcs.atmospheric_correction("test_data/L1", "test_outputs/L2",
-                                           conf['sen2cor']['path'])
+    pyeo.raster_manipulation.atmospheric_correction("test_data/L1", "test_outputs/L2",
+                                                    conf['sen2cor']['path'])
     assert os.path.isfile(
         "test_outputs/L2/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.SAFE/GRANULE/L2A_T13QFB_A004328_20180103T172711/IMG_DATA/R10m/T13QFB_20180103T172709_B08_10m.jp2"
     )
@@ -36,7 +36,7 @@ def test_merging():
         os.remove("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.msk")
     except FileNotFoundError:
         pass
-    pyeo.sen2_funcs.preprocess_sen2_images("test_data/L2/", "test_outputs/", "test_data/L1/", buffer_size=5)
+    pyeo.raster_manipulation.preprocess_sen2_images("test_data/L2/", "test_outputs/", "test_data/L1/", buffer_size=5)
     assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif")
     assert os.path.exists("test_outputs/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif")
     assert os.path.exists("test_outputs/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.msk")
@@ -50,7 +50,7 @@ def test_stacking():
         os.remove("test_outputs/T13QFB_20180329T171921_20180103T172709.tif")
     except FileNotFoundError:
         pass
-    pyeo.sen2_funcs.stack_old_and_new_images(r"test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif",
+    pyeo.raster_manipulation.stack_old_and_new_images(r"test_data/S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359.tif",
                                   r"test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
                                   r"test_outputs")
     image = gdal.Open("test_outputs/T13QFB_20180319T172021_20180103T172709.tif")
@@ -66,12 +66,12 @@ def test_mask_closure():
     if os.path.exists(out_mask_path):
         os.remove(out_mask_path)
     shutil.copy("test_data/20180103T172709.msk", out_mask_path)
-    pyeo.masks.buffer_mask_in_place(out_mask_path, 3)
+    pyeo.raster_manipulation.buffer_mask_in_place(out_mask_path, 3)
 
 
 def test_get_l1():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    output = pyeo.sen2_funcs.get_l1_safe_file(
+    output = pyeo.filesystem_utilities.get_l1_safe_file(
         "test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
         "test_data/L1"
     )
@@ -80,7 +80,7 @@ def test_get_l1():
 
 def test_get_l2():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    output = pyeo.sen2_funcs.get_l2_safe_file(
+    output = pyeo.filesystem_utilities.get_l2_safe_file(
         "test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif",
         "test_data/L2"
     )
@@ -89,5 +89,5 @@ def test_get_l2():
 
 def test_get_tile():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    assert pyeo.sen2_funcs.get_sen_2_image_tile("test_data/T13QFB_20180103T172709_20180329T171921.tif") == "T13QFB"
-    assert pyeo.sen2_funcs.get_sen_2_image_tile("test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif") == "T13QFB"
+    assert pyeo.filesystem_utilities.get_sen_2_image_tile("test_data/T13QFB_20180103T172709_20180329T171921.tif") == "T13QFB"
+    assert pyeo.filesystem_utilities.get_sen_2_image_tile("test_data/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.tif") == "T13QFB"

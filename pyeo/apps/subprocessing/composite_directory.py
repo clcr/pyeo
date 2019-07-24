@@ -43,10 +43,10 @@ if __name__ == "__main__":
     if args.merge_path:
         comp_dir = args.merge_path
         for safe_file in [os.path.join(os.path.dirname(args.in_dir), file) for file in os.listdir(args.in_dir)]:
-            pyeo.sen2_funcs.stack_sentinel_2_bands(safe_file, comp_dir)
+            pyeo.raster_manipulation.stack_sentinel_2_bands(safe_file, comp_dir)
 
     if args.mask_path:
         for image in [os.path.join(os.path.dirname(comp_dir), file) for file in os.listdir(comp_dir)]:
-            pyeo.masks.create_mask_from_model(image, args.mask_path)
+            pyeo.raster_manipulation.create_mask_from_model(image, args.mask_path)
 
     pyeo.raster_manipulation.composite_directory(comp_dir, args.out_path, generate_date_images=args.generate_dates_image)

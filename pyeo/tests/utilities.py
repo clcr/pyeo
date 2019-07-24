@@ -17,10 +17,10 @@ Notes:
 
 Recommended running augments:
 cd .../pyeo/tests
-pytest real_data_tests.py --log-cli-level DEBUG   (runs all non-slow tests with log output printed to stdout)
-pytest real_data_tests.py --log-cli-level DEBUG -k composite   (runs all non-slow tests with 'composite' in the function
+pytest utilities.py --log-cli-level DEBUG   (runs all non-slow tests with log output printed to stdout)
+pytest utilities.py --log-cli-level DEBUG -k composite   (runs all non-slow tests with 'composite' in the function
 name)
-pytest real_data_tests.py --log-cli-level DEBUG --runslow  (runs all tests)
+pytest utilities.py --log-cli-level DEBUG --runslow  (runs all tests)
 """
 import os
 

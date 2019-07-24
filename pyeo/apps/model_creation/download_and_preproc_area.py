@@ -1,6 +1,7 @@
 import sys, os
 
 import pyeo.queries_and_downloads
+import pyeo.raster_manipulation
 import pyeo.sen2_funcs
 import pyeo.filesystem_utilities
 
@@ -33,4 +34,4 @@ if __name__ == "__main__":
     if args.filter:
         products = pyeo.queries_and_downloads.filter_non_matching_s2_data(products)
     pyeo.queries_and_downloads.download_s2_data(products, args.l1_dir, args.l2_dir, user=conf["sent_2"]["user"], passwd=conf["sent_2"]["pass"])
-    pyeo.sen2_funcs.preprocess_sen2_images(args.l2_dir, args.merge_dir, args.l1_dir, cloud_threshold=0, buffer_size=5)
+    pyeo.raster_manipulation.preprocess_sen2_images(args.l2_dir, args.merge_dir, args.l1_dir, cloud_threshold=0, buffer_size=5)

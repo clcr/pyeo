@@ -4,6 +4,7 @@ import pyeo.filesystem_utilities
 import argparse
 import shutil
 
+import pyeo.raster_manipulation
 import pyeo.sen2_funcs
 
 
@@ -41,7 +42,7 @@ if __name__ == "__main__":
 
     file_list = [os.path.join(args.l1_dir, l1_filename) for l1_filename in sorted(os.listdir(args.l1_dir))]
 
-    l2_name = pyeo.sen2_funcs.apply_sen2cor(file_list[array_id],
+    l2_name = pyeo.raster_manipulation.apply_sen2cor(file_list[array_id],
                                       r"/scratch/clcr/shared/Sen2Cor-02.05.05-Linux64/bin/L2A_Process")
     from_path = os.path.join(args.l1_dir, os.path.basename(l2_name))
     to_path = os.path.join(args.l2_dir, os.path.basename(l2_name))

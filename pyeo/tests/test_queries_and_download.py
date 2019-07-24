@@ -5,7 +5,7 @@ import pytest
 from sklearn.externals import joblib
 
 import pyeo.queries_and_downloads
-from pyeo.tests.real_data_tests import load_test_conf
+from pyeo.tests.utilities import load_test_conf
 
 
 @pytest.mark.webtest

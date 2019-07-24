@@ -19,8 +19,7 @@ from google.cloud import storage
 from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
-from pyeo.sen2_funcs import get_sen_2_image_tile
-from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data
+from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
 from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests
 
 
