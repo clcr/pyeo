@@ -15,7 +15,6 @@ Produces two directories of un-mosaiced imagery; one of classified images and on
 import os, sys
 
 import pyeo.classification
-import pyeo.preprocessing
 import pyeo.queries_and_downloads
 import pyeo.raster_manipulation
 import pyeo.sen2_funcs

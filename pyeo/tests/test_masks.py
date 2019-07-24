@@ -1,16 +1,60 @@
-import pdb
-
-import os, sys
+import os
 import shutil
 
+import gdal
+import pytest
+
 import pyeo.masks
-import pyeo.preprocessing
 import pyeo.sen2_funcs
 
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..')))
-import pyeo.core as pyeo
-import numpy as np
-from pyeo.core import gdal
+
+def test_mask_buffering():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_masks = [r"test_data/buffered_masks/20180103T172709.msk",
+                  r"test_data/buffered_masks/20180319T172021.msk",
+                  r"test_data/buffered_masks/20180329T171921.msk"]
+    try:
+        [os.remove(mask) for mask in test_masks]
+    except FileNotFoundError:
+        pass
+    [shutil.copy(mask, "test_data/buffered_masks/") for mask in
+     ["test_data/20180103T172709.msk", "test_data/20180319T172021.msk", r"test_data/20180329T171921.msk"]]
+    [pyeo.masks.buffer_mask_in_place(mask, 2) for mask in test_masks]
+    assert [os.path.exists(mask) for mask in test_masks]
+
+
+@pytest.mark.slow
+def test_ml_masking():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/ml_mask_test.tif")
+        os.remove("test_outputs/ml_mask_test.msk")
+    except FileNotFoundError:
+        pass
+    shutil.copy(r"test_data/20180103T172709.tif", r"test_outputs/ml_mask_test.tif")
+    pyeo.masks.create_mask_from_model(
+        r"test_outputs/ml_mask_test.tif",
+        r"test_data/cloud_model_v0.1.pkl",
+        buffer_size=10
+    )
+
+
+def test_mask_combination():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    masks = [r"test_data/"+mask for mask in os.listdir("test_data") if mask.endswith(".msk")]
+    try:
+        os.remove("test_outputs/union_or_combination.tif")
+        os.remove("test_outputs/intersection_and_combination.tif")
+    except FileNotFoundError:
+        pass
+    pyeo.masks.combine_masks(masks, "test_outputs/union_or_combination.tif",
+                             geometry_func="union", combination_func="or")
+    pyeo.masks.combine_masks(masks, "test_outputs/intersection_and_combination.tif",
+                             geometry_func="intersect", combination_func="and")
+    mask_1 = gdal.Open("test_outputs/union_or_combination.tif")
+    assert not mask_1.GetVirtualMemArray().all == False
+    mask_2 = gdal.Open("test_outputs/intersection_and_combination.tif")
+    assert not mask_2.GetVirtualMemArray().all == False
 
 
 def test_mask_from_confidence_layer():
