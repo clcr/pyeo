@@ -824,73 +824,12 @@ GT is needed to move each point to the centre of the pixel. Can also produce a .
 </dd></dl>
 
 </div>
-<p>At present, all processing code is located in pyeo/core.py.
-A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
+<p>A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.</p>
 </div>
-<div class="section" id="example-scripts">
-<h1>Example scripts<a class="headerlink" href="#example-scripts" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="simple-s2-change-detection-py">
-<h2>simple_s2_change_detection.py<a class="headerlink" href="#simple-s2-change-detection-py" title="Permalink to this headline">¶</a></h2>
-<blockquote>
-<div><span class="target" id="module-pyeo.apps.change_detection.simple_s2_change_detection"></span><p>A change detection script that downloads, stacks and classifies a set of 10m sentinel 2 images.</p>
-<p>When run, this script will download every S2 image in the aoi (defined by the geojson at aoi_path) between the two
-dates that meets the specified cloud cover range. It will use the sen2cor distribution specified in the .ini file
-to atmospherically correct the data to L2A, merge each set of 10m bands into a single geotiff, stack the images
-into pairs based on the algorithm in create_new_stacks and classify those images using a scikit-learn model</p>
-<p>To use this script, fill out the [sent_2], [forest_sentinel] and [sen2cor] sections of the configuration file
-change_detection.ini, then run</p>
-<p>$ python pyeo/apps/change_detection/simple_s2_change_detection.py –conf /path/to/change_detection.ini</p>
-<p>Produces two directories of un-mosaiced imagery; one of classified images and one of class probabilites</p>
-</div></blockquote>
-</div>
-<div class="section" id="create-model-from-shapefile-and-raster-py">
-<h2>create_model_from_shapefile_and_raster.py<a class="headerlink" href="#create-model-from-shapefile-and-raster-py" title="Permalink to this headline">¶</a></h2>
-<blockquote>
-<div><span class="target" id="module-pyeo.apps.model_creation.create_model_from_shapefile_and_raster"></span><p>Produces a trained model from a raster and associated shapefile.</p>
-<p>To create a training set, enclose any features you want to classify with polygons. Give the shapefile an field
-of something like ‘class_id’, as an integer, and set that value to the class inside the polygon. Set the paths
-to the shapefile and raster in the associated model_creation.ini file, along with a path to where you want to
-store the completed model (as a .pkl file) and the name of the field used to identify the polygons (“class_id”</p>
-<blockquote>
-<div><p>in this example).</p>
-</div></blockquote>
-<p><em>Do not make class_id = 0 in any training polygon; it will be ignored if you do</em></p>
-<p><em>At present, the raster must be projected in EPSG 4326</em></p>
-<p>For example: if you want to make a model that classifies forest and water in an image, draw some polygons
-inside forested areas and set their ‘class_id’ to 1. Then draw some more polygons inside water bodies, and set
-their class_id to 2.</p>
-<p>This code will create and store a pixel classifier from training data and rasters. Each pixel under a polygon
-provides a sample of that polygon’s class, with every value of that pixel being a feature of that sample.</p>
-<p>At present, the model created is a balanced random forest classifier; there are plans to expand the function
-to take the model as an augment, but these are not yet implemented.</p>
-<p>You can call this script from the command with a .ini file as an argument</p>
-</div></blockquote>
-</div>
-<div class="section" id="composite-directory-py">
-<h2>composite_directory.py<a class="headerlink" href="#composite-directory-py" title="Permalink to this headline">¶</a></h2>
-<blockquote>
-<div><span class="target" id="module-pyeo.apps.subprocessing.composite_directory"></span><p>Creates a composite of all imagery in the target directory. Assumes that each image name contains an S2-like
-timestamp (yyyymmddThhmmss), and the each .tif has an associated multiplicative mask file (where masked pixels
-are 0 and unmasked pixels are 1)</p>
-<p>Usage: python composite_directory.py /path/to/image/dir path/to/output.tif</p>
-<p>This script will sort in_dir from the earliest to the latest image based on S2 timestamps. It will iterate through
-this list, saving any unmasked pixels in each image into the image at out_path. Any pixels that are masked all
-the way through will be 0 at present (nodata to be implemented).</p>
-<p>Masks can either be single band images or n-band image (same at the corresponding .tif)</p>
-</div></blockquote>
-</div>
-<div class="section" id="extract-signatures-py">
-<h2>extract_signatures.py<a class="headerlink" href="#extract-signatures-py" title="Permalink to this headline">¶</a></h2>
-<blockquote>
-<div><span class="target" id="module-pyeo.apps.subprocessing.extract_signatures"></span><p>Command line application for extracting signatures from a .tif
-file and a folder containing a .shp of the same name. Example of use:</p>
-<blockquote>
-<div><p>python extract_signatures.py in_ras ras1.tif ras2.tif out sigs.csv</p>
-</div></blockquote>
-</div></blockquote>
-</div>
+<div class="section" id="module-pyeo.apps.change_detection">
+<span id="example-scripts"></span><h1>Example scripts<a class="headerlink" href="#module-pyeo.apps.change_detection" title="Permalink to this headline">¶</a></h1>
 </div>
 
 

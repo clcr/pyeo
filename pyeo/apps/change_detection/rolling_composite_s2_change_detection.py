@@ -1,5 +1,7 @@
 """
- Right, let's think this through.
+rolling_composite_s2_change_detection
+-------------------------------------
+An app for providing continuous change detection. Runs the following algorithm
  Step -1: Create initial composite with last date (stored in filename?)
  Step 0: Load composite
  Step 1: Download images from last date in composite until present last date
@@ -14,10 +16,8 @@ Step 8:
  """
 
 import pyeo.classification
-import pyeo.preprocessing
 import pyeo.queries_and_downloads
 import pyeo.raster_manipulation
-import pyeo.sen2_funcs
 import pyeo.filesystem_utilities
 
 import configparser

@@ -553,7 +553,7 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
 def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_interest, out_resolution=10):
     """Filters class_map_path for pixels in filter_map_path containing only classes_of_interest.
     Assumes that filter_map_path and class_map_path are same resolution and projection."""
-    # TODO: put into proper place in core
+    # TODO: Include nodata value
     log = logging.getLogger(__name__)
     log.info("Filtering {} using classes{} from map {}".format(class_map_path, classes_of_interest, image_path))
     with TemporaryDirectory() as td:

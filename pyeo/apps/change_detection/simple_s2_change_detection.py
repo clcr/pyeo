@@ -1,4 +1,7 @@
-"""A change detection script that downloads, stacks and classifies a set of 10m sentinel 2 images.
+"""
+simple_s2_change_detection
+--------------------------
+A change detection script that downloads, stacks and classifies a set of 10m sentinel 2 images.
 
 When run, this script will download every S2 image in the aoi (defined by the geojson at aoi_path) between the two
 dates that meets the specified cloud cover range. It will use the sen2cor distribution specified in the .ini file

@@ -1,4 +1,12 @@
-"""Quick script that stacks and classifies two images"""
+"""
+image_comparison
+----------------
+An application for applying a pickled scikit-learn model to two contiguous raster images.
+
+Example call:
+::
+$image_comparison image_1.tif image_2.tif model.pkl class_map.tif
+"""
 
 import os, sys
 
@@ -6,7 +14,6 @@ import pyeo.classification
 import pyeo.raster_manipulation
 import pyeo.filesystem_utilities
 
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import argparse
 import os
 from tempfile import TemporaryDirectory

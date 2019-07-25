@@ -1,17 +1,23 @@
-"""Filters an image by a given class."""
-import os, sys
+"""
+filter_by_class_map
+-------------------
+Filters every pixel in input_image that is not one of filter_classes.
+Usage:
+::
+$ filter_by_class_map my_image.tif my_class_map.tif my_output_image.tif useful_class_1 useful_class_2
 
+This will create an image, my_output_image.tif, that contains only the pixels from my_image.tif
+that are labelled as useful_class_1 and useful_class_2 in my_class_map.tif
+"""
 import pyeo.filesystem_utilities
 import pyeo.raster_manipulation
 
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import argparse
 import os
-from tempfile import TemporaryDirectory
+
 
 if __name__ == "__main__":
 
-    # Reading in config file
     parser = argparse.ArgumentParser(description='Filter all of class out of input_image')
     parser.add_argument("input_image")
     parser.add_argument("class_image")

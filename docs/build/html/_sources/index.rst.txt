@@ -82,7 +82,7 @@ Function reference
 .. automodule:: pyeo.validation
    :members:
 
-At present, all processing code is located in pyeo/core.py.
+
 A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.
@@ -90,18 +90,5 @@ pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.
 Example scripts
 ===============
 
-simple_s2_change_detection.py
------------------------------
- .. automodule:: pyeo.apps.change_detection.simple_s2_change_detection
-
-create_model_from_shapefile_and_raster.py
------------------------------------------
- .. automodule:: pyeo.apps.model_creation.create_model_from_shapefile_and_raster
-
-composite_directory.py
-----------------------
- .. automodule:: pyeo.apps.subprocessing.composite_directory
-
-extract_signatures.py
----------------------
- .. automodule:: pyeo.apps.subprocessing.extract_signatures
+.. automodule:: pyeo.apps.change_detection
+   :members:
