@@ -4,11 +4,11 @@ image_comparison
 An application for applying a pickled scikit-learn model to two contiguous raster images.
 
 Example call:
-::
-$image_comparison image_1.tif image_2.tif model.pkl class_map.tif
-"""
 
-import os, sys
+::
+
+   $image_comparison image_1.tif image_2.tif model.pkl class_map.tif
+"""
 
 import pyeo.classification
 import pyeo.raster_manipulation
@@ -36,7 +36,6 @@ if __name__ == "__main__":
     with TemporaryDirectory() as td:
         stacked_path = os.path.join(td, "stacked.tif")
         pyeo.raster_manipulation.stack_images([args.old_image, args.new_image], stacked_path, geometry_mode="intersect")
-
         pyeo.classification.classify_image(stacked_path, args.model, args.output, prob_out_path=None,
                                            num_chunks=args.chunks, apply_mask=args.mask)
 

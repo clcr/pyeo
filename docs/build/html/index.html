@@ -408,25 +408,22 @@ Will floor() decimal output</p>
 <dt id="pyeo.queries_and_downloads.planet_query">
 <code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">planet_query</code><span class="sig-paren">(</span><em>aoi_path</em>, <em>start_date</em>, <em>end_date</em>, <em>out_path</em>, <em>api_key</em>, <em>item_type='PSScene4Band'</em>, <em>search_name='auto'</em>, <em>asset_type='analytic'</em>, <em>threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.planet_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads data from Planetlabs for a given time period in the given AOI</p>
-<dl class="simple">
-<dt>aoi<span class="classifier">str</span></dt><dd><p>Filepath of a single-polygon geojson containing the aoi</p>
-</dd>
-<dt>start_date<span class="classifier">str</span></dt><dd><p>the inclusive start of the time window in UTC format</p>
-</dd>
-<dt>end_date<span class="classifier">str</span></dt><dd><p>the inclusive end of the time window in UTC format</p>
-</dd>
-<dt>out_path<span class="classifier">filepath-like object</span></dt><dd><p>A path to the output folder
-Any identically-named imagery will be overwritten</p>
-</dd>
-<dt>item_type<span class="classifier">str</span></dt><dd><p>Image type to download (see Planet API docs)</p>
-</dd>
-<dt>search_name<span class="classifier">str</span></dt><dd><p>A name to refer to the search (required for large searches)</p>
-</dd>
-<dt>asset_type<span class="classifier">str</span></dt><dd><p>Planet asset type to download (see Planet API docs)</p>
-</dd>
-<dt>threads<span class="classifier">int</span></dt><dd><p>The number of downloads to perform concurrently</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aoi</strong> (<em>str</em>) – Filepath of a single-polygon geojson containing the aoi</p></li>
+<li><p><strong>start_date</strong> (<em>str</em>) – the inclusive start of the time window in UTC format</p></li>
+<li><p><strong>end_date</strong> (<em>str</em>) – the inclusive end of the time window in UTC format</p></li>
+<li><p><strong>out_path</strong> (<em>filepath-like object</em>) – A path to the output folder
+Any identically-named imagery will be overwritten</p></li>
+<li><p><strong>item_type</strong> (<em>str</em>) – Image type to download (see Planet API docs)</p></li>
+<li><p><strong>search_name</strong> (<em>str</em>) – A name to refer to the search (required for large searches)</p></li>
+<li><p><strong>asset_type</strong> (<em>str</em>) – Planet asset type to download (see Planet API docs)</p></li>
+<li><p><strong>threads</strong> (<em>int</em>) – The number of downloads to perform concurrently</p></li>
+</ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
 <p>IMPORTANT: Will not run for searches returning greater than 250 items.</p>
 </dd></dl>
 
@@ -441,20 +438,18 @@ Any identically-named imagery will be overwritten</p>
 <code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">sent2_query</code><span class="sig-paren">(</span><em>user</em>, <em>passwd</em>, <em>geojsonfile</em>, <em>start_date</em>, <em>end_date</em>, <em>cloud=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.sent2_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>From Geospatial Learn by Ciaran Robb, embedded here for portability.</p>
 <p>Produces a dict of sentinel-2 IDs and</p>
-<dl class="simple">
-<dt>user<span class="classifier">string</span></dt><dd><p>username for esa hub</p>
-</dd>
-<dt>passwd<span class="classifier">string</span></dt><dd><p>password for hub</p>
-</dd>
-<dt>geojsonfile<span class="classifier">string</span></dt><dd><p>AOI polygon of interest in EPSG 4326</p>
-</dd>
-<dt>start_date<span class="classifier">string</span></dt><dd><p>date of beginning of search</p>
-</dd>
-<dt>end_date<span class="classifier">string</span></dt><dd><p>date of end of search</p>
-</dd>
-<dt>cloud<span class="classifier">string (optional)</span></dt><dd><p>include a cloud filter in the search</p>
-</dd>
-<dt>product<span class="classifier">string (optional)</span></dt><dd><p>Product type for Sentinel 2. Valid values are S2MSI1C and S2MS2Ap</p>
+<p class="rubric">Notes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user</strong> (<em>string</em>) – username for esa hub</p></li>
+<li><p><strong>passwd</strong> (<em>string</em>) – password for hub</p></li>
+<li><p><strong>geojsonfile</strong> (<em>string</em>) – AOI polygon of interest in EPSG 4326</p></li>
+<li><p><strong>start_date</strong> (<em>string</em>) – date of beginning of search</p></li>
+<li><p><strong>end_date</strong> (<em>string</em>) – date of end of search</p></li>
+<li><p><strong>cloud</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – include a cloud filter in the search</p></li>
+<li><p><strong>product</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – Product type for Sentinel 2. Valid values are S2MSI1C and S2MS2Ap</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -740,12 +735,23 @@ followed by processing run date and then time</p>
 <dt id="pyeo.validation.allocate_category_sample_sizes">
 <code class="descclassname">pyeo.validation.</code><code class="descname">allocate_category_sample_sizes</code><span class="sig-paren">(</span><em>total_sample_size</em>, <em>user_accuracy</em>, <em>class_total_sizes</em>, <em>variance_tolerance</em>, <em>allocate_type='olofsson'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.allocate_category_sample_sizes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allocates a number of pixels to sample per class that will fulfil the parameters given</p>
-<p>total_sample_size: The total number of validation points requested (from cal_total_sample_size)
-user_accuracy: Dictionary of estimated user accuracies for classes in map (between 0 and 1)
-class_total_sizes: Dictionary of total pixels for each class in user_accuracy
-variance_tolerance: Acceptable vairance between the sample accuary and the data accuracy with a certain sample size
-allocate_type: The allocation strategy to be used. Can be ‘equal’, ‘prop’ or ‘olofsson’.</p>
-<p>A dictionary of classes and no. pixels per class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>total_sample_size</strong> (<em>The total number of validation points requested</em><em> (</em><em>from cal_total_sample_size</em><em>)</em>) – </p></li>
+<li><p><strong>user_accuracy</strong> (<em>Dictionary of estimated user accuracies for classes in map</em><em> (</em><em>between 0 and 1</em><em>)</em>) – </p></li>
+<li><p><strong>class_total_sizes</strong> (<em>Dictionary of total pixels for each class in user_accuracy</em>) – </p></li>
+<li><p><strong>variance_tolerance</strong> (<em>Acceptable vairance between the sample accuary and the data accuracy with a certain sample size</em>) – </p></li>
+<li><p><strong>allocate_type</strong> (<em>The allocation strategy to be used. Can be 'equal'</em><em>, </em><em>'prop'</em><em> or </em><em>'olofsson'.</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A dictionary of classes and no. pixels per class.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -760,42 +766,63 @@ WARNING: This will take up a LOT of memory!</p>
 <dt id="pyeo.validation.cal_total_sample_size">
 <code class="descclassname">pyeo.validation.</code><code class="descname">cal_total_sample_size</code><span class="sig-paren">(</span><em>desired_standard_error</em>, <em>user_accuracy</em>, <em>total_class_sizes</em>, <em>type='simple'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.cal_total_sample_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the number of sample points for a map to get a specified standard error.
-Parameters
-———-
-desired_standard_error: The desired standard error (between 0 and 1)
-user_accuracy: A dictionary of user accuracies from apriori knowledge
-total_class_sizes: The total number of pixels for each class
-type: whether to use the simple approximation or the full expession from Olofsson eq 13</p>
-<p>The total number of sample points to achieve the specified error</p>
+:param desired_standard_error:
+:type desired_standard_error: The desired standard error (between 0 and 1)
+:param user_accuracy:
+:type user_accuracy: A dictionary of user accuracies from apriori knowledge
+:param total_class_sizes:
+:type total_class_sizes: The total number of pixels for each class
+:param type:
+:type type: whether to use the simple approximation or the full expession from Olofsson eq 13</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>The total number of sample points to achieve the specified error</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.validation.calc_minimum_n">
 <code class="descclassname">pyeo.validation.</code><code class="descname">calc_minimum_n</code><span class="sig-paren">(</span><em>expected_accuracy</em>, <em>variance_tolerance</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.calc_minimum_n" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the rminimum number of points required to achieve the specified accuracy
-Parameters
-———-
-expected_accuracy: Between 0 and 1
-variance_tolerance:</p>
+:param expected_accuracy:
+:type expected_accuracy: Between 0 and 1
+:param variance_tolerance:</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.validation.count_pixel_classes">
 <code class="descclassname">pyeo.validation.</code><code class="descname">count_pixel_classes</code><span class="sig-paren">(</span><em>map_path</em>, <em>no_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.count_pixel_classes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Counts pixels in a map. Returns a dictionary of pixels.
-Parameters
-———-
-map_path: Path to the map to count
-no_data: A value to ignore</p>
-<p>A dictionary of class:count</p>
+:param map_path:
+:type map_path: Path to the map to count
+:param no_data:
+:type no_data: A value to ignore</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>A dictionary of class</strong></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>count</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.validation.part_fixed_value_sampling">
 <code class="descclassname">pyeo.validation.</code><code class="descname">part_fixed_value_sampling</code><span class="sig-paren">(</span><em>pinned_sample_numbers</em>, <em>class_total_sizes</em>, <em>total_sample_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.part_fixed_value_sampling" title="Permalink to this definition">¶</a></dt>
-<dd><p>pinned_sample_numbers
-class_total_sizes
-total_sample_size</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pinned_sample_numbers</strong> – </p></li>
+<li><p><strong>class_total_sizes</strong> – </p></li>
+<li><p><strong>total_sample_size</strong> – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -828,9 +855,59 @@ GT is needed to move each point to the centre of the pixel. Can also produce a .
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.</p>
 </div>
-<div class="section" id="module-pyeo.apps.change_detection">
-<span id="example-scripts"></span><h1>Example scripts<a class="headerlink" href="#module-pyeo.apps.change_detection" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-pyeo.apps.change_detection.image_comparison">
+<span id="applications"></span><h1>Applications<a class="headerlink" href="#module-pyeo.apps.change_detection.image_comparison" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="image-comparison">
+<h2>image_comparison<a class="headerlink" href="#image-comparison" title="Permalink to this headline">¶</a></h2>
+<p>An application for applying a pickled scikit-learn model to two contiguous raster images.</p>
+<p>Example call:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$image_comparison image_1.tif image_2.tif model.pkl class_map.tif
+</pre></div>
 </div>
+</div>
+<span class="target" id="module-pyeo.apps.change_detection.rolling_composite_s2_change_detection"></span><div class="section" id="rolling-composite-s2-change-detection">
+<h2>rolling_composite_s2_change_detection<a class="headerlink" href="#rolling-composite-s2-change-detection" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt>An app for providing continuous change detection. Runs the following algorithm</dt><dd><p>Step -1: Create initial composite with last date (stored in filename?)</p>
+<p>Step 0: Load composite</p>
+<p>Step 1: Download images from last date in composite until present last date</p>
+<p>Step 2: Preprocess each image</p>
+<p>Step 3: Generate cloud mask for each image</p>
+</dd>
+</dl>
+<p>For each preprocessed image:</p>
+<blockquote>
+<div><p>Step 4: Build stack with composite</p>
+<p>Step 5: Classify stack</p>
+<p>Step 6: Update composite with last cloud-free pixel based on cloud mask</p>
+<p>Step 7: Update last_date of composite</p>
+</div></blockquote>
+</div>
+<span class="target" id="module-pyeo.apps.change_detection.simple_s2_change_detection"></span><div class="section" id="simple-s2-change-detection">
+<h2>simple_s2_change_detection<a class="headerlink" href="#simple-s2-change-detection" title="Permalink to this headline">¶</a></h2>
+<p>A change detection script that downloads, stacks and classifies a set of 10m sentinel 2 images.</p>
+<p>When run, this script will download every S2 image in the aoi (defined by the geojson at aoi_path) between the two
+dates that meets the specified cloud cover range. It will use the sen2cor distribution specified in the .ini file
+to atmospherically correct the data to L2A, merge each set of 10m bands into a single geotiff, stack the images
+into pairs based on the algorithm in create_new_stacks and classify those images using a scikit-learn model</p>
+<p>To use this script, fill out the [sent_2], [forest_sentinel] and [sen2cor] sections of the configuration file
+change_detection.ini, then run</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python pyeo/apps/change_detection/simple_s2_change_detection.py --conf /path/to/change_detection.ini
+</pre></div>
+</div>
+<p>Produces two directories of un-mosaiced imagery; one of classified images and one of class probabilites</p>
+</div>
+<span class="target" id="module-pyeo.apps.masking.filter_by_class_map"></span><div class="section" id="filter-by-class-map">
+<h2>filter_by_class_map<a class="headerlink" href="#filter-by-class-map" title="Permalink to this headline">¶</a></h2>
+<p>Filters every pixel in input_image that is not one of filter_classes.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ filter_by_class_map my_image.tif my_class_map.tif my_output_image.tif useful_class_1 useful_class_2
+</pre></div>
+</div>
+<p>This will create an image, my_output_image.tif, that contains only the pixels from my_image.tif
+that are labelled as useful_class_1 and useful_class_2 in my_class_map.tif</p>
+</div>
+<span class="target" id="module-pyeo.apps.model_creation.create_model_from_region"></span></div>
 
 
           </div>

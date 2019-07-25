@@ -3,16 +3,25 @@ rolling_composite_s2_change_detection
 -------------------------------------
 An app for providing continuous change detection. Runs the following algorithm
  Step -1: Create initial composite with last date (stored in filename?)
+
  Step 0: Load composite
+
  Step 1: Download images from last date in composite until present last date
+
  Step 2: Preprocess each image
+
  Step 3: Generate cloud mask for each image
+
 For each preprocessed image:
+
     Step 4: Build stack with composite
+
     Step 5: Classify stack
+
     Step 6: Update composite with last cloud-free pixel based on cloud mask
+
     Step 7: Update last_date of composite
-Step 8:
+
  """
 
 import pyeo.classification

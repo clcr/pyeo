@@ -87,8 +87,17 @@ A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for 
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.
 
-Example scripts
-===============
+Applications
+============
 
-.. automodule:: pyeo.apps.change_detection
-   :members:
+.. automodule:: pyeo.apps.change_detection.image_comparison
+
+.. automodule:: pyeo.apps.change_detection.rolling_composite_s2_change_detection
+
+.. automodule:: pyeo.apps.change_detection.simple_s2_change_detection
+
+.. automodule:: pyeo.apps.masking.filter_by_class_map
+
+.. automodule:: pyeo.apps.model_creation.create_model_from_region
+
+
