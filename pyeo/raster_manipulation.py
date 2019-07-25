@@ -1,4 +1,8 @@
-"""Functions for working with raster data"""
+"""
+pyeo.raster_manipulation
+------------------------
+Functions for working with raster data.
+"""
 
 import glob
 import logging

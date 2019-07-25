@@ -75,6 +75,8 @@ conda activate pyeo_env
 </div>
 <div class="section" id="module-pyeo.classification">
 <span id="function-reference"></span><h1>Function reference<a class="headerlink" href="#module-pyeo.classification" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pyeo-classification">
+<h2>pyeo.classification<a class="headerlink" href="#pyeo-classification" title="Permalink to this headline">¶</a></h2>
 <p>Contains every function to do with map classification. This includes model creation, map classification and processes
 for array manipulation into scikit-learn compatible forms.</p>
 <dl class="function">
@@ -171,6 +173,7 @@ WRITE A TEST FOR THIS TOO; if this goes wrong, it’ll go wrong quietly and in a
 <dd><p>Reshapes an array from gdal order [band, y, x] to scikit order [x*y, band]</p>
 </dd></dl>
 
+</div>
 <span class="target" id="module-pyeo.array_utilities"></span><p>Contains routines for manipulating arrays.</p>
 <dl class="function">
 <dt id="pyeo.array_utilities.project_array">
@@ -178,7 +181,9 @@ WRITE A TEST FOR THIS TOO; if this goes wrong, it’ll go wrong quietly and in a
 <dd><p>Returns a new array with an extra dimension. Data is projected along that dimension to depth.</p>
 </dd></dl>
 
-<span class="target" id="module-pyeo.coordinate_manipulation"></span><p>Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.</p>
+<span class="target" id="module-pyeo.coordinate_manipulation"></span><div class="section" id="pyeo-coordinate-manipulation">
+<h2>pyeo.coordinate_manipulation<a class="headerlink" href="#pyeo-coordinate-manipulation" title="Permalink to this headline">¶</a></h2>
+<p>Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.</p>
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.align_bounds_to_whole_number">
 <code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">align_bounds_to_whole_number</code><span class="sig-paren">(</span><em>bounding_box</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.align_bounds_to_whole_number" title="Permalink to this definition">¶</a></dt>
@@ -311,7 +316,10 @@ Will floor() decimal output</p>
 <dd><p>Saves a polygon to a shapefile</p>
 </dd></dl>
 
-<span class="target" id="module-pyeo.queries_and_downloads"></span><p>Functions for querying, filtering and downloading data.</p>
+</div>
+<span class="target" id="module-pyeo.queries_and_downloads"></span><div class="section" id="pyeo-queries-and-downloads">
+<h2>pyeo.queries_and_downloads<a class="headerlink" href="#pyeo-queries-and-downloads" title="Permalink to this headline">¶</a></h2>
+<p>Functions for querying, filtering and downloading data.</p>
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.activate_and_dl_planet_item">
 <code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">activate_and_dl_planet_item</code><span class="sig-paren">(</span><em>session</em>, <em>item</em>, <em>asset_type</em>, <em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.activate_and_dl_planet_item" title="Permalink to this definition">¶</a></dt>
@@ -451,7 +459,10 @@ Any identically-named imagery will be overwritten</p>
 </dl>
 </dd></dl>
 
-<span class="target" id="module-pyeo.raster_manipulation"></span><p>Functions for working with raster data</p>
+</div>
+<span class="target" id="module-pyeo.raster_manipulation"></span><div class="section" id="pyeo-raster-manipulation">
+<h2>pyeo.raster_manipulation<a class="headerlink" href="#pyeo-raster-manipulation" title="Permalink to this headline">¶</a></h2>
+<p>Functions for working with raster data.</p>
 <dl class="function">
 <dt id="pyeo.raster_manipulation.apply_array_image_mask">
 <code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">apply_array_image_mask</code><span class="sig-paren">(</span><em>array</em>, <em>mask</em>, <em>fill_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_array_image_mask" title="Permalink to this definition">¶</a></dt>
@@ -721,7 +732,10 @@ followed by processing run date and then time</p>
 <dd><p>Trims image to polygon</p>
 </dd></dl>
 
-<span class="target" id="module-pyeo.validation"></span><p>A small set of functions for producing validation points from maps</p>
+</div>
+<span class="target" id="module-pyeo.validation"></span><div class="section" id="pyeo-validaion">
+<h2>pyeo.validaion<a class="headerlink" href="#pyeo-validaion" title="Permalink to this headline">¶</a></h2>
+<p>A small set of functions for producing validation points from maps</p>
 <dl class="function">
 <dt id="pyeo.validation.allocate_category_sample_sizes">
 <code class="descclassname">pyeo.validation.</code><code class="descname">allocate_category_sample_sizes</code><span class="sig-paren">(</span><em>total_sample_size</em>, <em>user_accuracy</em>, <em>class_total_sizes</em>, <em>variance_tolerance</em>, <em>allocate_type='olofsson'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.allocate_category_sample_sizes" title="Permalink to this definition">¶</a></dt>
@@ -809,6 +823,7 @@ GT is needed to move each point to the centre of the pixel. Can also produce a .
 <dd><p>Produces a stratified list of pixel coordinates. WARNING: high mem!</p>
 </dd></dl>
 
+</div>
 <p>At present, all processing code is located in pyeo/core.py.
 A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,

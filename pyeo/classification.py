@@ -1,4 +1,6 @@
 """
+pyeo.classification
+-------------------
 Contains every function to do with map classification. This includes model creation, map classification and processes
 for array manipulation into scikit-learn compatible forms.
 """

@@ -1,4 +1,6 @@
 """
+pyeo.queries_and_downloads
+--------------------------
 Functions for querying, filtering and downloading data.
 """
 

@@ -1,4 +1,8 @@
-"""A small set of functions for producing validation points from maps"""
+"""
+pyeo.validaion
+--------------
+A small set of functions for producing validation points from maps
+"""
 
 import numpy as np
 import gdal

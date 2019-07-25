@@ -1,4 +1,6 @@
 """
+pyeo.coordinate_manipulation
+----------------------------
 Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.
 """
 
