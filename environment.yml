@@ -21,6 +21,6 @@ dependencies:
     - geojson
     - google-cloud
     - sentinelhub
-    - sentinelsat1
+    - sentinelsat
     - tenacity
     - tqdm
