@@ -348,7 +348,7 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
         reproject_image(image_path, reproj_path, new_projection)
 
 
-def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff",  memory = 2e3):
+def reproject_image(in_raster, out_raster_path, new_projection,  driver = "GTiff",  memory = 2e3, do_post_resample=True):
     """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Will round projection
     back to whatever 2gb memory limit by default (because it works in most places)"""
     log = logging.getLogger(__name__)
@@ -359,7 +359,8 @@ def reproject_image(in_raster, out_raster_path, new_projection, driver = "GTiff"
     gdal.Warp(out_raster_path, in_raster, dstSRS=new_projection, warpMemoryLimit=memory, format=driver)
     # After warping, image has irregular gt; resample back to previous pixel size
     # TODO: Make this an option
-    resample_image_in_place(out_raster_path, res)
+    if do_post_resample:
+        resample_image_in_place(out_raster_path, res)
     return out_raster_path
 
 
@@ -900,7 +901,6 @@ def create_mask_from_fmask(in_l1_dir, out_path):
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
     with TemporaryDirectory() as td:
-        #pdb.set_trace()
         temp_fmask_path = os.path.join(td, "fmask.tif")
         apply_fmask(in_l1_dir, temp_fmask_path)
         fmask_image = gdal.Open(temp_fmask_path)

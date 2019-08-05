@@ -26,21 +26,9 @@ def test_classification():
 
 
 def test_raster_reclass_binary():
-    test_image_name = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany/class_composite_T36NYF_20180112T075259_20180117T075241.tif'
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_image_name = 'test_outputs/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif'
     test_value = 1
-    out_fn = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/cherangany/class_composite_T36NYF_20180112T075259_20180117T075241_rcl.tif'
-    a = pyeo.classification.raster_reclass_binary(test_image_name, test_value, outFn=out_fn)
-    print(np.unique(a) == [0, 1])
-
-
-def test_raster_reclass_directory():
-    test_dir = '/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/mt_elgon'
-    rst_list = glob.glob(os.path.join(test_dir, '*.tif'))
-    test_value = 1
-    suffix = '_rcl.'
-    for i, in_rst in enumerate(rst_list):
-        path, fn = os.path.split(in_rst)
-        n, fmt = fn.split('.', 2)
-        fn = n+suffix+fmt
-        out_fn = os.path.join(path, fn)
-        pyeo.classification.raster_reclass_binary(in_rst, test_value, outFn=out_fn)
+    out_filename = 'test_outputs/class_composite_T36NYF_20180112T075259_20180117T075241_rcl.tif'
+    a = pyeo.classification.raster_reclass_binary(test_image_name, test_value, outFn=out_filename)
+    assert np.all(np.unique(a) == [0, 1])

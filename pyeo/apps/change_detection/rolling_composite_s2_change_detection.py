@@ -119,7 +119,6 @@ if __name__ == "__main__":
     if args.skip_prob_image:
         probability_image_dir = None
 
-
     if args.start_date == "LATEST":
         # This isn't nice, but returns the yyyymmdd string of the latest stacked image
         start_date = pyeo.filesystem_utilities.get_image_acquisition_time(pyeo.filesystem_utilities.sort_by_timestamp(
@@ -128,6 +127,7 @@ if __name__ == "__main__":
         )[0]).strftime("%Y%m%d")
     elif args.start_date:
         start_date = args.start_date
+
     if args.end_date == "TODAY":
         end_date = dt.date.today().strftime("%Y%m%d")
     elif args.end_date:
