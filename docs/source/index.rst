@@ -70,7 +70,7 @@ Function reference
 .. automodule:: pyeo.coordinate_manipulation
    :members:
 
-.. automodule:: pyeo.filesystems_utilities
+.. automodule:: pyeo.filesystem_utilities
    :members:
 
 .. automodule:: pyeo.queries_and_downloads
