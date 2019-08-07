@@ -265,9 +265,9 @@ def create_model_from_signatures(sig_csv_path, model_out):
 def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326):
     """Given an image and a shapefile with categories, return x and y suitable
     for feeding into random_forest.fit.
-    Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'
-    WRITE A TEST FOR THIS TOO; if this goes wrong, it'll go wrong quietly and in a way that'll cause the most issues
-     further on down the line."""
+    Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'."""
+    # TODO: WRITE A TEST FOR THIS TOO; if this goes wrong, it'll go wrong
+    # quietly and in a way that'll cause the most issues further on down the line
     with TemporaryDirectory() as td:
         shape_projection = osr.SpatialReference()
         shape_projection.ImportFromEPSG(shape_projection_id)

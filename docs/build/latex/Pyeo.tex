@@ -209,12 +209,7 @@ At present, the model is an ExtraTreesClassifier arrived at by tpot; see tpot\_c
 \phantomsection\label{\detokenize{index:pyeo.classification.get_training_data}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{pyeo.classification.}}\sphinxbfcode{\sphinxupquote{get\_training\_data}}}{\emph{image\_path}, \emph{shape\_path}, \emph{attribute='CODE'}, \emph{shape\_projection\_id=4326}}{}
 Given an image and a shapefile with categories, return x and y suitable
 for feeding into random\_forest.fit.
-Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED ‘0’
-WRITE A TEST FOR THIS TOO; if this goes wrong, it’ll go wrong quietly and in a way that’ll cause the most issues
-\begin{quote}
-
-further on down the line.
-\end{quote}
+Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED ‘0’.
 
 \end{fulllineitems}
 
@@ -1139,7 +1134,7 @@ Reprojects every file ending with extension to new\_projection and saves in out\
 \index{reproject\_image() (in module pyeo.raster\_manipulation)@\spxentry{reproject\_image()}\spxextra{in module pyeo.raster\_manipulation}}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{index:pyeo.raster_manipulation.reproject_image}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{pyeo.raster\_manipulation.}}\sphinxbfcode{\sphinxupquote{reproject\_image}}}{\emph{in\_raster}, \emph{out\_raster\_path}, \emph{new\_projection}, \emph{driver='GTiff'}, \emph{memory=2000.0}}{}
+\phantomsection\label{\detokenize{index:pyeo.raster_manipulation.reproject_image}}\pysiglinewithargsret{\sphinxcode{\sphinxupquote{pyeo.raster\_manipulation.}}\sphinxbfcode{\sphinxupquote{reproject\_image}}}{\emph{in\_raster}, \emph{out\_raster\_path}, \emph{new\_projection}, \emph{driver='GTiff'}, \emph{memory=2000.0}, \emph{do\_post\_resample=True}}{}
 Creates a new, reprojected image from in\_raster. Wraps gdal.ReprojectImage function. Will round projection
 back to whatever 2gb memory limit by default (because it works in most places)
 

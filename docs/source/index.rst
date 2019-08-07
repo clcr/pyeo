@@ -24,7 +24,7 @@ Introduction
 
 Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying
 geospatial raster and vector data. It is intended to require a minimum of dependencies - most functions only require
-the basic GDAL/OGR/OSR stack.
+the basic GDAL/OGR/OSR stack and Numpy.
 
 
 Installation
@@ -38,25 +38,45 @@ With Git and Miniconda or Anaconda installed, :code:`cd` to an install location 
    cd pyeo
    conda env create --file environment.yml --name pyeo_env
    conda activate pyeo_env
+   python -m pip install . -vv
+
+In a Python prompt, try  :code:`import pyeo` - you should see no errors.
 
 
-Including Pyeo in your own code
-===============================
 
-Include the following lines at the start of your Python scripts:
-
-.. code-block:: python
-
-   import sys
-   sys.path.append("/path/to/pyeo")
-   import pyeo.core as pyeo
-
-You may see a warning about scikit versions; this is normal.
-
-Filenaming, assumptions and structure
+Assumptions
 =====================================
 
-Pyeo is divided into high-level and low-level fucntions.
+###Rasters ###
+
+- Can read from any gdal-readable format
+- Stores internally as geotiff
+- Named with the .tif suffix
+- Most raster processing is done using numpy and getVirtualMemArray
+- Unless otherwise stated, **all rastesrs are assumed to be in a projected coordinate system** - i.e. in meters.
+  Functions may fail if passed a raster in lat-long projection
+
+### Masks ###
+
+- Some Pyeo functions include options for applying masks
+- A raster may have an associated mask
+- A mask is a geotif with an identical name as the raster it's masking with a .msk extension
+   - For example, the mask for my_sat_image.tif is my_sat_image.msk
+- A mask is
+   - a single band raster
+   - of identical height, width and resolution of the related image
+   - contains values 0 or 1
+- A mask is applied by multiplying it with each band of its raster
+   - So any pixel with a 0 in its mask will be removed, and a 1 will be kept
+
+### Timestamps ###
+
+- Pyeo uses the same timestamp convention as ESA: yyyymmddThhmmss
+   - For example, 1PM on 27th December 2020 would be 20201227T130000
+- All timestamps are in UTC
+
+
+
 
 Function reference
 ==================

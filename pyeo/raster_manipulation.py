@@ -81,6 +81,7 @@ def create_new_stacks(image_dir, stack_dir):
                - subtract it's bounding box from new_data_polygon.
             c. If new_data_polygon drops having a total area less than threshold, stop.
     Step 4: Stack new rasters for each tile in new_data list.
+
     """
     log = logging.getLogger(__name__)
     new_images = []
@@ -507,6 +508,7 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
     :param str outFmt: String specifying the input data format e.g. 'GTiff' or 'VRT'.
     :param str outFn: Filename output as str including directory else image will be
     written to current working directory.
+
     """
     log = logging.getLogger(__name__)
     log.info('Starting raster sum function.')
