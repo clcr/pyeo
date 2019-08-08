@@ -12,6 +12,7 @@ For each preprocessed image:
     Step 7: Update last_date of composite
 Step 8:
  """
+import sys
 
 import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
@@ -29,7 +30,10 @@ if __name__ == "__main__":
     # Reading in config file
     parser = argparse.ArgumentParser(description='Downloads, preprocesses and classifies sentinel 2 images. A directory'
                                                  'structure to contain preprocessed and downloaded files will be'
-                                                 ' created at the aoi_root location specified in the config file.')
+                                                 ' created at the aoi_root location specified in the config file.'
+                                                 'If any of the step flags (d,p,m,a,s,c,u,r) are present, only those '
+                                                 'steps will be performed - otherwise all processing steps will be '
+                                                 'performed.')
     parser.add_argument(dest='config_path', action='store', default=r'change_detection.ini',
                         help="A path to a .ini file containing the specification for the job. See "
                              "pyeo/apps/change_detection/change_detection.ini for an example.")
@@ -53,16 +57,32 @@ if __name__ == "__main__":
     parser.add_argument('--build_prob_image', action='store_true', default=False,
                         help="If present, build a confidence map of pixels. These tend to be large.")
 
-    parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False)
-    parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False)
-    parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False)
-    parser.add_argument('-a', '--mask', dest='do_mask', action='store_true', default=False)
-    parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False)
-    parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False)
-    parser.add_argument('-u', '--update', dest='do_update', action='store_true', default=False)
-    parser.add_argument('-r', '--remove', dest='do_delete', action='store_true', default=False)
+    parser.add_argument('-d', '--download', dest='do_download', action='store_true', default=False,
+                        help='If present, perform the query and download level 1 images.')
+    parser.add_argument('-p', '--preprocess', dest='do_preprocess', action='store_true',  default=False,
+                        help='If present, apply sen2cor to all .SAFE in images/L1. Stores the result in images/L2')
+    parser.add_argument('-m', '--merge', dest='do_merge', action='store_true', default=False,
+                        help='If present, merges the blue, green, red and IR 10m rasters in each L2 safefile'
+                             ' into a single 4-band raster. This will also mask and reproject'
+                             ' the image to the requested projection. Stores the result in images/merged.')
+    parser.add_argument('-a', '--mask', dest='do_mask', action='store_true', default=False,
+                        help="Masks are created by default - this presently does nothing.")
+    parser.add_argument('-s', '--stack', dest='do_stack', action='store_true', default=False,
+                        help="For each image in images/merged, stacks with the composite in composite/ that is most "
+                             "recent prior to the image. Stores an 8-band geotiff in images/stacked, where bands 1-4 "
+                             "are the B,G,R and IR bands of the composite and band 5-8 are the B,G,R and IR bands of"
+                             "the merged image.")
+    parser.add_argument('-c', '--classify', dest='do_classify', action='store_true', default=False,
+                        help="For each image in images/stacked, applies the classifier given in the .ini file. Saves"
+                             "the outputs in output/categories.")
+    parser.add_argument('-u', '--update', dest='do_update', action='store_true', default=False,
+                        help="Builds a new cloud-free composite in composite/ from the latest image and mask"
+                             " in images/merged")
+    parser.add_argument('-r', '--remove', dest='do_delete', action='store_true', default=False,
+                        help="Not implemented. If present, removes all images in images/ to save space.")
 
-    parser.add_argument('--skip_prob_image', dest="skip_prob_image", action="store_true", default=False)
+    parser.add_argument('--skip_prob_image', dest="skip_prob_image", action="store_true", default=False,
+                        help="")
 
     args = parser.parse_args()
 
@@ -166,13 +186,20 @@ if __name__ == "__main__":
                                     buffer_size=5)
 
     log.info("Finding most recent composite")
-    latest_composite_name = \
+    try:
+        latest_composite_name = \
         pyeo.sort_by_timestamp(
-            [image_name for image_name in os.listdir(composite_dir) if image_name.endswith(".tif")],
-            recent_first=True
-        )[0]
-    latest_composite_path = os.path.join(composite_dir, latest_composite_name)
-    log.info("Most recent composite at {}".format(latest_composite_path))
+                [image_name for image_name in os.listdir(composite_dir) if image_name.endswith(".tif")],
+                recent_first=True
+            )[0]
+        latest_composite_path = os.path.join(composite_dir, latest_composite_name)
+        log.info("Most recent composite at {}".format(latest_composite_path))
+    except IndexError:
+        log.critical("Latest composite not found. The first time you run this script, you need to include the "
+                     "--build-composite flag to create a base composite to work off. If you have already done this,"
+                     "check that the earliest dated image in your images/merged folder is later than the earliest"
+                     " dated image in your composite/ folder.")
+        sys.exit(1)
 
     log.info("Sorting image list")
     images = \
