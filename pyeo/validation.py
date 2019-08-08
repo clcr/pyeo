@@ -41,8 +41,8 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
         ua = cal_sd_for_user_accuracy(accuracy, class_sample_counts[map_class])
         log.info("Accuracy for class {}: {}".format(map_class, ua))
     log.info("Overall accuracy: {}".format(overall_accuracy))
-    produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class,
-                                        produce_csv=produce_csv)
+    produce_stratified_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class,
+                                         produce_csv=produce_csv)
 
     log.info("Validation points at out: {}".format(out_shapefile_path))
     # manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
@@ -72,8 +72,8 @@ def count_pixel_classes(map_path, no_data=None):
     return out
 
 
-def produce_stratifed_validation_points(map_path, out_path, class_sample_counts,
-                                        no_data=None, seed=None, produce_csv=False):
+def produce_stratified_validation_points(map_path, out_path, class_sample_counts,
+                                         no_data=None, seed=None, produce_csv=False):
     """Produces a set of stratified validation points from map_path"""
     log = logging.getLogger(__name__)
     log.info("Producing random sampling of {}.".format(map_path))
@@ -166,7 +166,6 @@ def build_class_dict(class_array, no_data=None):
             out_dict.update({this_class: [it.multi_index]})
         it.iternext()
     return out_dict
-
 
 
 def cal_si(ui):

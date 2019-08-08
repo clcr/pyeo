@@ -22,9 +22,9 @@ if __name__ == "__main__":
 
     # Reading in config file
     parser = argparse.ArgumentParser(description='Compare old_image with new_image using model')
-    parser.add_argument("old_image")
-    parser.add_argument("new_image")
-    parser.add_argument("model")
+    parser.add_argument("old_image", help="Path the the older image to be compared")
+    parser.add_argument("new_image", help="Path to the newer image to be compard")
+    parser.add_argument("model", help="")
     parser.add_argument("output")
     parser.add_argument("-l", "--log_path", default=os.path.join(os.getcwd(), "comparison.log"))
     parser.add_argument("-c", "--chunks", default=16)
