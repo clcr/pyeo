@@ -44,7 +44,7 @@ In a Python prompt, try  :code:`import pyeo` - you should see no errors.
 
 
 
-Assumptions
+Assumptions and design decisions
 =====================================
 
 ###Rasters ###
