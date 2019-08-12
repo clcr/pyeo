@@ -87,6 +87,20 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
     return result
 
 
+def filter_to_l1_data(query_output):
+    log = logging.getLogger(__name__)
+    log.info("Extracting only L1 data from {} products".format(len(query_output)))
+    filtered_query = {key: value for (key, value) in query_output.items() if get_query_level(value) == "Level-1C"}
+    return filtered_query
+
+
+def filter_to_l2_data(query_output):
+    log = logging.getLogger(__name__)
+    log.info("Extracting only L2 data from {} products".format(len(query_output)))
+    filtered_query = {key: value for (key, value) in query_output.items() if get_query_level(value) == "Level-2A"}
+    return filtered_query
+
+
 def filter_non_matching_s2_data(query_output):
     """Removes any L2/L1 product that does not have a corresponding L1/L2 data"""
     # Here be algorithms
@@ -118,7 +132,7 @@ def filter_non_matching_s2_data(query_output):
         and sum(1 for image in image_set if get_query_level(image) == "Level-1C") == 1):
             out_set.update({image["uuid"]: image for image in image_set})
 
-    #Now rebuild into uuid:data_object format
+    #Finally, check that there is actually something here.
     if len(out_set) == 0:
         log.error("No L2 data detected for query. Please remove the --download_l2_data flag or request more recent images.")
         raise NoL2DataAvailableException
