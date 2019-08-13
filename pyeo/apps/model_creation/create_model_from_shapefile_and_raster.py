@@ -49,7 +49,8 @@ if __name__=="__main__":
 
     # This will be changed in the near future as I'm planning to refactor core soon
     #  to make the ML model building functions more granular
-    learning_data, classes = pyeo.classification.get_training_data(training_raster_path, training_shape_path, class_field)
+    learning_data, classes = pyeo.classification.get_training_data(training_raster_path, training_shape_path,
+                                                                   class_field)
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
     model.fit(learning_data, classes)

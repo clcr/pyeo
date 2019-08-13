@@ -4,7 +4,7 @@ pyeo.classification
 Contains every function to do with map classification. This includes model creation, map classification and processes
 for array manipulation into scikit-learn compatible forms.
 """
-
+import csv
 import glob
 import logging
 import os
@@ -22,8 +22,9 @@ from sklearn.model_selection import cross_val_score
 from pyeo.coordinate_manipulation import get_local_top_left
 from pyeo.filesystem_utilities import get_mask_path
 
-from pyeo.raster_manipulation import stack_images, create_matching_dataset, apply_array_image_mask
+from pyeo.raster_manipulation import stack_images, create_matching_dataset, apply_array_image_mask, get_masked_array
 
+log = logging.getLogger(__name__)
 
 def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path):
     """Generates a change map comparing an image with a composite"""
@@ -40,7 +41,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
     TODO: This has gotten very hairy; rewrite when you update this to take generic models
     """
-    log = logging.getLogger(__name__)
+    print("Hi, develsetup works")
     if skip_existing:
         log.info("Checking for existing classification {}".format(class_out_path))
         if os.path.isfile(class_out_path):
@@ -217,6 +218,12 @@ def reshape_prob_out_to_raster(probs, width, height):
     image_array = np.reshape(image_array, (classes, height, width))
     return image_array
 
+def extract_features_to_csv(in_ras_path, training_shape_path, out_path):
+    this_training_data, this_classes = get_training_data(in_ras_path, training_shape_path)
+    sigs = np.vstack((this_classes, this_training_data.T))
+    with open(out_path, 'w', newline='') as outfile:
+        writer = csv.writer(outfile)
+        writer.writerows(sigs.T)
 
 def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attribute="CODE"):
     """Returns a trained random forest model from the training data. This
@@ -268,7 +275,9 @@ def get_training_data(image_path, shape_path, attribute="CODE", shape_projection
     Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'."""
     # TODO: WRITE A TEST FOR THIS TOO; if this goes wrong, it'll go wrong
     # quietly and in a way that'll cause the most issues further on down the line
+    FILL_VALUE = -9999
     with TemporaryDirectory() as td:
+        # Step 1; rasterise shapefile into .tif of class values
         shape_projection = osr.SpatialReference()
         shape_projection.ImportFromEPSG(shape_projection_id)
         image = gdal.Open(image_path)
@@ -345,3 +354,5 @@ def raster_reclass_binary(img_path, rcl_value, outFn, outFmt='GTiff', write_out=
         out_ds = None
 
     return in_array
+
+

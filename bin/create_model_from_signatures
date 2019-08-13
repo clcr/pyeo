@@ -1,0 +1,5 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+python "$PYEO"/pyeo/apps/model_creation/create_model_from_signatures.py "$@"
