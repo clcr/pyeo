@@ -42,7 +42,36 @@ With Git and Miniconda or Anaconda installed, :code:`cd` to an install location 
 
 In a Python prompt, try  :code:`import pyeo` - you should see no errors.
 
+Quick start
+===========
+ Before you start, you will need:
 
+-A linux (or maybe mac, untested) machine
+-A raster of your window area
+-A shapefile of polygons over your training areas with a field containing class labels
+-A raster to classify. This can be the same as your original raster.
+All rasters and shapefiles should be in the same projection; ideally in the local projection of your satellite data.
+-Git
+-Anaconda/Miniconda
+
+INSTALLATION
+
+git clone https://github.com/clcr/pyeo
+cd pyeo
+git checkout restructure      # This gets you the present working branch
+conda env create --file environment.yml --name pyeo_env
+echo export PYEO=$(pwd) >> ~/.bashrc    #Or just append to the end of your .bashrc
+echo export PATH=$PATH:$PYEO/bin
+chmod 755 bin/*
+
+USE
+
+conda activate pyeo_env
+cd (whereever your data is)
+extract_signatures your_raster.tif your_shapefile.shp output.csv
+# You can now explore your signatures as a .csv file, and perform any interim processing
+create_model_from_signatures output.csv model.pkl
+classify_image your_raster model.pkl output_image.tif
 
 Assumptions and design decisions
 =====================================
@@ -74,6 +103,9 @@ Assumptions and design decisions
 - Pyeo uses the same timestamp convention as ESA: yyyymmddThhmmss
    - For example, 1PM on 27th December 2020 would be 20201227T130000
 - All timestamps are in UTC
+
+### Models ###
+- All models are serialised and deserialised using joblib.dump or joblib.load
 
 
 

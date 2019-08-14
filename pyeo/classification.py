@@ -26,8 +26,34 @@ from pyeo.raster_manipulation import stack_images, create_matching_dataset, appl
 
 log = logging.getLogger(__name__)
 
-def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path):
-    """Generates a change map comparing an image with a composite"""
+def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path=None):
+    """
+    Stacks an image with a composite and classifies each pixel change with a scikit-learn model
+    The image that is classified is has the following bands
+        composite blue
+        composite green
+        composite red
+        composite IR
+        image blue
+        image green
+        image red
+        image IR
+
+    Parameters
+    ----------
+    image_path
+        The path to the image
+    composite_path
+        The path to the composite
+    model_path
+        The path to a .pkl of a scikit-learn classifier that takes 8 features
+    class_out_path
+        A location to save the resulting classification .tif
+    prob_out_path
+        A location to save the probability raster of each pixel
+
+
+    """
     with TemporaryDirectory() as td:
         stacked_path = os.path.join(td, "comp_stack.tif")
         stack_images((composite_path, image_path), stacked_path)
@@ -37,11 +63,47 @@ def change_from_composite(image_path, composite_path, model_path, class_out_path
 def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
                    apply_mask=False, out_type="GTiff", num_chunks=10, nodata=0, skip_existing = False):
     """
-    Classifies change between two stacked images.
-    Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
-    TODO: This has gotten very hairy; rewrite when you update this to take generic models
+    Produces a class map from a raster and a model.
+    This applies the model's fit() function to each pixel in the input raster, and saves the result into an output
+    raster. The model is presumed to be a scikit-learn fitted model created using one of the other functions in this
+    library (create_model_from_rasters, create_model_from_signatures).
+
+    To fit into a
+
+    Parameters
+    ----------
+    image_path
+        The path to the raster image to be classified.
+    model_path
+        The path to the .pkl file containing the model
+    class_out_path
+        The path that the classified map will be saved at.
+    prob_out_path
+        If present, the path that the class probability map will be stored at.
+    apply_mask
+        If True, uses the .msk file corresponding to the image at image_path to skip any invalid pixels.
+    out_type
+        The raster format of the class image. Defaults to GTiff (geotif)
+    num_chunks
+        The number of chunks the image is broken into prior to classification. The smaller this number, the faster
+        classification will run - but the more likely you are to get a outofmemory error.
+    nodata
+        The value to write to masked pixels
+    skip_existing
+        If true, do not run if class_out_path already exists
+
+
+    Notes
+    -----
+    If you want to create a custom model, the object is presumed to have the following methods and attributes:
+       - model.n_classes_ : the number of classes the model will produce
+       - model.n_cores : The number of CPU cores used to run the model
+       - model.predict() : A function that will take a set of band inputs from a pixel and produce a class.
+       - model.predict_proba() : If called with prob_out_path, a function that takes a set of n band inputs from a pixel
+                                and produces n_classes_ outputs corresponding to the probabilties of a given pixel being
+                                that class
+
     """
-    print("Hi, develsetup works")
     if skip_existing:
         log.info("Checking for existing classification {}".format(class_out_path))
         if os.path.isfile(class_out_path):
@@ -159,9 +221,23 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
 
 
 def autochunk(dataset, mem_limit=None):
-    """Calculates the number of chunks to break a dataset into without a memory error.
+    """
+    EXPERIMENTAL Calculates the number of chunks to break a dataset into without a memory error. Presumes that 80% of the
+    memory on the host machine is available for use by Pyeo.
     We want to break the dataset into as few chunks as possible without going over mem_limit.
-    mem_limit defaults to total amount of RAM available on machine if not specified"""
+    mem_limit defaults to total amount of RAM available on machine if not specified
+
+    Parameters
+    ----------
+    dataset
+        The dataset to chunk
+    mem_limit
+        The maximum amount of memory available to the process. Will be automatically populated from os.sysconf if missing.
+
+    Returns
+    -------
+    The number of chunks to most efficiently break the image into.
+    """
     pixels = dataset.RasterXSize * dataset.RasterYSize
     bytes_per_pixel = dataset.GetVirtualMemArray().dtype.itemsize*dataset.RasterCount
     image_bytes = bytes_per_pixel*pixels
@@ -181,8 +257,29 @@ def autochunk(dataset, mem_limit=None):
 def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
                        apply_mask=False, out_type="GTiff", num_chunks=None):
     """
-    Classifies every .tif in in_dir using model at model_path. Outputs are saved
+    Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
     in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.
+
+    See the documentation for classification.classify_image() for more details.
+
+
+    Parameters
+    ----------
+    in_dir
+        The path to the directory containing the rasters to be classified.
+    model_path
+        The path to the .pkl file containing the model.
+    class_out_dir
+        The directory that will store the classified maps
+    prob_out_dir
+        The directory that will store the probability maps of the classified maps
+    apply_mask
+        If present, uses the corresponding .msk files to mask the directories
+    out_type
+        The raster format of the class image. Defaults to GTiff (geotif)
+    num_chunks
+        The number of chunks to break an image into.
+
     """
     log = logging.getLogger(__name__)
     log.info("Classifying files in {}".format(in_dir))
@@ -197,7 +294,22 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
 
 
 def reshape_raster_for_ml(image_array):
-    """Reshapes an array from gdal order [band, y, x] to scikit order [x*y, band]"""
+    """
+    A low-level function that reshapes an array from gdal order [band, y, x] to scikit features order [x*y, band]
+
+    For classification, scikit-learn functions take a 2-dimensional array of features of the shape (samples, features).
+    For pixel classification, features correspond to bands and samples correspond to specific pixels.
+
+    Parameters
+    ----------
+    image_array
+        A 3-dimensional Numpy array
+
+    Returns
+    -------
+        A 2-dimensional Numpy array of shape (samples, features)
+
+    """
     bands, y, x = image_array.shape
     image_array = np.transpose(image_array, (1, 2, 0))
     image_array = np.reshape(image_array, (x * y, bands))
@@ -205,14 +317,42 @@ def reshape_raster_for_ml(image_array):
 
 
 def reshape_ml_out_to_raster(classes, width, height):
-    """Reshapes an output [x*y] to gdal order [y, x]"""
+    """
+    Takes the output of a pixel classifier and reshapes to a single band image.
+
+    Parameters
+    ----------
+    classes
+        A 1-d numpy array of classification from pixels
+    width
+        The width of the image the produces the classification
+    height
+        The height of the image that produced the classification
+
+    Returns
+    -------
+        A 2-dimensional Numpy array of shape(width, height)
+
+    """
     # TODO: Test this.
     image_array = np.reshape(classes, (height, width))
     return image_array
 
 
 def reshape_prob_out_to_raster(probs, width, height):
-    """reshapes an output of shape [x*y, classes] to gdal order [classes, y, x]"""
+    """
+    reshapes an output of shape [x*y, classes] to gdal order [classes, y, x]
+
+    Parameters
+    ----------
+    probs
+    width
+    height
+
+    Returns
+    -------
+
+    """
     classes = probs.shape[1]
     image_array = np.transpose(probs, (1, 0))
     image_array = np.reshape(image_array, (classes, height, width))
