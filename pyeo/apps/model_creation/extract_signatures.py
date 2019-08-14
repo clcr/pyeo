@@ -15,6 +15,8 @@ if __name__ == "__main__":
     parser.add_argument("out_path", action='store', help="Path of the output .csv file")
     parser.add_argument("--apply_mask", action='store_true', help="If true, apply the images .msk file to before "
                                                                 "extracting signatures")
+    parser.add_argument("--attribute", default="CODE", help="The name of the field in the training shape containing"
+                                                            " class labels")
     args = parser.parse_args()
 
-    extract_features_to_csv(args.in_ras_path, args.training_shape_path, args.out_path)
+    extract_features_to_csv(args.in_ras_path, args.training_shape_path, args.out_path, attribute=args.attribute)

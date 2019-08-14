@@ -218,8 +218,8 @@ def reshape_prob_out_to_raster(probs, width, height):
     image_array = np.reshape(image_array, (classes, height, width))
     return image_array
 
-def extract_features_to_csv(in_ras_path, training_shape_path, out_path):
-    this_training_data, this_classes = get_training_data(in_ras_path, training_shape_path)
+def extract_features_to_csv(in_ras_path, training_shape_path, out_path, attribute="CODE"):
+    this_training_data, this_classes = get_training_data(in_ras_path, training_shape_path, attribute=attribute)
     sigs = np.vstack((this_classes, this_training_data.T))
     with open(out_path, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
