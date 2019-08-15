@@ -47,7 +47,7 @@
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
 <p>Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying
 geospatial raster and vector data. It is intended to require a minimum of dependencies - most functions only require
-the basic GDAL/OGR/OSR stack.</p>
+the basic GDAL/OGR/OSR stack and Numpy.</p>
 </div>
 <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
@@ -56,22 +56,91 @@ the basic GDAL/OGR/OSR stack.</p>
 <span class="nb">cd</span> pyeo
 conda env create --file environment.yml --name pyeo_env
 conda activate pyeo_env
+python -m pip install . -vv
 </pre></div>
 </div>
+<p>In a Python prompt, try  <code class="code docutils literal notranslate"><span class="pre">import</span> <span class="pre">pyeo</span></code> - you should see no errors.</p>
 </div>
-<div class="section" id="including-pyeo-in-your-own-code">
-<h1>Including Pyeo in your own code<a class="headerlink" href="#including-pyeo-in-your-own-code" title="Permalink to this headline">¶</a></h1>
-<p>Include the following lines at the start of your Python scripts:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;/path/to/pyeo&quot;</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">pyeo.core</span> <span class="kn">as</span> <span class="nn">pyeo</span>
-</pre></div>
+<div class="section" id="quick-start">
+<h1>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>Before you start, you will need:</p>
+</div></blockquote>
+<p>-A linux (or maybe mac, untested) machine
+-A raster of your window area
+-A shapefile of polygons over your training areas with a field containing class labels
+-A raster to classify. This can be the same as your original raster.
+All rasters and shapefiles should be in the same projection; ideally in the local projection of your satellite data.
+-Git
+-Anaconda/Miniconda</p>
+<p>INSTALLATION</p>
+<p>git clone <a class="reference external" href="https://github.com/clcr/pyeo">https://github.com/clcr/pyeo</a>
+cd pyeo
+git checkout restructure      # This gets you the present working branch
+conda env create –file environment.yml –name pyeo_env
+echo export PYEO=$(pwd) &gt;&gt; ~/.bashrc    #Or just append to the end of your .bashrc
+echo export PATH=$PATH:$PYEO/bin
+chmod 755 bin/*</p>
+<p>USE</p>
+<p>conda activate pyeo_env
+cd (whereever your data is)
+extract_signatures your_raster.tif your_shapefile.shp output.csv
+# You can now explore your signatures as a .csv file, and perform any interim processing
+create_model_from_signatures output.csv model.pkl
+classify_image your_raster model.pkl output_image.tif</p>
 </div>
-<p>You may see a warning about scikit versions; this is normal.</p>
-</div>
-<div class="section" id="filenaming-assumptions-and-structure">
-<h1>Filenaming, assumptions and structure<a class="headerlink" href="#filenaming-assumptions-and-structure" title="Permalink to this headline">¶</a></h1>
-<p>Pyeo is divided into high-level and low-level fucntions.</p>
+<div class="section" id="assumptions-and-design-decisions">
+<h1>Assumptions and design decisions<a class="headerlink" href="#assumptions-and-design-decisions" title="Permalink to this headline">¶</a></h1>
+<p>###Rasters ###</p>
+<ul class="simple">
+<li><p>Can read from any gdal-readable format</p></li>
+<li><p>Stores internally as geotiff</p></li>
+<li><p>Named with the .tif suffix</p></li>
+<li><p>Most raster processing is done using numpy and getVirtualMemArray</p></li>
+<li><p>Unless otherwise stated, <strong>all rastesrs are assumed to be in a projected coordinate system</strong> - i.e. in meters.
+Functions may fail if passed a raster in lat-long projection</p></li>
+</ul>
+<p>### Masks ###</p>
+<ul class="simple">
+<li><p>Some Pyeo functions include options for applying masks</p></li>
+<li><p>A raster may have an associated mask</p></li>
+<li><dl class="simple">
+<dt>A mask is a geotif with an identical name as the raster it’s masking with a .msk extension</dt><dd><ul>
+<li><p>For example, the mask for my_sat_image.tif is my_sat_image.msk</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>A mask is</dt><dd><ul>
+<li><p>a single band raster</p></li>
+<li><p>of identical height, width and resolution of the related image</p></li>
+<li><p>contains values 0 or 1</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>A mask is applied by multiplying it with each band of its raster</dt><dd><ul>
+<li><p>So any pixel with a 0 in its mask will be removed, and a 1 will be kept</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>### Timestamps ###</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Pyeo uses the same timestamp convention as ESA: yyyymmddThhmmss</dt><dd><ul>
+<li><p>For example, 1PM on 27th December 2020 would be 20201227T130000</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>All timestamps are in UTC</p></li>
+</ul>
+<p>### Models ###
+- All models are serialised and deserialised using joblib.dump or joblib.load</p>
 </div>
 <div class="section" id="module-pyeo.classification">
 <span id="function-reference"></span><h1>Function reference<a class="headerlink" href="#module-pyeo.classification" title="Permalink to this headline">¶</a></h1>
@@ -82,75 +151,270 @@ for array manipulation into scikit-learn compatible forms.</p>
 <dl class="function">
 <dt id="pyeo.classification.autochunk">
 <code class="descclassname">pyeo.classification.</code><code class="descname">autochunk</code><span class="sig-paren">(</span><em>dataset</em>, <em>mem_limit=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.autochunk" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the number of chunks to break a dataset into without a memory error.
+<dd><p>EXPERIMENTAL Calculates the number of chunks to break a dataset into without a memory error. Presumes that 80% of the
+memory on the host machine is available for use by Pyeo.
 We want to break the dataset into as few chunks as possible without going over mem_limit.
 mem_limit defaults to total amount of RAM available on machine if not specified</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> – The dataset to chunk</p></li>
+<li><p><strong>mem_limit</strong> – The maximum amount of memory available to the process. Will be automatically populated from os.sysconf if missing.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>The number of chunks to most efficiently break the image into.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.change_from_composite">
-<code class="descclassname">pyeo.classification.</code><code class="descname">change_from_composite</code><span class="sig-paren">(</span><em>image_path</em>, <em>composite_path</em>, <em>model_path</em>, <em>class_out_path</em>, <em>prob_out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.change_from_composite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a change map comparing an image with a composite</p>
+<code class="descclassname">pyeo.classification.</code><code class="descname">change_from_composite</code><span class="sig-paren">(</span><em>image_path</em>, <em>composite_path</em>, <em>model_path</em>, <em>class_out_path</em>, <em>prob_out_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.change_from_composite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks an image with a composite and classifies each pixel change with a scikit-learn model
+The image that is classified is has the following bands</p>
+<blockquote>
+<div><p>composite blue
+composite green
+composite red
+composite IR
+image blue
+image green
+image red
+image IR</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_path</strong> – The path to the image</p></li>
+<li><p><strong>composite_path</strong> – The path to the composite</p></li>
+<li><p><strong>model_path</strong> – The path to a .pkl of a scikit-learn classifier that takes 8 features</p></li>
+<li><p><strong>class_out_path</strong> – A location to save the resulting classification .tif</p></li>
+<li><p><strong>prob_out_path</strong> – A location to save the probability raster of each pixel</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.classify_directory">
 <code class="descclassname">pyeo.classification.</code><code class="descname">classify_directory</code><span class="sig-paren">(</span><em>in_dir</em>, <em>model_path</em>, <em>class_out_dir</em>, <em>prob_out_dir</em>, <em>apply_mask=False</em>, <em>out_type='GTiff'</em>, <em>num_chunks=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_directory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Classifies every .tif in in_dir using model at model_path. Outputs are saved
+<dd><p>Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
 in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.</p>
+<p>See the documentation for classification.classify_image() for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_dir</strong> – The path to the directory containing the rasters to be classified.</p></li>
+<li><p><strong>model_path</strong> – The path to the .pkl file containing the model.</p></li>
+<li><p><strong>class_out_dir</strong> – The directory that will store the classified maps</p></li>
+<li><p><strong>prob_out_dir</strong> – The directory that will store the probability maps of the classified maps</p></li>
+<li><p><strong>apply_mask</strong> – If present, uses the corresponding .msk files to mask the directories</p></li>
+<li><p><strong>out_type</strong> – The raster format of the class image. Defaults to GTiff (geotif)</p></li>
+<li><p><strong>num_chunks</strong> – The number of chunks to break an image into.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.classify_image">
 <code class="descclassname">pyeo.classification.</code><code class="descname">classify_image</code><span class="sig-paren">(</span><em>image_path</em>, <em>model_path</em>, <em>class_out_path</em>, <em>prob_out_path=None</em>, <em>apply_mask=False</em>, <em>out_type='GTiff'</em>, <em>num_chunks=10</em>, <em>nodata=0</em>, <em>skip_existing=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_image" title="Permalink to this definition">¶</a></dt>
-<dd><p>Classifies change between two stacked images.
-Images need to be chunked, otherwise they cause a memory error (~16GB of data with a ~15GB machine)
-TODO: This has gotten very hairy; rewrite when you update this to take generic models</p>
+<dd><p>Produces a class map from a raster and a model.
+This applies the model’s fit() function to each pixel in the input raster, and saves the result into an output
+raster. The model is presumed to be a scikit-learn fitted model created using one of the other functions in this
+library (create_model_from_rasters, create_model_from_signatures).</p>
+<p>To fit into a</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_path</strong> – The path to the raster image to be classified.</p></li>
+<li><p><strong>model_path</strong> – The path to the .pkl file containing the model</p></li>
+<li><p><strong>class_out_path</strong> – The path that the classified map will be saved at.</p></li>
+<li><p><strong>prob_out_path</strong> – If present, the path that the class probability map will be stored at.</p></li>
+<li><p><strong>apply_mask</strong> – If True, uses the .msk file corresponding to the image at image_path to skip any invalid pixels.</p></li>
+<li><p><strong>out_type</strong> – The raster format of the class image. Defaults to GTiff (geotif)</p></li>
+<li><p><strong>num_chunks</strong> – The number of chunks the image is broken into prior to classification. The smaller this number, the faster
+classification will run - but the more likely you are to get a outofmemory error.</p></li>
+<li><p><strong>nodata</strong> – The value to write to masked pixels</p></li>
+<li><p><strong>skip_existing</strong> – If true, do not run if class_out_path already exists</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<dl class="simple">
+<dt>If you want to create a custom model, the object is presumed to have the following methods and attributes:</dt><dd><ul class="simple">
+<li><p><a href="#id1"><span class="problematic" id="id2">model.n_classes_</span></a> : the number of classes the model will produce</p></li>
+<li><p>model.n_cores : The number of CPU cores used to run the model</p></li>
+<li><p>model.predict() : A function that will take a set of band inputs from a pixel and produce a class.</p></li>
+<li><dl class="simple">
+<dt>model.predict_proba()<span class="classifier">If called with prob_out_path, a function that takes a set of n band inputs from a pixel</span></dt><dd><p>and produces <a href="#id3"><span class="problematic" id="id4">n_classes_</span></a> outputs corresponding to the probabilties of a given pixel being
+that class</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.create_model_for_region">
 <code class="descclassname">pyeo.classification.</code><code class="descname">create_model_for_region</code><span class="sig-paren">(</span><em>path_to_region</em>, <em>model_out</em>, <em>scores_out</em>, <em>attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_for_region" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a model based on training data for files in a given region</p>
+<dd><p>Takes all .tif files in a given folder and creates a pickled scikit-learn model for classifying them.
+Wraps classification.create_trained_model() ; see docs for that for the details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_to_region</strong> – Path to the folder containing the tifs.</p></li>
+<li><p><strong>model_out</strong> – Path to location to save the .pkl file</p></li>
+<li><p><strong>scores_out</strong> – Path to save the cross-validation scores</p></li>
+<li><p><strong>attribute</strong> – The label of the field in the training shapefiles that contains the classification labels.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.classification.create_model_from_signatures">
+<code class="descclassname">pyeo.classification.</code><code class="descname">create_model_from_signatures</code><span class="sig-paren">(</span><em>sig_csv_path</em>, <em>model_out</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_from_signatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
+and pickle a scikit-learn model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sig_csv_path</strong> – The path to the signatures file</p></li>
+<li><p><strong>model_out</strong> – The location to save the pickled model to.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>At present, the model is an ExtraTreesClassifier arrived at by tpot:
+model = ens.ExtraTreesClassifier(bootstrap=False, criterion=”gini”, max_features=0.55, min_samples_leaf=2,</p>
+<blockquote>
+<div><p>min_samples_split=16, n_estimators=100, n_jobs=4, class_weight=’balanced’)</p>
+</div></blockquote>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.create_trained_model">
 <code class="descclassname">pyeo.classification.</code><code class="descname">create_trained_model</code><span class="sig-paren">(</span><em>training_image_file_paths</em>, <em>cross_val_repeats=5</em>, <em>attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_trained_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a trained random forest model from the training data. This
-assumes that image and model are in the same directory, with a shapefile.
-Give training_image_path a path to a list of .tif files. See spec in the R drive for data structure.
-At present, the model is an ExtraTreesClassifier arrived at by tpot; see tpot_classifier_kenya -&gt; tpot 1)</p>
+<dd><p>Creates a trained model from a set of training images with associated shapefiles.</p>
+<p>This assumes that each image in training_image_file_paths has in the same directory a folder of the same
+name containing a shapefile of the same name. For example, in the folder training_data:</p>
+<p>training_data
+—area1.tif
+—area1</p>
+<blockquote>
+<div><p>—area1.shp
+—area1.dbx
+…rest of shapefile for area 1 …</p>
+</div></blockquote>
+<p>—area2.tif
+—area2</p>
+<blockquote>
+<div><p>—area2.shp
+—area2.dbx
+…rest of shapefile for area 2…</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_image_file_paths</strong> – A list of filepaths to training images.</p></li>
+<li><p><strong>cross_val_repeats</strong> – The number of cross-validation repeats to use</p></li>
+<li><p><strong>attribute</strong> – The label of the field in the training shapefiles that contains the classification labels.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>model</em> – A fitted scikit-learn model. See notes.</p></li>
+<li><p><em>scores</em> – The cross-validation scores for model</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For full details of how to create an appropriate shapefile, see [here](../index.html#training_data).
+At present, the model is an ExtraTreesClassifier arrived at by tpot:
+model = ens.ExtraTreesClassifier(bootstrap=False, criterion=”gini”, max_features=0.55, min_samples_leaf=2,</p>
+<blockquote>
+<div><p>min_samples_split=16, n_estimators=100, n_jobs=4, class_weight=’balanced’)</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.classification.extract_features_to_csv">
+<code class="descclassname">pyeo.classification.</code><code class="descname">extract_features_to_csv</code><span class="sig-paren">(</span><em>in_ras_path</em>, <em>training_shape_path</em>, <em>out_path</em>, <em>attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.extract_features_to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a raster and a shapefile containing training polygons, extracts all pixels into a CSV file for further
+analysis.</p>
+<dl class="simple">
+<dt>This produces a CSV file where each row corresponds to a pixel. The columns are as follows:</dt><dd><p>Column 1: Class labels from the shapefile field labelled as ‘attribute’.
+Column 2… : Band values from the raster at in_ras_path.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_ras_path</strong> – The path to the raster used for creating the training dataset</p></li>
+<li><p><strong>training_shape_path</strong> – The path to the shapefile containing classification polygons</p></li>
+<li><p><strong>out_path</strong> – The path for the new .csv file</p></li>
+<li><p><strong>attribute</strong> – The label of the field in the training shapefile that contains the classification labels.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.get_training_data">
 <code class="descclassname">pyeo.classification.</code><code class="descname">get_training_data</code><span class="sig-paren">(</span><em>image_path</em>, <em>shape_path</em>, <em>attribute='CODE'</em>, <em>shape_projection_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.get_training_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given an image and a shapefile with categories, return x and y suitable
-for feeding into random_forest.fit.
-Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED ‘0’
-WRITE A TEST FOR THIS TOO; if this goes wrong, it’ll go wrong quietly and in a way that’ll cause the most issues</p>
-<blockquote>
-<div><p>further on down the line.</p>
-</div></blockquote>
+<dd><p>Given an image and a shapefile with categories, returns training data and features suitable
+for fitting a scikit-learn classifier.</p>
+<p>This extracts every pixel in image_path touched by the polygons in shape_path</p>
+<p>For full details of how to create an appropriate shapefile, see [here](../index.html#training_data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_path</strong> – The path to the raster image to extract signatures from</p></li>
+<li><p><strong>shape_path</strong> – The path to the shapefile containing labelled class polygons</p></li>
+<li><p><strong>attribute</strong> – The field containing the class labels</p></li>
+<li><p><strong>shape_projection_id</strong> – The projection of the shapefile</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>training_data</em> – A numpy array of shape (n_pixels, bands), where n_pixels is the number of pixels covered by the training polygons</p></li>
+<li><p><em>features</em> – A 1-d numpy array of length (n_pixels) containing the class labels for the corresponding pixel in training_data</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For performance, this uses scikit’s sparse.nonzero() function to get the location of each training data pixel.
+This means that this will ignore any classes with a label of ‘0’.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.raster_reclass_binary">
 <code class="descclassname">pyeo.classification.</code><code class="descname">raster_reclass_binary</code><span class="sig-paren">(</span><em>img_path</em>, <em>rcl_value</em>, <em>outFn</em>, <em>outFmt='GTiff'</em>, <em>write_out=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.raster_reclass_binary" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes a raster and reclassifies the values</p>
+<dd><p>Takes a raster and reclassifies rcl_value to 1, with all others becoming 0. In-place operation if write_out is True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>img_path</strong> (<em>str</em>) – Path to 1 band input  raster.</p></li>
-<li><p><strong>rcl_value</strong> (<em>int</em>) – Integer indication the value that should be reclassified to 1. All other values will be 0.</p></li>
-<li><p><strong>outFn</strong> (<em>str</em>) – Output file name.</p></li>
-<li><p><strong>outFmt</strong> (<em>str</em>) – Output format. Set to GTiff by default. Other GDAL options available.</p></li>
+<li><p><strong>img_path</strong> – Path to 1 band input  raster.</p></li>
+<li><p><strong>rcl_value</strong> – Integer indication the value that should be reclassified to 1. All other values will be 0.</p></li>
+<li><p><strong>outFn</strong> – Output file name.</p></li>
+<li><p><strong>outFmt</strong> – Output format. Set to GTiff by default. Other GDAL options available.</p></li>
 <li><p><strong>write_out</strong> – Boolean. Set to True by default. Will write raster to disk. If False, only an array is returned</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Reclassifies numpy array</p>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Reclassifies numpy array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -158,19 +422,56 @@ WRITE A TEST FOR THIS TOO; if this goes wrong, it’ll go wrong quietly and in a
 <dl class="function">
 <dt id="pyeo.classification.reshape_ml_out_to_raster">
 <code class="descclassname">pyeo.classification.</code><code class="descname">reshape_ml_out_to_raster</code><span class="sig-paren">(</span><em>classes</em>, <em>width</em>, <em>height</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_ml_out_to_raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reshapes an output [x*y] to gdal order [y, x]</p>
+<dd><p>Takes the output of a pixel classifier and reshapes to a single band image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>classes</strong> – A 1-d numpy array of classes from a pixel classifier</p></li>
+<li><p><strong>width</strong> – The width in pixels of the image the produced the classification</p></li>
+<li><p><strong>height</strong> – The height in pixels of the image that produced the classification</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A 2-dimensional Numpy array of shape(width, height)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.reshape_prob_out_to_raster">
 <code class="descclassname">pyeo.classification.</code><code class="descname">reshape_prob_out_to_raster</code><span class="sig-paren">(</span><em>probs</em>, <em>width</em>, <em>height</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_prob_out_to_raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>reshapes an output of shape [x*y, classes] to gdal order [classes, y, x]</p>
+<dd><p>Takes the probability output of a pixel classifier and reshapes it to a raster.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>probs</strong> – A numpy array of shape(n_pixels, n_classes)</p></li>
+<li><p><strong>width</strong> – The width in pixels of the image that produced the probability classification</p></li>
+<li><p><strong>height</strong> – The height in pixels of the image that produced the probability classification</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.classification.reshape_raster_for_ml">
 <code class="descclassname">pyeo.classification.</code><code class="descname">reshape_raster_for_ml</code><span class="sig-paren">(</span><em>image_array</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_raster_for_ml" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reshapes an array from gdal order [band, y, x] to scikit order [x*y, band]</p>
+<dd><p>A low-level function that reshapes an array from gdal order [band, y, x] to scikit features order [x*y, band]</p>
+<p>For classification, scikit-learn functions take a 2-dimensional array of features of the shape (samples, features).
+For pixel classification, features correspond to bands and samples correspond to specific pixels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_array</strong> – A 3-dimensional Numpy array</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A 2-dimensional Numpy array of shape (samples, features)</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -314,6 +615,153 @@ Will floor() decimal output</p>
 <dt id="pyeo.coordinate_manipulation.write_geometry">
 <code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">write_geometry</code><span class="sig-paren">(</span><em>geometry</em>, <em>out_path</em>, <em>srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.write_geometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves a polygon to a shapefile</p>
+</dd></dl>
+
+</div>
+<span class="target" id="module-pyeo.filesystem_utilities"></span><div class="section" id="pyeo-filesystem-utilities">
+<h2>pyeo.filesystem_utilities<a class="headerlink" href="#pyeo-filesystem-utilities" title="Permalink to this headline">¶</a></h2>
+<p>Contains functions for sorting, creating and comparing images as part of the filesystem. Includes any function
+that works on a generic pyeo timestamp and sentinel 2 functions.</p>
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.check_for_invalid_l1_data">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">check_for_invalid_l1_data</code><span class="sig-paren">(</span><em>l1_SAFE_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l1_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+an invalid SAFE directory; this will prevent disconnected files from being deleted.
+Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.check_for_invalid_l2_data">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">check_for_invalid_l2_data</code><span class="sig-paren">(</span><em>l2_SAFE_file</em>, <em>resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
+an invalid SAFE directory; this will prevent disconnected files from being deleted.
+Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.clean_aoi">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">clean_aoi</code><span class="sig-paren">(</span><em>aoi_dir</em>, <em>images_to_keep=4</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_aoi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
+composite directories. Will not affect the output folder.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.clean_l2_data">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">clean_l2_data</code><span class="sig-paren">(</span><em>l2_SAFE_file</em>, <em>resolution='10m'</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes any directories that don’t have band 2, 3, 4 or 8 in the specified resolution folder
+If warning=True, prompts first.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.clean_l2_dir">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">clean_l2_dir</code><span class="sig-paren">(</span><em>l2_dir</em>, <em>resolution='10m'</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls clean_l2_data on every SAFE file in l2_dir</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.create_file_structure">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">create_file_structure</code><span class="sig-paren">(</span><em>root</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.create_file_structure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the file structure if it doesn’t exist already</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_change_detection_dates">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_change_detection_dates</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_change_detection_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the source filepath and extracts the before_date and after_date dates from in, in that order.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_image_acquisition_time">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_image_acquisition_time</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_image_acquisition_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_l1_safe_file">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_l1_safe_file</code><span class="sig-paren">(</span><em>image_name</em>, <em>l1_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l1_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+a filename</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_l2_safe_file">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_l2_safe_file</code><span class="sig-paren">(</span><em>image_name</em>, <em>l2_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l2_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+a filename</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_mask_path">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_mask_path</code><span class="sig-paren">(</span><em>image_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_mask_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A gdal mask is an image with the same name as the image it’s masking, but with a .msk extension</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_preceding_image_path">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_preceding_image_path</code><span class="sig-paren">(</span><em>target_image_name</em>, <em>search_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_preceding_image_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the path to the image in search_dir preceding the image called image_name</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_pyeo_timestamp">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_pyeo_timestamp</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_pyeo_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all timestamps in a Pyeo image.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_related_images">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_related_images</code><span class="sig-paren">(</span><em>target_image_name</em>, <em>project_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_related_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the paths of all images related to that one in a project, by timestamp</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_granule_id">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_granule_id</code><span class="sig-paren">(</span><em>safe_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_granule_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the unique ID of a Sentinel 2 granule from a SAFE directory path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_image_orbit">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_image_orbit</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_orbit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the relative orbit number of a Sentinel 2 image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_image_tile">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_image_tile</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tile number of a Sentinel 2 image or path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_image_timestamp">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_image_timestamp</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the timestamps part of a Sentinel 2 image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_tiles">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_tiles</code><span class="sig-paren">(</span><em>image_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_tiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets the list of tiles present in the directory</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.init_log">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">init_log</code><span class="sig-paren">(</span><em>log_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.init_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up the log format and log handlers; one for stdout and to write to a file, ‘log_path’.
+Returns the log for the calling script</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.is_tif">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">is_tif</code><span class="sig-paren">(</span><em>image_string</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.is_tif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if image ends with .tif</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.sort_by_timestamp">
+<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">sort_by_timestamp</code><span class="sig-paren">(</span><em>strings</em>, <em>recent_first=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
+guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp</p>
 </dd></dl>
 
 </div>
@@ -666,7 +1114,7 @@ book ‘Geoprocessing with Python’. The out put data type is the same as the i
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.reproject_image">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">reproject_image</code><span class="sig-paren">(</span><em>in_raster</em>, <em>out_raster_path</em>, <em>new_projection</em>, <em>driver='GTiff'</em>, <em>memory=2000.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.reproject_image" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">reproject_image</code><span class="sig-paren">(</span><em>in_raster</em>, <em>out_raster_path</em>, <em>new_projection</em>, <em>driver='GTiff'</em>, <em>memory=2000.0</em>, <em>do_post_resample=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.reproject_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Will round projection
 back to whatever 2gb memory limit by default (because it works in most places)</p>
 </dd></dl>
@@ -826,8 +1274,8 @@ WARNING: This will take up a LOT of memory!</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyeo.validation.produce_stratifed_validation_points">
-<code class="descclassname">pyeo.validation.</code><code class="descname">produce_stratified_validation_points</code><span class="sig-paren">(</span><em>map_path</em>, <em>out_path</em>, <em>class_sample_counts</em>, <em>no_data=None</em>, <em>seed=None</em>, <em>produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.produce_stratifed_validation_points" title="Permalink to this definition">¶</a></dt>
+<dt id="pyeo.validation.produce_stratified_validation_points">
+<code class="descclassname">pyeo.validation.</code><code class="descname">produce_stratified_validation_points</code><span class="sig-paren">(</span><em>map_path</em>, <em>out_path</em>, <em>class_sample_counts</em>, <em>no_data=None</em>, <em>seed=None</em>, <em>produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.produce_stratified_validation_points" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces a set of stratified validation points from map_path</p>
 </dd></dl>
 

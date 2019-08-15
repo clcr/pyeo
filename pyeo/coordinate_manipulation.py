@@ -9,7 +9,20 @@ from osgeo import osr, ogr
 
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
-    """Reprojects a geotransform into a new projection."""
+    """
+    Reprojects a geotransform into a new projection.
+    The geotransform is the Gdal structure for
+
+    Parameters
+    ----------
+    in_gt
+    old_proj_wkt
+    new_proj_wkt
+
+    Returns
+    -------
+
+    """
     old_proj = osr.SpatialReference()
     new_proj = osr.SpatialReference()
     old_proj.ImportFromWkt(old_proj_wkt)

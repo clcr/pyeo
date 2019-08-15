@@ -303,7 +303,7 @@ def reshape_raster_for_ml(image_array):
     Parameters
     ----------
     image_array
-        A 3-dimensional Numpy array
+        A 3-dimensional Numpy array of shape (bands, y, x)
 
     Returns
     -------
@@ -323,11 +323,11 @@ def reshape_ml_out_to_raster(classes, width, height):
     Parameters
     ----------
     classes
-        A 1-d numpy array of classification from pixels
+        A 1-d numpy array of classes from a pixel classifier
     width
-        The width of the image the produces the classification
+        The width in pixels of the image the produced the classification
     height
-        The height of the image that produced the classification
+        The height in pixels of the image that produced the classification
 
     Returns
     -------
@@ -341,13 +341,16 @@ def reshape_ml_out_to_raster(classes, width, height):
 
 def reshape_prob_out_to_raster(probs, width, height):
     """
-    reshapes an output of shape [x*y, classes] to gdal order [classes, y, x]
+    Takes the probability output of a pixel classifier and reshapes it to a raster.
 
     Parameters
     ----------
     probs
+        A numpy array of shape(n_pixels, n_classes)
     width
+        The width in pixels of the image that produced the probability classification
     height
+        The height in pixels of the image that produced the probability classification
 
     Returns
     -------
@@ -359,6 +362,26 @@ def reshape_prob_out_to_raster(probs, width, height):
     return image_array
 
 def extract_features_to_csv(in_ras_path, training_shape_path, out_path, attribute="CODE"):
+    """
+    Given a raster and a shapefile containing training polygons, extracts all pixels into a CSV file for further
+    analysis.
+
+    This produces a CSV file where each row corresponds to a pixel. The columns are as follows:
+        Column 1: Class labels from the shapefile field labelled as 'attribute'.
+        Column 2... : Band values from the raster at in_ras_path.
+
+    Parameters
+    ----------
+    in_ras_path
+        The path to the raster used for creating the training dataset
+    training_shape_path
+        The path to the shapefile containing classification polygons
+    out_path
+        The path for the new .csv file
+    attribute
+        The label of the field in the training shapefile that contains the classification labels.
+
+    """
     this_training_data, this_classes = get_training_data(in_ras_path, training_shape_path, attribute=attribute)
     sigs = np.vstack((this_classes, this_training_data.T))
     with open(out_path, 'w', newline='') as outfile:
@@ -366,10 +389,49 @@ def extract_features_to_csv(in_ras_path, training_shape_path, out_path, attribut
         writer.writerows(sigs.T)
 
 def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attribute="CODE"):
-    """Returns a trained random forest model from the training data. This
-    assumes that image and model are in the same directory, with a shapefile.
-    Give training_image_path a path to a list of .tif files. See spec in the R drive for data structure.
-    At present, the model is an ExtraTreesClassifier arrived at by tpot; see tpot_classifier_kenya -> tpot 1)"""
+    """
+    Creates a trained model from a set of training images with associated shapefiles.
+
+    This assumes that each image in training_image_file_paths has in the same directory a folder of the same
+    name containing a shapefile of the same name. For example, in the folder training_data:
+
+    training_data
+    ---area1.tif
+    ---area1
+       ---area1.shp
+       ---area1.dbx
+       ...rest of shapefile for area 1 ...
+    ---area2.tif
+    ---area2
+       ---area2.shp
+       ---area2.dbx
+       ...rest of shapefile for area 2...
+
+
+    Parameters
+    ----------
+    training_image_file_paths
+        A list of filepaths to training images.
+    cross_val_repeats
+        The number of cross-validation repeats to use
+    attribute
+        The label of the field in the training shapefiles that contains the classification labels.
+
+    Returns
+    -------
+    model
+        A fitted scikit-learn model. See notes.
+    scores
+        The cross-validation scores for model
+
+    Notes
+    ----
+    For full details of how to create an appropriate shapefile, see [here](../index.html#training_data).
+    At present, the model is an ExtraTreesClassifier arrived at by tpot:
+    model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
+                                 min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
+
+    """
     # This could be optimised by pre-allocating the training array. but not now.
     learning_data = None
     classes = None
@@ -392,7 +454,22 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
 
 
 def create_model_for_region(path_to_region, model_out, scores_out, attribute="CODE"):
-    """Creates a model based on training data for files in a given region"""
+    """
+    Takes all .tif files in a given folder and creates a pickled scikit-learn model for classifying them.
+    Wraps classification.create_trained_model() ; see docs for that for the details.
+
+    Parameters
+    ----------
+    path_to_region
+        Path to the folder containing the tifs.
+    model_out
+        Path to location to save the .pkl file
+    scores_out
+        Path to save the cross-validation scores
+    attribute
+        The label of the field in the training shapefiles that contains the classification labels.
+
+    """
     image_glob = os.path.join(path_to_region, r"*.tif")
     image_list = glob.glob(image_glob)
     model, scores = create_trained_model(image_list, attribute=attribute)
@@ -402,6 +479,23 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
 
 
 def create_model_from_signatures(sig_csv_path, model_out):
+    """
+    Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
+    and pickle a scikit-learn model.
+
+    Parameters
+    ----------
+    sig_csv_path
+        The path to the signatures file
+    model_out
+        The location to save the pickled model to.
+
+    Notes
+    -----
+    At present, the model is an ExtraTreesClassifier arrived at by tpot:
+    model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
+                                 min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
+    """
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
     data = np.loadtxt(sig_csv_path, delimiter=",").T
@@ -410,9 +504,38 @@ def create_model_from_signatures(sig_csv_path, model_out):
 
 
 def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326):
-    """Given an image and a shapefile with categories, return x and y suitable
-    for feeding into random_forest.fit.
-    Note: THIS WILL FAIL IF YOU HAVE ANY CLASSES NUMBERED '0'."""
+    """
+    Given an image and a shapefile with categories, returns training data and features suitable
+    for fitting a scikit-learn classifier.
+
+    This extracts every pixel in image_path touched by the polygons in shape_path
+
+    For full details of how to create an appropriate shapefile, see [here](../index.html#training_data).
+
+    Parameters
+    ----------
+    image_path
+        The path to the raster image to extract signatures from
+    shape_path
+        The path to the shapefile containing labelled class polygons
+    attribute
+        The field containing the class labels
+    shape_projection_id
+        The projection of the shapefile
+
+    Returns
+    -------
+    training_data
+        A numpy array of shape (n_pixels, bands), where n_pixels is the number of pixels covered by the training polygons
+    features
+        A 1-d numpy array of length (n_pixels) containing the class labels for the corresponding pixel in training_data
+
+    Notes
+    -----
+    For performance, this uses scikit's sparse.nonzero() function to get the location of each training data pixel.
+    This means that this will ignore any classes with a label of '0'.
+
+    """
     # TODO: WRITE A TEST FOR THIS TOO; if this goes wrong, it'll go wrong
     # quietly and in a way that'll cause the most issues further on down the line
     FILL_VALUE = -9999
@@ -452,18 +575,28 @@ def get_training_data(image_path, shape_path, attribute="CODE", shape_projection
 
 
 def raster_reclass_binary(img_path, rcl_value, outFn, outFmt='GTiff', write_out=True):
-    """Takes a raster and reclassifies the values
+    """
+    Takes a raster and reclassifies rcl_value to 1, with all others becoming 0. In-place operation if write_out is True.
 
+    Parameters
+    ----------
+    img_path
+        Path to 1 band input  raster.
+    rcl_value
+        Integer indication the value that should be reclassified to 1. All other values will be 0.
+    outFn
+        Output file name.
+    outFmt
+        Output format. Set to GTiff by default. Other GDAL options available.
+    write_out
+        Boolean. Set to True by default. Will write raster to disk. If False, only an array is returned
 
-    :param str img_path: Path to 1 band input  raster.
-    :param int rcl_value: Integer indication the value that should be reclassified to 1. All other values will be 0.
-    :param str outFn: Output file name.
-    :param str outFmt: Output format. Set to GTiff by default. Other GDAL options available.
-    :param write_out: Boolean. Set to True by default. Will write raster to disk. If False, only an array is returned
-    :return: Reclassifies numpy array
+    Returns
+    -------
+    Reclassifies numpy array
     """
     log = logging.getLogger(__name__)
-    log.info('Starting raster reclassifcation.')
+    log.info('Starting raster reclassification.')
     # load in classification raster
     in_ds = gdal.Open(img_path)
     in_band = in_ds.GetRasterBand(1)
