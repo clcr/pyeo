@@ -10,17 +10,21 @@ from osgeo import osr, ogr
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     """
-    Reprojects a geotransform into a new projection.
-    The geotransform is the Gdal structure for
+    Reprojects a geotransform from the old projection to a new projection. See
+    [https://gdal.org/user/raster_data_model.html]
 
     Parameters
     ----------
     in_gt
+        A six-element numpy array, usually an output from gdal_image.GetGeoTransform()
     old_proj_wkt
+        The projection of the old geotransform in well-known text.
     new_proj_wkt
-
+        The projection of the new geotrasform in well-known text format.
     Returns
     -------
+    out_gt
+        The geotransform in the new projection
 
     """
     old_proj = osr.SpatialReference()
@@ -34,7 +38,22 @@ def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
 
 
 def get_combined_polygon(rasters, geometry_mode ="intersect"):
-    """Calculates the overall polygon boundary for multiple rasters"""
+    """
+    Returns a polygon containing the combined boundary of each raster in rasters.
+
+    Parameters
+    ----------
+    rasters
+        A list of raster objects opened with gdal.Open()
+    geometry_mode
+        If 'intersect', returns the boundary of the area that all rasters cover.
+        If 'union', returns the boundary of the area that any raster covers.
+
+    Returns
+    -------
+        ogr.Geometry() containing a polygon.
+
+    """
     raster_bounds = []
     for in_raster in rasters:
         raster_bounds.append(get_raster_bounds(in_raster))
@@ -49,7 +68,19 @@ def get_combined_polygon(rasters, geometry_mode ="intersect"):
 
 
 def multiple_union(polygons):
-    """Takes a list of polygons and returns a geometry representing the union of all of them"""
+    """
+    Takes a list of polygons and returns a polygon of the union of their perimeter
+
+    Parameters
+    ----------
+    polygons
+        A list of ogr.Geometry objects, each containing a single polygon.
+
+    Returns
+    -------
+        An ogr.Geometry object containing a single polygon
+
+    """
     # Note; I can see this maybe failing(or at least returning a multipolygon)
     # if two consecutive polygons do not overlap at all. Keep eye on.
     running_union = polygons[0]
@@ -58,9 +89,42 @@ def multiple_union(polygons):
     return running_union.Simplify(0)
 
 
+def multiple_intersection(polygons):
+    """
+    Takes a list of polygons and returns a geometry representing the intersection of all of them
+
+    Parameters
+    ----------
+    polygons
+        A list of ogr.Geometry objects, each containing a single polygon.
+
+    Returns
+    -------
+        An ogr.Geometry object containing a single polygon
+    """
+    running_intersection = polygons[0]
+    for polygon in polygons[1:]:
+        running_intersection = running_intersection.Intersection(polygon)
+    return running_intersection.Simplify(0)
+
+
 def pixel_bounds_from_polygon(raster, polygon):
-    """Returns the pixel coordinates of the bounds of the
-     intersection between polygon and raster """
+    """
+    Returns the bounding box of the overlap between a raster and a polygon in the raster
+
+    Parameters
+    ----------
+    raster
+        A gdal raster object
+
+    polygon
+        A ogr.Geometry object containing a single polygon
+
+    Returns
+    -------
+    A tuple (x_min, x_max, y_min, y_max)
+
+    """
     raster_bounds = get_raster_bounds(raster)
     intersection = get_poly_intersection(raster_bounds, polygon)
     bounds_geo = intersection.Boundary()
@@ -76,10 +140,28 @@ def pixel_bounds_from_polygon(raster, polygon):
 
 
 def point_to_pixel_coordinates(raster, point, oob_fail=False):
-    """Returns a tuple (x_pixel, y_pixel) in a georaster raster corresponding to the point.
-    Point can be an ogr point object, a wkt string or an x, y tuple or list. Assumes north-up non rotated.
-    Will floor() decimal output"""
-    # Equation is rearrangement of section on affinine geotransform in http://www.gdal.org/gdal_datamodel.html
+    """
+    Returns a tuple (x_pixel, y_pixel) in a georaster raster corresponding to the geographic point in a projection.
+     Assumes raster is north-up non rotated.
+
+    Parameters
+    ----------
+    raster
+        A gdal raster object
+    point
+        One of:
+            A well-known text string of a single point
+            An iterable of the form (x,y)
+            An ogr.Geometry object containing a single point
+    Returns
+    -------
+    A tuple of (x_pixel, y_pixel), containing the indicies of the point in the raster.
+
+    Notes
+    -----
+    The equation is a rearrangement of the section on affinine geotransform in http://www.gdal.org/gdal_datamodel.html
+
+    """
     if isinstance(point, str):
         point = ogr.CreateGeometryFromWkt(point)
         x_geo = point.GetX()
@@ -97,9 +179,23 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
 
 
 def pixel_to_point_coordinates(pixel, GT):
-    """Converts a pixel to it's coords implied by geotransform GT.
-    NOTE: This will not give the pixels precise location on the earth's surface;
-    you'll also need to make sure tha this is in the correct projection"""
+    """
+    Given a pixel and a geotransformation, returns the picaltion of that pixel's top left corner in the projection
+    used by the geotransform.
+    NOTE: At present, this takes input in the form of y,x! This is opposite to the output of point_to_pixel_coordinates!
+
+    Parameters
+    ----------
+    pixel
+        A tuple (y, x) of the coordinates of the pixel
+    GT
+        A six-element numpy array containing a geotransform
+
+    Returns
+    -------
+    A tuple containing the geographic coordinates of the top-left corner of the pixel.
+
+    """
     Xpixel = pixel[1]
     Yline = pixel[0]
     Xgeo = GT[0] + Xpixel * GT[1] + Yline * GT[2]
@@ -107,16 +203,20 @@ def pixel_to_point_coordinates(pixel, GT):
     return Xgeo, Ygeo
 
 
-def multiple_intersection(polygons):
-    """Takes a list of polygons and returns a geometry representing the intersection of all of them"""
-    running_intersection = polygons[0]
-    for polygon in polygons[1:]:
-        running_intersection = running_intersection.Intersection(polygon)
-    return running_intersection.Simplify(0)
-
-
 def write_geometry(geometry, out_path, srs_id=4326):
-    """Saves a polygon to a shapefile"""
+    """
+    Saves a polygon to a shapefile
+
+    Parameters
+    ----------
+    geometry
+    out_path
+    srs_id
+
+    Returns
+    -------
+
+    """
     driver = ogr.GetDriverByName("ESRI Shapefile")
     data_source = driver.CreateDataSource(out_path)
     srs = osr.SpatialReference()
