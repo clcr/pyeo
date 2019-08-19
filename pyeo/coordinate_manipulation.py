@@ -11,8 +11,8 @@ of one polygon.
 
 These functions all work on the objects provided by the ogr and gdal libraries. If you wish to use them in your own
 processing, a gdal.Image object is usually the output from gdal.Open() and an ogr.Geometry object can be obtained from
- a well-known text string using the  snipped `object=ogr.ImportFromWkt("mywkt"). For more information on wkt, see
- [https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry].
+a well-known text (wkt) string using the  snipped `object=ogr.ImportFromWkt("mywkt"). For more information on wkt, see
+https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry and the "QuickWKT" QGIS plugin.
 """
 
 import numpy as np

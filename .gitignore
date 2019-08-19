@@ -117,3 +117,4 @@ ENV/
 /pyeo/tests/*.img*
 /pyeo/tests/*.vrt
 **.zip
+/pyeo/tests/dem_tests/
