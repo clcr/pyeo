@@ -17,8 +17,20 @@ from pyeo.exceptions import CreateNewStacksException
 
 
 def init_log(log_path):
-    """Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
-     Returns the log for the calling script"""
+    """
+    Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
+     Returns the log for the calling script
+
+    Parameters
+    ----------
+    log_path
+        A location to save the log entries to
+
+    Returns
+    -------
+    A log object.
+
+    """
     logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     log = logging.getLogger(__name__)
