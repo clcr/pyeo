@@ -2,6 +2,9 @@
 pyeo.queries_and_downloads
 --------------------------
 Functions for querying, filtering and downloading data.
+
+NOTES: Sentinel 2 metadata
+NOTES: Query data structure
 """
 
 import datetime as dt
@@ -27,43 +30,43 @@ from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
-
-
-    From Geospatial Learn by Ciaran Robb, embedded here for portability.
-
-    Produces a dict of sentinel-2 IDs and
-
-    Notes
-    -----------
-
+    Fetches a list of Sentienl-2 products
 
     Parameters
     -----------
 
     user : string
-           username for esa hub
+           Username for ESA hub. Register at https://scihub.copernicus.eu/dhus/#/home
 
     passwd : string
-             password for hub
+             password for the ESA Open Access hub
 
     geojsonfile : string
-                  AOI polygon of interest in EPSG 4326
+                  Path to a geojson file containing a polygon of the outline of the area you wish to download.
+                  See www.geojson.io for a tool to build these.
 
     start_date : string
-                 date of beginning of search
+                 Date of beginning of search in the format YYYY-MM-DDThh:mm:ssZ (ISO standard)
 
     end_date : string
-               date of end of search
+               Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
+               See https://www.w3.org/TR/NOTE-datetime, or use cehck_for_s2_data_by_date
 
     cloud : string (optional)
-            include a cloud filter in the search
+            The maximum cloud clover (as calculated by Copernicus) to download.
 
-    product : string (optional)
-            Product type for Sentinel 2. Valid values are S2MSI1C and S2MS2Ap
+    Returns
+    -------
+    A dictionary of Sentinel-2 granule products that are touched by your AOI polygon, keyed by product ID.
+    Returns both level 1 and level 2 data.
 
+    Notes
+    -----
+    If you get a 'request too long' error, it is likely that your polygon is too complex. The following functions
+    download by granule; there is no need to have a precise polygon at this stage.
 
     """
-    ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
+    # Originally by Ciaran Robb
     log = logging.getLogger(__name__)
     api = SentinelAPI(user, passwd)
     footprint = geojson_to_wkt(read_geojson(geojsonfile))
@@ -76,6 +79,34 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
 
 
 def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
+    """
+    Gets all the products between start_date and end_date. Wraps sent2_query to avoid having passwords and
+    long-format timestamps in code.
+
+    Parameters
+    ----------
+    aoi_path
+        Path to a geojson file containing a polygon of the outline of the area you wish to download.
+        See www.geojson.io for a tool to build these.
+
+    start_date
+        Start date in the format yyyymmdd.
+
+    end_date
+        End date of the query in the format yyyymmdd
+
+    conf
+        Output from a configuration file containing your username and password for the ESA hub.
+        If needed, this can be dummied with a dictionary of the following format:
+        conf={'sent_2':{'user':'your_username', 'pass':'your_pass'}}
+
+    cloud_cover
+        The maximem level of cloud cover in images to be downloaded.
+
+    Returns
+    -------
+
+    """
     log = logging.getLogger(__name__)
     log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
     user = conf['sent_2']['user']
@@ -88,6 +119,20 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
 
 
 def filter_to_l1_data(query_output):
+    """
+    Takes list of products from check_for_s2_data_by_date and removes all non Level 1 products.
+
+    Parameters
+    ----------
+    query_output
+        A dictionary of products
+
+
+    Returns
+    -------
+    A dictionary of products containing only the L1C data products
+
+    """
     log = logging.getLogger(__name__)
     log.info("Extracting only L1 data from {} products".format(len(query_output)))
     filtered_query = {key: value for (key, value) in query_output.items() if get_query_level(value) == "Level-1C"}
@@ -95,6 +140,20 @@ def filter_to_l1_data(query_output):
 
 
 def filter_to_l2_data(query_output):
+    """
+    Takes list of products from check_for_s2_data_by_date and removes all non Level 2A products.
+
+    Parameters
+    ----------
+    query_output
+        A dictionary of products
+
+
+    Returns
+    -------
+    A dictionary of products containing only the L2A data products
+
+    """
     log = logging.getLogger(__name__)
     log.info("Extracting only L2 data from {} products".format(len(query_output)))
     filtered_query = {key: value for (key, value) in query_output.items() if get_query_level(value) == "Level-2A"}
@@ -102,9 +161,21 @@ def filter_to_l2_data(query_output):
 
 
 def filter_non_matching_s2_data(query_output):
-    """Removes any L2/L1 product that does not have a corresponding L1/L2 data"""
+    """
+    Filters a query such that it only contains paired level 1 and level 2 data products.
+
+    Parameters
+    ----------
+    query_output
+        Query list
+
+    Returns
+    -------
+    A dictionary of products contaiing only L1 and L2 data.
+
+    """
     # Here be algorithms
-    # A L1 and L2 image are related iff the following fields match:
+    # A L1 and L2 image are related if and only if the following fields match:
     #    Satellite (S2[A|B])
     #    Intake date (FIRST timestamp)
     #    Orbit number (Rxxx)
@@ -140,24 +211,93 @@ def filter_non_matching_s2_data(query_output):
 
 
 def get_query_datatake(query_item):
+    """
+    Gets the datatake timestamp of a query item.
+
+    Parameters
+    ----------
+    query_item
+        An item from a query results dictionary.
+
+    Returns
+    -------
+    The timestamp of that item's datatake.
+    """
     return query_item['beginposition']
 
 
 def get_query_granule(query_item):
+    """
+    Gets the granule ID (ex: 48MXU) of a query
+
+    Parameters
+    ----------
+    query_item
+        An item from a query results dictionary.
+
+    Returns
+    -------
+    The granule ID of that item.
+
+    """
     return query_item["title"].split("_")[5]
 
 
 def get_query_processing_time(query_item):
+    """
+    Returns the processing timestamps of a query item
+
+    Parameters
+    ----------
+    query_item
+        An item from a query results dictionary.
+
+    Returns
+    -------
+    The date processing timestamp in the format yyyymmddThhmmss (Ex: 20190613T123002)
+
+    """
     ingestion_string = query_item["title"].split("_")[6]
     return dt.datetime.strptime(ingestion_string, "%Y%m%dT%H%M%S")
 
 
 def get_query_level(query_item):
+    """
+    Returns the processing level of the query item.
+
+    Parameters
+    ----------
+    query_item
+         An item from a query results dictionary.
+
+    Returns
+    -------
+    A string of either 'Level-1C' or 'Level-2A'.
+
+    """
     return query_item["processinglevel"]
 
 
 def get_granule_identifiers(safe_product_id):
-    """Returns the parts of a S2 name that uniquely identify that granulate at a moment in time"""
+    """
+    Returns the parts of a S2 name that uniquely identify that granulate at a moment in time
+    Parameters
+    ----------
+    safe_product_id
+        The filename of a SAFE product
+
+    Returns
+    -------
+    satellite
+        A string of either "L2A" or "L2B"
+    intake_date
+        The timestamp of the data intoake of this granule
+    orbit number
+        The orbit number of this granule
+    granule
+        The ID of this granule
+
+    """
     satellite, _, intake_date, _, orbit_number, granule, _ = safe_product_id.split('_')
     return satellite, intake_date, orbit_number, granule
 
