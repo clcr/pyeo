@@ -12,8 +12,9 @@ its own .jp2 file. For full details, see https://sentinel.esa.int/web/sentinel/u
 
 There are two ways to refer to a given Sentinel-2 products: the UUID and the product ID.
 The UUID is a set of five five-character strings (EXMAPLE HERE)
-The product ID is a set of human-readable (more or less) containing all the information needed for unique identification
-of an product. (EXAMPLE HERE)
+The product ID is a human-readable string (more or less) containing all the information needed for unique identification
+of an product, split by the underscore character. For more information on the structure of a product ID,
+see (EXAMPLE HERE)
 
 Query data structure
 --------------------
@@ -53,12 +54,17 @@ from multiprocessing.dummy import Pool
 import requests
 import tenacity
 from botocore.exceptions import ClientError
-from google.cloud import storage
+
 from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
 from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests
+
+try:
+    from google.cloud import storage
+except ImportError:
+    pass
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
