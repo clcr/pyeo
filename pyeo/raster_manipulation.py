@@ -122,27 +122,24 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
 
 def create_new_stacks(image_dir, stack_dir):
     """
-    Produces a set of stacked rasters for each granule in image_dir. Saves the result in stacked_dir.
+    For each granule present in image_dir Saves the result in stacked_dir.
     Assumes that each image in image_dir is saved with a Sentinel-2 identifiter name - see merge_raster.
 
     Parameters
     ----------
     image_dir
-        A path to the directory containing the images to be stacked
+        A path to the directory containing the images to be stacked, all named as Sentinel 2 identifiers
     stack_dir
         A path to a directory to save the stacked images to.
     Returns
     -------
-        A list of paths to the new stacks
+        A list of paths to the new stacks, each names as
 
     Notes
     -----
-    Step 1: Sort directory as follows:
-            Relative Orbit number (RO4O), then Tile Number (T15PXT), then
-            Datatake sensing start date (YYYYMMDD) and time(THHMMSS).
-            newest first.
-    Step 2: For each tile number:
-            new_data_polygon = bounds(new_image_name)
+    The pairing algorithm is as follows:
+    Step 1: Group directory b
+    Step 2: For each tile number, sort by time
     Step 3: For each
     Step 4: Stack new rasters for each tile in new_data list.
 
