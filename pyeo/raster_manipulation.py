@@ -2,6 +2,24 @@
 pyeo.raster_manipulation
 ------------------------
 Functions for working with raster data.
+
+NOTE: supported datatypes
+gdal.GDT_Unknown
+gdal.GDT_Byte
+gdal.GDT_UInt16
+gdal.GDT_Int16
+gdal.GDT_UInt32
+gdal.GDT_Int32
+gdal.GDT_Float32
+gdal.GDT_Float64
+gdal.GDT_CInt16
+gdal.GDT_CInt32
+gdal.GDT_CFloat32
+gdal.GDT_CFloat64
+
+NOTE: Geotransforms
+
+NOTE: Projections
 """
 
 import glob
@@ -26,8 +44,29 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
-    """Creates an empty gdal dataset with the same dimensions, projection and geotransform. Defaults to 1 band.
-    Datatype is set from the first layer of in_dataset if unspecified"""
+    """
+    Creates an empty gdal dataset with the same dimensions, projection and geotransform as in_dataset.
+    Defaults to 1 band.
+    Datatype is set from the first layer of in_dataset if unspecified
+
+    Parameters
+    ----------
+    in_dataset
+        A gdal.Dataset object
+    out_path
+        The path to save the copied dataset to
+    format
+        The Ggal image format. Defaults to geotiff ("GTiff"); for a full list, see https://gdal.org/drivers/raster/index.html
+    bands
+        The number of bands in the dataset. Defaults to one.
+    datatype
+        The datatype of the returned dataset. See the introduction for this module.
+
+    Returns
+    -------
+    An gdal.Dataset of the new, empty dataset that is ready for writing.
+
+    """
     driver = gdal.GetDriverByName(format)
     if datatype is None:
         datatype = in_dataset.GetRasterBand(1).DataType
@@ -42,8 +81,27 @@ def create_matching_dataset(in_dataset, out_path,
 
 
 def save_array_as_image(array, path, geotransform, projection, format = "GTiff"):
-    """Saves a given array as a geospatial image in the format 'format'
-    Array must be gdal format: [bands, y, x]. Returns the gdal object"""
+    """
+    Saves a given array as a geospatial image to disk in the format 'format'. The datatype will be of one corresponding
+    to
+    Array must be gdal format: [bands, y, x].
+
+    Parameters
+    ----------
+    array
+        A Numpy array containing the values to be saved to a raster
+    path
+        The path to the location to save the output raster to
+    geotransform
+        The geotransform of the image to be saved. See note.
+    projection
+        The projection, as wkt, of the image to be saved. See note.
+    format
+
+    Returns
+    -------
+
+    """
     driver = gdal.GetDriverByName(format)
     type_code = gdal_array.NumericTypeCodeToGDALTypeCode(array.dtype)
     out_dataset = driver.Create(
@@ -64,22 +122,28 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
 
 def create_new_stacks(image_dir, stack_dir):
     """
-    Creates new stacks with with adjacent image acquisition dates. Threshold; how small a part
-    of the latest_image will be before it's considered to be fully processed.
-    New_image_name must exist inside image_dir.
+    Produces a set of stacked rasters for each granule in image_dir. Saves the result in stacked_dir.
+    Assumes that each image in image_dir is saved with a Sentinel-2 identifiter name - see merge_raster.
 
+    Parameters
+    ----------
+    image_dir
+        A path to the directory containing the images to be stacked
+    stack_dir
+        A path to a directory to save the stacked images to.
+    Returns
+    -------
+        A list of paths to the new stacks
+
+    Notes
+    -----
     Step 1: Sort directory as follows:
             Relative Orbit number (RO4O), then Tile Number (T15PXT), then
             Datatake sensing start date (YYYYMMDD) and time(THHMMSS).
             newest first.
     Step 2: For each tile number:
             new_data_polygon = bounds(new_image_name)
-    Step 3: For each tiff image coverring that tile, work backwards in time:
-            a. Check if it intersects new_data_polygon
-            b. If it does
-               - add to a to_be_stacked list,
-               - subtract it's bounding box from new_data_polygon.
-            c. If new_data_polygon drops having a total area less than threshold, stop.
+    Step 3: For each
     Step 4: Stack new rasters for each tile in new_data list.
 
     """
