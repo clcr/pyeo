@@ -150,7 +150,7 @@ Functions may fail if passed a raster in lat-long projection</p></li>
 for array manipulation into scikit-learn compatible forms.</p>
 <dl class="function">
 <dt id="pyeo.classification.autochunk">
-<code class="descclassname">pyeo.classification.</code><code class="descname">autochunk</code><span class="sig-paren">(</span><em>dataset</em>, <em>mem_limit=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.autochunk" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">autochunk</code><span class="sig-paren">(</span><em class="sig-param">dataset</em>, <em class="sig-param">mem_limit=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.autochunk" title="Permalink to this definition">¶</a></dt>
 <dd><p>EXPERIMENTAL Calculates the number of chunks to break a dataset into without a memory error. Presumes that 80% of the
 memory on the host machine is available for use by Pyeo.
 We want to break the dataset into as few chunks as possible without going over mem_limit.
@@ -173,7 +173,7 @@ mem_limit defaults to total amount of RAM available on machine if not specified<
 
 <dl class="function">
 <dt id="pyeo.classification.change_from_composite">
-<code class="descclassname">pyeo.classification.</code><code class="descname">change_from_composite</code><span class="sig-paren">(</span><em>image_path</em>, <em>composite_path</em>, <em>model_path</em>, <em>class_out_path</em>, <em>prob_out_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.change_from_composite" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">change_from_composite</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">composite_path</em>, <em class="sig-param">model_path</em>, <em class="sig-param">class_out_path</em>, <em class="sig-param">prob_out_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.change_from_composite" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stacks an image with a composite and classifies each pixel change with a scikit-learn model
 The image that is classified is has the following bands</p>
 <blockquote>
@@ -201,7 +201,7 @@ image IR</p>
 
 <dl class="function">
 <dt id="pyeo.classification.classify_directory">
-<code class="descclassname">pyeo.classification.</code><code class="descname">classify_directory</code><span class="sig-paren">(</span><em>in_dir</em>, <em>model_path</em>, <em>class_out_dir</em>, <em>prob_out_dir</em>, <em>apply_mask=False</em>, <em>out_type='GTiff'</em>, <em>num_chunks=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_directory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">classify_directory</code><span class="sig-paren">(</span><em class="sig-param">in_dir</em>, <em class="sig-param">model_path</em>, <em class="sig-param">class_out_dir</em>, <em class="sig-param">prob_out_dir</em>, <em class="sig-param">apply_mask=False</em>, <em class="sig-param">out_type='GTiff'</em>, <em class="sig-param">num_chunks=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
 in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.</p>
 <p>See the documentation for classification.classify_image() for more details.</p>
@@ -222,7 +222,7 @@ in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectiv
 
 <dl class="function">
 <dt id="pyeo.classification.classify_image">
-<code class="descclassname">pyeo.classification.</code><code class="descname">classify_image</code><span class="sig-paren">(</span><em>image_path</em>, <em>model_path</em>, <em>class_out_path</em>, <em>prob_out_path=None</em>, <em>apply_mask=False</em>, <em>out_type='GTiff'</em>, <em>num_chunks=10</em>, <em>nodata=0</em>, <em>skip_existing=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">classify_image</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">model_path</em>, <em class="sig-param">class_out_path</em>, <em class="sig-param">prob_out_path=None</em>, <em class="sig-param">apply_mask=False</em>, <em class="sig-param">out_type='GTiff'</em>, <em class="sig-param">num_chunks=10</em>, <em class="sig-param">nodata=0</em>, <em class="sig-param">skip_existing=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces a class map from a raster and a model.
 This applies the model’s fit() function to each pixel in the input raster, and saves the result into an output
 raster. The model is presumed to be a scikit-learn fitted model created using one of the other functions in this
@@ -263,7 +263,7 @@ that class</p>
 
 <dl class="function">
 <dt id="pyeo.classification.create_model_for_region">
-<code class="descclassname">pyeo.classification.</code><code class="descname">create_model_for_region</code><span class="sig-paren">(</span><em>path_to_region</em>, <em>model_out</em>, <em>scores_out</em>, <em>attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_for_region" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">create_model_for_region</code><span class="sig-paren">(</span><em class="sig-param">path_to_region</em>, <em class="sig-param">model_out</em>, <em class="sig-param">scores_out</em>, <em class="sig-param">attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_for_region" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes all .tif files in a given folder and creates a pickled scikit-learn model for classifying them.
 Wraps classification.create_trained_model() ; see docs for that for the details.</p>
 <dl class="field-list simple">
@@ -280,7 +280,7 @@ Wraps classification.create_trained_model() ; see docs for that for the details.
 
 <dl class="function">
 <dt id="pyeo.classification.create_model_from_signatures">
-<code class="descclassname">pyeo.classification.</code><code class="descname">create_model_from_signatures</code><span class="sig-paren">(</span><em>sig_csv_path</em>, <em>model_out</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_from_signatures" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">create_model_from_signatures</code><span class="sig-paren">(</span><em class="sig-param">sig_csv_path</em>, <em class="sig-param">model_out</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_from_signatures" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
 and pickle a scikit-learn model.</p>
 <dl class="field-list simple">
@@ -301,7 +301,7 @@ model = ens.ExtraTreesClassifier(bootstrap=False, criterion=”gini”, max_feat
 
 <dl class="function">
 <dt id="pyeo.classification.create_trained_model">
-<code class="descclassname">pyeo.classification.</code><code class="descname">create_trained_model</code><span class="sig-paren">(</span><em>training_image_file_paths</em>, <em>cross_val_repeats=5</em>, <em>attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_trained_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">create_trained_model</code><span class="sig-paren">(</span><em class="sig-param">training_image_file_paths</em>, <em class="sig-param">cross_val_repeats=5</em>, <em class="sig-param">attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_trained_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a trained model from a set of training images with associated shapefiles.</p>
 <p>This assumes that each image in training_image_file_paths has in the same directory a folder of the same
 name containing a shapefile of the same name. For example, in the folder training_data:</p>
@@ -347,7 +347,7 @@ model = ens.ExtraTreesClassifier(bootstrap=False, criterion=”gini”, max_feat
 
 <dl class="function">
 <dt id="pyeo.classification.extract_features_to_csv">
-<code class="descclassname">pyeo.classification.</code><code class="descname">extract_features_to_csv</code><span class="sig-paren">(</span><em>in_ras_path</em>, <em>training_shape_path</em>, <em>out_path</em>, <em>attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.extract_features_to_csv" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">extract_features_to_csv</code><span class="sig-paren">(</span><em class="sig-param">in_ras_path</em>, <em class="sig-param">training_shape_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">attribute='CODE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.extract_features_to_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a raster and a shapefile containing training polygons, extracts all pixels into a CSV file for further
 analysis.</p>
 <dl class="simple">
@@ -369,7 +369,7 @@ Column 2… : Band values from the raster at in_ras_path.</p>
 
 <dl class="function">
 <dt id="pyeo.classification.get_training_data">
-<code class="descclassname">pyeo.classification.</code><code class="descname">get_training_data</code><span class="sig-paren">(</span><em>image_path</em>, <em>shape_path</em>, <em>attribute='CODE'</em>, <em>shape_projection_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.get_training_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">get_training_data</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">shape_path</em>, <em class="sig-param">attribute='CODE'</em>, <em class="sig-param">shape_projection_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.get_training_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given an image and a shapefile with categories, returns training data and features suitable
 for fitting a scikit-learn classifier.</p>
 <p>This extracts every pixel in image_path touched by the polygons in shape_path</p>
@@ -398,7 +398,7 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 
 <dl class="function">
 <dt id="pyeo.classification.raster_reclass_binary">
-<code class="descclassname">pyeo.classification.</code><code class="descname">raster_reclass_binary</code><span class="sig-paren">(</span><em>img_path</em>, <em>rcl_value</em>, <em>outFn</em>, <em>outFmt='GTiff'</em>, <em>write_out=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.raster_reclass_binary" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">raster_reclass_binary</code><span class="sig-paren">(</span><em class="sig-param">img_path</em>, <em class="sig-param">rcl_value</em>, <em class="sig-param">outFn</em>, <em class="sig-param">outFmt='GTiff'</em>, <em class="sig-param">write_out=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.raster_reclass_binary" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a raster and reclassifies rcl_value to 1, with all others becoming 0. In-place operation if write_out is True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -421,7 +421,7 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 
 <dl class="function">
 <dt id="pyeo.classification.reshape_ml_out_to_raster">
-<code class="descclassname">pyeo.classification.</code><code class="descname">reshape_ml_out_to_raster</code><span class="sig-paren">(</span><em>classes</em>, <em>width</em>, <em>height</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_ml_out_to_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">reshape_ml_out_to_raster</code><span class="sig-paren">(</span><em class="sig-param">classes</em>, <em class="sig-param">width</em>, <em class="sig-param">height</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_ml_out_to_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes the output of a pixel classifier and reshapes to a single band image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -442,7 +442,7 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 
 <dl class="function">
 <dt id="pyeo.classification.reshape_prob_out_to_raster">
-<code class="descclassname">pyeo.classification.</code><code class="descname">reshape_prob_out_to_raster</code><span class="sig-paren">(</span><em>probs</em>, <em>width</em>, <em>height</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_prob_out_to_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">reshape_prob_out_to_raster</code><span class="sig-paren">(</span><em class="sig-param">probs</em>, <em class="sig-param">width</em>, <em class="sig-param">height</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_prob_out_to_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes the probability output of a pixel classifier and reshapes it to a raster.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -457,7 +457,7 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 
 <dl class="function">
 <dt id="pyeo.classification.reshape_raster_for_ml">
-<code class="descclassname">pyeo.classification.</code><code class="descname">reshape_raster_for_ml</code><span class="sig-paren">(</span><em>image_array</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_raster_for_ml" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">reshape_raster_for_ml</code><span class="sig-paren">(</span><em class="sig-param">image_array</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_raster_for_ml" title="Permalink to this definition">¶</a></dt>
 <dd><p>A low-level function that reshapes an array from gdal order [band, y, x] to scikit features order [x*y, band]</p>
 <p>For classification, scikit-learn functions take a 2-dimensional array of features of the shape (samples, features).
 For pixel classification, features correspond to bands and samples correspond to specific pixels.</p>
@@ -478,7 +478,7 @@ For pixel classification, features correspond to bands and samples correspond to
 <span class="target" id="module-pyeo.array_utilities"></span><p>Contains routines for manipulating arrays.</p>
 <dl class="function">
 <dt id="pyeo.array_utilities.project_array">
-<code class="descclassname">pyeo.array_utilities.</code><code class="descname">project_array</code><span class="sig-paren">(</span><em>array_in</em>, <em>depth</em>, <em>axis</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.array_utilities.project_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.array_utilities.</code><code class="sig-name descname">project_array</code><span class="sig-paren">(</span><em class="sig-param">array_in</em>, <em class="sig-param">depth</em>, <em class="sig-param">axis</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.array_utilities.project_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a new array with an extra dimension. Data is projected along that dimension to depth.</p>
 </dd></dl>
 
@@ -495,7 +495,7 @@ a well-known text (wkt) string using the  snipped <a href="#id1"><span class="pr
 <a class="reference external" href="https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry">https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry</a> and the “QuickWKT” QGIS plugin.</p>
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.align_bounds_to_whole_number">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">align_bounds_to_whole_number</code><span class="sig-paren">(</span><em>bounding_box</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.align_bounds_to_whole_number" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">align_bounds_to_whole_number</code><span class="sig-paren">(</span><em class="sig-param">bounding_box</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.align_bounds_to_whole_number" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a new bounding box with it’s height and width rounded to the nearest whole number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -512,7 +512,7 @@ a well-known text (wkt) string using the  snipped <a href="#id1"><span class="pr
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.check_overlap">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">check_overlap</code><span class="sig-paren">(</span><em>raster</em>, <em>aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.check_overlap" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">check_overlap</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.check_overlap" title="Permalink to this definition">¶</a></dt>
 <dd><p>A test to see if a raster and an AOI overlap.
 :param raster: A gdal.Image object
 :param aoi: A ogr.Dataset object containing a single polygon</p>
@@ -528,7 +528,7 @@ a well-known text (wkt) string using the  snipped <a href="#id1"><span class="pr
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.floor_to_resolution">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">floor_to_resolution</code><span class="sig-paren">(</span><em>input</em>, <em>resolution</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.floor_to_resolution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">floor_to_resolution</code><span class="sig-paren">(</span><em class="sig-param">input</em>, <em class="sig-param">resolution</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.floor_to_resolution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns input rounded DOWN to the nearest multiple of resolution. Used to prevent float errors on pixel boarders.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -550,7 +550,7 @@ a well-known text (wkt) string using the  snipped <a href="#id1"><span class="pr
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_aoi_bounds">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_aoi_bounds</code><span class="sig-paren">(</span><em>aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_bounds" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_aoi_bounds</code><span class="sig-paren">(</span><em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a wkbPolygon geometry with the bounding rectangle of a single-polygon shapefile</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -561,7 +561,7 @@ a well-known text (wkt) string using the  snipped <a href="#id1"><span class="pr
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_aoi_intersection">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_aoi_intersection</code><span class="sig-paren">(</span><em>raster</em>, <em>aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_intersection" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_aoi_intersection</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_intersection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a wkbPolygon geometry with the intersection of a raster and a shpefile containing an area of interest</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -581,7 +581,7 @@ a well-known text (wkt) string using the  snipped <a href="#id1"><span class="pr
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_aoi_size">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_aoi_size</code><span class="sig-paren">(</span><em>aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_size" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_aoi_size</code><span class="sig-paren">(</span><em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the width and height of the bounding box of an aoi.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -598,7 +598,7 @@ a well-known text (wkt) string using the  snipped <a href="#id1"><span class="pr
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_combined_polygon">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_combined_polygon</code><span class="sig-paren">(</span><em>rasters</em>, <em>geometry_mode='intersect'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_combined_polygon" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_combined_polygon</code><span class="sig-paren">(</span><em class="sig-param">rasters</em>, <em class="sig-param">geometry_mode='intersect'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_combined_polygon" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a polygon containing the combined boundary of each raster in rasters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -619,7 +619,7 @@ If ‘union’, returns the boundary of the area that any raster covers.</p></li
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_local_top_left">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_local_top_left</code><span class="sig-paren">(</span><em>raster1</em>, <em>raster2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_local_top_left" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_local_top_left</code><span class="sig-paren">(</span><em class="sig-param">raster1</em>, <em class="sig-param">raster2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_local_top_left" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the top-left corner of raster1 in the array of raster 2.
 Assumes both rasters are in the same projection and units.</p>
 <dl class="field-list simple">
@@ -640,7 +640,7 @@ Assumes both rasters are in the same projection and units.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_poly_bounding_rect">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_poly_bounding_rect</code><span class="sig-paren">(</span><em>poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_bounding_rect" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_poly_bounding_rect</code><span class="sig-paren">(</span><em class="sig-param">poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_bounding_rect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a polygon of the bounding rectangle of an input polygon.
 :param poly: An ogr.Geometry object containing a polygon</p>
 <dl class="field-list simple">
@@ -655,13 +655,13 @@ Assumes both rasters are in the same projection and units.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_poly_intersection">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_poly_intersection</code><span class="sig-paren">(</span><em>poly1</em>, <em>poly2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_intersection" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_poly_intersection</code><span class="sig-paren">(</span><em class="sig-param">poly1</em>, <em class="sig-param">poly2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_intersection" title="Permalink to this definition">¶</a></dt>
 <dd><p>A functional wrapper for ogr.Geometry.Intersection()</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_poly_size">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_poly_size</code><span class="sig-paren">(</span><em>poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_size" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_poly_size</code><span class="sig-paren">(</span><em class="sig-param">poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the width and height of a bounding box of a polygon</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -678,7 +678,7 @@ Assumes both rasters are in the same projection and units.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_raster_bounds">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_raster_bounds</code><span class="sig-paren">(</span><em>raster</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_bounds" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_raster_bounds</code><span class="sig-paren">(</span><em class="sig-param">raster</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a wkbPolygon geometry with the bounding rectangle of a raster calculated from its geotransform.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -700,7 +700,7 @@ reprojected geotransformations.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_raster_intersection">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_raster_intersection</code><span class="sig-paren">(</span><em>raster1</em>, <em>raster2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_intersection" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_raster_intersection</code><span class="sig-paren">(</span><em class="sig-param">raster1</em>, <em class="sig-param">raster2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_intersection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a wkbPolygon geometry with the intersection of two raster bounding boxes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -717,7 +717,7 @@ reprojected geotransformations.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.get_raster_size">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">get_raster_size</code><span class="sig-paren">(</span><em>raster</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_size" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_raster_size</code><span class="sig-paren">(</span><em class="sig-param">raster</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the width and height of a raster, in that raster’s units.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -734,7 +734,7 @@ reprojected geotransformations.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.multiple_intersection">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">multiple_intersection</code><span class="sig-paren">(</span><em>polygons</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.multiple_intersection" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">multiple_intersection</code><span class="sig-paren">(</span><em class="sig-param">polygons</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.multiple_intersection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a list of polygons and returns a geometry representing the intersection of all of them</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -751,7 +751,7 @@ reprojected geotransformations.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.multiple_union">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">multiple_union</code><span class="sig-paren">(</span><em>polygons</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.multiple_union" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">multiple_union</code><span class="sig-paren">(</span><em class="sig-param">polygons</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.multiple_union" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a list of polygons and returns a polygon of the union of their perimeter</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -768,7 +768,7 @@ reprojected geotransformations.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.pixel_bounds_from_polygon">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">pixel_bounds_from_polygon</code><span class="sig-paren">(</span><em>raster</em>, <em>polygon</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.pixel_bounds_from_polygon" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">pixel_bounds_from_polygon</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">polygon</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.pixel_bounds_from_polygon" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the bounding box of the overlap between a raster and a polygon in the raster</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -788,7 +788,7 @@ reprojected geotransformations.</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.pixel_to_point_coordinates">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">pixel_to_point_coordinates</code><span class="sig-paren">(</span><em>pixel</em>, <em>GT</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.pixel_to_point_coordinates" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">pixel_to_point_coordinates</code><span class="sig-paren">(</span><em class="sig-param">pixel</em>, <em class="sig-param">GT</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.pixel_to_point_coordinates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a pixel and a geotransformation, returns the picaltion of that pixel’s top left corner in the projection
 used by the geotransform.
 NOTE: At present, this takes input in the form of y,x! This is opposite to the output of point_to_pixel_coordinates!</p>
@@ -810,7 +810,7 @@ NOTE: At present, this takes input in the form of y,x! This is opposite to the o
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.point_to_pixel_coordinates">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">point_to_pixel_coordinates</code><span class="sig-paren">(</span><em>raster</em>, <em>point</em>, <em>oob_fail=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.point_to_pixel_coordinates" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">point_to_pixel_coordinates</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">point</em>, <em class="sig-param">oob_fail=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.point_to_pixel_coordinates" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Returns a tuple (x_pixel, y_pixel) in a georaster raster corresponding to the geographic point in a projection.</dt><dd><p>Assumes raster is north-up non rotated.</p>
 </dd>
@@ -841,7 +841,7 @@ An ogr.Geometry object containing a single point</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.reproject_geotransform">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">reproject_geotransform</code><span class="sig-paren">(</span><em>in_gt</em>, <em>old_proj_wkt</em>, <em>new_proj_wkt</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.reproject_geotransform" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">reproject_geotransform</code><span class="sig-paren">(</span><em class="sig-param">in_gt</em>, <em class="sig-param">old_proj_wkt</em>, <em class="sig-param">new_proj_wkt</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.reproject_geotransform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reprojects a geotransform from the old projection to a new projection. See
 [<a class="reference external" href="https://gdal.org/user/raster_data_model.html">https://gdal.org/user/raster_data_model.html</a>]</p>
 <dl class="field-list simple">
@@ -863,7 +863,7 @@ An ogr.Geometry object containing a single point</p>
 
 <dl class="function">
 <dt id="pyeo.coordinate_manipulation.write_geometry">
-<code class="descclassname">pyeo.coordinate_manipulation.</code><code class="descname">write_geometry</code><span class="sig-paren">(</span><em>geometry</em>, <em>out_path</em>, <em>srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.write_geometry" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">write_geometry</code><span class="sig-paren">(</span><em class="sig-param">geometry</em>, <em class="sig-param">out_path</em>, <em class="sig-param">srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.write_geometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves the geometry in an ogr.Geometry object to a shapefile.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -885,7 +885,7 @@ An ogr.Geometry object containing a single point</p>
 that works on a generic pyeo timestamp and sentinel 2 functions.</p>
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.check_for_invalid_l1_data">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">check_for_invalid_l1_data</code><span class="sig-paren">(</span><em>l1_SAFE_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l1_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l1_data</code><span class="sig-paren">(</span><em class="sig-param">l1_SAFE_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l1_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
 an invalid SAFE directory; this will prevent disconnected files from being deleted.
 Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
@@ -893,7 +893,7 @@ Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.check_for_invalid_l2_data">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">check_for_invalid_l2_data</code><span class="sig-paren">(</span><em>l2_SAFE_file</em>, <em>resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l2_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l2_data</code><span class="sig-paren">(</span><em class="sig-param">l2_SAFE_file</em>, <em class="sig-param">resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l2_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
 an invalid SAFE directory; this will prevent disconnected files from being deleted.
 Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
@@ -901,126 +901,139 @@ Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.clean_aoi">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">clean_aoi</code><span class="sig-paren">(</span><em>aoi_dir</em>, <em>images_to_keep=4</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_aoi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_aoi</code><span class="sig-paren">(</span><em class="sig-param">aoi_dir</em>, <em class="sig-param">images_to_keep=4</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_aoi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
 composite directories. Will not affect the output folder.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.clean_l2_data">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">clean_l2_data</code><span class="sig-paren">(</span><em>l2_SAFE_file</em>, <em>resolution='10m'</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_data</code><span class="sig-paren">(</span><em class="sig-param">l2_SAFE_file</em>, <em class="sig-param">resolution='10m'</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes any directories that don’t have band 2, 3, 4 or 8 in the specified resolution folder
 If warning=True, prompts first.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.clean_l2_dir">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">clean_l2_dir</code><span class="sig-paren">(</span><em>l2_dir</em>, <em>resolution='10m'</em>, <em>warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_dir" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_dir</code><span class="sig-paren">(</span><em class="sig-param">l2_dir</em>, <em class="sig-param">resolution='10m'</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls clean_l2_data on every SAFE file in l2_dir</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.create_file_structure">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">create_file_structure</code><span class="sig-paren">(</span><em>root</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.create_file_structure" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">create_file_structure</code><span class="sig-paren">(</span><em class="sig-param">root</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.create_file_structure" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates the file structure if it doesn’t exist already</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_change_detection_dates">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_change_detection_dates</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_change_detection_dates" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_change_detection_dates</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_change_detection_dates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes the source filepath and extracts the before_date and after_date dates from in, in that order.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_image_acquisition_time">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_image_acquisition_time</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_image_acquisition_time" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_image_acquisition_time</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_image_acquisition_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_l1_safe_file">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_l1_safe_file</code><span class="sig-paren">(</span><em>image_name</em>, <em>l1_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l1_safe_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l1_safe_file</code><span class="sig-paren">(</span><em class="sig-param">image_name</em>, <em class="sig-param">l1_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l1_safe_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
 a filename</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_l2_safe_file">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_l2_safe_file</code><span class="sig-paren">(</span><em>image_name</em>, <em>l2_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l2_safe_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l2_safe_file</code><span class="sig-paren">(</span><em class="sig-param">image_name</em>, <em class="sig-param">l2_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l2_safe_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
 a filename</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_mask_path">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_mask_path</code><span class="sig-paren">(</span><em>image_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_mask_path" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_mask_path</code><span class="sig-paren">(</span><em class="sig-param">image_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_mask_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>A gdal mask is an image with the same name as the image it’s masking, but with a .msk extension</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_preceding_image_path">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_preceding_image_path</code><span class="sig-paren">(</span><em>target_image_name</em>, <em>search_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_preceding_image_path" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_preceding_image_path</code><span class="sig-paren">(</span><em class="sig-param">target_image_name</em>, <em class="sig-param">search_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_preceding_image_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the path to the image in search_dir preceding the image called image_name</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_pyeo_timestamp">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_pyeo_timestamp</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_pyeo_timestamp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_pyeo_timestamp</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_pyeo_timestamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of all timestamps in a Pyeo image.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_related_images">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_related_images</code><span class="sig-paren">(</span><em>target_image_name</em>, <em>project_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_related_images" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_related_images</code><span class="sig-paren">(</span><em class="sig-param">target_image_name</em>, <em class="sig-param">project_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_related_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the paths of all images related to that one in a project, by timestamp</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_granule_id">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_granule_id</code><span class="sig-paren">(</span><em>safe_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_granule_id" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_granule_id</code><span class="sig-paren">(</span><em class="sig-param">safe_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_granule_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the unique ID of a Sentinel 2 granule from a SAFE directory path</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_image_orbit">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_image_orbit</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_orbit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_orbit</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_orbit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the relative orbit number of a Sentinel 2 image</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_image_tile">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_image_tile</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_tile" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_tile</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_tile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the tile number of a Sentinel 2 image or path</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_image_timestamp">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_image_timestamp</code><span class="sig-paren">(</span><em>image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_timestamp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_timestamp</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_timestamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the timestamps part of a Sentinel 2 image</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_tiles">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">get_sen_2_tiles</code><span class="sig-paren">(</span><em>image_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_tiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_tiles</code><span class="sig-paren">(</span><em class="sig-param">image_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_tiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>gets the list of tiles present in the directory</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.init_log">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">init_log</code><span class="sig-paren">(</span><em>log_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.init_log" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets up the log format and log handlers; one for stdout and to write to a file, ‘log_path’.
-Returns the log for the calling script</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">init_log</code><span class="sig-paren">(</span><em class="sig-param">log_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.init_log" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Sets up the log format and log handlers; one for stdout and to write to a file, ‘log_path’.</dt><dd><p>Returns the log for the calling script</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_path</strong> – A location to save the log entries to</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A log object.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.is_tif">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">is_tif</code><span class="sig-paren">(</span><em>image_string</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.is_tif" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">is_tif</code><span class="sig-paren">(</span><em class="sig-param">image_string</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.is_tif" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns True if image ends with .tif</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.filesystem_utilities.sort_by_timestamp">
-<code class="descclassname">pyeo.filesystem_utilities.</code><code class="descname">sort_by_timestamp</code><span class="sig-paren">(</span><em>strings</em>, <em>recent_first=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">sort_by_timestamp</code><span class="sig-paren">(</span><em class="sig-param">strings</em>, <em class="sig-param">recent_first=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
 guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp</p>
 </dd></dl>
@@ -1029,93 +1042,331 @@ guarantee ordering of strings with the same timestamp. Removes any string that d
 <span class="target" id="module-pyeo.queries_and_downloads"></span><div class="section" id="pyeo-queries-and-downloads">
 <h2>pyeo.queries_and_downloads<a class="headerlink" href="#pyeo-queries-and-downloads" title="Permalink to this headline">¶</a></h2>
 <p>Functions for querying, filtering and downloading data.</p>
+</div>
+<div class="section" id="safe-files">
+<h2>SAFE files<a class="headerlink" href="#safe-files" title="Permalink to this headline">¶</a></h2>
+<p>Sentinel 2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
+This is a directory structure that contains the imagery, metadata and supplementary data of a Sentinel 2 image. The
+rasters themeselves are the in the GRANULE/[granule_id]/IMG_DATA/[resolution]/ folder; each band is contained in
+its own .jp2 file. For full details, see <a class="reference external" href="https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/data-formats">https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/data-formats</a></p>
+<p>There are two ways to refer to a given Sentinel-2 products: the UUID and the product ID.
+The UUID is a set of five five-character strings (EXMAPLE HERE)
+The product ID is a human-readable string (more or less) containing all the information needed for unique identification
+of an product, split by the underscore character. For more information on the structure of a product ID,
+see (EXAMPLE HERE)</p>
+</div>
+<div class="section" id="query-data-structure">
+<h2>Query data structure<a class="headerlink" href="#query-data-structure" title="Permalink to this headline">¶</a></h2>
+<p>All query functions return a dictionary. The key of the dictionary is the UUID of the product id; the product is
+a further set of nested dictionaries containing information about the product to be downloaded. (PUT STRUCTURE HERE)</p>
+</div>
+<div class="section" id="data-download-sources">
+<h2>Data download sources<a class="headerlink" href="#data-download-sources" title="Permalink to this headline">¶</a></h2>
+<p>This library presently offers two options for download sources; Scihub and Amazon Web Services. If in doubt, use Scihub.</p>
+<div class="section" id="scihub">
+<h3>Scihub<a class="headerlink" href="#scihub" title="Permalink to this headline">¶</a></h3>
+<p>The Copernicus Open-Access Hub is the default option for downloading sentinel-2 images. Images are downloaded in .zip
+format, and then automatically unzipped. Users are required to register with a username and password before downloading,
+and there is a limit to no more than two concurrent downloads per username at a time. Scihub is entirely free.</p>
+</div>
+<div class="section" id="aws">
+<h3>AWS<a class="headerlink" href="#aws" title="Permalink to this headline">¶</a></h3>
+<p>Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
+updated a few hours after new products are made available. There is a small charge associated with downloading this
+data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
+payment details) and obtain an API key for that account. See <a class="reference external" href="https://aws.amazon.com/s3/pricing/">https://aws.amazon.com/s3/pricing/</a> for pricing details;
+the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
+for the AWS bucket.</p>
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.activate_and_dl_planet_item">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">activate_and_dl_planet_item</code><span class="sig-paren">(</span><em>session</em>, <em>item</em>, <em>asset_type</em>, <em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.activate_and_dl_planet_item" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">activate_and_dl_planet_item</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">item</em>, <em class="sig-param">asset_type</em>, <em class="sig-param">file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.activate_and_dl_planet_item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Activates and downloads a single planet item</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.build_search_request">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">build_search_request</code><span class="sig-paren">(</span><em>aoi</em>, <em>start_date</em>, <em>end_date</em>, <em>item_type</em>, <em>search_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.build_search_request" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">build_search_request</code><span class="sig-paren">(</span><em class="sig-param">aoi</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">item_type</em>, <em class="sig-param">search_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.build_search_request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds a search request for the planet API</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.queries_and_downloads.check_for_s2_data_by_date">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">check_for_s2_data_by_date</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">conf</em>, <em class="sig-param">cloud_cover=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets all the products between start_date and end_date. Wraps sent2_query to avoid having passwords and
+long-format timestamps in code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aoi_path</strong> – Path to a geojson file containing a polygon of the outline of the area you wish to download.
+See www.geojson.io for a tool to build these.</p></li>
+<li><p><strong>start_date</strong> – Start date in the format yyyymmdd.</p></li>
+<li><p><strong>end_date</strong> – End date of the query in the format yyyymmdd</p></li>
+<li><p><strong>conf</strong> – Output from a configuration file containing your username and password for the ESA hub.
+If needed, this can be dummied with a dictionary of the following format:
+conf={‘sent_2’:{‘user’:’your_username’, ‘pass’:’your_pass’}}</p></li>
+<li><p><strong>cloud_cover</strong> – The maximem level of cloud cover in images to be downloaded.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.queries_and_downloads.do_quick_search">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">do_quick_search</code><span class="sig-paren">(</span><em>session</em>, <em>search_request</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.do_quick_search" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">do_quick_search</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">search_request</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.do_quick_search" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tries the quick search; returns a dict of features</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.do_saved_search">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">do_saved_search</code><span class="sig-paren">(</span><em>session</em>, <em>search_request</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.do_saved_search" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">do_saved_search</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">search_request</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.do_saved_search" title="Permalink to this definition">¶</a></dt>
 <dd><p>Does a saved search; this doesn’t seem to work yet.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.queries_and_downloads.download_blob_from_google">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_blob_from_google</code><span class="sig-paren">(</span><em class="sig-param">bucket</em>, <em class="sig-param">object_prefix</em>, <em class="sig-param">out_folder</em>, <em class="sig-param">s2_object</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_blob_from_google" title="Permalink to this definition">¶</a></dt>
+<dd><p>Still experimental.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.queries_and_downloads.download_from_aws_with_rollback">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">download_from_aws_with_rollback</code><span class="sig-paren">(</span><em>product_id</em>, <em>folder</em>, <em>uuid</em>, <em>user</em>, <em>passwd</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_aws_with_rollback" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attempts to download product from AWS using product_id; if not found, rolls back to Scihub using uuid</p>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_aws_with_rollback</code><span class="sig-paren">(</span><em class="sig-param">product_id</em>, <em class="sig-param">folder</em>, <em class="sig-param">uuid</em>, <em class="sig-param">user</em>, <em class="sig-param">passwd</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_aws_with_rollback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempts to download a single product from AWS using product_id; if not found, rolls back to Scihub using the UUID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product_id</strong> – The product ID (“<a href="#id7"><span class="problematic" id="id8">L2A_</span></a>…”)</p></li>
+<li><p><strong>folder</strong> – The folder to download the .SAFE file to.</p></li>
+<li><p><strong>uuid</strong> – The product UUID (4dfB4-432df….)</p></li>
+<li><p><strong>user</strong> – Scihub username</p></li>
+<li><p><strong>passwd</strong> – Scihub password</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.download_from_google_cloud">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">download_from_google_cloud</code><span class="sig-paren">(</span><em>product_ids</em>, <em>out_folder</em>, <em>redownload=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_google_cloud" title="Permalink to this definition">¶</a></dt>
-<dd><p>Passed a list of S2 product ids , downloads them into out_for</p>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_google_cloud</code><span class="sig-paren">(</span><em class="sig-param">product_ids</em>, <em class="sig-param">out_folder</em>, <em class="sig-param">redownload=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_google_cloud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Still experimental.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.download_from_scihub">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">download_from_scihub</code><span class="sig-paren">(</span><em>product_uuid</em>, <em>out_folder</em>, <em>user</em>, <em>passwd</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_scihub" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_scihub</code><span class="sig-paren">(</span><em class="sig-param">product_uuid</em>, <em class="sig-param">out_folder</em>, <em class="sig-param">user</em>, <em class="sig-param">passwd</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_scihub" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads and unzips product_uuid from scihub</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product_uuid</strong> – The product UUID (4dfB4-432df….)</p></li>
+<li><p><strong>out_folder</strong> – The folder to save the .SAFE file to</p></li>
+<li><p><strong>user</strong> – Scihub username</p></li>
+<li><p><strong>passwd</strong> – Scihub password</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>If interrupted mid-download, there will be a .incomplete file in the download folder. You might need to remove
+this for further processing.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.download_planet_image_on_day">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">download_planet_image_on_day</code><span class="sig-paren">(</span><em>aoi_path</em>, <em>date</em>, <em>out_path</em>, <em>api_key</em>, <em>item_type='PSScene4Band'</em>, <em>search_name='auto'</em>, <em>asset_type='analytic'</em>, <em>threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_planet_image_on_day" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_planet_image_on_day</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em>, <em class="sig-param">date</em>, <em class="sig-param">out_path</em>, <em class="sig-param">api_key</em>, <em class="sig-param">item_type='PSScene4Band'</em>, <em class="sig-param">search_name='auto'</em>, <em class="sig-param">asset_type='analytic'</em>, <em class="sig-param">threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_planet_image_on_day" title="Permalink to this definition">¶</a></dt>
 <dd><p>Queries and downloads all images on the date in the aoi given</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.download_s2_data">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">download_s2_data</code><span class="sig-paren">(</span><em>new_data</em>, <em>l1_dir</em>, <em>l2_dir</em>, <em>source='scihub'</em>, <em>user=None</em>, <em>passwd=None</em>, <em>try_scihub_on_fail=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_s2_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_s2_data</code><span class="sig-paren">(</span><em class="sig-param">new_data</em>, <em class="sig-param">l1_dir</em>, <em class="sig-param">l2_dir</em>, <em class="sig-param">source='scihub'</em>, <em class="sig-param">user=None</em>, <em class="sig-param">passwd=None</em>, <em class="sig-param">try_scihub_on_fail=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_s2_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>new_data</strong> – A query dictionary contining the products you want to download</p></li>
+<li><p><strong>l1_dir</strong> – The directory to download level 1 products to.</p></li>
+<li><p><strong>l2_dir</strong> – The directory to download level 2 products to.</p></li>
+<li><p><strong>source</strong> – The source to download the data from. Can be ‘scihub’ or ‘aws’; see section introduction for details</p></li>
+<li><p><strong>user</strong> – The username for sentinelhub</p></li>
+<li><p><strong>passwd</strong> – The password for sentinelheub</p></li>
+<li><p><strong>try_scihub_on_fail</strong> – If true, this function will roll back to downloading from Scihub on a failure of any other downloader.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>BadDataSource</strong> – Raised when passed either a bad datasource or a bad image ID</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.filter_non_matching_s2_data">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">filter_non_matching_s2_data</code><span class="sig-paren">(</span><em>query_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_non_matching_s2_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes any L2/L1 product that does not have a corresponding L1/L2 data</p>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_non_matching_s2_data</code><span class="sig-paren">(</span><em class="sig-param">query_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_non_matching_s2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filters a query such that it only contains paired level 1 and level 2 data products.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query_output</strong> – Query list</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A dictionary of products contaiing only L1 and L2 data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.queries_and_downloads.filter_to_l1_data">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_to_l1_data</code><span class="sig-paren">(</span><em class="sig-param">query_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_to_l1_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes list of products from check_for_s2_data_by_date and removes all non Level 1 products.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query_output</strong> – A dictionary of products</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A dictionary of products containing only the L1C data products</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.queries_and_downloads.filter_to_l2_data">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_to_l2_data</code><span class="sig-paren">(</span><em class="sig-param">query_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_to_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes list of products from check_for_s2_data_by_date and removes all non Level 2A products.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query_output</strong> – A dictionary of products</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A dictionary of products containing only the L2A data products</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.get_granule_identifiers">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">get_granule_identifiers</code><span class="sig-paren">(</span><em>safe_product_id</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_granule_identifiers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the parts of a S2 name that uniquely identify that granulate at a moment in time</p>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_granule_identifiers</code><span class="sig-paren">(</span><em class="sig-param">safe_product_id</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_granule_identifiers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the parts of a S2 name that uniquely identify that granulate at a moment in time
+:param safe_product_id: The filename of a SAFE product</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>satellite</em> – A string of either “L2A” or “L2B”</p></li>
+<li><p><em>intake_date</em> – The timestamp of the data intoake of this granule</p></li>
+<li><p><em>orbit number</em> – The orbit number of this granule</p></li>
+<li><p><em>granule</em> – The ID of this granule</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.get_paginated_items">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">get_paginated_items</code><span class="sig-paren">(</span><em>session</em>, <em>search_id</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_paginated_items" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_paginated_items</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">search_id</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_paginated_items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Let’s leave this out for now.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.get_planet_product_path">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">get_planet_product_path</code><span class="sig-paren">(</span><em>planet_dir</em>, <em>product</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_planet_product_path" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_planet_product_path</code><span class="sig-paren">(</span><em class="sig-param">planet_dir</em>, <em class="sig-param">product</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_planet_product_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the path to a Planet product within a Planet directory</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.queries_and_downloads.get_query_datatake">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_datatake</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_datatake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the datatake timestamp of a query item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>The timestamp of that item’s datatake.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.queries_and_downloads.get_query_granule">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_granule</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_granule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the granule ID (ex: 48MXU) of a query</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>The granule ID of that item.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.queries_and_downloads.get_query_level">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_level</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the processing level of the query item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A string of either ‘Level-1C’ or ‘Level-2A’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.queries_and_downloads.get_query_processing_time">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_processing_time</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_processing_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the processing timestamps of a query item</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>The date processing timestamp in the format yyyymmddThhmmss (Ex</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>20190613T123002)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.queries_and_downloads.load_api_key">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">load_api_key</code><span class="sig-paren">(</span><em>path_to_api</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.load_api_key" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">load_api_key</code><span class="sig-paren">(</span><em class="sig-param">path_to_api</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.load_api_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an API key from a single-line text file containing that API</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path_to_api</strong> – The path a text file containing only the API key</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Returns the API key</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.planet_query">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">planet_query</code><span class="sig-paren">(</span><em>aoi_path</em>, <em>start_date</em>, <em>end_date</em>, <em>out_path</em>, <em>api_key</em>, <em>item_type='PSScene4Band'</em>, <em>search_name='auto'</em>, <em>asset_type='analytic'</em>, <em>threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.planet_query" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">planet_query</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">out_path</em>, <em class="sig-param">api_key</em>, <em class="sig-param">item_type='PSScene4Band'</em>, <em class="sig-param">search_name='auto'</em>, <em class="sig-param">asset_type='analytic'</em>, <em class="sig-param">threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.planet_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads data from Planetlabs for a given time period in the given AOI</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1138,90 +1389,111 @@ Any identically-named imagery will be overwritten</p></li>
 
 <dl class="function">
 <dt id="pyeo.queries_and_downloads.read_aoi">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">read_aoi</code><span class="sig-paren">(</span><em>aoi_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.read_aoi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">read_aoi</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.read_aoi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Opens the geojson file for the aoi. If FeatureCollection, return the first feature.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.sent2_query">
-<code class="descclassname">pyeo.queries_and_downloads.</code><code class="descname">sent2_query</code><span class="sig-paren">(</span><em>user</em>, <em>passwd</em>, <em>geojsonfile</em>, <em>start_date</em>, <em>end_date</em>, <em>cloud=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.sent2_query" title="Permalink to this definition">¶</a></dt>
-<dd><p>From Geospatial Learn by Ciaran Robb, embedded here for portability.</p>
-<p>Produces a dict of sentinel-2 IDs and</p>
-<p class="rubric">Notes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>user</strong> (<em>string</em>) – username for esa hub</p></li>
-<li><p><strong>passwd</strong> (<em>string</em>) – password for hub</p></li>
-<li><p><strong>geojsonfile</strong> (<em>string</em>) – AOI polygon of interest in EPSG 4326</p></li>
-<li><p><strong>start_date</strong> (<em>string</em>) – date of beginning of search</p></li>
-<li><p><strong>end_date</strong> (<em>string</em>) – date of end of search</p></li>
-<li><p><strong>cloud</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – include a cloud filter in the search</p></li>
-<li><p><strong>product</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – Product type for Sentinel 2. Valid values are S2MSI1C and S2MS2Ap</p></li>
-</ul>
+<dd class="field-odd"><p><strong>aoi_path</strong> – The path to the geojson file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A dictionary translation of the feature inside the .json file</p>
 </dd>
 </dl>
 </dd></dl>
 
+<dl class="function">
+<dt id="pyeo.queries_and_downloads.sent2_query">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">sent2_query</code><span class="sig-paren">(</span><em class="sig-param">user</em>, <em class="sig-param">passwd</em>, <em class="sig-param">geojsonfile</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">cloud=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.sent2_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches a list of Sentienl-2 products</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user</strong> (<em>string</em>) – Username for ESA hub. Register at <a class="reference external" href="https://scihub.copernicus.eu/dhus/#/home">https://scihub.copernicus.eu/dhus/#/home</a></p></li>
+<li><p><strong>passwd</strong> (<em>string</em>) – password for the ESA Open Access hub</p></li>
+<li><p><strong>geojsonfile</strong> (<em>string</em>) – Path to a geojson file containing a polygon of the outline of the area you wish to download.
+See www.geojson.io for a tool to build these.</p></li>
+<li><p><strong>start_date</strong> (<em>string</em>) – Date of beginning of search in the format YYYY-MM-DDThh:mm:ssZ (ISO standard)</p></li>
+<li><p><strong>end_date</strong> (<em>string</em>) – Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
+See https://www.w3.org/TR/NOTE-datetime, or use cehck_for_s2_data_by_date</p></li>
+<li><p><strong>cloud</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – The maximum cloud clover (as calculated by Copernicus) to download.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A dictionary of Sentinel-2 granule products that are touched by your AOI polygon, keyed by product ID.</em></p></li>
+<li><p><em>Returns both level 1 and level 2 data.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>If you get a ‘request too long’ error, it is likely that your polygon is too complex. The following functions
+download by granule; there is no need to have a precise polygon at this stage.</p>
+</dd></dl>
+
+</div>
 </div>
 <span class="target" id="module-pyeo.raster_manipulation"></span><div class="section" id="pyeo-raster-manipulation">
 <h2>pyeo.raster_manipulation<a class="headerlink" href="#pyeo-raster-manipulation" title="Permalink to this headline">¶</a></h2>
 <p>Functions for working with raster data.</p>
 <dl class="function">
 <dt id="pyeo.raster_manipulation.apply_array_image_mask">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">apply_array_image_mask</code><span class="sig-paren">(</span><em>array</em>, <em>mask</em>, <em>fill_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_array_image_mask" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_array_image_mask</code><span class="sig-paren">(</span><em class="sig-param">array</em>, <em class="sig-param">mask</em>, <em class="sig-param">fill_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_array_image_mask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value
 Mask is an a 2 dimensional array of 1 ( unmasked) and 0 (masked)</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.apply_fmask">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">apply_fmask</code><span class="sig-paren">(</span><em>in_safe_dir</em>, <em>out_file</em>, <em>fmask_command='fmask_sentinel2Stacked.py'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_fmask" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_fmask</code><span class="sig-paren">(</span><em class="sig-param">in_safe_dir</em>, <em class="sig-param">out_file</em>, <em class="sig-param">fmask_command='fmask_sentinel2Stacked.py'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_fmask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls fmask to create a new mask for L1 data</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.apply_sen2cor">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">apply_sen2cor</code><span class="sig-paren">(</span><em>image_path</em>, <em>sen2cor_path</em>, <em>delete_unprocessed_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_sen2cor" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_sen2cor</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">sen2cor_path</em>, <em class="sig-param">delete_unprocessed_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_sen2cor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies sen2cor to the SAFE file at image_path. Returns the path to the new product.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.atmospheric_correction">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">atmospheric_correction</code><span class="sig-paren">(</span><em>in_directory</em>, <em>out_directory</em>, <em>sen2cor_path</em>, <em>delete_unprocessed_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.atmospheric_correction" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">atmospheric_correction</code><span class="sig-paren">(</span><em class="sig-param">in_directory</em>, <em class="sig-param">out_directory</em>, <em class="sig-param">sen2cor_path</em>, <em class="sig-param">delete_unprocessed_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.atmospheric_correction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies Sen2cor cloud correction to level 1C images</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.buffer_mask_in_place">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">buffer_mask_in_place</code><span class="sig-paren">(</span><em>mask_path</em>, <em>buffer_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.buffer_mask_in_place" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">buffer_mask_in_place</code><span class="sig-paren">(</span><em class="sig-param">mask_path</em>, <em class="sig-param">buffer_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.buffer_mask_in_place" title="Permalink to this definition">¶</a></dt>
 <dd><p>Expands a mask in-place, overwriting the previous mask</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.clip_raster">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">clip_raster</code><span class="sig-paren">(</span><em>raster_path</em>, <em>aoi_path</em>, <em>out_path</em>, <em>srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param">raster_path</em>, <em class="sig-param">aoi_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
 Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.combine_masks">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">combine_masks</code><span class="sig-paren">(</span><em>mask_paths</em>, <em>out_path</em>, <em>combination_func='and'</em>, <em>geometry_func='intersect'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.combine_masks" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">combine_masks</code><span class="sig-paren">(</span><em class="sig-param">mask_paths</em>, <em class="sig-param">out_path</em>, <em class="sig-param">combination_func='and'</em>, <em class="sig-param">geometry_func='intersect'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.combine_masks" title="Permalink to this definition">¶</a></dt>
 <dd><p>ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
 Python true or false. Also assumes that all masks are the same projection for now.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.composite_directory">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">composite_directory</code><span class="sig-paren">(</span><em>image_dir</em>, <em>composite_out_dir</em>, <em>format='GTiff'</em>, <em>generate_date_images=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.composite_directory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">composite_directory</code><span class="sig-paren">(</span><em class="sig-param">image_dir</em>, <em class="sig-param">composite_out_dir</em>, <em class="sig-param">format='GTiff'</em>, <em class="sig-param">generate_date_images=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.composite_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Composites every image in image_dir, assumes all have associated masks.  Will
 place a file named composite_[last image date].tif inside composite_out_dir</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.composite_images_with_mask">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">composite_images_with_mask</code><span class="sig-paren">(</span><em>in_raster_path_list</em>, <em>composite_out_path</em>, <em>format='GTiff'</em>, <em>generate_date_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.composite_images_with_mask" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">composite_images_with_mask</code><span class="sig-paren">(</span><em class="sig-param">in_raster_path_list</em>, <em class="sig-param">composite_out_path</em>, <em class="sig-param">format='GTiff'</em>, <em class="sig-param">generate_date_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.composite_images_with_mask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
 be a binary .msk file with the same path as their corresponding image. All images must have the same
 number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
@@ -1231,39 +1503,39 @@ Will reproject images and masks if they do not match initial raster.</p>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.create_mask_from_class_map">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">create_mask_from_class_map</code><span class="sig-paren">(</span><em>class_map_path</em>, <em>out_path</em>, <em>classes_of_interest</em>, <em>buffer_size=0</em>, <em>out_resolution=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_mask_from_class_map" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">create_mask_from_class_map</code><span class="sig-paren">(</span><em class="sig-param">class_map_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">classes_of_interest</em>, <em class="sig-param">buffer_size=0</em>, <em class="sig-param">out_resolution=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_mask_from_class_map" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a mask from a classification mask: 1 for each pixel containing one of classes_of_interest, otherwise 0</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.create_mask_from_confidence_layer">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">create_mask_from_confidence_layer</code><span class="sig-paren">(</span><em>l2_safe_path</em>, <em>out_path</em>, <em>cloud_conf_threshold=0</em>, <em>buffer_size=3</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_mask_from_confidence_layer" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">create_mask_from_confidence_layer</code><span class="sig-paren">(</span><em class="sig-param">l2_safe_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">cloud_conf_threshold=0</em>, <em class="sig-param">buffer_size=3</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_mask_from_confidence_layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1. If
 cloud_conf_threshold = 0, use scl mask else use confidence image</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.create_mask_from_model">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">create_mask_from_model</code><span class="sig-paren">(</span><em>image_path</em>, <em>model_path</em>, <em>model_clear=0</em>, <em>num_chunks=10</em>, <em>buffer_size=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_mask_from_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">create_mask_from_model</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">model_path</em>, <em class="sig-param">model_clear=0</em>, <em class="sig-param">num_chunks=10</em>, <em class="sig-param">buffer_size=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_mask_from_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.create_matching_dataset">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">create_matching_dataset</code><span class="sig-paren">(</span><em>in_dataset</em>, <em>out_path</em>, <em>format='GTiff'</em>, <em>bands=1</em>, <em>datatype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_matching_dataset" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">create_matching_dataset</code><span class="sig-paren">(</span><em class="sig-param">in_dataset</em>, <em class="sig-param">out_path</em>, <em class="sig-param">format='GTiff'</em>, <em class="sig-param">bands=1</em>, <em class="sig-param">datatype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_matching_dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an empty gdal dataset with the same dimensions, projection and geotransform. Defaults to 1 band.
 Datatype is set from the first layer of in_dataset if unspecified</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.create_new_image_from_polygon">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">create_new_image_from_polygon</code><span class="sig-paren">(</span><em>polygon</em>, <em>out_path</em>, <em>x_res</em>, <em>y_res</em>, <em>bands</em>, <em>projection</em>, <em>format='GTiff'</em>, <em>datatype=5</em>, <em>nodata=-9999</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_new_image_from_polygon" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">create_new_image_from_polygon</code><span class="sig-paren">(</span><em class="sig-param">polygon</em>, <em class="sig-param">out_path</em>, <em class="sig-param">x_res</em>, <em class="sig-param">y_res</em>, <em class="sig-param">bands</em>, <em class="sig-param">projection</em>, <em class="sig-param">format='GTiff'</em>, <em class="sig-param">datatype=5</em>, <em class="sig-param">nodata=-9999</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_new_image_from_polygon" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an empty image of the extent of input polygon</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.create_new_stacks">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">create_new_stacks</code><span class="sig-paren">(</span><em>image_dir</em>, <em>stack_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_new_stacks" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">create_new_stacks</code><span class="sig-paren">(</span><em class="sig-param">image_dir</em>, <em class="sig-param">stack_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_new_stacks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates new stacks with with adjacent image acquisition dates. Threshold; how small a part
 of the latest_image will be before it’s considered to be fully processed.
 New_image_name must exist inside image_dir.</p>
@@ -1288,20 +1560,20 @@ newest first.</p>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.filter_by_class_map">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">filter_by_class_map</code><span class="sig-paren">(</span><em>image_path</em>, <em>class_map_path</em>, <em>out_map_path</em>, <em>classes_of_interest</em>, <em>out_resolution=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.filter_by_class_map" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">filter_by_class_map</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">class_map_path</em>, <em class="sig-param">out_map_path</em>, <em class="sig-param">classes_of_interest</em>, <em class="sig-param">out_resolution=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.filter_by_class_map" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filters class_map_path for pixels in filter_map_path containing only classes_of_interest.
 Assumes that filter_map_path and class_map_path are same resolution and projection.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.flatten_probability_image">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">flatten_probability_image</code><span class="sig-paren">(</span><em>prob_image</em>, <em>out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.flatten_probability_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">flatten_probability_image</code><span class="sig-paren">(</span><em class="sig-param">prob_image</em>, <em class="sig-param">out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.flatten_probability_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces a single-band raster containing the highest certainties in a input probablility raster</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.get_masked_array">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">get_masked_array</code><span class="sig-paren">(</span><em>raster</em>, <em>mask_path</em>, <em>fill_value=-9999</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.get_masked_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">get_masked_array</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">mask_path</em>, <em class="sig-param">fill_value=-9999</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.get_masked_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a numpy.mask masked array for the raster.
 Masked pixels are FALSE in the mask image (multiplicateive map),
 but TRUE in the masked_array (nodata pixels)</p>
@@ -1309,7 +1581,7 @@ but TRUE in the masked_array (nodata pixels)</p>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.mosaic_images">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">mosaic_images</code><span class="sig-paren">(</span><em>raster_paths</em>, <em>out_raster_file</em>, <em>format='GTiff'</em>, <em>datatype=5</em>, <em>nodata=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.mosaic_images" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">mosaic_images</code><span class="sig-paren">(</span><em class="sig-param">raster_paths</em>, <em class="sig-param">out_raster_file</em>, <em class="sig-param">format='GTiff'</em>, <em class="sig-param">datatype=5</em>, <em class="sig-param">nodata=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.mosaic_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mosaics multiple images with the same number of layers into one single image. Overwrites
 overlapping pixels with the value furthest down raster_paths. Takes projection from the first
 raster.</p>
@@ -1325,20 +1597,20 @@ raster.</p>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.open_dataset_from_safe">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">open_dataset_from_safe</code><span class="sig-paren">(</span><em>safe_file_path</em>, <em>band</em>, <em>resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.open_dataset_from_safe" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">open_dataset_from_safe</code><span class="sig-paren">(</span><em class="sig-param">safe_file_path</em>, <em class="sig-param">band</em>, <em class="sig-param">resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.open_dataset_from_safe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Opens a dataset given a safe file. Give band as a string.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.preprocess_sen2_images">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">preprocess_sen2_images</code><span class="sig-paren">(</span><em>l2_dir</em>, <em>out_dir</em>, <em>l1_dir</em>, <em>cloud_threshold=60</em>, <em>buffer_size=0</em>, <em>epsg=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.preprocess_sen2_images" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">preprocess_sen2_images</code><span class="sig-paren">(</span><em class="sig-param">l2_dir</em>, <em class="sig-param">out_dir</em>, <em class="sig-param">l1_dir</em>, <em class="sig-param">cloud_threshold=60</em>, <em class="sig-param">buffer_size=0</em>, <em class="sig-param">epsg=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.preprocess_sen2_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
 the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.raster_sum">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">raster_sum</code><span class="sig-paren">(</span><em>inRstList</em>, <em>outFn</em>, <em>outFmt='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.raster_sum" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">raster_sum</code><span class="sig-paren">(</span><em class="sig-param">inRstList</em>, <em class="sig-param">outFn</em>, <em class="sig-param">outFmt='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.raster_sum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a raster stack from a list of rasters. Adapted from Chris Gerard’s
 book ‘Geoprocessing with Python’. The out put data type is the same as the input data type.</p>
 <dl class="field-list simple">
@@ -1355,7 +1627,7 @@ book ‘Geoprocessing with Python’. The out put data type is the same as the i
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.raster_to_array">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">raster_to_array</code><span class="sig-paren">(</span><em>rst_pth</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.raster_to_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">raster_to_array</code><span class="sig-paren">(</span><em class="sig-param">rst_pth</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.raster_to_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reads in a raster file and returns a N-dimensional array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1369,52 +1641,52 @@ book ‘Geoprocessing with Python’. The out put data type is the same as the i
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.reproject_directory">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">reproject_directory</code><span class="sig-paren">(</span><em>in_dir</em>, <em>out_dir</em>, <em>new_projection</em>, <em>extension='.tif'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.reproject_directory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">reproject_directory</code><span class="sig-paren">(</span><em class="sig-param">in_dir</em>, <em class="sig-param">out_dir</em>, <em class="sig-param">new_projection</em>, <em class="sig-param">extension='.tif'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.reproject_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reprojects every file ending with extension to new_projection and saves in out_dir</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.reproject_image">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">reproject_image</code><span class="sig-paren">(</span><em>in_raster</em>, <em>out_raster_path</em>, <em>new_projection</em>, <em>driver='GTiff'</em>, <em>memory=2000.0</em>, <em>do_post_resample=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.reproject_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">reproject_image</code><span class="sig-paren">(</span><em class="sig-param">in_raster</em>, <em class="sig-param">out_raster_path</em>, <em class="sig-param">new_projection</em>, <em class="sig-param">driver='GTiff'</em>, <em class="sig-param">memory=2000.0</em>, <em class="sig-param">do_post_resample=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.reproject_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Will round projection
 back to whatever 2gb memory limit by default (because it works in most places)</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.resample_image_in_place">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">resample_image_in_place</code><span class="sig-paren">(</span><em>image_path</em>, <em>new_res</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.resample_image_in_place" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">resample_image_in_place</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">new_res</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.resample_image_in_place" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resamples an image in-place using gdalwarp to new_res in metres</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.save_array_as_image">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">save_array_as_image</code><span class="sig-paren">(</span><em>array</em>, <em>path</em>, <em>geotransform</em>, <em>projection</em>, <em>format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.save_array_as_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">save_array_as_image</code><span class="sig-paren">(</span><em class="sig-param">array</em>, <em class="sig-param">path</em>, <em class="sig-param">geotransform</em>, <em class="sig-param">projection</em>, <em class="sig-param">format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.save_array_as_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves a given array as a geospatial image in the format ‘format’
 Array must be gdal format: [bands, y, x]. Returns the gdal object</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.stack_and_trim_images">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">stack_and_trim_images</code><span class="sig-paren">(</span><em>old_image_path</em>, <em>new_image_path</em>, <em>aoi_path</em>, <em>out_image</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_and_trim_images" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_and_trim_images</code><span class="sig-paren">(</span><em class="sig-param">old_image_path</em>, <em class="sig-param">new_image_path</em>, <em class="sig-param">aoi_path</em>, <em class="sig-param">out_image</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_and_trim_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stacks an old and new S2 image and trims to within an aoi</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.stack_image_with_composite">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">stack_image_with_composite</code><span class="sig-paren">(</span><em>image_path</em>, <em>composite_path</em>, <em>out_dir</em>, <em>create_combined_mask=True</em>, <em>skip_if_exists=True</em>, <em>invert_stack=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_image_with_composite" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_image_with_composite</code><span class="sig-paren">(</span><em class="sig-param">image_path</em>, <em class="sig-param">composite_path</em>, <em class="sig-param">out_dir</em>, <em class="sig-param">create_combined_mask=True</em>, <em class="sig-param">skip_if_exists=True</em>, <em class="sig-param">invert_stack=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_image_with_composite" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stacks an image with a cloud-free composite</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.stack_images">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">stack_images</code><span class="sig-paren">(</span><em>raster_paths</em>, <em>out_raster_path</em>, <em>geometry_mode='intersect'</em>, <em>format='GTiff'</em>, <em>datatype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_images" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_images</code><span class="sig-paren">(</span><em class="sig-param">raster_paths</em>, <em class="sig-param">out_raster_path</em>, <em class="sig-param">geometry_mode='intersect'</em>, <em class="sig-param">format='GTiff'</em>, <em class="sig-param">datatype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stacks multiple images in image_paths together, using the information of the top image.
 geometry_mode can be “union” or “intersect”</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.stack_old_and_new_images">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">stack_old_and_new_images</code><span class="sig-paren">(</span><em>old_image_path</em>, <em>new_image_path</em>, <em>out_dir</em>, <em>create_combined_mask=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_old_and_new_images" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_old_and_new_images</code><span class="sig-paren">(</span><em class="sig-param">old_image_path</em>, <em class="sig-param">new_image_path</em>, <em class="sig-param">out_dir</em>, <em class="sig-param">create_combined_mask=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_old_and_new_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stacks two images with the same tile
 Names the result with the two timestamps.
 First, decompose the granule ID into its components:
@@ -1426,13 +1698,13 @@ followed by processing run date and then time</p>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.stack_sentinel_2_bands">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">stack_sentinel_2_bands</code><span class="sig-paren">(</span><em>safe_dir</em>, <em>out_image_path</em>, <em>band='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_sentinel_2_bands" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_sentinel_2_bands</code><span class="sig-paren">(</span><em class="sig-param">safe_dir</em>, <em class="sig-param">out_image_path</em>, <em class="sig-param">band='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_sentinel_2_bands" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stacks the contents of a .SAFE granule directory into a single geotiff</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.trim_image">
-<code class="descclassname">pyeo.raster_manipulation.</code><code class="descname">trim_image</code><span class="sig-paren">(</span><em>in_raster_path</em>, <em>out_raster_path</em>, <em>polygon</em>, <em>format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.trim_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">trim_image</code><span class="sig-paren">(</span><em class="sig-param">in_raster_path</em>, <em class="sig-param">out_raster_path</em>, <em class="sig-param">polygon</em>, <em class="sig-param">format='GTiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.trim_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trims image to polygon</p>
 </dd></dl>
 
@@ -1442,7 +1714,7 @@ followed by processing run date and then time</p>
 <p>A small set of functions for producing validation points from maps</p>
 <dl class="function">
 <dt id="pyeo.validation.allocate_category_sample_sizes">
-<code class="descclassname">pyeo.validation.</code><code class="descname">allocate_category_sample_sizes</code><span class="sig-paren">(</span><em>total_sample_size</em>, <em>user_accuracy</em>, <em>class_total_sizes</em>, <em>variance_tolerance</em>, <em>allocate_type='olofsson'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.allocate_category_sample_sizes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">allocate_category_sample_sizes</code><span class="sig-paren">(</span><em class="sig-param">total_sample_size</em>, <em class="sig-param">user_accuracy</em>, <em class="sig-param">class_total_sizes</em>, <em class="sig-param">variance_tolerance</em>, <em class="sig-param">allocate_type='olofsson'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.allocate_category_sample_sizes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allocates a number of pixels to sample per class that will fulfil the parameters given</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1465,7 +1737,7 @@ followed by processing run date and then time</p>
 
 <dl class="function">
 <dt id="pyeo.validation.build_class_dict">
-<code class="descclassname">pyeo.validation.</code><code class="descname">build_class_dict</code><span class="sig-paren">(</span><em>class_array</em>, <em>no_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.build_class_dict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">build_class_dict</code><span class="sig-paren">(</span><em class="sig-param">class_array</em>, <em class="sig-param">no_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.build_class_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dict of coordinates of the following shape:
 [class, coord].
 WARNING: This will take up a LOT of memory!</p>
@@ -1473,7 +1745,7 @@ WARNING: This will take up a LOT of memory!</p>
 
 <dl class="function">
 <dt id="pyeo.validation.cal_total_sample_size">
-<code class="descclassname">pyeo.validation.</code><code class="descname">cal_total_sample_size</code><span class="sig-paren">(</span><em>desired_standard_error</em>, <em>user_accuracy</em>, <em>total_class_sizes</em>, <em>type='simple'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.cal_total_sample_size" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">cal_total_sample_size</code><span class="sig-paren">(</span><em class="sig-param">desired_standard_error</em>, <em class="sig-param">user_accuracy</em>, <em class="sig-param">total_class_sizes</em>, <em class="sig-param">type='simple'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.cal_total_sample_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the number of sample points for a map to get a specified standard error.
 :param desired_standard_error:
 :type desired_standard_error: The desired standard error (between 0 and 1)
@@ -1495,7 +1767,7 @@ WARNING: This will take up a LOT of memory!</p>
 
 <dl class="function">
 <dt id="pyeo.validation.calc_minimum_n">
-<code class="descclassname">pyeo.validation.</code><code class="descname">calc_minimum_n</code><span class="sig-paren">(</span><em>expected_accuracy</em>, <em>variance_tolerance</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.calc_minimum_n" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">calc_minimum_n</code><span class="sig-paren">(</span><em class="sig-param">expected_accuracy</em>, <em class="sig-param">variance_tolerance</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.calc_minimum_n" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the rminimum number of points required to achieve the specified accuracy
 :param expected_accuracy:
 :type expected_accuracy: Between 0 and 1
@@ -1504,7 +1776,7 @@ WARNING: This will take up a LOT of memory!</p>
 
 <dl class="function">
 <dt id="pyeo.validation.count_pixel_classes">
-<code class="descclassname">pyeo.validation.</code><code class="descname">count_pixel_classes</code><span class="sig-paren">(</span><em>map_path</em>, <em>no_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.count_pixel_classes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">count_pixel_classes</code><span class="sig-paren">(</span><em class="sig-param">map_path</em>, <em class="sig-param">no_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.count_pixel_classes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Counts pixels in a map. Returns a dictionary of pixels.
 :param map_path:
 :type map_path: Path to the map to count
@@ -1522,7 +1794,7 @@ WARNING: This will take up a LOT of memory!</p>
 
 <dl class="function">
 <dt id="pyeo.validation.part_fixed_value_sampling">
-<code class="descclassname">pyeo.validation.</code><code class="descname">part_fixed_value_sampling</code><span class="sig-paren">(</span><em>pinned_sample_numbers</em>, <em>class_total_sizes</em>, <em>total_sample_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.part_fixed_value_sampling" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">part_fixed_value_sampling</code><span class="sig-paren">(</span><em class="sig-param">pinned_sample_numbers</em>, <em class="sig-param">class_total_sizes</em>, <em class="sig-param">total_sample_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.part_fixed_value_sampling" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1536,26 +1808,26 @@ WARNING: This will take up a LOT of memory!</p>
 
 <dl class="function">
 <dt id="pyeo.validation.produce_stratified_validation_points">
-<code class="descclassname">pyeo.validation.</code><code class="descname">produce_stratified_validation_points</code><span class="sig-paren">(</span><em>map_path</em>, <em>out_path</em>, <em>class_sample_counts</em>, <em>no_data=None</em>, <em>seed=None</em>, <em>produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.produce_stratified_validation_points" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">produce_stratified_validation_points</code><span class="sig-paren">(</span><em class="sig-param">map_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">class_sample_counts</em>, <em class="sig-param">no_data=None</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.produce_stratified_validation_points" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces a set of stratified validation points from map_path</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.validation.save_point_list_to_shapefile">
-<code class="descclassname">pyeo.validation.</code><code class="descname">save_point_list_to_shapefile</code><span class="sig-paren">(</span><em>class_sample_point_dict</em>, <em>out_path</em>, <em>geotransform</em>, <em>projection_wkt</em>, <em>produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.save_point_list_to_shapefile" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">save_point_list_to_shapefile</code><span class="sig-paren">(</span><em class="sig-param">class_sample_point_dict</em>, <em class="sig-param">out_path</em>, <em class="sig-param">geotransform</em>, <em class="sig-param">projection_wkt</em>, <em class="sig-param">produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.save_point_list_to_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves a list of points to a shapefile at out_path. Need the gt and projection of the raster.
 GT is needed to move each point to the centre of the pixel. Can also produce a .csv file for CoolEarth</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.validation.save_validation_maifest">
-<code class="descclassname">pyeo.validation.</code><code class="descname">save_validation_maifest</code><span class="sig-paren">(</span><em>out_path</em>, <em>class_counts</em>, <em>sample_size</em>, <em>class_sample_counts</em>, <em>target_standard_error</em>, <em>user_accuracies</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.save_validation_maifest" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">save_validation_maifest</code><span class="sig-paren">(</span><em class="sig-param">out_path</em>, <em class="sig-param">class_counts</em>, <em class="sig-param">sample_size</em>, <em class="sig-param">class_sample_counts</em>, <em class="sig-param">target_standard_error</em>, <em class="sig-param">user_accuracies</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.save_validation_maifest" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a json file containing the parameters used to produce this validation set</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pyeo.validation.stratified_random_sample">
-<code class="descclassname">pyeo.validation.</code><code class="descname">stratified_random_sample</code><span class="sig-paren">(</span><em>map_path</em>, <em>class_sample_count</em>, <em>no_data=None</em>, <em>seed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.stratified_random_sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">stratified_random_sample</code><span class="sig-paren">(</span><em class="sig-param">map_path</em>, <em class="sig-param">class_sample_count</em>, <em class="sig-param">no_data=None</em>, <em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.stratified_random_sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces a stratified list of pixel coordinates. WARNING: high mem!</p>
 </dd></dl>
 
@@ -1625,9 +1897,6 @@ that are labelled as useful_class_1 and useful_class_2 in my_class_map.tif</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-            <p class="logo"><a href="#">
-              <img class="logo" src="_static/pyeologo_small.png" alt="Logo"/>
-            </a></p>
 <h1 class="logo"><a href="#">Pyeo</a></h1>
 
 
@@ -1647,10 +1916,10 @@ that are labelled as useful_class_1 and useful_class_2 in my_class_map.tif</p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -1672,7 +1941,7 @@ that are labelled as useful_class_1 and useful_class_2 in my_class_map.tif</p>
       &copy;2018, John Roberts.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -3,8 +3,42 @@ pyeo.queries_and_downloads
 --------------------------
 Functions for querying, filtering and downloading data.
 
-NOTES: Sentinel 2 metadata
-NOTES: Query data structure
+SAFE files
+----------
+Sentinel 2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
+This is a directory structure that contains the imagery, metadata and supplementary data of a Sentinel 2 image. The
+rasters themeselves are the in the GRANULE/[granule_id]/IMG_DATA/[resolution]/ folder; each band is contained in
+its own .jp2 file. For full details, see https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/data-formats
+
+There are two ways to refer to a given Sentinel-2 products: the UUID and the product ID.
+The UUID is a set of five five-character strings (EXMAPLE HERE)
+The product ID is a human-readable string (more or less) containing all the information needed for unique identification
+of an product, split by the underscore character. For more information on the structure of a product ID,
+see (EXAMPLE HERE)
+
+Query data structure
+--------------------
+All query functions return a dictionary. The key of the dictionary is the UUID of the product id; the product is
+a further set of nested dictionaries containing information about the product to be downloaded. (PUT STRUCTURE HERE)
+
+Data download sources
+---------------------
+This library presently offers two options for download sources; Scihub and Amazon Web Services. If in doubt, use Scihub.
+
+Scihub
+======
+The Copernicus Open-Access Hub is the default option for downloading sentinel-2 images. Images are downloaded in .zip
+format, and then automatically unzipped. Users are required to register with a username and password before downloading,
+and there is a limit to no more than two concurrent downloads per username at a time. Scihub is entirely free.
+
+AWS
+===
+Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
+updated a few hours after new products are made available. There is a small charge associated with downloading this
+data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
+payment details) and obtain an API key for that account. See https://aws.amazon.com/s3/pricing/ for pricing details;
+the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
+for the AWS bucket.
 """
 
 import datetime as dt
@@ -20,12 +54,17 @@ from multiprocessing.dummy import Pool
 import requests
 import tenacity
 from botocore.exceptions import ClientError
-from google.cloud import storage
+
 from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
 from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests
+
+try:
+    from google.cloud import storage
+except ImportError:
+    pass
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
@@ -303,7 +342,32 @@ def get_granule_identifiers(safe_product_id):
 
 
 def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passwd=None, try_scihub_on_fail=False):
-    """Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2."""
+    """
+    Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2.
+
+    Parameters
+    ----------
+    new_data
+        A query dictionary contining the products you want to download
+    l1_dir
+        The directory to download level 1 products to.
+    l2_dir
+        The directory to download level 2 products to.
+    source
+        The source to download the data from. Can be 'scihub' or 'aws'; see section introduction for details
+    user
+        The username for sentinelhub
+    passwd
+        The password for sentinelheub
+    try_scihub_on_fail
+        If true, this function will roll back to downloading from Scihub on a failure of any other downloader.
+
+    Raises
+    ------
+    BadDataSource
+        Raised when passed either a bad datasource or a bad image ID
+
+    """
     log = logging.getLogger(__name__)
 
     for image_uuid in new_data:
@@ -339,7 +403,23 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
 
 
 def download_from_aws_with_rollback(product_id, folder, uuid, user, passwd):
-    """Attempts to download product from AWS using product_id; if not found, rolls back to Scihub using uuid"""
+    """
+    Attempts to download a single product from AWS using product_id; if not found, rolls back to Scihub using the UUID
+
+    Parameters
+    ----------
+    product_id
+        The product ID ("L2A_...")
+    folder
+        The folder to download the .SAFE file to.
+    uuid
+        The product UUID (4dfB4-432df....)
+    user
+        Scihub username
+    passwd
+        Scihub password
+
+    """
     log = logging.getLogger(__file__)
     try:
         download_safe_format(product_id=product_id, folder=folder)
@@ -349,7 +429,26 @@ def download_from_aws_with_rollback(product_id, folder, uuid, user, passwd):
 
 
 def download_from_scihub(product_uuid, out_folder, user, passwd):
-    """Downloads and unzips product_uuid from scihub"""
+    """
+    Downloads and unzips product_uuid from scihub
+
+    Parameters
+    ----------
+    product_uuid
+        The product UUID (4dfB4-432df....)
+    out_folder
+        The folder to save the .SAFE file to
+    user
+        Scihub username
+    passwd
+        Scihub password
+
+    Notes
+    -----
+    If interrupted mid-download, there will be a .incomplete file in the download folder. You might need to remove
+    this for further processing.
+
+    """
     log = logging.getLogger(__name__)
     api = SentinelAPI(user, passwd)
     log.info("Downloading {} from scihub".format(product_uuid))
@@ -366,7 +465,7 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
 
 
 def download_from_google_cloud(product_ids, out_folder, redownload = False):
-    """Passed a list of S2 product ids , downloads them into out_for"""
+    """Still experimental."""
     log = logging.getLogger(__name__)
     log.info("Downloading following products from Google Cloud:".format(product_ids))
     storage_client = storage.Client()
@@ -402,6 +501,7 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
 
 
 def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
+    """Still experimental."""
     log = logging.getLogger(__name__)
     blob = bucket.get_blob(s2_object.name)
     object_out_path = os.path.join(
@@ -415,13 +515,25 @@ def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
 
 
 def load_api_key(path_to_api):
-    """Returns an API key from a single-line text file containing that API"""
+    """
+    Returns an API key from a single-line text file containing that API
+
+    Parameters
+    ----------
+    path_to_api
+        The path a text file containing only the API key
+    Returns
+    -------
+    Returns the API key
+    """
     with open(path_to_api, 'r') as api_file:
         return api_file.read()
 
 
 def get_planet_product_path(planet_dir, product):
-    """Returns the path to a Planet product within a Planet directory"""
+    """
+    Returns the path to a Planet product within a Planet directory
+    """
     planet_folder = os.path.dirname(planet_dir)
     product_file = glob.glob(planet_folder + '*' + product)
     return os.path.join(planet_dir, product_file)
@@ -564,7 +676,18 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
 
 
 def read_aoi(aoi_path):
-    """Opens the geojson file for the aoi. If FeatureCollection, return the first feature."""
+    """
+    Opens the geojson file for the aoi. If FeatureCollection, return the first feature.
+
+    Parameters
+    ----------
+    aoi_path
+        The path to the geojson file
+    Returns
+    -------
+    A dictionary translation of the feature inside the .json file
+
+    """
     with open(aoi_path, 'r') as aoi_fp:
         aoi_dict = json.load(aoi_fp)
         if aoi_dict["type"] == "FeatureCollection":
