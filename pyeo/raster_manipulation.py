@@ -595,7 +595,6 @@ def flatten_probability_image(prob_image, out_path):
     out_path
         The place to save the flattened image.
 
-
     """
     prob_raster = gdal.Open(prob_image)
     out_raster = create_matching_dataset(prob_raster, out_path, bands=1)
@@ -608,10 +607,24 @@ def flatten_probability_image(prob_image, out_path):
     prob_raster = None
 
 
-def get_masked_array(raster, mask_path, fill_value = -9999):
-    """Returns a numpy.mask masked array for the raster.
+def get_masked_array(raster, mask_path):
+    """
+    Returns a numpy.mask masked array for the raster.
     Masked pixels are FALSE in the mask image (multiplicateive map),
-    but TRUE in the masked_array (nodata pixels)"""
+    but TRUE in the masked_array (nodata pixels). If the raster is multi-band and
+    the mask is single-band, the mask will be applied to every raster.
+    Parameters
+    ----------
+    raster
+        A gdal.Image object
+    mask_path
+        The path to the mask to use
+
+    Returns
+    -------
+    A numpy.masked array of the raster.
+
+    """
     mask = gdal.Open(mask_path)
     mask_array = mask.GetVirtualMemArray()
     raster_array = raster.GetVirtualMemArray()
@@ -622,7 +635,20 @@ def get_masked_array(raster, mask_path, fill_value = -9999):
 
 
 def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
-    """Stacks an old and new S2 image and trims to within an aoi"""
+    """
+    Stacks an old and new S2 image and trims to within an aoi.
+    Parameters
+    ----------
+    old_image_path
+        Path to the image that will be the first set of bands in the output image
+    new_image_path
+        Path to the image that will be the second set of bands in the output image
+    aoi_path
+        Path to a shapefile containing the AOI
+    out_image
+        Path to the location of the clipped and stacked image.
+
+    """
     log = logging.getLogger(__name__)
     if os.path.exists(out_image):
         log.warning("{} exists, skipping.")
@@ -637,8 +663,25 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
 
 
 def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
-    """Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
-    Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform."""
+    """
+    Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
+    Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.
+
+    Parameters
+    ----------
+    raster_path
+        Path to the raster to be clipped.
+    aoi_path
+        Path to a shapefile containing a single polygon
+    out_path
+        Path to a location to save the final output raster
+    srs_id
+        Projection of the raster.
+
+    Returns
+    -------
+
+    """
     # https://gis.stackexchange.com/questions/257257/how-to-use-gdal-warp-cutline-option
     with TemporaryDirectory() as td:
         srs = osr.SpatialReference()
@@ -669,7 +712,35 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
 
 def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
                            projection, format="GTiff", datatype = gdal.GDT_Int32, nodata = -9999):
-    """Returns an empty image of the extent of input polygon"""
+    """
+    Returns an empty image that covers the extent of the imput polygon.
+
+    Parameters
+    ----------
+    polygon
+        An OGR.Geometry object of a single polygon
+    out_path
+        The path to save the new image to
+    x_res
+        Pixel width in the new image
+    y_res
+        Pixel height in the new image
+    bands
+        Number of bands in the new image.
+    projection
+        The projection, in wkt, of the output image.
+    format
+        The gdal raster format of the output image
+    datatype
+        The gdal datatype of the output image
+    nodata
+        The nodata value of the output image
+
+    Returns
+    -------
+    A gdal.Image object
+
+    """
     # TODO: Implement nodata
     bounds_x_min, bounds_x_max, bounds_y_min, bounds_y_max = polygon.GetEnvelope()
     if bounds_x_min >= bounds_x_max:
@@ -692,7 +763,19 @@ def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
 
 
 def resample_image_in_place(image_path, new_res):
-    """Resamples an image in-place using gdalwarp to new_res in metres"""
+    """
+    Resamples an image in-place using gdalwarp to new_res in metres.
+    WARNING: This will make a permanent change to an image! Use with care.
+
+    Parameters
+    ----------
+    image_path
+        Path to the image to be resampled
+
+    new_res
+        Pixel edge size in meters
+
+    """
     # I don't like using a second object here, but hey.
     with TemporaryDirectory() as td:
         args = gdal.WarpOptions(
@@ -707,8 +790,13 @@ def resample_image_in_place(image_path, new_res):
 def raster_to_array(rst_pth):
     """Reads in a raster file and returns a N-dimensional array.
 
-    :param str rst_pth: Path to input raster.
-    :return: N-dimensional array.
+    Parameters
+    ----------
+    rst_pth
+        Path to input raster.
+    Returns
+    -------
+    As N-dimensional array.
     """
     log = logging.getLogger(__name__)
     in_ds = gdal.Open(rst_pth)
@@ -721,10 +809,16 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
     """Creates a raster stack from a list of rasters. Adapted from Chris Gerard's
     book 'Geoprocessing with Python'. The out put data type is the same as the input data type.
 
-    :param str inRstList: List of rasters to stack.
-    :param str outFmt: String specifying the input data format e.g. 'GTiff' or 'VRT'.
-    :param str outFn: Filename output as str including directory else image will be
-    written to current working directory.
+    Parameters
+    ----------
+
+    inRstList
+        List of rasters to stack.
+    outFmt
+        String specifying the input data format e.g. 'GTiff' or 'VRT'.
+    outFn
+        Filename output as str including directory else image will be
+        written to current working directory.
 
     """
     log = logging.getLogger(__name__)
@@ -771,8 +865,24 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
 
 
 def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_interest, out_resolution=10):
-    """Filters class_map_path for pixels in filter_map_path containing only classes_of_interest.
-    Assumes that filter_map_path and class_map_path are same resolution and projection."""
+    """
+    Filters a raster with a set of classes for corresponding for pixels in filter_map_path containing only
+    classes_of_interest. Assumes that filter_map_path and class_map_path are same resolution and projection.
+
+
+    Parameters
+    ----------
+    image_path
+        Path to the imaage to be filtered
+    class_map_path
+    out_map_path
+    classes_of_interest
+    out_resolution
+
+    Returns
+    -------
+
+    """
     # TODO: Include nodata value
     log = logging.getLogger(__name__)
     log.info("Filtering {} using classes{} from map {}".format(class_map_path, classes_of_interest, image_path))
