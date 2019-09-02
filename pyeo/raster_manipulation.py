@@ -20,6 +20,8 @@ gdal.GDT_CFloat64
 NOTE: Geotransforms
 
 NOTE: Projections
+
+NOTE: Masks
 """
 
 import glob
@@ -140,8 +142,7 @@ def create_new_stacks(image_dir, stack_dir):
     The pairing algorithm is as follows:
     Step 1: Group directory b
     Step 2: For each tile number, sort by time
-    Step 3: For each
-    Step 4: Stack new rasters for each tile in new_data list.
+    Step 3: For each image in the sorted list, stack wach image with it's next oldest image.
 
     """
     log = logging.getLogger(__name__)
@@ -162,6 +163,8 @@ def create_new_stacks(image_dir, stack_dir):
             log.info("Image file list for pairwise stacking for this tile:")
             for file in safe_files:
                 log.info("   {}".format(file))
+            # For each image in the list, stack the oldest with the next oldest. Then set oldest to next oldest
+            # and repeat
             latest_image_path = safe_files[0]
             for image in safe_files[1:]:
                 new_images.append(stack_old_and_new_images(image, latest_image_path, stack_dir))
@@ -171,7 +174,33 @@ def create_new_stacks(image_dir, stack_dir):
 
 def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True, skip_if_exists=True,
                                invert_stack = False):
-    """Stacks an image with a cloud-free composite"""
+    """
+    Creates a single 8-band geotif image with a cloud-free composite, and saves the result in out_dir. Images are named
+    "composite_tile_timestamp-of-composite_timestamp-of-image". Bands 123 and 4 are the BGR and I bands of the
+    composite, and bands 567 and 8 are the BGR and I bands of the image.
+
+    Parameters
+    ----------
+    image_path
+        Path to the image to be stacked .
+    composite_path
+        Path to the composite to stack the image with
+    out_dir
+        The directory to save the resulting composite to
+    create_combined_mask
+        If true, combines the cloud mask files associated with the images into a single mask. The mask will mask out
+        clouds that exist in either image.
+    skip_if_exists
+        If true, skip stacking if a file with the same name is found.
+    invert_stack
+        If true, changes the ordering of the bands to image BGRI - composite BGRI. Included to permit compatability
+        with older models - you can ususally leave this alone.
+
+    Returns
+    -------
+    The path to the new composite.
+
+    """
     log = logging.getLogger(__name__)
     log.info("Stacking {} with composite {}".format(image_path, composite_path))
     composite_timestamp = get_sen_2_image_timestamp(composite_path)
@@ -196,8 +225,30 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
 
 def stack_images(raster_paths, out_raster_path,
                  geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32):
-    """Stacks multiple images in image_paths together, using the information of the top image.
-    geometry_mode can be "union" or "intersect" """
+    """
+    When provided with a list of rasters, will stack them into a single raster. The nunmber of
+    bands in the output is equal to the total number of bands in the input. Geotransform and projection
+    are taken from the first raster in the list; there may be unexpected behavior if multiple differing
+    proejctions are provided.
+
+    Parameters
+    ----------
+    raster_paths
+        A list of paths to the rasters to be stacked, in order.
+    out_raster_path
+        The path to the saved output raster.
+    geometry_mode
+        Can be either 'instersect' or 'union'.
+        - If 'intersect', then the output raster will only contain the pixels of the input rasters that overlap.
+        - If 'union', then the output raster will contain every pixel in the outputs. Layers without data will
+        have their pixel values set to 0.
+    format
+        The GDAL image format for the output.
+    datatype
+        The datatype of the gdal array
+
+    """
+    #TODO: Confirm the union works, and confirm that nondata defaults to 0.
     log = logging.getLogger(__name__)
     log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
@@ -246,7 +297,21 @@ def stack_images(raster_paths, out_raster_path,
 
 
 def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
-    """Trims image to polygon"""
+    """
+    Trims a raster to a polygon.
+
+    Parameters
+    ----------
+    in_raster_path
+        Path to the imput raster
+    out_raster_path
+        Path of the output raster
+    polygon
+        A ogr.Geometry containing a single polygon
+    format
+        Image format of the output raster. Defaults to geotiff.
+
+    """
     with TemporaryDirectory() as td:
         in_raster = gdal.Open(in_raster_path)
         in_gt = in_raster.GetGeoTransform()
@@ -286,13 +351,19 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     overlapping pixels with the value furthest down raster_paths. Takes projection from the first
     raster.
 
-    TODO: consider using GDAL:
+    Parameters
+    ----------
+    raster_paths
+        A list of paths of raster to be mosaiced
+    out_raster_file
+        The path to the output file
+    format
+        The image format of the output raster.
+    datatype
+        The datatype of the output raster
+    nodata
+        The input nodata value; any pixels in raster_paths with this value will be ignored.
 
-    gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
-              [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]
-              [-ul_lr ulx uly lrx lry] [-init "value [value...]"]
-              [-n nodata_value] [-a_nodata output_nodata_value]
-              [-ot datatype] [-createonly] input_files
     """
 
     # This, again, is very similar to stack_rasters
@@ -325,11 +396,32 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
 
 
 def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff", generate_date_image=False):
-    """Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Masks are assumed to
-    be a binary .msk file with the same path as their corresponding image. All images must have the same
-    number of layers and resolution, but do not have to be perfectly on top of each other. If it does not exist,
-    composite_out_path will be created. Takes projection, resolution, ect from first band of first raster in list.
-    Will reproject images and masks if they do not match initial raster."""
+    """
+    Works down in_raster_path_list, updating pixels in composite_out_path if not masked.
+
+    Parameters
+    ----------
+    in_raster_path_list
+        A list of paths to rasters.
+    composite_out_path
+        The path of the output image
+    format
+        The gdal format of the image.
+    generate_date_image
+        If true, generates a single-layer raster containing the dates of each image detected.
+
+    Returns
+    -------
+        The path to the composite.
+
+    Notes
+    -----
+    Masks are assumed to be a multiplicative .msk file with the same path as their corresponding image; see REFERENCE.
+    All images must have the same number of layers and resolution, but do not have to be perfectly on top of each
+    other. If it does not exist, composite_out_path will be created. Takes projection, resolution, ect from first band
+    of first raster in list. Will reproject images and masks if they do not match initial raster.
+
+    """
 
     log = logging.getLogger(__name__)
     driver = gdal.GetDriverByName(format)
@@ -401,7 +493,22 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
 
 
 def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
-    """Reprojects every file ending with extension to new_projection and saves in out_dir"""
+    """
+    Reprojects every file ending with extension to new_projection and saves in out_dir
+
+    Parameters
+    ----------
+    in_dir
+        A directory containing the rasters to be reprojected/
+    out_dir
+        The directory to save the output files to. Output files will be saved in out_dir, with the same
+        filenames.
+    new_projection
+        The new projection in wkt.
+    extension
+        The file extension to reproject
+
+    """
     log = logging.getLogger(__name__)
     image_paths = [os.path.join(in_dir, image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
     for image_path in image_paths:
@@ -411,8 +518,31 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
 
 
 def reproject_image(in_raster, out_raster_path, new_projection,  driver = "GTiff",  memory = 2e3, do_post_resample=True):
-    """Creates a new, reprojected image from in_raster. Wraps gdal.ReprojectImage function. Will round projection
-    back to whatever 2gb memory limit by default (because it works in most places)"""
+    """
+    Creates a new, reprojected image from in_raster using the gdal.ReprojectImage function.
+
+    Parameters
+    ----------
+    in_raster
+        Either a gdal.Raster object or a path to a raster
+    out_raster_path
+        The path to the new output raster.
+    new_projection
+        The new projection in .wkt
+    driver
+        The format of the output raster.
+    memory
+        The amount of memory to give to the reprojection.
+    do_post_resample
+        If set to false, do not resample the image back to the original projection.
+
+    Notes
+    -----
+    The GDAL reprojection routine changes the size of the pixels by a very small amount; for example, a 10m pixel image
+    can become a 10.002m pixel resolution image. To stop alignment issues,
+    by deafult this function resamples the images back to their original resolution
+
+    """
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
@@ -427,8 +557,22 @@ def reproject_image(in_raster, out_raster_path, new_projection,  driver = "GTiff
 
 
 def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_date_images=False):
-    """Composites every image in image_dir, assumes all have associated masks.  Will
-     place a file named composite_[last image date].tif inside composite_out_dir"""
+    """
+    Using composite_images_with_mask, creates a composite containing every image in image_dir. This will
+     place a file named composite_[last image date].tif inside composite_out_dir
+
+    Parameters
+    ----------
+    image_dir
+        The directory containing the rasters and associated .msk files to be composited.
+    composite_out_dir
+        The directory that will contain the final composite
+    format
+        The raster format of the output image.
+    generate_date_images
+        If true, generates a corresponding date image for the composite. See docs for composite_images_with_mask.
+
+    """
     log = logging.getLogger(__name__)
     log.info("Compositing {}".format(image_dir))
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
@@ -440,7 +584,19 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
 
 
 def flatten_probability_image(prob_image, out_path):
-    """Produces a single-band raster containing the highest certainties in a input probablility raster"""
+    """
+    Takes a probability output from classify_image and flattens it into a single layer containing only the maximum
+    value from each pixel.
+
+    Parameters
+    ----------
+    prob_image
+        The path to a probability image.
+    out_path
+        The place to save the flattened image.
+
+
+    """
     prob_raster = gdal.Open(prob_image)
     out_raster = create_matching_dataset(prob_raster, out_path, bands=1)
     prob_array = prob_raster.GetVirtualMemArray()
