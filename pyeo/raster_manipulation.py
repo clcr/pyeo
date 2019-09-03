@@ -29,6 +29,7 @@ import logging
 import os
 import shutil
 import subprocess
+import re
 from tempfile import TemporaryDirectory
 
 import gdal
@@ -1043,6 +1044,30 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
             shutil.rmtree(image_path)
     return image_path.replace("MSIL1C", "MSIL2A")
 
+
+def get_sen2cor_version(sen2cor_path):
+    """
+    Gets the version number of sen2cor from the help string.
+    Parameters
+    ----------
+    sen2cor_path
+        Path the the sen2cor executable
+
+    Returns
+    -------
+
+    """
+    proc = subprocess.run([sen2cor_path, "--help"], stdout=subprocess.PIPE)
+    help_string = proc.stdout.decode("utf-8")
+
+    # Looks for the string "Version: " followed by three sets of digits seperated by period characters.
+    # Returns the three character string as group 1.
+    version_regex = r"Version: (\d+.\d+.\d+)"
+    match = re.match(version_regex, help_string)
+    if match:
+        return match.group(1)
+    else:
+        raise FileNotFoundError("Version information not found; please check your sen2cor path.")
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
     """Applies Sen2cor cloud correction to level 1C images"""
