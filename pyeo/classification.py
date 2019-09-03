@@ -354,6 +354,7 @@ def reshape_prob_out_to_raster(probs, width, height):
 
     Returns
     -------
+    The reshaped image array
 
     """
     classes = probs.shape[1]
