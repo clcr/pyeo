@@ -265,6 +265,14 @@ def get_sen_2_image_orbit(image_name):
     return comps[4]
 
 
+def get_sen_2_baseline(image_name):
+    """Returns the baseline string of a s2 image"""
+    tmp1 = image_name.split("/")[-1]  # remove path
+    tmp2 = tmp1.split(".")[0] # remove file extension
+    comps = tmp2.split("_") # decompose
+    return comps[3]
+
+
 def get_sen_2_image_tile(image_name):
     """Returns the tile number of a Sentinel 2 image or path"""
     name = os.path.basename(image_name)
