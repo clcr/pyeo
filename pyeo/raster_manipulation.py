@@ -23,7 +23,7 @@ NOTE: Projections
 
 NOTE: Masks
 """
-
+import datetime
 import glob
 import logging
 import os
@@ -41,7 +41,7 @@ from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect
 from pyeo.array_utilities import project_array
 from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1_safe_file, get_sen_2_image_timestamp, \
-    get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path
+    get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
 from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception
 
 
@@ -1020,10 +1020,11 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     log = logging.getLogger(__name__)
     # added sen2cor_path by hb91
     log.info("calling subprocess: {}".format([sen2cor_path, image_path]))
+    now_time = datetime.datetime.now()   # I can't think of a better way of geting the new outpath from sen2cor
+    timestamp = now_time.strftime(r"%Y%m%dT%H%M%S")
     sen2cor_proc = subprocess.Popen([sen2cor_path, image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
-
     while True:
         nextline = sen2cor_proc.stdout.readline()
         if len(nextline) > 0:
@@ -1036,13 +1037,43 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
 
     log.info("sen2cor processing finished for {}".format(image_path))
     log.info("Validating:")
-    if not check_for_invalid_l2_data(image_path.replace("MSIL1C", "MSIL2A")):
-        log.error("10m imagery not present in {}".format(image_path.replace("MSIL1C", "MSIL2A")))
+    version = get_sen2cor_version(sen2cor_path)
+    out_path = build_sen2cor_output_path(image_path, timestamp, version)
+    if not check_for_invalid_l2_data(out_path):
+        log.error("10m imagery not present in {}".format(out_path))
         raise BadS2Exception
     if delete_unprocessed_image:
-            log.info("removing {}".format(image_path))
-            shutil.rmtree(image_path)
-    return image_path.replace("MSIL1C", "MSIL2A")
+        log.info("removing {}".format(image_path))
+        shutil.rmtree(image_path)
+    return out_path
+
+
+def build_sen2cor_output_path(image_path, timestamp, version):
+    """
+    Creates a sen2cor output path dependent on the version of sen2cor
+    Parameters
+    ----------
+    image_path
+        Path to the image
+    timestamp
+        Timestamp that processing was started (required for v >= 2.8)
+    version
+        String of the version of sen2cor (ex "2.05.05")
+
+    Returns
+    -------
+    The path of the finished sen2cor file
+
+    """
+    # Accounting for sen2cors ever-shifting filename format
+    if version >= "2.08.00":
+        out_path = image_path.replace("MSIL1C", "MSIL2A")
+        baseline = get_sen_2_baseline(image_path)
+        out_path = out_path.replace(baseline, "R9999")
+        out_path = out_path.rsplit("_")[0] + "_" + timestamp + ".SAFE"
+    else:
+        out_path = image_path.replace("MSIL1C", "MSIL2A")
+    return out_path
 
 
 def get_sen2cor_version(sen2cor_path):
@@ -1055,19 +1086,21 @@ def get_sen2cor_version(sen2cor_path):
 
     Returns
     -------
+    A string of the version of sen2cor at sen2cor_path
 
     """
     proc = subprocess.run([sen2cor_path, "--help"], stdout=subprocess.PIPE)
     help_string = proc.stdout.decode("utf-8")
 
-    # Looks for the string "Version: " followed by three sets of digits seperated by period characters.
+    # Looks for the string "Version: " followed by three sets of digits separated by period characters.
     # Returns the three character string as group 1.
     version_regex = r"Version: (\d+.\d+.\d+)"
-    match = re.match(version_regex, help_string)
+    match = re.search(version_regex, help_string)
     if match:
         return match.group(1)
     else:
         raise FileNotFoundError("Version information not found; please check your sen2cor path.")
+
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
     """Applies Sen2cor cloud correction to level 1C images"""
