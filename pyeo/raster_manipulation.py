@@ -677,10 +677,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
     out_path
         Path to a location to save the final output raster
     srs_id
-        Projection of the raster.
-
-    Returns
-    -------
+        Projection of the input raster.
 
     """
     # https://gis.stackexchange.com/questions/257257/how-to-use-gdal-warp-cutline-option
@@ -940,7 +937,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             log.info("Merging 10m bands in SAFE dir: {}".format(l2_safe_file))
             temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
             log.info("Output file: {}".format(temp_path))
-            stack_sentinel_2_bands(l2_safe_file, temp_path, band='10m')
+            stack_sentinel_2_bands(l2_safe_file, temp_path)
 
             #pdb.set_trace()
 
@@ -966,16 +963,22 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 shutil.move(mask_path, out_mask_path)
 
 
-def stack_sentinel_2_bands(safe_dir, out_image_path, band = "10m"):
+def stack_sentinel_2_bands(safe_dir, out_image_path, bands=["B08", "B04", "B03", "B02"], out_resolution=10):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
     log = logging.getLogger(__name__)
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
-    image_glob = os.path.join(safe_dir, granule_path)
-    file_list = glob.glob(image_glob)
-    file_list.sort()   # Sorting alphabetically gives the right order for bands
-    if not file_list:
-        log.error("No 10m imagery present in {}".format(safe_dir))
-        raise BadS2Exception
+    if out_resolution == 10:
+        res_string = "10m"
+    elif out_resolution == 20:
+        res_string = "20m"
+    elif out_resolution == 60:
+        res_string = "60m"
+    else:
+        res_string = None
+    # Step 1; get path of every band
+    # granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
+    for band in bands:
+        band_glob = "GRANULE/*/IMG_DATA/R*/*_{}_*.*".format(band)
+        bands = glob.glob(os.path.join(safe_dir, band_glob))
     stack_images(file_list, out_image_path, geometry_mode="intersect")
     return out_image_path
 
