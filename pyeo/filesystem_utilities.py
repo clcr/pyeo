@@ -15,11 +15,14 @@ import shutil
 
 from pyeo.exceptions import CreateNewStacksException
 
+# Set up logging on import
+log = logging.getLogger(__name__)
+formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
+
 
 def init_log(log_path):
     """
-    Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
-     Returns the log for the calling script
+    Connects the console and file handlers to the default log
 
     Parameters
     ----------
@@ -31,16 +34,8 @@ def init_log(log_path):
     A log object.
 
     """
-    logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
-    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
-    log = logging.getLogger(__name__)
-    log.setLevel(logging.DEBUG)
-    file_handler = logging.FileHandler(log_path)
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(formatter)
-    log.addHandler(file_handler)
+
     log.info("****PROCESSING START****")
-    return log
 
 
 def create_file_structure(root):

@@ -42,7 +42,10 @@ from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from
 from pyeo.array_utilities import project_array
 from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1_safe_file, get_sen_2_image_timestamp, \
     get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
-from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception
+from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception, NonSquarePixelException
+
+
+log = logging.getLogger(__name__)
 
 
 def create_matching_dataset(in_dataset, out_path,
@@ -202,7 +205,6 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
     The path to the new composite.
 
     """
-    log = logging.getLogger(__name__)
     log.info("Stacking {} with composite {}".format(image_path, composite_path))
     composite_timestamp = get_sen_2_image_timestamp(composite_path)
     image_timestamp = get_sen_2_image_timestamp(image_path)
@@ -250,7 +252,6 @@ def stack_images(raster_paths, out_raster_path,
 
     """
     #TODO: Confirm the union works, and confirm that nondata defaults to 0.
-    log = logging.getLogger(__name__)
     log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
@@ -963,24 +964,68 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 shutil.move(mask_path, out_mask_path)
 
 
-def stack_sentinel_2_bands(safe_dir, out_image_path, bands=["B08", "B04", "B03", "B02"], out_resolution=10):
+def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B08", "B04", "B03", "B02"), out_resolution=10):
     """Stacks the contents of a .SAFE granule directory into a single geotiff"""
-    log = logging.getLogger(__name__)
-    if out_resolution == 10:
+
+    band_paths = [get_sen_2_band_path(safe_dir, band, out_resolution) for band in bands]
+
+    # Move every image NOT in the requested resolution to resample_dir and resample
+    with TemporaryDirectory() as resample_dir:
+        new_band_paths = []
+        for band_path in band_paths:
+            if get_image_resolution(band_path) != out_resolution:
+                resample_path = os.path.join(resample_dir, os.path.basename(band_path))
+                shutil.copy(band_path, resample_path)
+                resample_image_in_place(resample_path, out_resolution)  # why did I make this the only in-place function?
+                new_band_paths.append(resample_path)
+            else:
+                new_band_paths.append(band_path)
+
+        stack_images(new_band_paths, out_image_path, geometry_mode="intersect")
+
+    return out_image_path
+
+
+def get_sen_2_band_path(l2_safe_dir, band, resolution=None):
+    """Returns the path to the raster of the specified band in the specified safe_dir. """
+    if resolution == 10:
         res_string = "10m"
-    elif out_resolution == 20:
+    elif resolution == 20:
         res_string = "20m"
-    elif out_resolution == 60:
+    elif resolution == 60:
         res_string = "60m"
     else:
         res_string = None
-    # Step 1; get path of every band
-    # granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_{}.jp2".format(band, band)
-    for band in bands:
+
+    if res_string in ["10m", "20m", "60m"]:  # If resolution is given, then find the band of that resolution
+        band_glob = "GRANULE/*/IMG_DATA/R{}/*_{}_*.*".format(res_string, band)
+        band_glob = os.path.join(l2_safe_dir, band_glob)
+        try:
+            band_path = glob.glob(band_glob)[0]
+        except IndexError:
+            log.warning("Band {} not found of specified resolution, searching in other available resolutions".format(band))
+
+    if res_string is None or 'band_path' not in locals():  # Else use the highest resolution available for that band
         band_glob = "GRANULE/*/IMG_DATA/R*/*_{}_*.*".format(band)
-        bands = glob.glob(os.path.join(safe_dir, band_glob))
-    stack_images(file_list, out_image_path, geometry_mode="intersect")
-    return out_image_path
+        band_glob = os.path.join(l2_safe_dir, band_glob)
+        band_paths = glob.glob(band_glob)
+        try:
+            band_path = sorted(band_paths)[0] # Sorting alphabetically gives the highest resolution first
+        except TypeError:
+            raise FileNotFoundError("Band {} not found for safe file {}". format(band, l2_safe_dir))
+    return band_path
+
+
+def get_image_resolution(image_path):
+    """Returns the resolution of the image in its native projection. Assumes square pixels."""
+    image= gdal.Open(image_path)
+    if image is None:
+        raise FileNotFoundError("Image not found at {}".format(image_path))
+    gt = image.GetGeoTransform()
+    if gt[1] != gt[5]*-1:
+        raise NonSquarePixelException("Image at {} has non-square pixels - this is currently not implemented in Pyeo")
+    return gt[1]
+
 
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):

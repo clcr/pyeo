@@ -5,41 +5,43 @@ Contains ForestSentinel exception classes.
 import requests
 
 
-class ForestSentinelException(Exception):
+class PyeoException(Exception):
     pass
 
 
-class StackImagesException(ForestSentinelException):
+class StackImagesException(PyeoException):
     pass
 
 
-class CreateNewStacksException(ForestSentinelException):
+class CreateNewStacksException(PyeoException):
     pass
 
 
-class StackImageException(ForestSentinelException):
+class StackImageException(PyeoException):
     pass
 
 
-class BadS2Exception(ForestSentinelException):
+class BadS2Exception(PyeoException):
     pass
 
 
-class BadGoogleURLExceeption(ForestSentinelException):
+class BadGoogleURLExceeption(PyeoException):
     pass
 
 
-class BadDataSourceExpection(ForestSentinelException):
+class BadDataSourceExpection(PyeoException):
     pass
 
 
-class NoL2DataAvailableException(ForestSentinelException):
+class NoL2DataAvailableException(PyeoException):
     pass
 
 
-class FMaskException(ForestSentinelException):
+class FMaskException(PyeoException):
     pass
 
+class NonSquarePixelException(PyeoException):
+    pass
 
 class TooManyRequests(requests.RequestException):
     """Too many requests; do exponential backoff"""

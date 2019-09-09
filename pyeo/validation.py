@@ -324,7 +324,7 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, class_total
         log.info('allocated sample number under different scenario is: ')
         log.info(allocated_n)
     else:
-        raise pyeo.exceptions.ForestSentinelException("Invalid allocation type: valid values are 'equal', 'prop' or 'olofsson")
+        raise pyeo.exceptions.PyeoException("Invalid allocation type: valid values are 'equal', 'prop' or 'olofsson")
     return allocated_n
 
 

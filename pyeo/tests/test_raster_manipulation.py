@@ -260,3 +260,21 @@ def test_mask_joining():
     out_array = out_image.GetVirtualMemArray()
     assert 1 in out_array
     assert 0 in out_array
+
+
+def test_s2_band_stacking():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        shutil.rmtree("test_outputs/band_stacking")
+    except FileNotFoundError:
+        pass
+    os.mkdir("test_outputs/band_stacking")
+    test_safe_file = "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE"
+    # Stacking only the default 10m bands
+    default_out = "test_outputs/band_stacking/default.tif"
+    pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, default_out)
+    some_bands_10m = "test_outputs/band_stacking/with_reproj.tif"
+    pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, some_bands_10m, out_resolution=20)
+    weird_bands = "test_outputs/band_stacking/weird_bands.tif"
+    pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, weird_bands,
+                                                    bands = ["B02", "B08", "SCL", "B8A", "B11", "B12"], out_resolution=60)
