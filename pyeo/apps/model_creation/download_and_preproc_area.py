@@ -1,10 +1,12 @@
 import sys, os
 
+
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
+
 import pyeo.queries_and_downloads
 import pyeo.raster_manipulation
 import pyeo.filesystem_utilities
 
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import argparse
 import configparser
 
@@ -21,7 +23,10 @@ if __name__ == "__main__":
     parser.add_argument("--log_path", default="download_and_preproc.log")
     parser.add_argument("--download_l2_data", action="store_true", help="If present, download L2 data")
     parser.add_argument("--sen2cor_path", help="Path to the sen2cor folder")
-    parser.add_argument("--stacked_dir", help="If present, will create a set of stacked image pairs in stacked_dir")
+    parser.add_argument("--stacked_dir",  help="If present, will create a set of stacked image pairs in stacked_dir")
+    parser.add_argument("--bands", nargs="*", default=("B08", "B04", "B03", "B02"),
+                        help="If present, specifies the bands to include in the preprocessed output. "
+                             "Ex: --bands B01 B03 B8A")
 
     args = parser.parse_args()
 
@@ -48,7 +53,7 @@ if __name__ == "__main__":
         sys.exit(1)
     log.info("Extracting BGRI bands from L2 images and creating cloudmasks. Output in {}".format(args.merged_dir))
     pyeo.raster_manipulation.preprocess_sen2_images(args.l2_dir, args.merge_dir, args.l1_dir, cloud_threshold=0,
-                                                    buffer_size=5)
+                                                    buffer_size=5, bands=args.bands)
     if args.stacked_dir:
         log.info("Stacking images pairs from {} in {}".format(args.merged_dir, args.stacked_dir))
         pyeo.raster_manipulation.create_new_stacks(args.merge_dir, args.stacked_dir)

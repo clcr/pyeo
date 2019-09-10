@@ -277,4 +277,5 @@ def test_s2_band_stacking():
     pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, some_bands_10m, out_resolution=20)
     weird_bands = "test_outputs/band_stacking/weird_bands.tif"
     pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, weird_bands,
-                                                    bands = ["B02", "B08", "SCL", "B8A", "B11", "B12"], out_resolution=60)
+                                                    bands=["B02", "B08", "SCL", "B8A", "B11", "B12"],
+                                                    out_resolution=60)

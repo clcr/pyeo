@@ -16,26 +16,23 @@ import shutil
 from pyeo.exceptions import CreateNewStacksException
 
 # Set up logging on import
-log = logging.getLogger(__name__)
+log = logging.getLogger("pyeo")
 formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
 
 
 def init_log(log_path):
-    """
-    Connects the console and file handlers to the default log
-
-    Parameters
-    ----------
-    log_path
-        A location to save the log entries to
-
-    Returns
-    -------
-    A log object.
-
-    """
-
+    """Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
+     Returns the log for the calling script"""
+    logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
+    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
+    log = logging.getLogger("pyeo")
+    log.setLevel(logging.DEBUG)
+    file_handler = logging.FileHandler(log_path)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    log.addHandler(file_handler)
     log.info("****PROCESSING START****")
+    return log
 
 
 def create_file_structure(root):
@@ -71,18 +68,18 @@ def validate_config_file(config_path):
     pass
 
 
+# What was I thinking with these two functions?
 def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
     """Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
     Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
-    log = logging.getLogger(__name__)
     if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
         log.info("{} does not exist.".format(l2_SAFE_file))
         return 2
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]_*.jp2".format(resolution)
+    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]*.jp2".format(resolution)
     image_glob = os.path.join(l2_SAFE_file, granule_path)
-    if glob.glob(image_glob):
+    if len(glob.glob(image_glob)) == 4:
         return 1
     else:
         return 0
@@ -92,14 +89,13 @@ def check_for_invalid_l1_data(l1_SAFE_file):
     """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
     Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
-    log = logging.getLogger(__name__)
     if not l1_SAFE_file.endswith(".SAFE") or "L1C" not in l1_SAFE_file:
         log.info("{} does not exist.".format(l1_SAFE_file))
         return 2
     log.info("Checking {} for incomplete imagery".format(l1_SAFE_file))
-    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]_*.jp2"
+    granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]*.jp2"
     image_glob = os.path.join(l1_SAFE_file, granule_path)
-    if glob.glob(image_glob):
+    if len(glob.glob(image_glob)) == 4:
         return 1
     else:
         return 0
@@ -108,7 +104,6 @@ def check_for_invalid_l1_data(l1_SAFE_file):
 def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
     If warning=True, prompts first."""
-    log = logging.getLogger(__name__)
     is_valid = check_for_invalid_l2_data(l2_SAFE_file, resolution)
     if not is_valid:
         if warning:
@@ -120,7 +115,6 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
 
 def clean_l2_dir(l2_dir, resolution="10m", warning=True):
     """Calls clean_l2_data on every SAFE file in l2_dir"""
-    log = logging.getLogger(__name__)
     log.info("Scanning {} for incomplete SAFE files".format(l2_dir))
     for safe_file_path in [os.path.join(l2_dir, safe_file_name) for safe_file_name in os.listdir(l2_dir)]:
         clean_l2_data(safe_file_path, resolution, warning)

@@ -61,6 +61,8 @@ from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
 from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests
 
+log = logging.getLogger("pyeo")
+
 try:
     from google.cloud import storage
 except ImportError:
@@ -106,7 +108,6 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
 
     """
     # Originally by Ciaran Robb
-    log = logging.getLogger(__name__)
     api = SentinelAPI(user, passwd)
     footprint = geojson_to_wkt(read_geojson(geojsonfile))
     log.info("Sending query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
@@ -146,7 +147,6 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
     -------
 
     """
-    log = logging.getLogger(__name__)
     log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
     user = conf['sent_2']['user']
     password = conf['sent_2']['pass']
@@ -172,7 +172,6 @@ def filter_to_l1_data(query_output):
     A dictionary of products containing only the L1C data products
 
     """
-    log = logging.getLogger(__name__)
     log.info("Extracting only L1 data from {} products".format(len(query_output)))
     filtered_query = {key: value for (key, value) in query_output.items() if get_query_level(value) == "Level-1C"}
     return filtered_query
@@ -193,7 +192,6 @@ def filter_to_l2_data(query_output):
     A dictionary of products containing only the L2A data products
 
     """
-    log = logging.getLogger(__name__)
     log.info("Extracting only L2 data from {} products".format(len(query_output)))
     filtered_query = {key: value for (key, value) in query_output.items() if get_query_level(value) == "Level-2A"}
     return filtered_query
@@ -221,7 +219,6 @@ def filter_non_matching_s2_data(query_output):
     #    Granule ID (Txxaaa)
     # So if we succeviely partition the query, we should get a set of products with either 1 or
     # 2 entries per granule / timestamp combination
-    log = logging.getLogger(__name__)
     sorted_query = sorted(query_output.values(), key=get_query_granule)
     granule_groups = {str(key): list(group) for key, group in itertools.groupby(sorted_query, key=get_query_granule)}
     granule_date_groups = {}
@@ -368,22 +365,20 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
         Raised when passed either a bad datasource or a bad image ID
 
     """
-    log = logging.getLogger(__name__)
-
     for image_uuid in new_data:
-
-        if 'L1C' in new_data[image_uuid]['identifier']:
-            out_path = l1_dir
+        identifier = new_data[image_uuid]['identifier']
+        if 'L1C' in identifier:
+            out_path = os.path.join(l1_dir, identifier+".SAFE")
             if check_for_invalid_l1_data(out_path) == 1:
                 log.info("L1 imagery exists, skipping download")
                 continue
-        elif 'L2A' in new_data[image_uuid]['identifier']:
-            out_path = l2_dir
+        elif 'L2A' in identifier:
+            out_path = os.path.join(l2_dir, identifier+".SAFE")
             if check_for_invalid_l2_data(out_path) == 1:
                 log.info("L2 imagery exists, skipping download")
                 continue
         else:
-            log.error("{} is not a Sentinel 2 product")
+            log.error("{} is not a Sentinel 2 product".format(identifier))
             raise BadDataSourceExpection
 
         log.info("Downloading {} from {} to {}".format(new_data[image_uuid]['identifier'], source, out_path))
@@ -449,7 +444,6 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     this for further processing.
 
     """
-    log = logging.getLogger(__name__)
     api = SentinelAPI(user, passwd)
     log.info("Downloading {} from scihub".format(product_uuid))
     prod = api.download(product_uuid, out_folder)

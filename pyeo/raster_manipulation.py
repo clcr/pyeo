@@ -1,4 +1,5 @@
 """
+
 pyeo.raster_manipulation
 ------------------------
 Functions for working with raster data.
@@ -45,7 +46,7 @@ from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1
 from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception, NonSquarePixelException
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("pyeo")
 
 
 def create_matching_dataset(in_dataset, out_path,
@@ -149,7 +150,6 @@ def create_new_stacks(image_dir, stack_dir):
     Step 3: For each image in the sorted list, stack wach image with it's next oldest image.
 
     """
-    log = logging.getLogger(__name__)
     new_images = []
     tiles = get_sen_2_tiles(image_dir)
     tiles = list(set(tiles)) # eliminate duplicates
@@ -927,10 +927,10 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
     return out
 
 
-def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None):
+def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None,
+                           bands=("B08", "B04", "B03", "B02"), out_resolution=None):
     """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
     the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided"""
-    log = logging.getLogger(__name__)
     safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
     for l2_safe_file in safe_file_path_list:
         with TemporaryDirectory() as temp_dir:
@@ -938,9 +938,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             log.info("Merging 10m bands in SAFE dir: {}".format(l2_safe_file))
             temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
             log.info("Output file: {}".format(temp_path))
-            stack_sentinel_2_bands(l2_safe_file, temp_path)
-
-            #pdb.set_trace()
+            stack_sentinel_2_bands(l2_safe_file, temp_path, bands=bands, out_resolution=out_resolution)
 
             log.info("Creating cloudmask for {}".format(temp_path))
             l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
@@ -1065,7 +1063,6 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     # for it; since it's doing that, it may as well be logging the output from sen2cor. This
     # approach can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
-    log = logging.getLogger(__name__)
     # added sen2cor_path by hb91
     log.info("calling subprocess: {}".format([sen2cor_path, image_path]))
     now_time = datetime.datetime.now()   # I can't think of a better way of geting the new outpath from sen2cor
