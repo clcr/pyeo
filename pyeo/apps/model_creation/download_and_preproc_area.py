@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--bands", nargs="*", default=("B08", "B04", "B03", "B02"),
                         help="If present, specifies the bands to include in the preprocessed output. "
                              "Ex: --bands B01 B03 B8A")
+    parser.add_argument("--resolution", default=10, help="Resolution of final merged image.")
 
     args = parser.parse_args()
 
@@ -51,9 +52,9 @@ if __name__ == "__main__":
         log.critical("Please provide either the --download_l2_data flag or the arg --sen2cor"
                      "_path with a path to Sen2Cor")
         sys.exit(1)
-    log.info("Extracting BGRI bands from L2 images and creating cloudmasks. Output in {}".format(args.merged_dir))
+    log.info("Extracting bands {} from L2 images and creating cloudmasks. Output in {}".format(args.bands, args.merge_dir))
     pyeo.raster_manipulation.preprocess_sen2_images(args.l2_dir, args.merge_dir, args.l1_dir, cloud_threshold=0,
-                                                    buffer_size=5, bands=args.bands)
+                                                    buffer_size=5, bands=args.bands, out_resolution=args.resolution)
     if args.stacked_dir:
         log.info("Stacking images pairs from {} in {}".format(args.merged_dir, args.stacked_dir))
         pyeo.raster_manipulation.create_new_stacks(args.merge_dir, args.stacked_dir)

@@ -928,7 +928,7 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 
 
 def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None,
-                           bands=("B08", "B04", "B03", "B02"), out_resolution=None):
+                           bands=("B08", "B04", "B03", "B02"), out_resolution=10):
     """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
     the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided"""
     safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
@@ -972,6 +972,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B08", "B04", "B03",
         new_band_paths = []
         for band_path in band_paths:
             if get_image_resolution(band_path) != out_resolution:
+                log.info("Resampling {} to {}m".format(band_path, out_resolution))
                 resample_path = os.path.join(resample_dir, os.path.basename(band_path))
                 shutil.copy(band_path, resample_path)
                 resample_image_in_place(resample_path, out_resolution)  # why did I make this the only in-place function?
@@ -1064,10 +1065,11 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     # approach can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
     # added sen2cor_path by hb91
-    log.info("calling subprocess: {}".format([sen2cor_path, image_path]))
+    out_dir = os.path.dirname(image_path)
+    log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--output_dir', image_path]))
     now_time = datetime.datetime.now()   # I can't think of a better way of geting the new outpath from sen2cor
     timestamp = now_time.strftime(r"%Y%m%dT%H%M%S")
-    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path],
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, 'output_dir', image_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
     while True:
@@ -1114,8 +1116,8 @@ def build_sen2cor_output_path(image_path, timestamp, version):
     if version >= "2.08.00":
         out_path = image_path.replace("MSIL1C", "MSIL2A")
         baseline = get_sen_2_baseline(image_path)
-        out_path = out_path.replace(baseline, "R9999")
-        out_path = out_path.rsplit("_")[0] + "_" + timestamp + ".SAFE"
+        out_path = out_path.replace(baseline, "N9999")
+        out_path = out_path.rpartition("_")[0] + "_" + timestamp + ".SAFE"
     else:
         out_path = image_path.replace("MSIL1C", "MSIL2A")
     return out_path
@@ -1156,9 +1158,12 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
     for image in images:
         log.info("Atmospheric correction of {}".format(image))
         image_path = os.path.join(in_directory, image)
-        #image_timestamp = get_sen_2_image_timestamp(image)
-        if glob.glob(os.path.join(out_directory, image.replace("MSIL1C", "MSIL2A"))):
-            log.warning("{} exists. Skipping.".format(image.replace("MSIL1C", "MSIL2A")))
+        image_timestamp = get_sen_2_image_timestamp(image)
+        out_name = build_sen2cor_output_path(image, image_timestamp, get_sen2cor_version(sen2cor_path))
+        out_path = os.path.join(out_directory, out_name)
+        out_glob = out_path.rpartition("_")[0] + "*"
+        if glob.glob(out_glob):
+            log.warning("{} exists. Skipping.".format(out_path))
             continue
         try:
             l2_path = apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=delete_unprocessed_image)
