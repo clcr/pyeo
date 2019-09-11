@@ -11,9 +11,12 @@ import argparse
 import configparser
 
 
-def main(aoi_path, start_date, end_date, l1_dir, l2_dir, merge_dir, conf,
+def main(aoi_path, start_date, end_date, l1_dir, l2_dir, merge_dir, conf_path,
          download_l2_data=False, sen2cor_path=None, stacked_dir=None, bands=("B08", "B04", "B03", "B02"),
          resolution=10, cloud_cover=100):
+
+    conf = configparser.ConfigParser()
+    conf.read(conf_path)
 
     products = pyeo.queries_and_downloads.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf,
                                                                     cloud_cover=cloud_cover)
@@ -49,7 +52,7 @@ if __name__ == "__main__":
     parser.add_argument("l1_dir", help="The directory to store the level 1 images")
     parser.add_argument("l2_dir",  help="The directory to store the level 2 images")
     parser.add_argument("merge_dir", help="The directory to store the merged images")
-    parser.add_argument("conf", help="The path to a config file containing your Copernicus login and password")
+    parser.add_argument("conf_path", help="The path to a config file containing your Copernicus login and password")
     parser.add_argument("--log_path", default="download_and_preproc.log")
     parser.add_argument("--download_l2_data", action="store_true", help="If present, download L2 data")
     parser.add_argument("--sen2cor_path", help="Path to the sen2cor folder")
@@ -64,10 +67,7 @@ if __name__ == "__main__":
 
     log = pyeo.filesystem_utilities.init_log(args.log_path)
 
-    conf = configparser.ConfigParser()
-    conf.read(args.conf)
-
-    main(args.aoi_path, args.start_date, args.end_date, args.l1_dir, args.l2_dir, args.merge_dir, conf,
+    main(args.aoi_path, args.start_date, args.end_date, args.l1_dir, args.l2_dir, args.merge_dir, args.conf_path,
          args.download_l2_data, args.sen2cor_path, args.stacked_dir, args.bands, args.resolution, args.resolution,
          args.cloud_cover)
 
