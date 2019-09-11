@@ -2,4 +2,4 @@
 set -o errexit
 set -o nounset
 
-python "$PYEO"/pyeo/apps/subprocessing/extract_signatures.py "$@"
+python "$PYEO"/pyeo/apps/model_creation/extract_signatures.py "$@"

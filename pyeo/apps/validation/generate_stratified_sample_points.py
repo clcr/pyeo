@@ -1,10 +1,8 @@
 """App to generate a set of proportional stratified sample points from a class map"""
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 import argparse
-from pyeo.validation import produce_stratifed_validation_points
-from pyeo.core import init_log
+from pyeo.validation import produce_stratified_validation_points
+from pyeo.filesystem_utilities import init_log
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generates a shapefile containing n stratified random points"
@@ -22,7 +20,7 @@ if __name__ == "__main__":
     if args.log:
         init_log(args.log)
 
-    produce_stratifed_validation_points(
+    produce_stratified_validation_points(
         map_path=args.map_path,
         out_path=args.out_path,
         n_points=args.n_points,

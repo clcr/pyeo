@@ -1,0 +1,20 @@
+# Fdb version 3
+["pdflatex"] 1565089515 "Pyeo.tex" "Pyeo.pdf" "Pyeo" 1565089550
+  "/etc/texmf/web2c/texmf.cnf" 1565085688 475 c0e671620eb5563b2130f56340a5fde8 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty" 1480098821 4732 d63eda807ac82cca2ca8488efd31a966 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/omsenc.dfu" 1487721667 2004 ac51aeac484f08c01026120d62677eca ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/ot1enc.dfu" 1487721667 3181 1cb3e9ad01f4a01127b2ffd821bfeec7 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/report.cls" 1480098821 22880 e7be6f7dd8c05d5108bf3a7d8cabe59a ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/size10.clo" 1480098821 8292 e897c12e1e886ce77fe26afc5d470886 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/t1enc.dfu" 1487721667 11255 9d97362866549d3d3c994b5f28d1b9b5 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/utf8.def" 1487721667 7784 325a2a09984cb5c4ff230f9867145ad3 ""
+  "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1520210507 32485 c64754543d8ac501bea6e75e209ea521 ""
+  "/usr/share/texmf/web2c/texmf.cnf" 1520210507 32485 c64754543d8ac501bea6e75e209ea521 ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1565085734 724917 20d1b223587f22b571a89ae9cfa6ed8c ""
+  "Pyeo.aux" 1565085819 8 a94a2480d3289e625eea47cd1b285758 ""
+  "Pyeo.tex" 1565086274 90772 04d6750d6cfc1dd5ef6e2061fd34a8bf ""
+  "cmap.sty" 0 -1 0 ""
+  "sphinxmanual.cls" 1565084670 3764 e7c0a8da02dc45450256dd4cfdafb426 ""
+  (generated)
+  "Pyeo.pdf"
+  "Pyeo.log"

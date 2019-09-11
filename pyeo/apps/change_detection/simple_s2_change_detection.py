@@ -1,4 +1,7 @@
-"""A change detection script that downloads, stacks and classifies a set of 10m sentinel 2 images.
+"""
+simple_s2_change_detection
+--------------------------
+A change detection script that downloads, stacks and classifies a set of 10m sentinel 2 images.
 
 When run, this script will download every S2 image in the aoi (defined by the geojson at aoi_path) between the two
 dates that meets the specified cloud cover range. It will use the sen2cor distribution specified in the .ini file
@@ -8,13 +11,19 @@ into pairs based on the algorithm in create_new_stacks and classify those images
 To use this script, fill out the [sent_2], [forest_sentinel] and [sen2cor] sections of the configuration file
 change_detection.ini, then run
 
-$ python pyeo/apps/change_detection/simple_s2_change_detection.py --conf /path/to/change_detection.ini
+::
+
+   $ python pyeo/apps/change_detection/simple_s2_change_detection.py --conf /path/to/change_detection.ini
 
 Produces two directories of un-mosaiced imagery; one of classified images and one of class probabilites"""
 
 import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-import pyeo.core as pyeo
+
+import pyeo.classification
+import pyeo.queries_and_downloads
+import pyeo.raster_manipulation
+import pyeo.filesystem_utilities
+
 import configparser
 import argparse
 import os
@@ -54,8 +63,8 @@ if __name__ == "__main__":
     model_path = conf['forest_sentinel']['model']
     sen2cor_path = conf['sen2cor']['path']
 
-    pyeo.create_file_structure(project_root)
-    log = pyeo.init_log(log_path)
+    pyeo.filesystem_utilities.create_file_structure(project_root)
+    log = pyeo.filesystem_utilities.init_log(log_path)
 
     l1_image_path = os.path.join(project_root, r"images/L1")
     l2_image_path = os.path.join(project_root, r"images/L2")
@@ -68,37 +77,37 @@ if __name__ == "__main__":
 
     # Query and download
     if args.do_download or do_all:
-        products = pyeo.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
+        products = pyeo.queries_and_downloads.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
         log.info("Downloading")
-        pyeo.download_s2_data(products, l1_image_path)
+        pyeo.queries_and_downloads.download_s2_data(products, l1_image_path)
 
     # Atmospheric correction
     if args.do_preprocess or do_all:
         log.info("Applying sen2cor")
-        pyeo.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
+        pyeo.raster_manipulation.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
 
     # Merging / Aggregating layers into single image
     if args.do_merge or do_all:
         log.info("Cleaning L2A directory")
-        pyeo.clean_l2_dir(l2_image_path, resolution="10m", warning=False)
+        pyeo.filesystem_utilities.clean_l2_dir(l2_image_path, resolution="10m", warning=False)
         log.info("Aggregating layers")
-        pyeo.preprocess_sen2_images(l2_image_path, merged_image_path, cloud_certainty_threshold)
+        pyeo.raster_manipulation.preprocess_sen2_images(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
     # Stack layers
     if args.do_stack or do_all:
         log.info("Stacking before and after images")
-        pyeo.create_new_stacks(merged_image_path, stacked_image_path)
+        pyeo.raster_manipulation.create_new_stacks(merged_image_path, stacked_image_path)
 
     # Mosaic stacked layers
     if args.do_stack or do_all:
         log.info("Mosaicking stacked multitemporal images across tiles")
-        pyeo.mosaic_images(stacked_image_path, mosaic_image_path, format="GTiff", datatype=gdal.GDT_Int32, nodata=0)
+        pyeo.raster_manipulation.mosaic_images(stacked_image_path, mosaic_image_path, format="GTiff", datatype=gdal.GDT_Int32, nodata=0)
 
     # Classify stacks
     if args.do_classify or do_all:
         log.info("Classifying images")
-        pyeo.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
-                                num_chunks=16, apply_mask=False)
+        pyeo.classification.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
+                                               num_chunks=16, apply_mask=False)
 
 
 

@@ -1,7 +1,6 @@
-import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
+import pyeo.filesystem_utilities
+
 import argparse
-import pyeo.core as pyeo
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Removes any SAFEfile in directory without the 2,3,4 or 8m imagery"
@@ -13,5 +12,5 @@ if __name__ == "__main__":
                         help="Resolution to check (10m, 20m or 60m")
     args = parser.parse_args()
 
-    pyeo.init_log("clean_log.log")
-    pyeo.clean_l2_dir(args.l2_dir, args.resolution, args.do_warning)
+    pyeo.filesystem_utilities.init_log("clean_log.log")
+    pyeo.filesystem_utilities.clean_l2_dir(args.l2_dir, args.resolution, args.do_warning)
