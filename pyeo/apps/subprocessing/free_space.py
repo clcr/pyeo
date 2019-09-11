@@ -1,8 +1,7 @@
 """Removes all but the most recent n images from the filetree"""
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-import pyeo.core as pyeo
+import os
+import pyeo.filesystem_utilities
 import shutil
 import argparse
 
@@ -26,7 +25,7 @@ def free_space(aoi_dir, images_to_keep, with_warning=True):
 
 def remove_old_images(image_dir, images_to_keep, with_warning=True):
     """Removes all but the latest images from image_dir."""
-    images = pyeo.sort_by_timestamp(os.listdir(image_dir))
+    images = pyeo.filesystem_utilities.sort_by_timestamp(os.listdir(image_dir))
     if with_warning:
         if not input(
                 "About to delete {} files from {}: Y/N?".format(len(images[images_to_keep:]), image_dir)).upper().\

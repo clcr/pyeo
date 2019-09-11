@@ -1,10 +1,17 @@
-"""A small set of functions for producing validation points from maps"""
+"""
+pyeo.validaion
+--------------
+A small set of functions for producing validation points from maps
+"""
 
 import numpy as np
 import gdal
 import random
 import ogr, osr
-from pyeo import core
+
+import pyeo.coordinate_manipulation
+import pyeo.exceptions
+import pyeo.filesystem_utilities
 import logging
 import datetime
 import json
@@ -16,7 +23,7 @@ gdal.UseExceptions()
 
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None, produce_csv=False):
-    log = core.init_log("validation_log.log")
+    log = pyeo.filesystem_utilities.init_log("validation_log.log")
     class_counts = count_pixel_classes(in_map_path, no_data_class)
     log.info("Class counts: {}".format(class_counts))
     sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
@@ -34,8 +41,8 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
         ua = cal_sd_for_user_accuracy(accuracy, class_sample_counts[map_class])
         log.info("Accuracy for class {}: {}".format(map_class, ua))
     log.info("Overall accuracy: {}".format(overall_accuracy))
-    produce_stratifed_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class,
-                                        produce_csv=produce_csv)
+    produce_stratified_validation_points(in_map_path, out_shapefile_path, class_sample_counts, no_data_class,
+                                         produce_csv=produce_csv)
 
     log.info("Validation points at out: {}".format(out_shapefile_path))
     # manifest_path = out_shapefile_path.rsplit(".")[0] + "_manifest.json"
@@ -65,8 +72,8 @@ def count_pixel_classes(map_path, no_data=None):
     return out
 
 
-def produce_stratifed_validation_points(map_path, out_path, class_sample_counts,
-                                        no_data=None, seed=None, produce_csv=False):
+def produce_stratified_validation_points(map_path, out_path, class_sample_counts,
+                                         no_data=None, seed=None, produce_csv=False):
     """Produces a set of stratified validation points from map_path"""
     log = logging.getLogger(__name__)
     log.info("Producing random sampling of {}.".format(map_path))
@@ -98,7 +105,7 @@ def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform
     for map_class, point_list in class_sample_point_dict.items():
         for point in point_list:
             feature = ogr.Feature(layer.GetLayerDefn())
-            coord = core.pixel_to_point_coordinates(point, geotransform)
+            coord = pyeo.coordinate_manipulation.pixel_to_point_coordinates(point, geotransform)
             offset = geotransform[1]/2   # Adds half a pixel offset so points end up in the center of pixels
             wkt = "POINT({} {})".format(coord[0]+offset, coord[1]-offset) # Never forget about negative y values in gts.
             new_point = ogr.CreateGeometryFromWkt(wkt)
@@ -118,7 +125,7 @@ def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform
 
             # Join all points create single dimesional list of points (and revise the '*' operator)
             for id,  point in enumerate(itertools.chain(*class_sample_point_dict.values())):
-                coord = core.pixel_to_point_coordinates(point, geotransform)
+                coord = pyeo.coordinate_manipulation.pixel_to_point_coordinates(point, geotransform)
                 offset = geotransform[1] / 2  # Adds half a pixel offset so points end up in the center of pixels
                 lat = coord[0] + offset
                 lon = coord[1] - offset
@@ -159,7 +166,6 @@ def build_class_dict(class_array, no_data=None):
             out_dict.update({this_class: [it.multi_index]})
         it.iternext()
     return out_dict
-
 
 
 def cal_si(ui):
@@ -318,7 +324,7 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, class_total
         log.info('allocated sample number under different scenario is: ')
         log.info(allocated_n)
     else:
-        raise core.ForestSentinelException("Invalid allocation type: valid values are 'equal', 'prop' or 'olofsson")
+        raise pyeo.exceptions.PyeoException("Invalid allocation type: valid values are 'equal', 'prop' or 'olofsson")
     return allocated_n
 
 
