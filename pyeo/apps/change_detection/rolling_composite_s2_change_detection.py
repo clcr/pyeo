@@ -30,6 +30,7 @@ import pyeo.queries_and_downloads
 import pyeo.raster_manipulation
 import pyeo.filesystem_utilities
 
+
 import configparser
 import argparse
 import os
@@ -203,6 +204,7 @@ if __name__ == "__main__":
     try:
         latest_composite_name = \
             pyeo.filesystem_utilities.sort_by_timestamp(
+
                 [image_name for image_name in os.listdir(composite_dir) if image_name.endswith(".tif")],
                 recent_first=True
             )[0]
