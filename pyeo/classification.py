@@ -1,6 +1,6 @@
 """
 pyeo.classification
--------------------
+===================
 Contains every function to do with map classification. This includes model creation, map classification and processes
 for array manipulation into scikit-learn compatible forms.
 """
@@ -30,14 +30,15 @@ def change_from_composite(image_path, composite_path, model_path, class_out_path
     """
     Stacks an image with a composite and classifies each pixel change with a scikit-learn model
     The image that is classified is has the following bands
-        composite blue
-        composite green
-        composite red
-        composite IR
-        image blue
-        image green
-        image red
-        image IR
+
+    1. composite blue
+    2. composite green
+    3. composite red
+    4. composite IR
+    5. image blue
+    6. image green
+    7. image red
+    8. image IR
 
     Parameters
     ----------

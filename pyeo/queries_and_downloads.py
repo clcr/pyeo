@@ -1,6 +1,6 @@
 """
 pyeo.queries_and_downloads
---------------------------
+==========================
 Functions for querying, filtering and downloading data.
 
 SAFE files
@@ -25,20 +25,23 @@ Data download sources
 ---------------------
 This library presently offers two options for download sources; Scihub and Amazon Web Services. If in doubt, use Scihub.
 
-Scihub
-======
-The Copernicus Open-Access Hub is the default option for downloading sentinel-2 images. Images are downloaded in .zip
-format, and then automatically unzipped. Users are required to register with a username and password before downloading,
-and there is a limit to no more than two concurrent downloads per username at a time. Scihub is entirely free.
+- Scihub
 
-AWS
-===
-Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
-updated a few hours after new products are made available. There is a small charge associated with downloading this
-data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
-payment details) and obtain an API key for that account. See https://aws.amazon.com/s3/pricing/ for pricing details;
-the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
-for the AWS bucket.
+   The Copernicus Open-Access Hub is the default option for downloading sentinel-2 images. Images are downloaded in .zip
+   format, and then automatically unzipped. Users are required to register with a username and password before downloading,
+   and there is a limit to no more than two concurrent downloads per username at a time. Scihub is entirely free.
+
+ - AWS
+
+   Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
+   updated a few hours after new products are made available. There is a small charge associated with downloading this
+   data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
+   payment details) and obtain an API key for that account. See https://aws.amazon.com/s3/pricing/ for pricing details;
+   the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
+   for the AWS bucket.
+
+Functions
+---------
 """
 
 import datetime as dt

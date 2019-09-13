@@ -7,17 +7,15 @@ Welcome to Pyeo's documentation!
 ================================
 
 .. toctree::
-   :maxdepth: 2
    :caption: Contents:
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   index
+   array_utilities
+   classification
+   coordinate_manipulation
+   queries_and_downloads
+   raster_manipulation
+   validation
 
 Introduction
 ============
@@ -44,50 +42,49 @@ In a Python prompt, try  :code:`import pyeo` - you should see no errors.
 
 Quick start
 ===========
- Before you start, you will need:
+Before you start, you will need:
 
--A linux (or maybe mac, untested) machine
--A raster of your window area
--A shapefile of polygons over your training areas with a field containing class labels
--A raster to classify. This can be the same as your original raster.
-All rasters and shapefiles should be in the same projection; ideally in the local projection of your satellite data.
--Git
--Anaconda/Miniconda
+- A linux (or maybe mac, untested) machine
+- A raster of your window area
+- A shapefile of polygons over your training areas with a field containing class labels
+- A raster to classify. This can be the same as your original raster.
 
-INSTALLATION
+  - All rasters and shapefiles should be in the same projection; ideally in the local projection of your satellite data.
+- Git
+- Anaconda/Miniconda
 
-git clone https://github.com/clcr/pyeo
-cd pyeo
-git checkout restructure      # This gets you the present working branch
-conda env create --file environment.yml --name pyeo_env
-echo export PYEO=$(pwd) >> ~/.bashrc    #Or just append to the end of your .bashrc
-echo export PATH=$PATH:$PYEO/bin
-chmod 755 bin/*
 
-USE
+Use
+----
+To create a model
 
-conda activate pyeo_env
-cd (whereever your data is)
-extract_signatures your_raster.tif your_shapefile.shp output.csv
-# You can now explore your signatures as a .csv file, and perform any interim processing
-create_model_from_signatures output.csv model.pkl
-classify_image your_raster model.pkl output_image.tif
+.. code-block:: bash
+
+   conda activate pyeo_env
+   cd (whereever your data is)
+   extract_signatures your_raster.tif your_shapefile.shp output.csv
+   # You can now explore your signatures as a .csv file, and perform any interim processing
+   create_model_from_signatures output.csv model.pkl
+   classify_image your_raster model.pkl output_image.tif
 
 Assumptions and design decisions
 =====================================
 
-###Rasters ###
+Rasters
+-------
 
-- Can read from any gdal-readable format
-- Stores internally as geotiff
-- Named with the .tif suffix
-- Most raster processing is done using numpy and getVirtualMemArray
-- Unless otherwise stated, **all rastesrs are assumed to be in a projected coordinate system** - i.e. in meters.
+When working with raster data (geotiff, .jp2, ect) using Pyeo, the folllowing assumtions have been made:
+
+- Any function that reads a raster can read from any gdal-readable format
+- All interim rasters are stored internally as a geotiff
+- All internal rasters have a .tif extension in the filename
+- Unless otherwise stated, **all rasters are assumed to be in a projected coordinate system** - i.e. in meters.
   Functions may fail if passed a raster in lat-long projection
 
-### Masks ###
+Masks
+-----
+Some Pyeo functions include options for applying masks.
 
-- Some Pyeo functions include options for applying masks
 - A raster may have an associated mask
 - A mask is a geotif with an identical name as the raster it's masking with a .msk extension
    - For example, the mask for my_sat_image.tif is my_sat_image.msk
@@ -98,41 +95,17 @@ Assumptions and design decisions
 - A mask is applied by multiplying it with each band of its raster
    - So any pixel with a 0 in its mask will be removed, and a 1 will be kept
 
-### Timestamps ###
+Timestamps
+----------
 
 - Pyeo uses the same timestamp convention as ESA: yyyymmddThhmmss
    - For example, 1PM on 27th December 2020 would be 20201227T130000
 - All timestamps are in UTC
 
-### Models ###
+Models
+------
+
 - All models are serialised and deserialised using joblib.dump or joblib.load
-
-
-
-
-Function reference
-==================
-
-.. automodule:: pyeo.classification
-   :members:
-
-.. automodule:: pyeo.array_utilities
-   :members:
-
-.. automodule:: pyeo.coordinate_manipulation
-   :members:
-
-.. automodule:: pyeo.filesystem_utilities
-   :members:
-
-.. automodule:: pyeo.queries_and_downloads
-   :members:
-
-.. automodule:: pyeo.raster_manipulation
-   :members:
-
-.. automodule:: pyeo.validation
-   :members:
 
 
 A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.

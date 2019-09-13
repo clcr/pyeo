@@ -1,4 +1,6 @@
 """
+pyeo.array_utilities
+===============
 Contains routines for manipulating arrays.
 """
 
