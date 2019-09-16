@@ -1,8 +1,8 @@
 
 import os
-import pyeo.pyeo as pyeo
-import pyeo.pyeo.terrain_correction as terrain_correction
-import gdal
+
+import pyeo.terrain_correction as terrain_correction
+import osgeo.gdal as gdal
 import pathlib
 import numpy as np
 import pytest

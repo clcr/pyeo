@@ -1,9 +1,16 @@
-"""Functions for implementing terrain correction algorithm (credit to Wim Nursal, LAPAN"""
+"""
+Terrain correction
+==================
+
+Functions for implementing terrain correction algorithm (credit to Wim Nursal, LAPAN
+
+Original code at https://github.com/Forests2020-Indonesia/Topographic-Correction/blob/master/Topographic%20Correction.py
+"""
 
 import gdal
 from tempfile import TemporaryDirectory
 import os.path as p
-import pyeo.pyeo.core as core
+import pyeo.filesystem_utilities as fu
 import numpy as np
 import datetime as dt
 import calendar
@@ -45,7 +52,7 @@ def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
 def calculate_granule_solar_positions(safe_file):
     """Returns the sun zenith angle and azimuth angle from a L2 .SAFE file.
     NOTE: Only difference between this and Landsat seems to be that Landsat uses UTC"""
-    sensing_dt = core.get_image_acquisition_time(p.basename(safe_file))  # Keep a close eye on the timezone
+    sensing_dt = fu.get_image_acquisition_time(p.basename(safe_file))  # Keep a close eye on the timezone
     gamma = calculate_fractional_year(sensing_dt)
     decl = calculate_declination_angle(gamma)
 
@@ -153,3 +160,21 @@ def days_in_year(year):
         return 366
     else:
         return 365
+
+
+def calculate_illumination_condition_raster():
+    """Calculates the illumination condition of a pixel"""
+    A = cos(zenith_angle)*cos(dem_slope)
+    B = sin(zenith_angle)*sin(dem_slope)*cos(delta)
+
+
+
+def calculate_reflectance():
+
+    reflectance_pixels = band.ravel()
+    ic_pixels = ic_image.ravel()
+    slope = linregress(ic_pixels, reflectance_pixels)
+
+
+
+
