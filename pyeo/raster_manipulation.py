@@ -804,6 +804,27 @@ def raster_to_array(rst_pth):
     return out_array
 
 
+def calc_ndvi(raster_path, output_path):
+    import pdb
+    raster = gdal.Open(raster_path)
+    out_raster = create_matching_dataset(raster, output_path, datatype=gdal.GDT_Float32)
+    array = raster.GetVirtualMemArray()
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    R = array[2, ...]
+    I = array[3, ...]
+    out_array[...] = (R-I)/(R+I)
+    pdb.set_trace()
+
+    out_array[...] = np.where(out_array == -2147483648, 0, out_array)
+
+    R = None
+    I = None
+    array = None
+    out_array = None
+    raster = None
+    out_raster = None
+
+
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
     """Creates a raster stack from a list of rasters. Adapted from Chris Gerard's
     book 'Geoprocessing with Python'. The out put data type is the same as the input data type.
@@ -880,7 +901,7 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
 
     Returns
     -------
-
+S2A_MSIL2A_20180802T105621_N0208_R094_T31UCU_20180802T141714.SAFE
     """
     # TODO: Include nodata value
     log = logging.getLogger(__name__)
