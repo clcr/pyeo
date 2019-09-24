@@ -832,8 +832,12 @@ def apply_band_function(in_path, function, bands, out_path, datatype = gdal.GDT_
     raster = gdal.Open(in_path)
     out_raster = create_matching_dataset(raster, out_path=out_path, datatype=datatype)
     array = raster_GetVirtualMemArray(raster)
+    out_array = out_raster.GetVirtualMemArray()
     band_views = [raster[band, ...] for band in bands]
-    out_array[...] = function(zip(band_views)
+    out_array[...] = function(*band_views)
+    out_array = None
+    [view= None for view in band_views]
+    raster = None
 
 
 def ndvi_function(r, i)
