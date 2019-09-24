@@ -825,6 +825,21 @@ def calc_ndvi(raster_path, output_path):
     out_raster = None
 
 
+def apply_band_function(in_path, function, bands, out_path, datatype = gdal.GDT_Int32):
+    """Applys an arbitrary band mathemtics function to an image at in_path and saves the result at out_map.
+    Function should be a function ofblect of the form f(b1, b2, b3...) where b... corresponds to band indicies in
+    the bands array."""
+    raster = gdal.Open(in_path)
+    out_raster = create_matching_dataset(raster, out_path=out_path, datatype=datatype)
+    array = raster_GetVirtualMemArray(raster)
+    band_views = [raster[band, ...] for band in bands]
+    out_array[...] = function(zip(band_views)
+
+
+def ndvi_function(r, i)
+    return (r-i)/(r+i)
+
+
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
     """Creates a raster stack from a list of rasters. Adapted from Chris Gerard's
     book 'Geoprocessing with Python'. The out put data type is the same as the input data type.
