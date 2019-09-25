@@ -1002,8 +1002,8 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 shutil.move(mask_path, out_mask_path)
 
 
-def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B08", "B04", "B03", "B02"), out_resolution=10):
-    """Stacks the contents of a .SAFE granule directory into a single geotiff"""
+def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
+    """Stacks the specified bands of a .SAFE granule directory into a single geotiff"""
 
     band_paths = [get_sen_2_band_path(safe_dir, band, out_resolution) for band in bands]
 
