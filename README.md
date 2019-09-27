@@ -21,23 +21,17 @@ With Git installed, `cd` to an install location then run the following lines
 git clone https://github.com/clcr/pyeo.git
 cd pyeo
 conda env create --file environment.yml --name pyeo_env
-source activate pyeo_env
+conda activate pyeo_env
+python -m setup.py . -vv
 ```
 
-At present, Pyeo does not insert itself into your Python path. Instead, add the following lines to the start of your programs:
+If you want to edit Pyeo, replace the last line with
 
-```python
-import sys
-sys.path.append("/path/to/pyeo/")
+```bash
+python -m setup.py -e . -vv
 ```
 
-To verify the installation, open a Python prompt and type
-
-```python
->>> import pyeo.core
-```
-
-You should get no errors.
-
+You can test your installation with
+`import pyeo.classifier`
 
 Full documentation at https://clcr.github.io/pyeo/build/html/index.html

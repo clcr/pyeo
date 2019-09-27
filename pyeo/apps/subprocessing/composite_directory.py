@@ -11,11 +11,11 @@
  Masks can either be single band images or n-band image (same at the corresponding .tif)
 """
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-import pyeo.core
+import os
+
+import pyeo.raster_manipulation
+import pyeo.filesystem_utilities
 import argparse
-import shutil
 
 
 if __name__ == "__main__":
@@ -36,15 +36,15 @@ if __name__ == "__main__":
 
     comp_dir = args.in_dir
 
-    pyeo.core.init_log(args.logpath)
+    pyeo.filesystem_utilities.init_log(args.logpath)
 
     if args.merge_path:
         comp_dir = args.merge_path
         for safe_file in [os.path.join(os.path.dirname(args.in_dir), file) for file in os.listdir(args.in_dir)]:
-            pyeo.core.stack_sentinel_2_bands(safe_file, comp_dir)
+            pyeo.raster_manipulation.stack_sentinel_2_bands(safe_file, comp_dir)
 
     if args.mask_path:
         for image in [os.path.join(os.path.dirname(comp_dir), file) for file in os.listdir(comp_dir)]:
-            pyeo.core.create_mask_from_model(image, args.mask_path)
+            pyeo.raster_manipulation.create_mask_from_model(image, args.mask_path)
 
-    pyeo.core.composite_directory(comp_dir, args.out_path, generate_date_images=args.generate_dates_image)
+    pyeo.raster_manipulation.composite_directory(comp_dir, args.out_path, generate_date_images=args.generate_dates_image)

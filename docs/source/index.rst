@@ -7,24 +7,22 @@ Welcome to Pyeo's documentation!
 ================================
 
 .. toctree::
-   :maxdepth: 2
    :caption: Contents:
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   index
+   array_utilities
+   classification
+   coordinate_manipulation
+   queries_and_downloads
+   raster_manipulation
+   validation
 
 Introduction
 ============
 
 Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying
 geospatial raster and vector data. It is intended to require a minimum of dependencies - most functions only require
-the basic GDAL/OGR/OSR stack.
+the basic GDAL/OGR/OSR stack and Numpy.
 
 
 Installation
@@ -38,310 +36,93 @@ With Git and Miniconda or Anaconda installed, :code:`cd` to an install location 
    cd pyeo
    conda env create --file environment.yml --name pyeo_env
    conda activate pyeo_env
+   python -m pip install . -vv
+
+In a Python prompt, try  :code:`import pyeo` - you should see no errors.
+
+Quick start
+===========
+Before you start, you will need:
+
+- A linux (or maybe mac, untested) machine
+- A raster of your window area
+- A shapefile of polygons over your training areas with a field containing class labels
+- A raster to classify. This can be the same as your original raster.
+
+  - All rasters and shapefiles should be in the same projection; ideally in the local projection of your satellite data.
+- Git
+- Anaconda/Miniconda
 
 
-Including Pyeo in your own code
-===============================
+Use
+----
+To create a model
 
-Include the following lines at the start of your Python scripts:
+.. code-block:: bash
 
-.. code-block:: python
+   conda activate pyeo_env
+   cd (whereever your data is)
+   extract_signatures your_raster.tif your_shapefile.shp output.csv
+   # You can now explore your signatures as a .csv file, and perform any interim processing
+   create_model_from_signatures output.csv model.pkl
+   classify_image your_raster model.pkl output_image.tif
 
-   import sys
-   sys.path.append("/path/to/pyeo")
-   import pyeo.core as pyeo
+Assumptions and design decisions
+=====================================
 
-You may see a warning about scikit versions; this is normal.
+Rasters
+-------
 
-Function reference
-==================
+When working with raster data (geotiff, .jp2, ect) using Pyeo, the folllowing assumtions have been made:
 
-.. module:: pyeo.core
+- Any function that reads a raster can read from any gdal-readable format
+- All interim rasters are stored internally as a geotiff
+- All internal rasters have a .tif extension in the filename
+- Unless otherwise stated, **all rasters are assumed to be in a projected coordinate system** - i.e. in meters.
+  Functions may fail if passed a raster in lat-long projection
 
-At present, all processing code is located in pyeo/core.py.
+Masks
+-----
+Some Pyeo functions include options for applying masks.
+
+- A raster may have an associated mask
+- A mask is a geotif with an identical name as the raster it's masking with a .msk extension
+   - For example, the mask for my_sat_image.tif is my_sat_image.msk
+- A mask is
+   - a single band raster
+   - of identical height, width and resolution of the related image
+   - contains values 0 or 1
+- A mask is applied by multiplying it with each band of its raster
+   - So any pixel with a 0 in its mask will be removed, and a 1 will be kept
+
+Timestamps
+----------
+
+- Pyeo uses the same timestamp convention as ESA: yyyymmddThhmmss
+   - For example, 1PM on 27th December 2020 would be 20201227T130000
+- All timestamps are in UTC
+
+Models
+------
+
+- All models are serialised and deserialised using joblib.dump or joblib.load
+
+
 A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.
 
-Conven
+Applications
+============
 
+.. automodule:: pyeo.apps.change_detection.image_comparison
 
-File structure and logging
---------------------------
+.. automodule:: pyeo.apps.change_detection.rolling_composite_s2_change_detection
 
- .. autofunction:: init_log
+.. automodule:: pyeo.apps.change_detection.simple_s2_change_detection
 
- .. autofunction:: create_file_structure
+.. automodule:: pyeo.apps.masking.filter_by_class_map
 
- .. autofunction:: read_aoi
- 
- .. autofunction:: clean_aoi
- 
- .. autofunction:: get_preceding_image_path
- 
- .. autofunction:: get_pyeo_timestamp
- 
- .. autofunction:: is_tif
- 
- .. autofunction:: load_api_key
- 
- .. autofunction:: read_geojson
+.. automodule:: pyeo.apps.model_creation.create_model_from_region
 
 
-Sentinel 2 data acquisition
----------------------------
-
- .. autofunction:: check_for_new_s2_data
-
- .. autofunction:: download_new_s2_data
-
- .. autofunction:: sent2_query (from geospatial_learn)
- 
- .. autofunction:: check_for_s2_data_by_date
-
-
-Planet data acquisition
------------------------
-
- .. autofunction:: download_planet_image_on_day
-
- .. autofunction:: planet_query
-
- .. autofunction:: build_search_request
-
- .. autofunction:: do_quick_search
-
- .. autofunction:: do_saved_search
-
- .. autofunction:: activate_and_dl_planet_item
- 
- .. autofunction:: get_planet_product_path
-
- 
-
-
-Data source download functions
-------------------------------
-
- .. autofunction:: download_blob_from_google
- 
- .. autofunction:: download_from_google_cloud
- 
- .. autofunction:: download_from_scihub
-
-
-Sentinel 2 preprocessing
-------------------------
-
- .. autofunction:: apply_sen2cor
- 
- .. autofunction:: apply_fmask
-
- .. autofunction:: atmospheric_correction
-
- .. autofunction:: sort_by_timestamp
-
- .. autofunction:: get_image_acquisition_time
-
- .. autofunction:: open_dataset_from_safe
-
- .. autofunction:: preprocess_sen2_images
-
- .. autofunction:: stack_sentinel_2_bands
-
- .. autofunction:: get_sen_2_image_timestamp
- 
- .. autofunction:: check_for_invalid_l1_data
- 
- .. autofunction:: check_for_invalid_l2_data
- 
- .. autofunction:: clean_l2_data
- 
- .. autofunction:: clean_l2_dir
- 
- .. autofunction:: get_l1_safe_file
- 
- .. autofunction:: get_l2_safe_file
- 
- .. autofunction:: get_sen_2_granule_id
- 
- .. autofunction:: get_sen_2_image_orbit
- 
- .. autofunction:: get_sen_2_image_tile
- 
- .. autofunction:: get_sen_2_tiles
-
-
-Raster processing
------------------
-
- .. autofunction:: create_matching_dataset
-
- .. autofunction:: create_new_stacks
-
- .. autofunction:: stack_old_and_new_images
-
- .. autofunction:: stack_images
- 
- .. autofunction:: stack_image_with_composite
-
- .. autofunction:: get_raster_bounds
- 
- .. autofunction:: get_raster_size
-
- .. autofunction:: resample_image_in_place
-
- .. autofunction:: composite_images_with_mask
-
- .. autofunction:: composite_directory
- 
- .. autofunction:: filter_by_class_map
- 
- .. autofunction:: mosaic_images
-
- .. autofunction:: raster_reclass_binary
- 
- .. autofunction:: raster_sum
- 
- .. autofunction:: raster_to_array
- 
- .. autofunction:: reproject_directory
- 
- .. autofunction:: reproject_image
- 
- .. autofunction:: reproject_geotransform 
- 
- 
-
-Geometry processing
--------------------
-
- .. autofunction:: get_combined_polygon
-
- .. autofunction:: multiple_union
-
- .. autofunction:: multiple_intersection
-
- .. autofunction:: write_polygon
-
- .. autofunction:: check_overlap
-
- .. autofunction:: get_aoi_bounds
-
- .. autofunction:: get_aoi_size
-
- .. autofunction:: get_poly_size
- 
- .. autofunction:: get_poly_bounding_rect
-
-
-Raster/Geometry interactions
-----------------------------
-
- .. autofunction:: pixel_bounds_from_polygon
-
- .. autofunction:: point_to_pixel_coordinates
-
- .. autofunction:: stack_and_trim_images
-
- .. autofunction:: clip_raster
-
- .. autofunction:: get_aoi_intersection
-
- .. autofunction:: get_raster_intersection
-
- .. autofunction:: get_poly_intersection
-
- .. autofunction:: create_new_image_from_polygon
-
- .. autofunction:: get_local_top_left
- 
- .. autofunction:: align_bounds_to_whole_number
- 
- .. autofunction:: floor_to_resolution
-
-
-Masking functions
------------------
-
- .. autofunction:: create_mask_from_model
-
- .. autofunction:: create_mask_from_confidence_layer
- 
- .. autofunction:: create_mask_from_class_map
- 
- .. autofunction:: create_mask_from_fmask
- 
- .. autofunction:: create_mask_from_sen2cor_and_fmask
-
- .. autofunction:: get_mask_path
-
- .. autofunction:: combine_masks
- 
- .. autofunction:: get_masked_array
-
- .. autofunction:: apply_array_image_mask
- 
- .. autofunction:: buffer_mask_in_place
- 
- .. autofunction:: project_array
-
-
-Machine learning functions
---------------------------
-
- .. autofunction:: classify_image
- 
- .. autofunction:: classify_directory
- 
- .. autofunction:: change_from_composite
-
- .. autofunction:: reshape_raster_for_ml
-
- .. autofunction:: reshape_ml_out_to_raster
-
- .. autofunction:: reshape_prob_out_to_raster
-
- .. autofunction:: create_trained_model
-
- .. autofunction:: create_model_for_region
- 
- .. autofunction:: create_model_from_signatures
-
- .. autofunction:: get_training_data
- 
- .. autofunction:: flatten_probability_image
- 
- .. autofunction:: autochunk
-
-
-Exception objects
------------------
-
- .. autoclass:: ForestSentinelException
-
- .. autoclass:: StackImageException
-
- .. autoclass:: CreateNewStacksException
-
- .. autoclass:: TooManyRequests
-
-
-Example scripts
-===============
-
-simple_s2_change_detection.py
------------------------------
- .. automodule:: pyeo.apps.change_detection.simple_s2_change_detection
-
-create_model_from_shapefile_and_raster.py
-------------------------------
- .. automodule:: pyeo.apps.model_creation.create_model_from_shapefile_and_raster
-
-composite_directory.py
-----------------------
- .. automodule:: pyeo.apps.subprocessing.composite_directory
-
-extract_signatures.py
----------------------
- .. automodule:: pyeo.apps.subprocessing.extract_signatures

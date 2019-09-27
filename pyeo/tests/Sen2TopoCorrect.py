@@ -77,9 +77,10 @@ def leap(dt):
     else:
         a= int(365)
     return a
+
 def cos(x):
     cos= np.cos(np.deg2rad(x))
-    return  cos
+    return cos
 def sin(x):
     sin=np.sin(np.deg2rad(x))
     return sin
@@ -235,6 +236,7 @@ azimuth_angle=180 - theta3 #degrees
 
 ASPECT = readDem[0]
 SLOPE = readDem[1]
+
 # IC calculation
 delta=azimuth_angle - ASPECT
 IC=(cos(zenit_angle)* cos (SLOPE)) + (sin(zenit_angle) * sin (SLOPE) * cos(delta))#radians
@@ -256,11 +258,11 @@ cos_zenith= cos(zenit_angle)
 temp={}
 IC_final={}
 for y in s2_image_dict:
-        val2=s2_image_dict[y]
-        temp[y]=val2[a_true,b_true].ravel()
-        IC_true=IC[a_true,b_true].ravel()
-        slope=linregress(IC_true, temp[y])
-        IC_final[y]= s2_image_dict[y] - (slope[0] * (IC - cos_zenith))
+    val2=s2_image_dict[y]
+    temp[y]=val2[a_true,b_true].ravel()
+    IC_true=IC[a_true,b_true].ravel()
+    slope=linregress(IC_true, temp[y])
+    IC_final[y]= s2_image_dict[y] - (slope[0] * (IC - cos_zenith))
 print ("Exporting to GeoTIFF...")
 #export auto
 for item in IC_final:

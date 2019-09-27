@@ -1,0 +1,614 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pyeo.coordinate_manipulation &mdash; Pyeo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="pyeo.queries_and_downloads" href="queries_and_downloads.html" />
+    <link rel="prev" title="pyeo.classification" href="classification.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Pyeo
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pyeo.coordinate_manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.coordinate_manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Pyeo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>pyeo.coordinate_manipulation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/coordinate_manipulation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-pyeo.coordinate_manipulation"></span><div class="section" id="pyeo-coordinate-manipulation">
+<h1>pyeo.coordinate_manipulation<a class="headerlink" href="#pyeo-coordinate-manipulation" title="Permalink to this headline">¶</a></h1>
+<p>Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.</p>
+<p>Unless otherwise stated, all functions assume that any geometry, rasters and shapefiles are using the same projection.
+If they are not, there may be unexpected errors.</p>
+<p>Some of these functions call for an AOI shapefile. This is a single-layer shapefile containing only the geometry
+of one polygon.</p>
+<p>These functions all work on the objects provided by the ogr and gdal libraries. If you wish to use them in your own
+processing, a gdal.Image object is usually the output from gdal.Open() and an ogr.Geometry object can be obtained from
+a well-known text (wkt) string using the  snipped <a href="#id1"><span class="problematic" id="id2">`</span></a>object=ogr.ImportFromWkt(“mywkt”). For more information on wkt, see
+<a class="reference external" href="https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry">https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry</a> and the “QuickWKT” QGIS plugin.</p>
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.align_bounds_to_whole_number">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">align_bounds_to_whole_number</code><span class="sig-paren">(</span><em class="sig-param">bounding_box</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.align_bounds_to_whole_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new bounding box with it’s height and width rounded to the nearest whole number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>bounding_box</strong> – An ogr.Geometry object containing a raster’s bounding box as a polygon.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>An ogr.Geometry object containing the aligned bounding box.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.check_overlap">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">check_overlap</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.check_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>A test to see if a raster and an AOI overlap.
+:param raster: A gdal.Image object
+:param aoi: A ogr.Dataset object containing a single polygon</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>True if the raster and the polygon overlap, oherwise False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.floor_to_resolution">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">floor_to_resolution</code><span class="sig-paren">(</span><em class="sig-param">input</em>, <em class="sig-param">resolution</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.floor_to_resolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns input rounded DOWN to the nearest multiple of resolution. Used to prevent float errors on pixel boarders.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> – The value to be rounded</p></li>
+<li><p><strong>resolution</strong> – The resolution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>The largest value between input and 0 that is divisible by resolution.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Uses the following formula: input-(input%resolution)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_aoi_bounds">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_aoi_bounds</code><span class="sig-paren">(</span><em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a wkbPolygon geometry with the bounding rectangle of a single-polygon shapefile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>aoi</strong> – An ogr.Dataset object containing a single layer.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_aoi_intersection">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_aoi_intersection</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_intersection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a wkbPolygon geometry with the intersection of a raster and a shpefile containing an area of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster</strong> – A raster containing image data</p></li>
+<li><p><strong>aoi</strong> – A shapefile with a single layer and feature</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>a ogr.Geometry object containing a single polygon with the area of intersection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_aoi_size">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_aoi_size</code><span class="sig-paren">(</span><em class="sig-param">aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_aoi_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the width and height of the bounding box of an aoi.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>aoi</strong> – A shapefile containing a single layer with a single polygon</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A tuple of (width, height)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_combined_polygon">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_combined_polygon</code><span class="sig-paren">(</span><em class="sig-param">rasters</em>, <em class="sig-param">geometry_mode='intersect'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_combined_polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a polygon containing the combined boundary of each raster in rasters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rasters</strong> – A list of raster objects opened with gdal.Open()</p></li>
+<li><p><strong>geometry_mode</strong> – If ‘intersect’, returns the boundary of the area that all rasters cover.
+If ‘union’, returns the boundary of the area that any raster covers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ogr.Geometry() containing a polygon.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_local_top_left">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_local_top_left</code><span class="sig-paren">(</span><em class="sig-param">raster1</em>, <em class="sig-param">raster2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_local_top_left" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the top-left corner of raster1 in the array of raster 2.
+Assumes both rasters are in the same projection and units.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster1</strong> – The raster to get the top-left corner of.</p></li>
+<li><p><strong>raster2</strong> – The raster that raster1’s top-left corner is over.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A tuple of (x_pixel, y_pixel), containing the indicies of the point in the raster.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_poly_bounding_rect">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_poly_bounding_rect</code><span class="sig-paren">(</span><em class="sig-param">poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_bounding_rect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a polygon of the bounding rectangle of an input polygon.
+:param poly: An ogr.Geometry object containing a polygon</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>An ogr.Geometry object with a four-point polygon representing the bounding rectangle.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_poly_intersection">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_poly_intersection</code><span class="sig-paren">(</span><em class="sig-param">poly1</em>, <em class="sig-param">poly2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_intersection" title="Permalink to this definition">¶</a></dt>
+<dd><p>A functional wrapper for ogr.Geometry.Intersection()</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_poly_size">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_poly_size</code><span class="sig-paren">(</span><em class="sig-param">poly</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_poly_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the width and height of a bounding box of a polygon</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>poly</strong> – A ogr.Geometry object containing the polygon.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A tuple of (width, height)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_raster_bounds">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_raster_bounds</code><span class="sig-paren">(</span><em class="sig-param">raster</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a wkbPolygon geometry with the bounding rectangle of a raster calculated from its geotransform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>raster</strong> – A gdal.Image object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>An ogr.Geometry object containing a single wkbPolygon with four points defining the bounding rectangle of the</em></p></li>
+<li><p><em>raster.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Bounding rectangle is obtained from raster.GetGeoTransform(), with the top left corners rounded
+down to the nearest multiple of of the resolution of the geotransform. This is to avoid rounding errors in
+reprojected geotransformations.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_raster_intersection">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_raster_intersection</code><span class="sig-paren">(</span><em class="sig-param">raster1</em>, <em class="sig-param">raster2</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_intersection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a wkbPolygon geometry with the intersection of two raster bounding boxes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>raster2</strong> (<em>raster1</em><em>,</em>) – A gdal.Image() object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>a ogr.Geometry object containing a single polygon</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.get_raster_size">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">get_raster_size</code><span class="sig-paren">(</span><em class="sig-param">raster</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.get_raster_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the width and height of a raster, in that raster’s units.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>raster</strong> – A gdal.Image object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A tuple containing (width, height)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.multiple_intersection">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">multiple_intersection</code><span class="sig-paren">(</span><em class="sig-param">polygons</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.multiple_intersection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of polygons and returns a geometry representing the intersection of all of them</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>polygons</strong> – A list of ogr.Geometry objects, each containing a single polygon.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>An ogr.Geometry object containing a single polygon</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.multiple_union">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">multiple_union</code><span class="sig-paren">(</span><em class="sig-param">polygons</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.multiple_union" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of polygons and returns a polygon of the union of their perimeter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>polygons</strong> – A list of ogr.Geometry objects, each containing a single polygon.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>An ogr.Geometry object containing a single polygon</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.pixel_bounds_from_polygon">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">pixel_bounds_from_polygon</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">polygon</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.pixel_bounds_from_polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the bounding box of the overlap between a raster and a polygon in the raster</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster</strong> – A gdal raster object</p></li>
+<li><p><strong>polygon</strong> – A ogr.Geometry object containing a single polygon</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A tuple (x_min, x_max, y_min, y_max)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.pixel_to_point_coordinates">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">pixel_to_point_coordinates</code><span class="sig-paren">(</span><em class="sig-param">pixel</em>, <em class="sig-param">GT</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.pixel_to_point_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a pixel and a geotransformation, returns the picaltion of that pixel’s top left corner in the projection
+used by the geotransform.
+NOTE: At present, this takes input in the form of y,x! This is opposite to the output of point_to_pixel_coordinates!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pixel</strong> – A tuple (y, x) of the coordinates of the pixel</p></li>
+<li><p><strong>GT</strong> – A six-element numpy array containing a geotransform</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A tuple containing the geographic coordinates of the top-left corner of the pixel.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.point_to_pixel_coordinates">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">point_to_pixel_coordinates</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">point</em>, <em class="sig-param">oob_fail=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.point_to_pixel_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Returns a tuple (x_pixel, y_pixel) in a georaster raster corresponding to the geographic point in a projection.</dt><dd><p>Assumes raster is north-up non rotated.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster</strong> – A gdal raster object</p></li>
+<li><p><strong>point</strong> – <dl class="simple">
+<dt>One of:</dt><dd><p>A well-known text string of a single point
+An iterable of the form (x,y)
+An ogr.Geometry object containing a single point</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A tuple of (x_pixel, y_pixel), containing the indicies of the point in the raster.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The equation is a rearrangement of the section on affinine geotransform in <a class="reference external" href="http://www.gdal.org/gdal_datamodel.html">http://www.gdal.org/gdal_datamodel.html</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.reproject_geotransform">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">reproject_geotransform</code><span class="sig-paren">(</span><em class="sig-param">in_gt</em>, <em class="sig-param">old_proj_wkt</em>, <em class="sig-param">new_proj_wkt</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.reproject_geotransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reprojects a geotransform from the old projection to a new projection. See
+[<a class="reference external" href="https://gdal.org/user/raster_data_model.html">https://gdal.org/user/raster_data_model.html</a>]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_gt</strong> – A six-element numpy array, usually an output from gdal_image.GetGeoTransform()</p></li>
+<li><p><strong>old_proj_wkt</strong> – The projection of the old geotransform in well-known text.</p></li>
+<li><p><strong>new_proj_wkt</strong> – The projection of the new geotrasform in well-known text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The geotransform in the new projection</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>out_gt</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.write_geometry">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">write_geometry</code><span class="sig-paren">(</span><em class="sig-param">geometry</em>, <em class="sig-param">out_path</em>, <em class="sig-param">srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.write_geometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the geometry in an ogr.Geometry object to a shapefile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>geometry</strong> – An ogr.Geometry object</p></li>
+<li><p><strong>out_path</strong> – The location to save the output shapefile</p></li>
+<li><p><strong>srs_id</strong> – The projection of the output shapefile. Can be an EPSG number or a WKT string.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The shapefile consists of one layer named ‘geometry’.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="queries_and_downloads.html" class="btn btn-neutral float-right" title="pyeo.queries_and_downloads" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="classification.html" class="btn btn-neutral float-left" title="pyeo.classification" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, John Roberts
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

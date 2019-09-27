@@ -1353,13 +1353,12 @@ def create_mask_from_fmask(in_l1_dir, out_path):
         resample_image_in_place(out_path, 10)
 
 
-def apply_fmask(in_safe_dir, out_file, fmask_command="/home/ubuntu/anaconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"):
+def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"):
     """Calls fmask to create a new mask for L1 data"""
     # For reasons known only to the spirits, calling subprocess.run from within this function on a HPC cause the PATH
     # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
     if "torque" in os.getenv("PATH"):  # Are we on a HPC? If so, give explicit path to fmask
-        fmask_command = '/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py'
-        fmask_command = '/home/ubuntu/anaconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py'
+        fmask_command = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"
     log = logging.getLogger(__name__)
     args = [
         fmask_command,

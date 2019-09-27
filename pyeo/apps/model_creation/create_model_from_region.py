@@ -1,6 +1,5 @@
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-import pyeo.core as pyeo
+import pyeo.classification
+import pyeo.filesystem_utilities
 import configparser
 import argparse
 
@@ -18,12 +17,12 @@ if __name__ == "__main__":
 
     conf = configparser.ConfigParser()
 
-    log = pyeo.init_log("model.log")
+    log = pyeo.filesystem_utilities.init_log("model.log")
 
     log.info("***MODEL CREATION START***")
 
-    pyeo.create_model_for_region(args.region_path, args.out_path,
-                                 args.training_class.rsplit('.')[0]+"_scores.txt",
-                                 args.training_class)
+    pyeo.classification.create_model_for_region(args.region_path, args.out_path,
+                                                args.training_class.rsplit('.')[0] +"_scores.txt",
+                                                args.training_class)
 
     log.info("***MODEL CREATION END***")

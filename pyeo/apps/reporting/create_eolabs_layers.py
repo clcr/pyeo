@@ -1,10 +1,9 @@
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
-import pyeo.core as pyeo
+import os
+
+import pyeo.raster_manipulation
 import csv
 import gdal
 import numpy as np
-import boto3
 import argparse
 
 # Class, R, G, B, A, label
@@ -25,14 +24,14 @@ DEFAULT_KEY = [
 def create_report(class_path, certainty_path, out_dir, class_color_key=DEFAULT_KEY):
     if class_color_key != DEFAULT_KEY:
         class_color_key = load_color_pallet(class_color_key)
-    pyeo.flatten_probability_image(certainty_path, os.path.join(out_dir, "prob.tif"))
+    pyeo.raster_manipulation.flatten_probability_image(certainty_path, os.path.join(out_dir, "prob.tif"))
     create_display_layer(class_path, os.path.join(out_dir, "display.tif"), class_color_key)
 
 
 def create_display_layer(class_path, out_path, class_color_key):
     srs = """PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]"""
     class_raster = gdal.Open(class_path)
-    display_raster = pyeo.create_matching_dataset(class_raster, out_path, bands=3, datatype=gdal.GDT_Byte)
+    display_raster = pyeo.raster_manipulation.create_matching_dataset(class_raster, out_path, bands=3, datatype=gdal.GDT_Byte)
     display_array = display_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
 
     class_array = class_raster.GetVirtualMemArray()

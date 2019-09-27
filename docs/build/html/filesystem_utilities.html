@@ -1,0 +1,352 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pyeo.filesystem_utilities &mdash; Pyeo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Pyeo
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Pyeo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>pyeo.filesystem_utilities</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/filesystem_utilities.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-pyeo.filesystem_utilities"></span><div class="section" id="pyeo-filesystem-utilities">
+<h1>pyeo.filesystem_utilities<a class="headerlink" href="#pyeo-filesystem-utilities" title="Permalink to this headline">¶</a></h1>
+<p>Contains functions for sorting, creating and comparing images as part of the filesystem. Includes any function
+that works on a generic pyeo timestamp and sentinel 2 functions.</p>
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.check_for_invalid_l1_data">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l1_data</code><span class="sig-paren">(</span><em class="sig-param">l1_SAFE_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l1_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+an invalid SAFE directory; this will prevent disconnected files from being deleted.
+Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.check_for_invalid_l2_data">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l2_data</code><span class="sig-paren">(</span><em class="sig-param">l2_SAFE_file</em>, <em class="sig-param">resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
+an invalid SAFE directory; this will prevent disconnected files from being deleted.
+Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.clean_aoi">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_aoi</code><span class="sig-paren">(</span><em class="sig-param">aoi_dir</em>, <em class="sig-param">images_to_keep=4</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_aoi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
+composite directories. Will not affect the output folder.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.clean_l2_data">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_data</code><span class="sig-paren">(</span><em class="sig-param">l2_SAFE_file</em>, <em class="sig-param">resolution='10m'</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes any directories that don’t have band 2, 3, 4 or 8 in the specified resolution folder
+If warning=True, prompts first.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.clean_l2_dir">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_dir</code><span class="sig-paren">(</span><em class="sig-param">l2_dir</em>, <em class="sig-param">resolution='10m'</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls clean_l2_data on every SAFE file in l2_dir</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.create_file_structure">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">create_file_structure</code><span class="sig-paren">(</span><em class="sig-param">root</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.create_file_structure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the file structure if it doesn’t exist already</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_change_detection_dates">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_change_detection_dates</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_change_detection_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the source filepath and extracts the before_date and after_date dates from in, in that order.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_image_acquisition_time">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_image_acquisition_time</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_image_acquisition_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_l1_safe_file">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l1_safe_file</code><span class="sig-paren">(</span><em class="sig-param">image_name</em>, <em class="sig-param">l1_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l1_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+a filename</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_l2_safe_file">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l2_safe_file</code><span class="sig-paren">(</span><em class="sig-param">image_name</em>, <em class="sig-param">l2_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l2_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
+a filename</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_mask_path">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_mask_path</code><span class="sig-paren">(</span><em class="sig-param">image_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_mask_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A gdal mask is an image with the same name as the image it’s masking, but with a .msk extension</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_preceding_image_path">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_preceding_image_path</code><span class="sig-paren">(</span><em class="sig-param">target_image_name</em>, <em class="sig-param">search_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_preceding_image_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the path to the image in search_dir preceding the image called image_name</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_pyeo_timestamp">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_pyeo_timestamp</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_pyeo_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all timestamps in a Pyeo image.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_related_images">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_related_images</code><span class="sig-paren">(</span><em class="sig-param">target_image_name</em>, <em class="sig-param">project_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_related_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the paths of all images related to that one in a project, by timestamp</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_baseline">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_baseline</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the baseline string of a s2 image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_granule_id">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_granule_id</code><span class="sig-paren">(</span><em class="sig-param">safe_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_granule_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the unique ID of a Sentinel 2 granule from a SAFE directory path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_image_orbit">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_orbit</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_orbit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the relative orbit number of a Sentinel 2 image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_image_tile">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_tile</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tile number of a Sentinel 2 image or path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_image_timestamp">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_timestamp</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the timestamps part of a Sentinel 2 image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.get_sen_2_tiles">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_tiles</code><span class="sig-paren">(</span><em class="sig-param">image_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_tiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets the list of tiles present in the directory</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.init_log">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">init_log</code><span class="sig-paren">(</span><em class="sig-param">log_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.init_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up the log format and log handlers; one for stdout and to write to a file, ‘log_path’.
+Returns the log for the calling script</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.is_tif">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">is_tif</code><span class="sig-paren">(</span><em class="sig-param">image_string</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.is_tif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if image ends with .tif</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.filesystem_utilities.sort_by_timestamp">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">sort_by_timestamp</code><span class="sig-paren">(</span><em class="sig-param">strings</em>, <em class="sig-param">recent_first=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
+guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, John Roberts
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

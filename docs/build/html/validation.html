@@ -1,0 +1,337 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pyeo.validation &mdash; Pyeo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="pyeo.queries_and_downloads" href="queries_and_downloads.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Pyeo
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pyeo.validaion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.validaion</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Pyeo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>pyeo.validation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/validation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-pyeo.validation"></span><div class="section" id="pyeo-validaion">
+<h1>pyeo.validaion<a class="headerlink" href="#pyeo-validaion" title="Permalink to this headline">¶</a></h1>
+<p>A small set of functions for producing validation points from maps</p>
+<dl class="function">
+<dt id="pyeo.validation.allocate_category_sample_sizes">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">allocate_category_sample_sizes</code><span class="sig-paren">(</span><em class="sig-param">total_sample_size</em>, <em class="sig-param">user_accuracy</em>, <em class="sig-param">class_total_sizes</em>, <em class="sig-param">variance_tolerance</em>, <em class="sig-param">allocate_type='olofsson'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.allocate_category_sample_sizes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocates a number of pixels to sample per class that will fulfil the parameters given</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>total_sample_size</strong> (<em>The total number of validation points requested</em><em> (</em><em>from cal_total_sample_size</em><em>)</em>) – </p></li>
+<li><p><strong>user_accuracy</strong> (<em>Dictionary of estimated user accuracies for classes in map</em><em> (</em><em>between 0 and 1</em><em>)</em>) – </p></li>
+<li><p><strong>class_total_sizes</strong> (<em>Dictionary of total pixels for each class in user_accuracy</em>) – </p></li>
+<li><p><strong>variance_tolerance</strong> (<em>Acceptable vairance between the sample accuary and the data accuracy with a certain sample size</em>) – </p></li>
+<li><p><strong>allocate_type</strong> (<em>The allocation strategy to be used. Can be 'equal'</em><em>, </em><em>'prop'</em><em> or </em><em>'olofsson'.</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A dictionary of classes and no. pixels per class.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.build_class_dict">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">build_class_dict</code><span class="sig-paren">(</span><em class="sig-param">class_array</em>, <em class="sig-param">no_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.build_class_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dict of coordinates of the following shape:
+[class, coord].
+WARNING: This will take up a LOT of memory!</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.cal_total_sample_size">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">cal_total_sample_size</code><span class="sig-paren">(</span><em class="sig-param">desired_standard_error</em>, <em class="sig-param">user_accuracy</em>, <em class="sig-param">total_class_sizes</em>, <em class="sig-param">type='simple'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.cal_total_sample_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the number of sample points for a map to get a specified standard error.
+:param desired_standard_error:
+:type desired_standard_error: The desired standard error (between 0 and 1)
+:param user_accuracy:
+:type user_accuracy: A dictionary of user accuracies from apriori knowledge
+:param total_class_sizes:
+:type total_class_sizes: The total number of pixels for each class
+:param type:
+:type type: whether to use the simple approximation or the full expession from Olofsson eq 13</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>The total number of sample points to achieve the specified error</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.calc_minimum_n">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">calc_minimum_n</code><span class="sig-paren">(</span><em class="sig-param">expected_accuracy</em>, <em class="sig-param">variance_tolerance</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.calc_minimum_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the rminimum number of points required to achieve the specified accuracy
+:param expected_accuracy:
+:type expected_accuracy: Between 0 and 1
+:param variance_tolerance:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.count_pixel_classes">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">count_pixel_classes</code><span class="sig-paren">(</span><em class="sig-param">map_path</em>, <em class="sig-param">no_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.count_pixel_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Counts pixels in a map. Returns a dictionary of pixels.
+:param map_path:
+:type map_path: Path to the map to count
+:param no_data:
+:type no_data: A value to ignore</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>A dictionary of class</strong></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>count</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.part_fixed_value_sampling">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">part_fixed_value_sampling</code><span class="sig-paren">(</span><em class="sig-param">pinned_sample_numbers</em>, <em class="sig-param">class_total_sizes</em>, <em class="sig-param">total_sample_size</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.part_fixed_value_sampling" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pinned_sample_numbers</strong> – </p></li>
+<li><p><strong>class_total_sizes</strong> – </p></li>
+<li><p><strong>total_sample_size</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.produce_stratified_validation_points">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">produce_stratified_validation_points</code><span class="sig-paren">(</span><em class="sig-param">map_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">class_sample_counts</em>, <em class="sig-param">no_data=None</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.produce_stratified_validation_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a set of stratified validation points from map_path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.save_point_list_to_shapefile">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">save_point_list_to_shapefile</code><span class="sig-paren">(</span><em class="sig-param">class_sample_point_dict</em>, <em class="sig-param">out_path</em>, <em class="sig-param">geotransform</em>, <em class="sig-param">projection_wkt</em>, <em class="sig-param">produce_csv=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.save_point_list_to_shapefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a list of points to a shapefile at out_path. Need the gt and projection of the raster.
+GT is needed to move each point to the centre of the pixel. Can also produce a .csv file for CoolEarth</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.save_validation_maifest">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">save_validation_maifest</code><span class="sig-paren">(</span><em class="sig-param">out_path</em>, <em class="sig-param">class_counts</em>, <em class="sig-param">sample_size</em>, <em class="sig-param">class_sample_counts</em>, <em class="sig-param">target_standard_error</em>, <em class="sig-param">user_accuracies</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.save_validation_maifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a json file containing the parameters used to produce this validation set</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.validation.stratified_random_sample">
+<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">stratified_random_sample</code><span class="sig-paren">(</span><em class="sig-param">map_path</em>, <em class="sig-param">class_sample_count</em>, <em class="sig-param">no_data=None</em>, <em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.stratified_random_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces a stratified list of pixel coordinates. WARNING: high mem!</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="queries_and_downloads.html" class="btn btn-neutral float-left" title="pyeo.queries_and_downloads" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, John Roberts
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
