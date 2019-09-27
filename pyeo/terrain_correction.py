@@ -170,11 +170,6 @@ def calculate_illumination_condition_raster():
 
 
 def calculate_reflectance():
-
     reflectance_pixels = band.ravel()
     ic_pixels = ic_image.ravel()
     slope = linregress(ic_pixels, reflectance_pixels)
-
-
-
-
