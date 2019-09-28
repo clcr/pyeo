@@ -831,17 +831,22 @@ def apply_band_function(in_path, function, bands, out_path, datatype = gdal.GDT_
     the bands array."""
     raster = gdal.Open(in_path)
     out_raster = create_matching_dataset(raster, out_path=out_path, datatype=datatype)
-    array = raster_GetVirtualMemArray(raster)
+    array = raster.GetVirtualMemArray(raster)
     out_array = out_raster.GetVirtualMemArray()
     band_views = [raster[band, ...] for band in bands]
     out_array[...] = function(*band_views)
     out_array = None
-    [view= None for view in band_views]
+    for view in band_views:
+        view = None
     raster = None
 
 
-def ndvi_function(r, i)
+def ndvi_function(r, i):
     return (r-i)/(r+i)
+
+
+def example_band_function:
+    in_path = "merged_array"
 
 
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
