@@ -289,4 +289,4 @@ def test_band_maths():
         pass
 
     test_file = "test_data/bands.tif"
-    pyeo.raster_manipulation.apply_band_function()
+    pyeo.raster_manipulation.apply_band_function(pyeo.raster_manipulation.ndvi_func, [3,4])
