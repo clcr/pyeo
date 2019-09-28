@@ -279,3 +279,14 @@ def test_s2_band_stacking():
     pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, weird_bands,
                                                     bands=["B02", "B08", "SCL", "B8A", "B11", "B12"],
                                                     out_resolution=60)
+
+
+def test_band_maths():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/ndvi.tif")
+    except FileNotFoundError:
+        pass
+
+    test_file = "test_data/bands.tif"
+    pyeo.raster_manipulation.apply_band_function(pyeo.raster_manipulation.ndvi_func, [3,4])
