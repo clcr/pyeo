@@ -269,7 +269,7 @@ def test_s2_band_stacking():
     except FileNotFoundError:
         pass
     os.mkdir("test_outputs/band_stacking")
-    test_safe_file = "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE"
+    test_safe_file = "test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE"
     # Stacking only the default 10m bands
     default_out = "test_outputs/band_stacking/default.tif"
     pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, default_out)
@@ -289,4 +289,9 @@ def test_band_maths():
         pass
 
     test_file = "test_data/bands.tif"
-    pyeo.raster_manipulation.apply_band_function(pyeo.raster_manipulation.ndvi_func, [3,4])
+    test_outputs = "test_outputs/ndvi.tif"
+    pyeo.raster_manipulation.apply_band_function(test_file,
+                                                 pyeo.raster_manipulation.ndvi_function,
+                                                 [2, 3],
+                                                 test_outputs,
+                                                 out_datatype=gdal.GDT_Float32)

@@ -825,28 +825,24 @@ def calc_ndvi(raster_path, output_path):
     out_raster = None
 
 
-def apply_band_function(in_path, function, bands, out_path, datatype = gdal.GDT_Int32):
+def apply_band_function(in_path, function, bands, out_path, out_datatype = gdal.GDT_Int32):
     """Applys an arbitrary band mathemtics function to an image at in_path and saves the result at out_map.
-    Function should be a function ofblect of the form f(b1, b2, b3...) where b... corresponds to band indicies in
-    the bands array."""
+    Function should be a function ofblect of the form f(band_input_A, band_input_B, ...)"""
     raster = gdal.Open(in_path)
-    out_raster = create_matching_dataset(raster, out_path=out_path, datatype=datatype)
-    array = raster.GetVirtualMemArray(raster)
-    out_array = out_raster.GetVirtualMemArray()
-    band_views = [raster[band, ...] for band in bands]
+    out_raster = create_matching_dataset(raster, out_path=out_path, datatype=out_datatype)
+    array = raster.GetVirtualMemArray()
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    band_views = [array[band, ...] for band in bands]
     out_array[...] = function(*band_views)
     out_array = None
     for view in band_views:
         view = None
     raster = None
+    out_raster = None
 
 
 def ndvi_function(r, i):
     return (r-i)/(r+i)
-
-
-def example_band_function:
-    in_path = "merged_array"
 
 
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
@@ -1026,6 +1022,12 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04",
                 new_band_paths.append(band_path)
 
         stack_images(new_band_paths, out_image_path, geometry_mode="intersect")
+
+    # Saving band labels in images
+    new_raster = gdal.Open(out_image_path)
+    for band_index, band_label in enumerate(bands):
+        band = new_raster.GetRasterBand(band_index+1)
+        band.SetDescription(band_label)
 
     return out_image_path
 
