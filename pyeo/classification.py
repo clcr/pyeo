@@ -480,7 +480,7 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
         score_file.write(str(scores))
 
 
-def create_model_from_signatures(sig_csv_path, model_out):
+def create_model_from_signatures(sig_csv_path, model_out, datatype=np.int32):
     """
     Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
     and pickle a scikit-learn model.
@@ -491,6 +491,8 @@ def create_model_from_signatures(sig_csv_path, model_out):
         The path to the signatures file
     model_out
         The location to save the pickled model to.
+    datatype
+        The datatype to read the csv as. Defaults to int32.
 
     Notes
     -----
@@ -500,7 +502,7 @@ def create_model_from_signatures(sig_csv_path, model_out):
     """
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
-    data = np.loadtxt(sig_csv_path, delimiter=",").T
+    data = np.genfromtxt(sig_csv_path, delimiter=",", dtype=datatype).T
     model.fit(data[1:, :].T, data[0, :])
     joblib.dump(model, model_out)
 
