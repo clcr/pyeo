@@ -1066,10 +1066,10 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     # will take some work to make sure they all finish before the program moves on.
     # added sen2cor_path by hb91
     out_dir = os.path.dirname(image_path)
-    log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--output_dir', image_path]))
+    log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path)]))
     now_time = datetime.datetime.now()   # I can't think of a better way of geting the new outpath from sen2cor
     timestamp = now_time.strftime(r"%Y%m%dT%H%M%S")
-    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, 'output_dir', image_path],
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path)],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
     while True:
@@ -1158,7 +1158,7 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
     for image in images:
         log.info("Atmospheric correction of {}".format(image))
         image_path = os.path.join(in_directory, image)
-        image_timestamp = get_sen_2_image_timestamp(image)
+        image_timestamp = datetime.datetime.now().strftime(r"%Y%m%dT%H%M%S")
         out_name = build_sen2cor_output_path(image, image_timestamp, get_sen2cor_version(sen2cor_path))
         out_path = os.path.join(out_directory, out_name)
         out_glob = out_path.rpartition("_")[0] + "*"
