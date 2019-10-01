@@ -279,3 +279,17 @@ def test_s2_band_stacking():
     pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, weird_bands,
                                                     bands=["B02", "B08", "SCL", "B8A", "B11", "B12"],
                                                     out_resolution=60)
+
+
+def test_remove_raster_band():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_file = r"/home/localadmin1/projects/pyeo/pyeo/tests/test_data/composite_T36MZE_20190509T073621_20190519T073621_clipped.tif"
+    try:
+        os.remove("test_outputs/band_removal.tif")
+    except FileNotFoundError:
+        pass
+    out_path = "test_outputs/band_removal.tif"
+    pyeo.raster_manipulation.strip_bands(test_file, out_path, [2])
+    out = gdal.Open(out_path)
+    assert out
+    assert out.RasterCount == 7

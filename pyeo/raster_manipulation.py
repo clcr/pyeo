@@ -298,6 +298,25 @@ def stack_images(raster_paths, out_raster_path,
     out_raster = None
 
 
+def strip_bands(in_raster_path, out_raster_path, bands_to_strip):
+    in_raster = gdal.Open(in_raster_path)
+    out_raster_band_count = in_raster.RasterCount-len(bands_to_strip)
+    out_raster = create_matching_dataset(in_raster, out_raster_path, bands=out_raster_band_count)
+    out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    in_raster_array = in_raster.GetVirtualMemArray()
+
+    bands_to_copy = [band for band in range(in_raster_array.shape[0]) if band not in bands_to_strip]
+
+    out_raster_array[...] = in_raster_array[bands_to_copy, :,:]
+
+    out_raster_array = None
+    in_raster_array = None
+    out_raster = None
+    in_raster = None
+
+    return out_raster_path
+
+
 def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
     """
     Trims a raster to a polygon.
