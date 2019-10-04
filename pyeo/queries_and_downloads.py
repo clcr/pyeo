@@ -31,7 +31,7 @@ This library presently offers two options for download sources; Scihub and Amazo
    format, and then automatically unzipped. Users are required to register with a username and password before downloading,
    and there is a limit to no more than two concurrent downloads per username at a time. Scihub is entirely free.
 
- - AWS
+- AWS
 
    Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
    updated a few hours after new products are made available. There is a small charge associated with downloading this
