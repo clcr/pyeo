@@ -295,3 +295,17 @@ def test_band_maths():
                                                  [2, 3],
                                                  test_outputs,
                                                  out_datatype=gdal.GDT_Float32)
+
+
+def test_averaging():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/averaged.tif")
+    except FileNotFoundError:
+        pass
+    test_files = ["test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE/GRANULE/L2A_T31UCU_A015721_20180626T111413/IMG_DATA/R10m/T31UCU_20180626T110621_B02_10m.jp2",
+                  "test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE/GRANULE/L2A_T31UCU_A015721_20180626T111413/IMG_DATA/R10m/T31UCU_20180626T110621_B03_10m.jp2",
+                  "test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE/GRANULE/L2A_T31UCU_A015721_20180626T111413/IMG_DATA/R10m/T31UCU_20180626T110621_B04_10m.jp2"
+                ]
+    test_output = "test_outputs/averaged.tif"
+    pyeo.raster_manipulation.average_images(test_files, test_output)

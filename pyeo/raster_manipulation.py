@@ -298,6 +298,80 @@ def stack_images(raster_paths, out_raster_path,
     out_raster = None
 
 
+def average_images(raster_paths, out_raster_path,
+                 geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32):
+    """
+    When provided with a list of rasters, will stack them into a single raster. The nunmber of
+    bands in the output is equal to the total number of bands in the input. Geotransform and projection
+    are taken from the first raster in the list; there may be unexpected behavior if multiple differing
+    proejctions are provided.
+
+    Parameters
+    ----------
+    raster_paths
+        A list of paths to the rasters to be stacked, in order.
+    out_raster_path
+        The path to the saved output raster.
+    geometry_mode
+        Can be either 'instersect' or 'union'.
+        - If 'intersect', then the output raster will only contain the pixels of the input rasters that overlap.
+        - If 'union', then the output raster will contain every pixel in the outputs. Layers without data will
+        have their pixel values set to 0.
+    format
+        The GDAL image format for the output.
+    datatype
+        The datatype of the gdal array
+
+    """
+    # TODO: Confirm the union works, and confirm that nondata defaults to 0.
+    log.info("Stacking images {}".format(raster_paths))
+    if len(raster_paths) <= 1:
+        raise StackImagesException("stack_images requires at least two input images")
+    rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
+    most_rasters = max(raster.RasterCount for raster in rasters)
+    projection = rasters[0].GetProjection()
+    in_gt = rasters[0].GetGeoTransform()
+    x_res = in_gt[1]
+    y_res = in_gt[5] * -1  # Y resolution in affine geotransform is -ve for Maths reasons
+    combined_polygons = get_combined_polygon(rasters, geometry_mode)
+
+    # Creating a new gdal object
+    out_raster = create_new_image_from_polygon(combined_polygons, out_raster_path, x_res, y_res,
+                                               most_rasters, projection, format, datatype)
+
+    # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
+    out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    if len(out_raster_array.shape == 2):
+        out_raster_array = np.expand_dims(out_raster_array, 3)
+    present_layer = 0
+    for i, in_raster in enumerate(rasters):
+        log.info("Stacking image {}".format(i))
+        in_raster_array = in_raster.GetVirtualMemArray()
+        out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
+        in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
+        if len(in_raster_array.shape) == 2:
+            in_raster_array = np.expand_dims(in_raster_array, 0)
+        # Gdal does band, y, x
+        out_raster_view = out_raster_array[
+                          :
+                          out_y_min: out_y_max,
+                          out_x_min: out_x_max
+                          ]
+        in_raster_view = in_raster_array[
+                         :
+                         in_y_min: in_y_max,
+                         in_x_min: in_x_max
+                         ]
+        out_raster_view[...] = (out_raster_view+in_raster_view)/2   # Sequential mean
+        out_raster_view = None
+        in_raster_view = None
+        present_layer += in_raster.RasterCount
+        in_raster_array = None
+        in_raster = None
+    out_raster_array = None
+    out_raster = None
+
+
 def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
     """
     Trims a raster to a polygon.
