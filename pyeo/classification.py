@@ -255,8 +255,8 @@ def autochunk(dataset, mem_limit=None):
             return num_chunks
 
 
-def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
-                       apply_mask=False, out_type="GTiff", num_chunks=None):
+def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir = None,
+                       apply_mask=False, out_type="GTiff", num_chunks=10):
     """
     Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
     in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.
@@ -289,7 +289,10 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
     for image_path in glob.glob(in_dir+r"/*.tif"):
         image_name = os.path.basename(image_path).split('.')[0]
         class_out_path = os.path.join(class_out_dir, image_name+"_class.tif")
-        prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
+        if prob_out_dir:
+            prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
+        else:
+            prob_out_path = None
         classify_image(image_path, model_path, class_out_path, prob_out_path,
                        apply_mask, out_type, num_chunks)
 

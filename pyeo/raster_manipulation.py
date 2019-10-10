@@ -317,6 +317,80 @@ def strip_bands(in_raster_path, out_raster_path, bands_to_strip):
     return out_raster_path
 
 
+def average_images(raster_paths, out_raster_path,
+                 geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32):
+    """
+    When provided with a list of rasters, will stack them into a single raster. The nunmber of
+    bands in the output is equal to the total number of bands in the input. Geotransform and projection
+    are taken from the first raster in the list; there may be unexpected behavior if multiple differing
+    proejctions are provided.
+
+    Parameters
+    ----------
+    raster_paths
+        A list of paths to the rasters to be stacked, in order.
+    out_raster_path
+        The path to the saved output raster.
+    geometry_mode
+        Can be either 'instersect' or 'union'.
+        - If 'intersect', then the output raster will only contain the pixels of the input rasters that overlap.
+        - If 'union', then the output raster will contain every pixel in the outputs. Layers without data will
+        have their pixel values set to 0.
+    format
+        The GDAL image format for the output.
+    datatype
+        The datatype of the gdal array
+
+    """
+    # TODO: Confirm the union works, and confirm that nondata defaults to 0.
+    log.info("Stacking images {}".format(raster_paths))
+    if len(raster_paths) <= 1:
+        raise StackImagesException("stack_images requires at least two input images")
+    rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
+    most_rasters = max(raster.RasterCount for raster in rasters)
+    projection = rasters[0].GetProjection()
+    in_gt = rasters[0].GetGeoTransform()
+    x_res = in_gt[1]
+    y_res = in_gt[5] * -1  # Y resolution in affine geotransform is -ve for Maths reasons
+    combined_polygons = get_combined_polygon(rasters, geometry_mode)
+
+    # Creating a new gdal object
+    out_raster = create_new_image_from_polygon(combined_polygons, out_raster_path, x_res, y_res,
+                                               most_rasters, projection, format, datatype)
+
+    # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
+    out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    if len(out_raster_array.shape == 2):
+        out_raster_array = np.expand_dims(out_raster_array, 3)
+    present_layer = 0
+    for i, in_raster in enumerate(rasters):
+        log.info("Stacking image {}".format(i))
+        in_raster_array = in_raster.GetVirtualMemArray()
+        out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
+        in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
+        if len(in_raster_array.shape) == 2:
+            in_raster_array = np.expand_dims(in_raster_array, 0)
+        # Gdal does band, y, x
+        out_raster_view = out_raster_array[
+                          :
+                          out_y_min: out_y_max,
+                          out_x_min: out_x_max
+                          ]
+        in_raster_view = in_raster_array[
+                         :
+                         in_y_min: in_y_max,
+                         in_x_min: in_x_max
+                         ]
+        out_raster_view[...] = (out_raster_view+in_raster_view)/2   # Sequential mean
+        out_raster_view = None
+        in_raster_view = None
+        present_layer += in_raster.RasterCount
+        in_raster_array = None
+        in_raster = None
+    out_raster_array = None
+    out_raster = None
+
+
 def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
     """
     Trims a raster to a polygon.
@@ -796,6 +870,7 @@ def resample_image_in_place(image_path, new_res):
     """
     # I don't like using a second object here, but hey.
     with TemporaryDirectory() as td:
+        # Remember this is used for masks, so any averging resample strat will cock things up.
         args = gdal.WarpOptions(
             xRes=new_res,
             yRes=new_res
@@ -821,6 +896,47 @@ def raster_to_array(rst_pth):
     out_array = in_ds.ReadAsArray()
 
     return out_array
+
+
+def calc_ndvi(raster_path, output_path):
+    import pdb
+    raster = gdal.Open(raster_path)
+    out_raster = create_matching_dataset(raster, output_path, datatype=gdal.GDT_Float32)
+    array = raster.GetVirtualMemArray()
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    R = array[2, ...]
+    I = array[3, ...]
+    out_array[...] = (R-I)/(R+I)
+    pdb.set_trace()
+
+    out_array[...] = np.where(out_array == -2147483648, 0, out_array)
+
+    R = None
+    I = None
+    array = None
+    out_array = None
+    raster = None
+    out_raster = None
+
+
+def apply_band_function(in_path, function, bands, out_path, out_datatype = gdal.GDT_Int32):
+    """Applys an arbitrary band mathemtics function to an image at in_path and saves the result at out_map.
+    Function should be a function ofblect of the form f(band_input_A, band_input_B, ...)"""
+    raster = gdal.Open(in_path)
+    out_raster = create_matching_dataset(raster, out_path=out_path, datatype=out_datatype)
+    array = raster.GetVirtualMemArray()
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    band_views = [array[band, ...] for band in bands]
+    out_array[...] = function(*band_views)
+    out_array = None
+    for view in band_views:
+        view = None
+    raster = None
+    out_raster = None
+
+
+def ndvi_function(r, i):
+    return (r-i)/(r+i)
 
 
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
@@ -981,8 +1097,8 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 shutil.move(mask_path, out_mask_path)
 
 
-def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B08", "B04", "B03", "B02"), out_resolution=10):
-    """Stacks the contents of a .SAFE granule directory into a single geotiff"""
+def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
+    """Stacks the specified bands of a .SAFE granule directory into a single geotiff"""
 
     band_paths = [get_sen_2_band_path(safe_dir, band, out_resolution) for band in bands]
 
@@ -1000,6 +1116,12 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B08", "B04", "B03",
                 new_band_paths.append(band_path)
 
         stack_images(new_band_paths, out_image_path, geometry_mode="intersect")
+
+    # Saving band labels in images
+    new_raster = gdal.Open(out_image_path)
+    for band_index, band_label in enumerate(bands):
+        band = new_raster.GetRasterBand(band_index+1)
+        band.SetDescription(band_label)
 
     return out_image_path
 

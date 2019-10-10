@@ -281,6 +281,35 @@ def test_s2_band_stacking():
                                                     out_resolution=60)
 
 
+def test_band_maths():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/ndvi.tif")
+    except FileNotFoundError:
+        pass
+
+    test_file = "test_data/bands.tif"
+    test_outputs = "test_outputs/ndvi.tif"
+    pyeo.raster_manipulation.apply_band_function(test_file,
+                                                 pyeo.raster_manipulation.ndvi_function,
+                                                 [2, 3],
+                                                 test_outputs,
+                                                 out_datatype=gdal.GDT_Float32)
+
+
+def test_averaging():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.remove("test_outputs/averaged.tif")
+    except FileNotFoundError:
+        pass
+    test_files = ["test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE/GRANULE/L2A_T31UCU_A015721_20180626T111413/IMG_DATA/R10m/T31UCU_20180626T110621_B02_10m.jp2",
+                  "test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE/GRANULE/L2A_T31UCU_A015721_20180626T111413/IMG_DATA/R10m/T31UCU_20180626T110621_B03_10m.jp2",
+                  "test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE/GRANULE/L2A_T31UCU_A015721_20180626T111413/IMG_DATA/R10m/T31UCU_20180626T110621_B04_10m.jp2"
+                ]
+    test_output = "test_outputs/averaged.tif"
+    pyeo.raster_manipulation.average_images(test_files, test_output)
+
 def test_remove_raster_band():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_file = r"/home/localadmin1/projects/pyeo/pyeo/tests/test_data/composite_T36MZE_20190509T073621_20190519T073621_clipped.tif"
