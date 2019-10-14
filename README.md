@@ -22,13 +22,13 @@ git clone https://github.com/clcr/pyeo.git
 cd pyeo
 conda env create --file environment.yml --name pyeo_env
 conda activate pyeo_env
-python -m setup.py . -vv
+python -m pip install . -vv
 ```
 
 If you want to edit Pyeo, replace the last line with
 
 ```bash
-python -m setup.py -e . -vv
+python -m pip install -e . -vv
 ```
 
 You can test your installation with
