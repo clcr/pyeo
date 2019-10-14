@@ -111,13 +111,13 @@ def test_calculate_sun_position():
 
 def test_get_pixel_latlon():
     # Expected out for  top-left corner of test image, (0,0)
-    # Test image is in EPSG 32748, QGIS says that TL corner coords are -10406087.252, 9999993.810. Really?
+    # Test image is in EPSG 32748, QGIS says that TL corner coords are 600001.8, 9399997.9
     # epsg.io says that this is 35.6942795°, -0.0000193° in latlon
     os.chdir(pathlib.Path(__file__).parent)
     test_image_path = "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE/GRANULE/L2A_T48MXU_A011755_20170922T031450/IMG_DATA/R20m/L2A_T48MXU_20170922T025541_AOT_20m.jp2"
-    target_lon = 35.6942795
-    target_lat = -0.0000193
+    target_lon = 105.9026743
+    target_lat = -5.4275703
     test_image = gdal.Open(test_image_path)
     out_lat, out_lon = terrain_correction.get_pixel_latlon(test_image, 0, 0)
-    assert out_lat == target_lat
-    assert out_lon == target_lon
+    np.testing.assert_allclose(out_lat, target_lat, 0.001)
+    np.testing.assert_allclose(out_lon, target_lon, 0.001)
