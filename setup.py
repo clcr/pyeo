@@ -36,6 +36,6 @@ setup(
         "sentinelhub",
         "sentinelsat",
         "tenacity",
-        "tqdm"
+        "tqdm", 'pysolar'
     ],
 )

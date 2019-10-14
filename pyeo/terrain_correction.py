@@ -10,10 +10,16 @@ Original code at https://github.com/Forests2020-Indonesia/Topographic-Correction
 import gdal
 from tempfile import TemporaryDirectory
 import os.path as p
+
+import osr
+
 import pyeo.filesystem_utilities as fu
+import pyeo.coordinate_manipulation as cm
 import numpy as np
 import datetime as dt
 import calendar
+from pysolar import solar
+import pytz
 
 
 def do_terrain_correction(in_safe_file, out_path, dem_path):
@@ -133,17 +139,9 @@ def calculate_solar_elevation(solar_declination):
 
 
 def calculate_sun_position(latitude, longitude, timezone, local_datetime):
+    """Stuff it, we're using Pysolar"""
 
-    fractional_year = calculate_fractional_year(local_datetime) # Should this be local or UTC?
-    eqtime = calculate_eqtime(fractional_year)
-    solar_declination = calculate_declination_angle(fractional_year)
-    offset = calculate_time_offset(eqtime, longitude, timezone)
-
-    true_solar_time = calculate_true_solar_time(local_datetime, offset)
-    hour_angle = calculate_hour_angle(true_solar_time)
-
-    solar_zenith = calculate_solar_zenith(hour_angle, latitude, solar_declination)
-    solar_azimuth = calculate_solar_azimuth(solar_zenith, latitude, solar_declination)
+    solar_altitude = solar.get_altitude(latitude, longitude, local_datetime)
     solar_elevation = calculate_solar_elevation(solar_declination)
 
     out = {
@@ -162,14 +160,25 @@ def days_in_year(year):
         return 365
 
 
-def calculate_illumination_condition_raster():
-    """Calculates the illumination condition of a pixel"""
-    A = cos(zenith_angle)*cos(dem_slope)
-    B = sin(zenith_angle)*sin(dem_slope)*cos(delta)
+def get_pixel_latlon(raster, x, y):
+    """For a given pixel, gets the lat-lon value in EPSG 4326."""
+    native_projection = osr.SpatialReference()
+    native_projection.ImportFromWkt(raster.GetProjection())
+    latlon_projection = osr.SpatialReference()
+    latlon_projection.ImportFromEPSG(4326)
+    transformer = osr.CoordinateTransformation(native_projection, latlon_projection)
 
+    geotransform = raster.GetGeoTransform()
+    x_geo, y_geo = cm.pixel_to_point_coordinates([y,x], geotransform)  # Why did I do this reverse?
+    lon, lat, _ = transformer.TransformPoint(x_geo, y_geo)
+    return lat, lon
+
+
+
+def calculate_illumination_condition_raster(in_raster_path):
+    with TemporaryDirectory() as td:
+        lat_lon_path = p.join(td, "lat_lon_raster.tif")
 
 
 def calculate_reflectance():
-    reflectance_pixels = band.ravel()
-    ic_pixels = ic_image.ravel()
-    slope = linregress(ic_pixels, reflectance_pixels)
+    pass

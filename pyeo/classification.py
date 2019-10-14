@@ -122,6 +122,9 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     except KeyError:
         log.warning("Sklearn joblib import failed,trying generic joblib")
         model = joblib.load(model_path)
+    except TypeError:
+        log.warning("Sklearn joblib import failed,trying generic joblib")
+        model = joblib.load(model_path)
     class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_path))
     if prob_out_path:

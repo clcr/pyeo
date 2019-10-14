@@ -7,6 +7,7 @@ import pathlib
 import numpy as np
 import pytest
 import datetime as dt
+import pysolar
 
 gdal.UseExceptions()
 
@@ -25,7 +26,7 @@ def test_terrain_correction():
     input_image_path = "test_data/terrain_test_before.tif"
     target_image_path = "test_data/terrain_test_after.tif"
     output_image_path = "test_outputs/terrain_test_output.tif"
-    pyeo.terrain_correction(input_image_path, output_image_path)
+    terrain_correction(input_image_path, output_image_path)
     output_image = gdal.Open(output_image_path)
     target_image = gdal.Open(target_image_path)
     assert np.all(output_image.GetVirtualMemArray() == target_image.GetVirtualMemArray())
@@ -58,15 +59,15 @@ def test_calculate_declination_angle():
 
 def test_calculate_eqtime():
     # Equation of time for noon on the 1st Jan 1990 (fractional_year = 0)
-    # Target value from https://www.esrl.noaa.gov/gmd/grad/solcalc on the 1st Jan 1990
+    # Target value from setting equation of time to 0
     #NOTE: Sahid said there was a discrepency between eqtime from paper and eqtime from solarcalc
-    np.testing.assert_allclose(terrain_correction.calculate_eqtime(0), -3.53, 1e-1)
+    np.testing.assert_allclose(terrain_correction.calculate_eqtime(0), -2.9, 1e-1)
 
 
 def test_calculate_time_offset():
     # Time offset at 0,0 on the 1st Jan, 1990.
     # This should be degenerate, and shake out to eqtime: everything else is 0
-    assert terrain_correction.calculate_time_offset(-3.53, 0, 0) == -3.53
+    assert terrain_correction.calculate_time_offset(-2.9, 0, 0) == -2.9
 
 
 def test_calculate_true_solar_time():
@@ -74,7 +75,7 @@ def test_calculate_true_solar_time():
     # https://www.esrl.noaa.gov/gmd/grad/solcal for time_offset and toarget value (true solar noon)
     target = (21*60) + 3 + (32/60)
     test_1_dt = dt.datetime(1990, 1, 1, 12, 0, 0)
-    np.testing.assert_allclose(terrain_correction.calculate_true_solar_time(test_1_dt, -3.53), target)
+    np.testing.assert_allclose(terrain_correction.calculate_true_solar_time(test_1_dt, -2.9), target)
 
 
 def test_calcuate_hour_angle():
@@ -106,3 +107,17 @@ def test_calculate_sun_position():
         local_datetime=dt.datetime(2008, 12, 18, 10, 22, 28)
     )
     assert expected_output == actual_output
+
+
+def test_get_pixel_latlon():
+    # Expected out for  top-left corner of test image, (0,0)
+    # Test image is in EPSG 32748, QGIS says that TL corner coords are -10406087.252, 9999993.810. Really?
+    # epsg.io says that this is 35.6942795°, -0.0000193° in latlon
+    os.chdir(pathlib.Path(__file__).parent)
+    test_image_path = "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE/GRANULE/L2A_T48MXU_A011755_20170922T031450/IMG_DATA/R20m/L2A_T48MXU_20170922T025541_AOT_20m.jp2"
+    target_lon = 35.6942795
+    target_lat = -0.0000193
+    test_image = gdal.Open(test_image_path)
+    out_lat, out_lon = terrain_correction.get_pixel_latlon(test_image, 0, 0)
+    assert out_lat == target_lat
+    assert out_lon == target_lon
