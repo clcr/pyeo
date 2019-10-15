@@ -55,58 +55,6 @@ def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
     gdal.DEMProcessing(aspect_out_path, dem, "aspect")
 
 
-def calculate_granule_solar_positions(safe_file):
-    """Returns the sun zenith angle and azimuth angle from a L2 .SAFE file.
-    NOTE: Only difference between this and Landsat seems to be that Landsat uses UTC"""
-    sensing_dt = fu.get_image_acquisition_time(p.basename(safe_file))  # Keep a close eye on the timezone
-    gamma = calculate_fractional_year(sensing_dt)
-    decl = calculate_declination_angle(gamma)
-
-
-def calculate_fractional_year(sensing_dt):
-    """Calculates the faction of the year from a datetime in radians.
-    See https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
-    year, _, _, hour, minute, second, _, day_of_year, _ = sensing_dt.timetuple()
-    A = (2 * np.pi) / days_in_year(year)
-    B = (day_of_year - 1 + ((hour - 12) / 24))  # Wim was using minutes and seconds here, does it matter that I'm not?
-    gamma = A*B
-    return gamma
-
-
-def calculate_declination_angle(fractional_year):
-    """Given a fractional year in radians (gamma) calculates the sun declination angle in degrees.
-    See https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
-    decl = 0.006918 - 0.399912 * np.cos(fractional_year) + 0.070257 * np.sin(fractional_year) - 0.006758 * np.cos(2 * fractional_year) \
-           + 0.000907 * np.sin(2 * fractional_year) - 0.002697 * np.cos(3 * fractional_year) + 0.00148 * np.sin(3 * fractional_year)  # radians
-    decl_deg = np.rad2deg(decl)
-    return decl_deg
-
-
-def calculate_eqtime(gamma):
-    """Given a fractional year in radians (gamma), calulates the equation of time in minutes.
-    See  https://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF"""
-    # np trig funcs expect radians
-    eqtime = 229.18 * (0.000075 + (0.001868 * np.cos(gamma)) - (0.032077 * np.sin(gamma)) - (0.014615 * np.cos(2 * gamma))
-                       - (0.040849 * np.sin(2 * gamma)))
-    return eqtime
-
-
-def calculate_time_offset(eqtime, longitude, timezone):
-    """Given the equation of time in minutes, the longitude in degrees (east +ve) and timezone in hours returns the
-    time offset in minutes."""
-    return eqtime + 4*longitude - 60*timezone
-
-
-def calculate_true_solar_time(sensing_dt, time_offset):
-    """Given the datetime object and a time offset, returns the true solar time in minutes"""
-    return sensing_dt.hour*60 + sensing_dt.minute + sensing_dt.second/60 + time_offset
-
-
-def calculate_hour_angle(true_solar_time):
-    """Given the true solar time in minutes, calculates the solar hour angle in degrees"""
-    return (true_solar_time/4)-180
-
-
 def calculate_solar_zenith(hour_angle, latitude, solar_declination):
     """Given the hour angle, latitude and solar declination (all in degrees), returns the solar
     zenith angle in degrees."""
@@ -174,11 +122,67 @@ def get_pixel_latlon(raster, x, y):
     return lat, lon
 
 
+def _generate_latlon_transformer(raster):
+    native_projection = osr.SpatialReference()
+    native_projection.ImportFromWkt(raster.GetProjection())
+    latlon_projection = osr.SpatialReference()
+    latlon_projection.ImportFromEPSG(4326)
+    geotransform = raster.GetGeoTransform()
+    return osr.CoordinateTransformation(native_projection, latlon_projection), geotransform
 
-def calculate_illumination_condition_raster(in_raster_path):
+
+def _generate_latlon_arrays(array, transformer, geotransform):
+    lat_array = np.empty_like(array, dtype=np.float)
+    lon_array = np.empty_like(array, dtype=np.float)
+    iterator = np.nditer(lat, flags=['multi_index'])
+    while not iterator.finished:
+        pixel = reversed(iterator.multi_index)  # pixel_to_point_coords takes y,x for some reason.
+        geo_coords = cm.pixel_to_point_coordinates(pixel, geotransform)
+        lat, lon = transformer.TransformPoint(*geo_coords)  # U
+        lat_array[pixel[1], pixel[0]] = lat
+        lon_array[pixel[1], pixel[0]] = lon
+        iterator.iternext()
+    return lat_array, lon_array
+
+
+def calculate_illumination_condition_raster(dem_raster_path, raster_datetime):
     with TemporaryDirectory() as td:
-        lat_lon_path = p.join(td, "lat_lon_raster.tif")
+        slope_raster_path = p.join(td, "slope.tif")
+        aspect_raster_path = p.join(td, "aspect.tif")
+        dem_image = gdal.Open(dem_raster_path)
+        dem_array = dem_image.GetVirtualMemArray()
+
+        get_dem_slope_and_angle(dem_raster_path, slope_raster_path, aspect_raster_path)
+        slope_image = gdal.Open(slope_raster_path)
+        slope_array = slope_image.GetVirtualMemArray()
+        aspect_image = gdal.Open(aspect_raster_path)
+        aspect_array = aspect_image.GetVirtualMemArray()
+
+        transformer, geotrasform = _generate_latlon_transformer(slope_image)
+        lat_array, lon_array = _generate_latlon_arrays(slope_array, transformer, geotrasform)
+
+        # Quick meatball vectorisation of pysolar functions
+        get_azimuth_array = np.vectorize(
+            lambda lat, lon, elevation: solar.get_azimuth(lat, lon, raster_datetime, elevation)
+        )
+        get_altitude_array = np.vectorize(
+            lambda lat, lon, elevation: solar.get_altitude(lat, lon, raster_datetime, elevation)
+        )
+
+        azimuth_array = get_azimuth_array(lat_array, lon_array, dem_array)
+        altitude_array = get_altitude_array(lat_array, lon_array, dem_array)
+        zenith_array = 90 - altitude_array
+
+        #OK, if we're cool we can do this all as array operations.
+        IC_array = np.cos(zenith_array)*np.cos(slope_array)+\
+                   np.sin(zenith_array)*np.sin(slope_array)*np.cos(azimuth_array-aspect_array)
+
 
 
 def calculate_reflectance():
-    pass
+    for y in reflectance_f:  #
+        val2 = reflectance_f[y]  #
+        temp[y] = val2[a_true, b_true].ravel()  # masked
+        IC_true = IC[a_true, b_true].ravel()  # IC masked
+        slope = linregress(IC_true, temp[y])
+        IC_final[y] = reflectance_f[y] - (slope[0] * (IC - cos(zenit_angle)))
