@@ -15,11 +15,17 @@ import osr
 
 import pyeo.filesystem_utilities as fu
 import pyeo.coordinate_manipulation as cm
+import pyeo.raster_manipulation as ras
 import numpy as np
 import datetime as dt
 import calendar
 from pysolar import solar
 import pytz
+
+import logging
+
+from joblib import Parallel, delayed
+log = logging.getLogger("pyeo")
 
 
 def do_terrain_correction(in_safe_file, out_path, dem_path):
@@ -50,9 +56,11 @@ def download_dem():
 def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
     """Produces two .tifs, slope and aspect, from an imput DEM.
     Assumes that the DEM is in meters."""
+    log.info("Calculating slope and apsect rasters from")
     dem = gdal.Open(dem_path)
     gdal.DEMProcessing(slope_out_path, dem, "slope", scale=111120)  # For DEM in meters
     gdal.DEMProcessing(aspect_out_path, dem, "aspect")
+    dem=None
 
 
 def calculate_solar_zenith(hour_angle, latitude, solar_declination):
@@ -81,35 +89,9 @@ def calculate_solar_azimuth(solar_zenith, latitude, solar_declination):
     return out
 
 
-def calculate_solar_elevation(solar_declination):
-    """Trivial function"""
-    return 90 - solar_declination
-
-
-def calculate_sun_position(latitude, longitude, timezone, local_datetime):
-    """Stuff it, we're using Pysolar"""
-
-    solar_altitude = solar.get_altitude(latitude, longitude, local_datetime)
-    solar_elevation = calculate_solar_elevation(solar_declination)
-
-    out = {
-        "solar_zenith_angle": solar_zenith,
-        "solar_azimuth_angle": solar_azimuth,
-        "solar_elevation_angle": solar_elevation
-    }
-
-    return out
-
-
-def days_in_year(year):
-    if calendar.isleap(year):
-        return 366
-    else:
-        return 365
-
-
 def get_pixel_latlon(raster, x, y):
     """For a given pixel, gets the lat-lon value in EPSG 4326."""
+    # TODO: Move to coordinate_manipulation
     native_projection = osr.SpatialReference()
     native_projection.ImportFromWkt(raster.GetProjection())
     latlon_projection = osr.SpatialReference()
@@ -131,22 +113,41 @@ def _generate_latlon_transformer(raster):
     return osr.CoordinateTransformation(native_projection, latlon_projection), geotransform
 
 
+# This is very slow.
 def _generate_latlon_arrays(array, transformer, geotransform):
     lat_array = np.empty_like(array, dtype=np.float)
     lon_array = np.empty_like(array, dtype=np.float)
-    iterator = np.nditer(lat, flags=['multi_index'])
+    iterator = np.nditer(array, flags=['multi_index'])
     while not iterator.finished:
-        pixel = reversed(iterator.multi_index)  # pixel_to_point_coords takes y,x for some reason.
+        pixel = list(reversed(iterator.multi_index))  # pixel_to_point_coords takes y,x for some reason.
         geo_coords = cm.pixel_to_point_coordinates(pixel, geotransform)
-        lat, lon = transformer.TransformPoint(*geo_coords)  # U
+        lat, lon, _ = transformer.TransformPoint(*geo_coords)  # U
         lat_array[pixel[1], pixel[0]] = lat
         lon_array[pixel[1], pixel[0]] = lon
         iterator.iternext()
     return lat_array, lon_array
 
 
-def calculate_illumination_condition_raster(dem_raster_path, raster_datetime):
+def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic_raster_out_path):
+    """
+    Given a DEM, creates a raster of the illumination conditions as specified in
+    https://ieeexplore.ieee.org/document/8356797, equation 9. The Pysolar library is
+    used to calculate solar position.
+
+    Parameters
+    ----------
+    dem_raster_path
+        The path to a raster containing the DEM in question
+    raster_datetime
+        The time of day _with timezone set_ for the
+    ic_raster_out_path
+        The path to save the output raster.
+
+
+    """
+    log.info("Generating illumination condition raster from {}".format(dem_raster_path))
     with TemporaryDirectory() as td:
+        log.info("Calculating slope and aspect rasters")
         slope_raster_path = p.join(td, "slope.tif")
         aspect_raster_path = p.join(td, "aspect.tif")
         dem_image = gdal.Open(dem_raster_path)
@@ -158,25 +159,37 @@ def calculate_illumination_condition_raster(dem_raster_path, raster_datetime):
         aspect_image = gdal.Open(aspect_raster_path)
         aspect_array = aspect_image.GetVirtualMemArray()
 
-        transformer, geotrasform = _generate_latlon_transformer(slope_image)
-        lat_array, lon_array = _generate_latlon_arrays(slope_array, transformer, geotrasform)
+        transformer, geotransform = _generate_latlon_transformer(dem_image)
+        lat_array, lon_array = _generate_latlon_arrays(dem_array, transformer, geotransform)
 
-        # Quick meatball vectorisation of pysolar functions
-        get_azimuth_array = np.vectorize(
-            lambda lat, lon, elevation: solar.get_azimuth(lat, lon, raster_datetime, elevation)
-        )
-        get_altitude_array = np.vectorize(
-            lambda lat, lon, elevation: solar.get_altitude(lat, lon, raster_datetime, elevation)
-        )
+        ic_array = parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
 
-        azimuth_array = get_azimuth_array(lat_array, lon_array, dem_array)
-        altitude_array = get_altitude_array(lat_array, lon_array, dem_array)
-        zenith_array = 90 - altitude_array
+        ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeotransform(), dem_image.GetProjection())
 
-        #OK, if we're cool we can do this all as array operations.
-        IC_array = np.cos(zenith_array)*np.cos(slope_array)+\
-                   np.sin(zenith_array)*np.sin(slope_array)*np.cos(azimuth_array-aspect_array)
 
+def parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime):
+
+    # Defining a lambda function for this date specifically
+    def calc_ic_for_this_date(aspect, slope, lat, lon):
+        return calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon)
+
+    print("Beginning IC calculation.")
+    zipped_arrays = zip(aspect_array.ravel(),
+                      slope_array.ravel(),
+                      lat_array.ravel(),
+                      lon_array.ravel())
+    ic_array = Parallel(n_jobs=2, verbose=3)(delayed(calc_ic_for_this_date)(*zipped_arrays))
+
+    return ic_array.reshape(lat_array.shape)
+
+
+def calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon):
+    azimuth = solar.get_azimuth_fast(lat, lon, raster_datetime)
+    altitude = solar.get_altitude_fast(lat, lon, raster_datetime)
+    zenith = 90 - altitude
+    ic = np.cos(zenith) * np.cos(slope) + \
+         np.sin(zenith) * np.sin(slope) * np.cos(azimuth - aspect)
+    return ic
 
 
 def calculate_reflectance():

@@ -1,5 +1,6 @@
 
 import os
+from os import path as p
 
 import pyeo.terrain_correction as terrain_correction
 import osgeo.gdal as gdal
@@ -7,13 +8,16 @@ import pathlib
 import numpy as np
 import pytest
 import datetime as dt
-import pysolar
+import pytz
+import joblib
+from tempfile import TemporaryDirectory
 
 gdal.UseExceptions()
 
 
 def setup_module():
     os.chdir(pathlib.Path(__file__).parent/"dem_tests")
+    
 
 
 def test_setup():
@@ -56,6 +60,24 @@ def test_get_pixel_latlon():
     np.testing.assert_allclose(out_lon, target_lon, 0.001)
 
 
-def test_calculate_illumination_raster():
-    slope_ras_path = "something"
-    aspect_raster_path = "something_else"
+def test_calculate_illumination_raster(monkeypatch):
+
+    # The generate latlon array function is massively time-consuming.
+    # This replaces it with precomputed data.
+    def mock_latlon(foo, bar, baz):
+        lat = joblib.load("test_data/lat_array_indo")
+        lon = joblib.load("test_data/lon_array_indo")
+        return lat, lon
+    monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)
+
+    os.chdir(pathlib.Path(__file__).parent)
+    dem_path = "test_data/dem_test_indonesia.tif"
+    raster_timezone = pytz.timezone("Asia/Jakarta")
+    raster_datetime = dt.datetime(2019, 6, 1, 12, 00, 00, tzinfo=raster_timezone)
+    out_path = "test_outputs/illumination_indonesia.tif"
+    terrain_correction.calculate_illumination_condition_raster(dem_path, raster_datetime, out_path)
+
+
+
+if __name__ == "__main__":
+    test_calculate_illumination_raster()
