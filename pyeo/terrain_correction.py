@@ -178,7 +178,8 @@ def parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, ras
                       slope_array.ravel(),
                       lat_array.ravel(),
                       lon_array.ravel())
-    ic_array = Parallel(n_jobs=2, verbose=3)(delayed(calc_ic_for_this_date)(*zipped_arrays))
+    ic_array = Parallel(n_jobs=2, verbose=3)(delayed(calc_ic_for_this_date)(*pixel_values)
+                                             for pixel_values in zipped_arrays)
 
     return ic_array.reshape(lat_array.shape)
 
