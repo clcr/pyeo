@@ -122,6 +122,9 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     except KeyError:
         log.warning("Sklearn joblib import failed,trying generic joblib")
         model = joblib.load(model_path)
+    except TypeError:
+        log.warning("Sklearn joblib import failed,trying generic joblib")
+        model = joblib.load(model_path)
     class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_path))
     if prob_out_path:
@@ -255,8 +258,8 @@ def autochunk(dataset, mem_limit=None):
             return num_chunks
 
 
-def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
-                       apply_mask=False, out_type="GTiff", num_chunks=None):
+def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir = None,
+                       apply_mask=False, out_type="GTiff", num_chunks=10):
     """
     Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
     in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.
@@ -289,7 +292,10 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir,
     for image_path in glob.glob(in_dir+r"/*.tif"):
         image_name = os.path.basename(image_path).split('.')[0]
         class_out_path = os.path.join(class_out_dir, image_name+"_class.tif")
-        prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
+        if prob_out_dir:
+            prob_out_path = os.path.join(prob_out_dir, image_name+"_prob.tif")
+        else:
+            prob_out_path = None
         classify_image(image_path, model_path, class_out_path, prob_out_path,
                        apply_mask, out_type, num_chunks)
 
@@ -480,7 +486,7 @@ def create_model_for_region(path_to_region, model_out, scores_out, attribute="CO
         score_file.write(str(scores))
 
 
-def create_model_from_signatures(sig_csv_path, model_out):
+def create_model_from_signatures(sig_csv_path, model_out, sig_datatype=np.int32):
     """
     Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
     and pickle a scikit-learn model.
@@ -491,6 +497,8 @@ def create_model_from_signatures(sig_csv_path, model_out):
         The path to the signatures file
     model_out
         The location to save the pickled model to.
+    sig_datatype
+        The datatype to read the csv as. Defaults to int32.
 
     Notes
     -----
@@ -500,9 +508,29 @@ def create_model_from_signatures(sig_csv_path, model_out):
     """
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
-    data = np.loadtxt(sig_csv_path, delimiter=",").T
-    model.fit(data[1:, :].T, data[0, :])
+    features, labels = load_signatures(sig_csv_path, sig_datatype)
+    model.fit(features, labels)
     joblib.dump(model, model_out)
+
+
+def load_signatures(sig_csv_path, sig_datatype=np.int32):
+    """
+    Extracts features and class labels from a signature CSV
+    Parameters
+    ----------
+    sig_csv_path
+    sig_datatype
+
+    Returns
+    -------
+    features
+        a numpy array of the shape (feature_count, sample_count)
+    class_labels
+        a 1d numpy array of class labels corresponding to the samples in features.
+
+    """
+    data = np.genfromtxt(sig_csv_path, delimiter=",", dtype=sig_datatype).T
+    return (data[1:, :].T, data[0, :])
 
 
 def get_training_data(image_path, shape_path, attribute="CODE", shape_projection_id=4326):
