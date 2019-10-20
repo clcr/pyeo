@@ -72,6 +72,24 @@ def test_calculate_illumination_raster(monkeypatch):
     terrain_correction.calculate_illumination_condition_raster(dem_path, raster_datetime, out_path)
 
 
+def test_terrain_correction(monkeypatch):
+    def mock_latlon(foo, bar, baz):
+        lat = joblib.load("test_data/lat_array_indo")
+        lon = joblib.load("test_data/lon_array_indo")
+        return lat, lon
+    monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)
+
+    os.chdir(pathlib.Path(__file__).parent)
+    dem_path = "test_data/dem_test_indonesia.tif"
+    in_path = "test_data/original_all.tif"
+    raster_timezone = pytz.timezone("Asia/Jakarta")
+    raster_datetime = dt.datetime(2019, 6, 1, 12, 00, 00, tzinfo=raster_timezone)
+    out_path = "test_outputs/correction_indonesia.tif"
+    
+
+
+    
+
 
 if __name__ == "__main__":
     test_calculate_illumination_raster()

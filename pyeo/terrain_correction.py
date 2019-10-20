@@ -21,10 +21,10 @@ import datetime as dt
 import calendar
 from pysolar import solar
 import pytz
+from scipy import stats
 
 import logging
 
-from joblib import Parallel, delayed
 log = logging.getLogger("pyeo")
 
 
@@ -128,7 +128,7 @@ def _generate_latlon_arrays(array, transformer, geotransform):
     return lat_array, lon_array
 
 
-def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic_raster_out_path):
+def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic_raster_out_path=None):
     """
     Given a DEM, creates a raster of the illumination conditions as specified in
     https://ieeexplore.ieee.org/document/8356797, equation 9. The Pysolar library is
@@ -164,9 +164,12 @@ def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic
 
         print("pixels to process: {}".format(np.product(lat_array.shape)))
 
-        ic_array = parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
-
-        ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
+        ic_array, zenith_array = parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
+        
+        if ic_raster_out_path:
+            ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
+        
+        return ic_array, zenith_array
 
 
 def calc_azimuth_array(lat_array, lon_array, raster_datetime):
@@ -191,7 +194,7 @@ def parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, ras
     ic_array = _deg_cos(np.deg2rad(zenith_array)) * _deg_cos(slope_array) + \
                _deg_sin(zenith_array) * _deg_sin(slope_array) * _deg_cos(azimuth_array - aspect_array)
 
-    return ic_array
+    return ic_array, zenith_array
 
 def _deg_sin(in_array):
     return np.rad2deg(np.sin(np.deg2rad(in_array)))
@@ -207,10 +210,29 @@ def calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon, azimuth, al
     return ic
 
 
-def calculate_reflectance():
+def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime):
     for y in reflectance_f:  #
         val2 = reflectance_f[y]  #
         temp[y] = val2[a_true, b_true].ravel()  # masked
         IC_true = IC[a_true, b_true].ravel()  # IC masked
-        slope = linregress(IC_true, temp[y])
+        slope = stats.linregress(IC_true, temp[y])
         IC_final[y] = reflectance_f[y] - (slope[0] * (IC - cos(zenit_angle)))
+    
+    ic_array, zenith_array = calculate_illumination_condition_raster(dem_raster_path, raster_datetime)
+    
+    ref_raster = gdal.Open(raster_path)
+    ref_array = ref_raster.GetVirtualMemArray()
+    out_raster = ras.create_matching_dataset(ref_raster, out_raster_path, n_bands = ref_raster.RasterCount)
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    
+    if len(ref_array.shape) == 2:
+        ref_array = np.extend_dims(ref_array, 0)
+
+    for i, band in enumerate(ref_array[:, ...]):
+        slope, _, _, _, _ = stats.linregress(ic_array, band)
+        out_array[i, ...] = band - (slope*(ic_array - _deg_cos(zenith_array)))
+    
+    out_array = None
+    out_raster = None
+    ref_array = None
+    ref_raster = None
