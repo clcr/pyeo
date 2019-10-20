@@ -111,6 +111,9 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
     """
     driver = gdal.GetDriverByName(format)
     type_code = gdal_array.NumericTypeCodeToGDALTypeCode(array.dtype)
+    # If array is 2d, give it an extra dimension.
+    if len(array.shape) == 2:
+        array = np.expand_dims(array, axis=0)
     out_dataset = driver.Create(
         path,
         xsize=array.shape[2],

@@ -16,13 +16,7 @@ gdal.UseExceptions()
 
 
 def setup_module():
-    os.chdir(pathlib.Path(__file__).parent/"dem_tests")
-    
-
-
-def test_setup():
-    assert pathlib.Path().cwd().is_absolute()
-    assert pathlib.Path.cwd().stem == "dem_tests"
+    os.chdir(pathlib.Path(__file__).parent)
 
 
 @pytest.mark.skip("Not implemented yet")

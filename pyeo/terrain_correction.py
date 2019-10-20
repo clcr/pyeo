@@ -166,29 +166,41 @@ def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic
 
         ic_array = parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
 
-        ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeotransform(), dem_image.GetProjection())
+        ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
+
+
+def calc_azimuth_array(lat_array, lon_array, raster_datetime):
+    def calc_azimuth_for_datetime(lat, lon):
+        return solar.get_azimuth_fast(lat, lon, raster_datetime)
+    return(np.array(list(map(calc_azimuth_for_datetime, lat_array, lon_array))))
+
+
+def calc_altitude_array(lat_array, lon_array, raster_datetime):
+    def calc_altitude_for_datetime(lat, lon):
+        return solar.get_altitude_fast(lat, lon, raster_datetime)
+    return (np.array(list(map(calc_altitude_for_datetime, lat_array, lon_array))))
 
 
 def parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime):
 
-    # Defining a lambda function for this date specifically
-    def calc_ic_for_this_date(aspect, slope, lat, lon):
-        return calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon)
-
+    print("Precomputing -azimuth and zenith arrays")
+    azimuth_array = calc_azimuth_array(lat_array, lon_array, raster_datetime)
+    altitude_array = calc_altitude_array(lat_array, lon_array, raster_datetime)
+    zenith_array = 90-altitude_array
     print("Beginning IC calculation.")
-    zipped_arrays = zip(aspect_array.ravel(),
-                      slope_array.ravel(),
-                      lat_array.ravel(),
-                      lon_array.ravel())
-    ic_array = Parallel(n_jobs=-1, verbose=3, max_nbytes=None)(
-        delayed(calc_ic_for_this_date)(*pixel_values) for pixel_values in zipped_arrays)
+    ic_array = _deg_cos(np.deg2rad(zenith_array)) * _deg_cos(slope_array) + \
+               _deg_sin(zenith_array) * _deg_sin(slope_array) * _deg_cos(azimuth_array - aspect_array)
 
-    return ic_array.reshape(np.ndarray(ic_array))
+    return ic_array
+
+def _deg_sin(in_array):
+    return np.rad2deg(np.sin(np.deg2rad(in_array)))
+
+def _deg_cos(in_array):
+    return np.rad2deg(np.cos(np.deg2rad(in_array)))
 
 
-def calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon):
-    azimuth = solar.get_azimuth_fast(lat, lon, raster_datetime)
-    altitude = solar.get_altitude_fast(lat, lon, raster_datetime)
+def calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon, azimuth, altitude):
     zenith = 90 - altitude
     ic = np.cos(zenith) * np.cos(slope) + \
          np.sin(zenith) * np.sin(slope) * np.cos(azimuth - aspect)
