@@ -667,6 +667,10 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
     generate_date_images
         If true, generates a corresponding date image for the composite. See docs for composite_images_with_mask.
 
+    Returns
+    -------
+    The path to the new composite
+
     """
     log = logging.getLogger(__name__)
     log.info("Compositing {}".format(image_dir))
@@ -676,6 +680,7 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
     last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
     composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format, generate_date_image=generate_date_images)
+    return composite_out_path
 
 
 def flatten_probability_image(prob_image, out_path):
@@ -787,10 +792,10 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
         width_pix = int(np.floor(max_x_geo - min_x_geo)/in_gt[1])
         height_pix = int(np.floor(max_y_geo - min_y_geo)/np.absolute(in_gt[5]))
         new_geotransform = (min_x_geo, in_gt[1], 0, min_y_geo, 0, in_gt[5])
-        write_geometry(intersection, intersection_path)
+        write_geometry(intersection, intersection_path, srs_id=srs_id)
         clip_spec = gdal.WarpOptions(
             format="GTiff",
-            cutlineDSName=intersection_path,
+            cutlineDSName=intersection_path+"/geometry.shp",
             cropToCutline=True,
             width=width_pix,
             height=height_pix,
@@ -798,7 +803,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
             dstSRS=srs
         )
         out = gdal.Warp(out_path, raster, options=clip_spec)
-        out.SetGeoTransform(new_geotransform)
+        # out.SetGeoTransform(new_geotransform)
         out = None
 
 
@@ -876,7 +881,7 @@ def resample_image_in_place(image_path, new_res):
             yRes=new_res
         )
         temp_image = os.path.join(td, "temp_image.tif")
-        gdal.Warp(temp_image, image_path, options=args)
+        error = gdal.Warp(temp_image, image_path, options=args)
         shutil.move(temp_image, image_path)
 
 
@@ -896,6 +901,12 @@ def raster_to_array(rst_pth):
     out_array = in_ds.ReadAsArray()
 
     return out_array
+
+def get_extent_as_shp(in_ras_path, out_shp_path):
+    """"""
+    #By Qing
+    os.system('gdaltindex ' + out_shp_path + ' ' + in_ras_path)
+    return out_shp_path
 
 
 def calc_ndvi(raster_path, output_path):
@@ -1081,6 +1092,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
             log.info("Cloudmask created")
 
+            # Fold the output resolution bits into
             out_path = os.path.join(out_dir, os.path.basename(temp_path))
             out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
 
@@ -1091,10 +1103,12 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 wkt = proj.ExportToWkt()
                 reproject_image(temp_path, out_path, wkt)
                 reproject_image(mask_path, out_mask_path, wkt)
+                resample_image_in_place(out_mask_path, out_resolution)
             else:
                 log.info("Moving images to {}".format(out_dir))
                 shutil.move(temp_path, out_path)
                 shutil.move(mask_path, out_mask_path)
+                resample_image_in_place(out_mask_path, out_resolution)
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
@@ -1165,7 +1179,6 @@ def get_image_resolution(image_path):
     if gt[1] != gt[5]*-1:
         raise NonSquarePixelException("Image at {} has non-square pixels - this is currently not implemented in Pyeo")
     return gt[1]
-
 
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
@@ -1494,7 +1507,7 @@ def create_mask_from_fmask(in_l1_dir, out_path):
         resample_image_in_place(out_path, 10)
 
 
-def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"):
+def apply_fmask(in_safe_dir, out_file, fmask_command="/home/ubuntu/anaconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"):
     """Calls fmask to create a new mask for L1 data"""
     # For reasons known only to the spirits, calling subprocess.run from within this function on a HPC cause the PATH
     # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
