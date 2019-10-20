@@ -162,6 +162,8 @@ def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic
         transformer, geotransform = _generate_latlon_transformer(dem_image)
         lat_array, lon_array = _generate_latlon_arrays(dem_array, transformer, geotransform)
 
+        print("pixels to process: {}".format(np.product(lat_array.shape)))
+
         ic_array = parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
 
         ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeotransform(), dem_image.GetProjection())
@@ -178,10 +180,10 @@ def parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, ras
                       slope_array.ravel(),
                       lat_array.ravel(),
                       lon_array.ravel())
-    ic_array = Parallel(n_jobs=2, verbose=3)(delayed(calc_ic_for_this_date)(*pixel_values)
-                                             for pixel_values in zipped_arrays)
+    ic_array = Parallel(n_jobs=-1, verbose=3, max_nbytes=None)(
+        delayed(calc_ic_for_this_date)(*pixel_values) for pixel_values in zipped_arrays)
 
-    return ic_array.reshape(lat_array.shape)
+    return ic_array.reshape(np.ndarray(ic_array))
 
 
 def calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon):
