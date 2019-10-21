@@ -113,20 +113,26 @@ def _generate_latlon_transformer(raster):
     return osr.CoordinateTransformation(native_projection, latlon_projection), geotransform
 
 
+def generate_latlon(x, y,geotransform, transformer):
+    x_geo, y_geo = cm.pixel_to_point_coordinates([y,x], geotransform)
+    lon, lat, _ = transformer.TransformPoint(x_geo, y_geo)
+    return np.fromiter((lat, lon),np.float)
+
 # This is very slow.
 def _generate_latlon_arrays(array, transformer, geotransform):
-    lat_array = np.empty_like(array, dtype=np.float)
-    lon_array = np.empty_like(array, dtype=np.float)
-    iterator = np.nditer(array, flags=['multi_index'])
-    while not iterator.finished:
-        pixel = list(reversed(iterator.multi_index))  # pixel_to_point_coords takes y,x for some reason.
-        geo_coords = cm.pixel_to_point_coordinates(pixel, geotransform)
-        lat, lon, _ = transformer.TransformPoint(*geo_coords)  # U
-        lat_array[pixel[1], pixel[0]] = lat
-        lon_array[pixel[1], pixel[0]] = lon
-        iterator.iternext()
-    return lat_array, lon_array
+    
+    def generate_latlon_for_here(x,y):
+        return generate_latlon(x,y,geotransform, transformer)
 
+    latlon_array = np.empty((array.size, 2))
+    x_list = np.arange(array.shape[0])
+    y_list = np.arange(array.shape[1])
+    x_mesh, y_mesh = np.meshgrid(x_list, y_list)
+    x_mesh = x_mesh.ravel()
+    y_mesh = y_mesh.ravel()
+    latlon_array[...,:] = list(map(generate_latlon_for_here, x_mesh, y_mesh)) 
+    return latlon_array 
+   
 
 def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_raster_out_path=None):
     """

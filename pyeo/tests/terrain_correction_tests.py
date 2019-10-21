@@ -43,6 +43,16 @@ def test_get_pixel_latlon():
     np.testing.assert_allclose(out_lon, target_lon, 0.001)
 
 
+def test_calculate_latlon_array():
+    raster_path = "test_data/dem_test_indonesia.tif"
+    raster = gdal.Open(raster_path)
+    array = raster.GetVirtualMemArray()
+    transformer, gt = terrain_correction._generate_latlon_transformer(raster)
+    latlon = terrain_correction._generate_latlon_arrays(array, transformer, gt)
+    import pdb
+    pdb.set_trace()
+
+
 def test_calculate_illumination_raster(monkeypatch):
 
     # The generate latlon array function is massively time-consuming.
