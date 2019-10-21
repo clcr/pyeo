@@ -23,6 +23,8 @@ from pysolar import solar
 import pytz
 from scipy import stats
 
+from joblib import Parallel, delayed
+
 import logging
 
 log = logging.getLogger("pyeo")
@@ -121,6 +123,9 @@ def generate_latlon(x, y,geotransform, transformer):
 # This is very slow.
 def _generate_latlon_arrays(array, transformer, geotransform):
     
+    def generate_geo_point(x,y):
+        return cm.pixel_to_point_coordinates((y,x), geotransform)
+    
     def generate_latlon_for_here(x,y):
         return generate_latlon(x,y,geotransform, transformer)
 
@@ -130,8 +135,13 @@ def _generate_latlon_arrays(array, transformer, geotransform):
     x_mesh, y_mesh = np.meshgrid(x_list, y_list)
     x_mesh = x_mesh.ravel()
     y_mesh = y_mesh.ravel()
-    latlon_array[...,:] = list(map(generate_latlon_for_here, x_mesh, y_mesh)) 
-    return latlon_array 
+
+    
+    x_geo, y_geo = list(map(generate_geo_point, x_mesh, y_mesh))
+    import pdb; pdb.set_trace()
+
+    latlon = transformer.TransformPoints(list(zip(*[x_mesh, y_mesh])))
+    lat, lon = zip(*latlon_array)
    
 
 def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_raster_out_path=None):
