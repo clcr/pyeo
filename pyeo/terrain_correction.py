@@ -128,7 +128,7 @@ def _generate_latlon_arrays(array, transformer, geotransform):
     return lat_array, lon_array
 
 
-def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic_raster_out_path=None):
+def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_raster_out_path=None):
     """
     Given a DEM, creates a raster of the illumination conditions as specified in
     https://ieeexplore.ieee.org/document/8356797, equation 9. The Pysolar library is
@@ -159,16 +159,17 @@ def calculate_illumination_condition_raster(dem_raster_path, raster_datetime, ic
         aspect_image = gdal.Open(aspect_raster_path)
         aspect_array = aspect_image.GetVirtualMemArray()
 
+        print("Calculating latlon arrays (this takes a while, for some reason.")
         transformer, geotransform = _generate_latlon_transformer(dem_image)
         lat_array, lon_array = _generate_latlon_arrays(dem_array, transformer, geotransform)
 
         print("pixels to process: {}".format(np.product(lat_array.shape)))
-
         ic_array, zenith_array = parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
         
         if ic_raster_out_path:
             ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
-        
+
+
         return ic_array, zenith_array
 
 
@@ -191,47 +192,49 @@ def parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, ras
     altitude_array = calc_altitude_array(lat_array, lon_array, raster_datetime)
     zenith_array = 90-altitude_array
     print("Beginning IC calculation.")
-    ic_array = _deg_cos(np.deg2rad(zenith_array)) * _deg_cos(slope_array) + \
+    ic_array = _deg_cos(zenith_array) * _deg_cos(slope_array) + \
                _deg_sin(zenith_array) * _deg_sin(slope_array) * _deg_cos(azimuth_array - aspect_array)
 
     return ic_array, zenith_array
 
+
 def _deg_sin(in_array):
-    return np.rad2deg(np.sin(np.deg2rad(in_array)))
+    return np.sin(np.deg2rad(in_array))
+
 
 def _deg_cos(in_array):
-    return np.rad2deg(np.cos(np.deg2rad(in_array)))
-
-
-def calculate_ic_for_pixel(aspect, raster_datetime, slope, lat, lon, azimuth, altitude):
-    zenith = 90 - altitude
-    ic = np.cos(zenith) * np.cos(slope) + \
-         np.sin(zenith) * np.sin(slope) * np.cos(azimuth - aspect)
-    return ic
+    return np.cos(np.deg2rad(in_array))
 
 
 def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime):
-    for y in reflectance_f:  #
-        val2 = reflectance_f[y]  #
-        temp[y] = val2[a_true, b_true].ravel()  # masked
-        IC_true = IC[a_true, b_true].ravel()  # IC masked
-        slope = stats.linregress(IC_true, temp[y])
-        IC_final[y] = reflectance_f[y] - (slope[0] * (IC - cos(zenit_angle)))
-    
-    ic_array, zenith_array = calculate_illumination_condition_raster(dem_raster_path, raster_datetime)
-    
-    ref_raster = gdal.Open(raster_path)
-    ref_array = ref_raster.GetVirtualMemArray()
-    out_raster = ras.create_matching_dataset(ref_raster, out_raster_path, n_bands = ref_raster.RasterCount)
-    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
-    
-    if len(ref_array.shape) == 2:
-        ref_array = np.extend_dims(ref_array, 0)
+   
+    with TemporaryDirectory() as td:
 
-    for i, band in enumerate(ref_array[:, ...]):
-        slope, _, _, _, _ = stats.linregress(ic_array, band)
-        out_array[i, ...] = band - (slope*(ic_array - _deg_cos(zenith_array)))
-    
+        ref_raster = gdal.Open(raster_path)
+        ref_array = ref_raster.GetVirtualMemArray()
+        out_raster = ras.create_matching_dataset(ref_raster, out_raster_path, bands=ref_raster.RasterCount)
+        out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+
+        print("Preprocessing DEM")
+        clipped_dem_path = p.join(td, "clipped_dem.tif")
+        reproj_dem_path = p.join(td, "reproj_dem.tif")
+        ras.reproject_image(dem_path, reproj_dem_path, ref_raster.GetProjection(), do_post_resample=False)
+        ras.resample_image_in_place(reproj_dem_path, ref_raster.GetGeoTransform()[1])  # Assuming square pixels
+        ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path)
+
+        ic_array, zenith_array = calculate_illumination_condition_array(clipped_dem_path, raster_datetime)
+
+        if len(ref_array.shape) == 2:
+            ref_array = np.expand_dims(ref_array, 0)
+        
+        import pdb
+        print("Beginning linear regression")
+        for i, band in enumerate(ref_array[:, ...]):
+            print("Processing band {} of {}".format(i+1, ref_array.shape[0]))
+            slope, _, _, _, _ = stats.linregress(ic_array.ravel(), band.ravel())
+          #  pdb.set_trace()
+            out_array[i, ...] = (band - (slope*(ic_array - _deg_cos(zenith_array)))).reshape(band.shape)
+
     out_array = None
     out_raster = None
     ref_array = None

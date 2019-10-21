@@ -794,7 +794,6 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
         min_x_geo, max_x_geo, min_y_geo, max_y_geo = intersection.GetEnvelope()
         width_pix = int(np.floor(max_x_geo - min_x_geo)/in_gt[1])
         height_pix = int(np.floor(max_y_geo - min_y_geo)/np.absolute(in_gt[5]))
-        new_geotransform = (min_x_geo, in_gt[1], 0, min_y_geo, 0, in_gt[5])
         write_geometry(intersection, intersection_path, srs_id=srs_id)
         clip_spec = gdal.WarpOptions(
             format="GTiff",
@@ -806,8 +805,30 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
             dstSRS=srs
         )
         out = gdal.Warp(out_path, raster, options=clip_spec)
-        # out.SetGeoTransform(new_geotransform)
         out = None
+
+
+def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_raster_path):
+    """
+    Clips one raster to the extent proivded by the other raster, and saves the result at out_raster_path.
+    Assumes both raster_to_clip and extent_raster are in the same projection.
+    Parameters
+    ----------
+    raster_to_clip_path
+        The location of the raster to be clipped.
+    extent_raster_path
+        The location of the raster that will provide the extent to clip to
+    out_raster_path
+        A location for the finished raster
+    """
+
+    with TemporaryDirectory() as td:
+        temp_aoi_path = os.path.join(td, "temp_clip.shp")
+        get_extent_as_shp(extent_raster_path, temp_aoi_path)
+        ext_ras = gdal.Open(extent_raster_path)
+        proj = osr.SpatialReference(wkt=ext_ras.GetProjection())
+        srs_id = int(proj.GetAttrValue('AUTHORITY', 1))
+        clip_raster(raster_to_clip_path, temp_aoi_path, out_raster_path, srs_id)
 
 
 def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
