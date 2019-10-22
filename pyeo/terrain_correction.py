@@ -131,7 +131,12 @@ def _generate_latlon_arrays(array, transformer, geotransform):
     x_mesh = x_mesh.ravel()
     y_mesh = y_mesh.ravel()
     latlon_array[...,:] = list(map(generate_latlon_for_here, x_mesh, y_mesh)) 
-    return latlon_array 
+    lat_array = latlon_array[:, 0]
+    lon_array = latlon_array[:, 1]
+    lat_array = np.reshape(lat_array, array.shape).T
+    lon_array = np.reshape(lon_array, array.shape).T
+    return lat_array, lon_array
+
    
 
 def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_raster_out_path=None):
@@ -174,7 +179,6 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
         
         if ic_raster_out_path:
             ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
-
 
         return ic_array, zenith_array
 
@@ -238,7 +242,6 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         for i, band in enumerate(ref_array[:, ...]):
             print("Processing band {} of {}".format(i+1, ref_array.shape[0]))
             slope, _, _, _, _ = stats.linregress(ic_array.ravel(), band.ravel())
-          #  pdb.set_trace()
             out_array[i, ...] = (band - (slope*(ic_array - _deg_cos(zenith_array)))).reshape(band.shape)
 
     out_array = None

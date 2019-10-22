@@ -48,9 +48,11 @@ def test_calculate_latlon_array():
     raster = gdal.Open(raster_path)
     array = raster.GetVirtualMemArray()
     transformer, gt = terrain_correction._generate_latlon_transformer(raster)
-    latlon = terrain_correction._generate_latlon_arrays(array, transformer, gt)
-    import pdb
-    pdb.set_trace()
+    lon, lat = terrain_correction._generate_latlon_arrays(array, transformer, gt)
+    test_lat = joblib.load("test_data/lat_array_indo")
+    test_lon = joblib.load("test_data/lon_array_indo")
+    assert np.all(lat == test_lat)
+    assert np.all(lon == test_lon)
 
 
 def test_calculate_illumination_raster(monkeypatch):
@@ -75,14 +77,14 @@ def test_calculate_illumination_raster(monkeypatch):
 def test_terrain_correction(monkeypatch):
     os.chdir(pathlib.Path(__file__).parent)
 
-    def mock_latlon(foo, bar, baz):
-        lat = joblib.load("test_data/clipped_lat")
-        lon = joblib.load("test_data/clipped_lon")
-        return lat, lon
-    monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)
+#    def mock_latlon(foo, bar, baz):
+#        lat = joblib.load("test_data/clipped_lat")
+#        lon = joblib.load("test_data/clipped_lon")
+#        return lat, lon
+ #   monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)#
 
     dem_path = "test_data/dem_test_indonesia.tif"
-    in_path = "test_data/indonesia_s2_image.tif"
+    in_path = "test_data/indonesia_s2_l1_image.tif"
     raster_timezone = pytz.timezone("UTC")
     raster_datetime = dt.datetime(2017, 9, 22, 2, 55, 41, tzinfo=raster_timezone)
     out_path = "test_outputs/correction_indonesia.tif"
