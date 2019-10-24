@@ -2,9 +2,10 @@
 Terrain correction
 ==================
 
-Functions for implementing terrain correction algorithm (credit to Wim Nursal, LAPAN
+Functions for implementing terrain correction algorithm (credit to Wim Nursal and team, LAPAN)
 
 Original code at https://github.com/Forests2020-Indonesia/Topographic-Correction/blob/master/Topographic%20Correction.py
+Method b: https://ieeexplore.ieee.org/document/8356797
 """
 
 import gdal
@@ -28,25 +29,6 @@ import logging
 log = logging.getLogger("pyeo")
 
 
-def do_terrain_correction(in_safe_file, out_path, dem_path):
-    """Corrects for shadow effects due to terrain features.
-    Takes in a L2 SAFE file and a DEM, and produces a really boring image.
-    Algorithm:
-    -Generate slope and aspect from DEM using gdaldem
-    -Calculate solar position from datatake sensing start and location of image
-    -Calculate the correction factor for that image from the sun zenith angle, azimuth angle, DEM aspect and DEM slope
-    -Build a mask of green areas using NDVI
-    -Perform a linear regression based on that IC calculation and the contents of the L2 image to get ground slope(?)
-    -Correct pixel p in original image with following: p_out = p_in - (ground_slope*(IC-cos(sun_zenith)))
-    -Write to output
-    NOTE TO SELF: Watch out; Wim has recast the bands to float. Beware off-by-one and rounding errors"""
-    with TemporaryDirectory() as td:
-        slope_dem_path = p.join(td, "slope.tif")
-        aspect_dem_path = p.join(td, "aspect.tif")
-
-        get_dem_slope_and_angle(dem_path, slope_dem_path, aspect_dem_path)
-
-
 def download_dem():
     #"""Downloads a DEM (probably JAXA) for the relevent area (maybe)"""
     # Maybe later.
@@ -60,37 +42,11 @@ def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
     dem = gdal.Open(dem_path)
     gdal.DEMProcessing(slope_out_path, dem, "slope", scale=111120)  # For DEM in meters
     gdal.DEMProcessing(aspect_out_path, dem, "aspect")
-    dem=None
-
-
-def calculate_solar_zenith(hour_angle, latitude, solar_declination):
-    """Given the hour angle, latitude and solar declination (all in degrees), returns the solar
-    zenith angle in degrees."""
-    latitude = np.deg2rad(latitude)
-    hour_angle = np.deg2rad(hour_angle)
-    solar_declination = np.deg2rad(solar_declination)
-    A = np.sin(latitude) * np.sin(solar_declination)
-    B = np.cos(latitude) * np.cos(solar_declination) * np.cos(hour_angle)
-    theta = np.arccos(A+B)
-    return np.rad2deg(theta)
-
-
-def calculate_solar_azimuth(solar_zenith, latitude, solar_declination):
-    """Given the solar zenith in degrees, east-positive latitude and solar declination in degrees"""
-    # Again, work in rads
-    lat_rad = np.deg2rad(latitude)
-    zen_rad = np.deg2rad(solar_zenith)
-    dec_rad = np.deg2rad(solar_declination)
-    A = (np.sin(lat_rad)*np.cos(zen_rad)) - np.sin(dec_rad)
-    B = np.cos(lat_rad)*np.sin(zen_rad)
-    C = -1*(A/B)
-    theta = np.pi-np.arccos(C)
-    out = np.rad2deg(theta)
-    return out
+    dem = None
 
 
 def get_pixel_latlon(raster, x, y):
-    """For a given pixel, gets the lat-lon value in EPSG 4326."""
+    """For a given pixel in raster, gets the lat-lon value in EPSG 4326."""
     # TODO: Move to coordinate_manipulation
     native_projection = osr.SpatialReference()
     native_projection.ImportFromWkt(raster.GetProjection())
@@ -141,7 +97,7 @@ def _generate_latlon_arrays(array, transformer, geotransform):
 
 def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_raster_out_path=None):
     """
-    Given a DEM, creates a raster of the illumination conditions as specified in
+    Given a DEM, creates an array of the illumination conditions as specified in
     https://ieeexplore.ieee.org/document/8356797, equation 9. The Pysolar library is
     used to calculate solar position.
 
@@ -152,8 +108,12 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
     raster_datetime
         The time of day _with timezone set_ for the
     ic_raster_out_path
-        The path to save the output raster.
+        If present, saves a raster of the illumination condition
 
+    Returns
+    -------
+    An array of illuminatiton conditions for every pixel in the input DEM.
+    Each pixel is a value between -1 and 1
 
     """
     log.info("Generating illumination condition raster from {}".format(dem_raster_path))
@@ -175,7 +135,7 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
         lat_array, lon_array = _generate_latlon_arrays(dem_array, transformer, geotransform)
 
         print("pixels to process: {}".format(np.product(lat_array.shape)))
-        ic_array, zenith_array = parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
+        ic_array, zenith_array = ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
         
         if ic_raster_out_path:
             ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
@@ -195,7 +155,7 @@ def calc_altitude_array(lat_array, lon_array, raster_datetime):
     return (np.array(list(map(calc_altitude_for_datetime, lat_array, lon_array))))
 
 
-def parallel_ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime):
+def ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime):
 
     print("Precomputing -azimuth and zenith arrays")
     azimuth_array = calc_azimuth_array(lat_array, lon_array, raster_datetime)
@@ -217,6 +177,31 @@ def _deg_cos(in_array):
 
 
 def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime):
+
+    """
+    Corrects for shadow effects due to terrain features.
+    Algorithm:
+
+    * Generate slope and aspect from DEM using gdaldem
+    * Calculate solar position from datatake sensing start and location of image
+    * Calculate the correction factor for that image from the sun zenith angle, azimuth angle, DEM aspect and DEM slope
+    * Build a mask of green areas using NDVI
+    * Perform a linear regression based on that IC calculation and the contents of the L2 image to get ground slope(?)
+    * Correct pixel p in original image with following: p_out = p_in - (ground_slope*(IC-cos(sun_zenith)))
+    * Write to output
+
+    Parameters
+    ----------
+    raster_path
+        A path to the raster to correct.
+    dem_path
+        The path to the DEM
+    out_raster_path
+        The path to the output.
+    raster_datetime
+        A datetime.DateTime object **with timezone set**
+
+    """
    
     with TemporaryDirectory() as td:
 

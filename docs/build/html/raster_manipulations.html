@@ -81,16 +81,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
 <li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
 </ul>
 
             
@@ -182,8 +178,15 @@ Mask is an a 2 dimensional array of 1 ( unmasked) and 0 (masked)</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.raster_manipulation.apply_band_function">
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_band_function</code><span class="sig-paren">(</span><em class="sig-param">in_path</em>, <em class="sig-param">function</em>, <em class="sig-param">bands</em>, <em class="sig-param">out_path</em>, <em class="sig-param">out_datatype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_band_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applys an arbitrary band mathemtics function to an image at in_path and saves the result at out_map.
+Function should be a function ofblect of the form f(band_input_A, band_input_B, …)</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.raster_manipulation.apply_fmask">
-<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_fmask</code><span class="sig-paren">(</span><em class="sig-param">in_safe_dir</em>, <em class="sig-param">out_file</em>, <em class="sig-param">fmask_command='fmask_sentinel2Stacked.py'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_fmask" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_fmask</code><span class="sig-paren">(</span><em class="sig-param">in_safe_dir</em>, <em class="sig-param">out_file</em>, <em class="sig-param">fmask_command='/home/ubuntu/anaconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_fmask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls fmask to create a new mask for L1 data</p>
 </dd></dl>
 
@@ -197,6 +200,29 @@ Mask is an a 2 dimensional array of 1 ( unmasked) and 0 (masked)</p>
 <dt id="pyeo.raster_manipulation.atmospheric_correction">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">atmospheric_correction</code><span class="sig-paren">(</span><em class="sig-param">in_directory</em>, <em class="sig-param">out_directory</em>, <em class="sig-param">sen2cor_path</em>, <em class="sig-param">delete_unprocessed_image=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.atmospheric_correction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies Sen2cor cloud correction to level 1C images</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.raster_manipulation.average_images">
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">average_images</code><span class="sig-paren">(</span><em class="sig-param">raster_paths</em>, <em class="sig-param">out_raster_path</em>, <em class="sig-param">geometry_mode='intersect'</em>, <em class="sig-param">format='GTiff'</em>, <em class="sig-param">datatype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.average_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>When provided with a list of rasters, will stack them into a single raster. The nunmber of
+bands in the output is equal to the total number of bands in the input. Geotransform and projection
+are taken from the first raster in the list; there may be unexpected behavior if multiple differing
+proejctions are provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster_paths</strong> – A list of paths to the rasters to be stacked, in order.</p></li>
+<li><p><strong>out_raster_path</strong> – The path to the saved output raster.</p></li>
+<li><p><strong>geometry_mode</strong> – Can be either ‘instersect’ or ‘union’.
+- If ‘intersect’, then the output raster will only contain the pixels of the input rasters that overlap.
+- If ‘union’, then the output raster will contain every pixel in the outputs. Layers without data will
+have their pixel values set to 0.</p></li>
+<li><p><strong>format</strong> – The GDAL image format for the output.</p></li>
+<li><p><strong>datatype</strong> – The datatype of the gdal array</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -240,6 +266,16 @@ Will np.floor() when converting from geo to pixel units and np.absolute() y reso
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.raster_manipulation.clip_raster_to_intersection">
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster_to_intersection</code><span class="sig-paren">(</span><em class="sig-param">raster_to_clip_path</em>, <em class="sig-param">extent_raster_path</em>, <em class="sig-param">out_raster_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster_to_intersection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clips one raster to the extent proivded by the other raster, and saves the result at out_raster_path.
+Assumes both raster_to_clip and extent_raster are in the same projection.
+:param raster_to_clip_path: The location of the raster to be clipped.
+:param extent_raster_path: The location of the raster that will provide the extent to clip to
+:param out_raster_path: A location for the finished raster</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.raster_manipulation.combine_masks">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">combine_masks</code><span class="sig-paren">(</span><em class="sig-param">mask_paths</em>, <em class="sig-param">out_path</em>, <em class="sig-param">combination_func='and'</em>, <em class="sig-param">geometry_func='intersect'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.combine_masks" title="Permalink to this definition">¶</a></dt>
 <dd><p>ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
@@ -261,6 +297,12 @@ Python true or false. Also assumes that all masks are the same projection for no
 <li><p><strong>format</strong> – The raster format of the output image.</p></li>
 <li><p><strong>generate_date_images</strong> – If true, generates a corresponding date image for the composite. See docs for composite_images_with_mask.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>The path to the new composite</p>
 </dd>
 </dl>
 </dd></dl>
@@ -682,8 +724,8 @@ followed by processing run date and then time</p>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.stack_sentinel_2_bands">
-<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_sentinel_2_bands</code><span class="sig-paren">(</span><em class="sig-param">safe_dir</em>, <em class="sig-param">out_image_path</em>, <em class="sig-param">bands=('B08'</em>, <em class="sig-param">'B04'</em>, <em class="sig-param">'B03'</em>, <em class="sig-param">'B02')</em>, <em class="sig-param">out_resolution=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_sentinel_2_bands" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stacks the contents of a .SAFE granule directory into a single geotiff</p>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_sentinel_2_bands</code><span class="sig-paren">(</span><em class="sig-param">safe_dir</em>, <em class="sig-param">out_image_path</em>, <em class="sig-param">bands=('B02'</em>, <em class="sig-param">'B03'</em>, <em class="sig-param">'B04'</em>, <em class="sig-param">'B08')</em>, <em class="sig-param">out_resolution=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_sentinel_2_bands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks the specified bands of a .SAFE granule directory into a single geotiff</p>
 </dd></dl>
 
 <dl class="function">
