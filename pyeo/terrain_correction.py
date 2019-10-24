@@ -2,9 +2,10 @@
 Terrain correction
 ==================
 
-Functions for implementing terrain correction algorithm (credit to Wim Nursal, LAPAN
+Functions for implementing terrain correction algorithm (credit to Wim Nursal and team, LAPAN)
 
 Original code at https://github.com/Forests2020-Indonesia/Topographic-Correction/blob/master/Topographic%20Correction.py
+Method b: https://ieeexplore.ieee.org/document/8356797
 """
 
 import gdal
@@ -28,25 +29,6 @@ import logging
 log = logging.getLogger("pyeo")
 
 
-def do_terrain_correction(in_safe_file, out_path, dem_path):
-    """Corrects for shadow effects due to terrain features.
-    Takes in a L2 SAFE file and a DEM, and produces a really boring image.
-    Algorithm:
-    -Generate slope and aspect from DEM using gdaldem
-    -Calculate solar position from datatake sensing start and location of image
-    -Calculate the correction factor for that image from the sun zenith angle, azimuth angle, DEM aspect and DEM slope
-    -Build a mask of green areas using NDVI
-    -Perform a linear regression based on that IC calculation and the contents of the L2 image to get ground slope(?)
-    -Correct pixel p in original image with following: p_out = p_in - (ground_slope*(IC-cos(sun_zenith)))
-    -Write to output
-    NOTE TO SELF: Watch out; Wim has recast the bands to float. Beware off-by-one and rounding errors"""
-    with TemporaryDirectory() as td:
-        slope_dem_path = p.join(td, "slope.tif")
-        aspect_dem_path = p.join(td, "aspect.tif")
-
-        get_dem_slope_and_angle(dem_path, slope_dem_path, aspect_dem_path)
-
-
 def download_dem():
     #"""Downloads a DEM (probably JAXA) for the relevent area (maybe)"""
     # Maybe later.
@@ -60,7 +42,7 @@ def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
     dem = gdal.Open(dem_path)
     gdal.DEMProcessing(slope_out_path, dem, "slope", scale=111120)  # For DEM in meters
     gdal.DEMProcessing(aspect_out_path, dem, "aspect")
-    dem=None
+    dem = None
 
 
 def calculate_solar_zenith(hour_angle, latitude, solar_declination):
@@ -154,6 +136,10 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
     ic_raster_out_path
         The path to save the output raster.
 
+    Returns
+    -------
+
+
 
     """
     log.info("Generating illumination condition raster from {}".format(dem_raster_path))
@@ -217,6 +203,32 @@ def _deg_cos(in_array):
 
 
 def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime):
+
+    """
+    Corrects for shadow effects due to terrain features.
+    Algorithm:
+
+    * Generate slope and aspect from DEM using gdaldem
+    * Calculate solar position from datatake sensing start and location of image
+    * Calculate the correction factor for that image from the sun zenith angle, azimuth angle, DEM aspect and DEM slope
+    * Build a mask of green areas using NDVI
+    * Perform a linear regression based on that IC calculation and the contents of the L2 image to get ground slope(?)
+    * Correct pixel p in original image with following: p_out = p_in - (ground_slope*(IC-cos(sun_zenith)))
+    * Write to output
+
+    Parameters
+    ----------
+    raster_path
+        A path to the raster to correct.
+    dem_path
+        The path to the DEM
+    out_raster_path
+        The path to the output.
+    raster_datetime
+        A datetime.DateTime object *with timezone set*
+
+
+    """
    
     with TemporaryDirectory() as td:
 
