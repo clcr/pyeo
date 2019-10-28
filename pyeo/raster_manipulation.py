@@ -48,6 +48,9 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 
 log = logging.getLogger("pyeo")
 
+if os==Windows():
+    def gdal.Raster.GetVirtualMemArray(self, eAccess):
+        return gdal.ReadAsArray(self)
 
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
