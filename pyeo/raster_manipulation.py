@@ -24,6 +24,7 @@ NOTE: Projections
 
 NOTE: Masks
 """
+import sys
 import datetime
 import glob
 import logging
@@ -48,9 +49,16 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 
 log = logging.getLogger("pyeo")
 
-#if os==Windows():
-#    def gdal.Raster.GetVirtualMemArray(self, eAccess):
-#        return gdal.ReadAsArray(self)
+if sys.platform() == "win32":
+    # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
+    # Monkeypatching outside of test environments is normally Very Bad,
+    # and should only be attempted by those with special training or 
+    # nothing to lose.
+    log.warn("Windows OS detected; monkeypatching GetVirtualMemArray.
+            Some functiosn may not ")
+    def WindowsVirtualMemArray(self, eAccess=None):
+        return gdal.ReadAsArray(self)
+    gdal.Raster.GetVirtualMemArray = WindowsVirtualMemArray
 
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
