@@ -91,5 +91,11 @@ def test_terrain_correction(monkeypatch):
     terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime)
 
 
-if __name__ == "__main__":
-    test_calculate_illumination_raster()
+def test_terrain_correction_landsat():
+    dem_path = "test_data/dem_test_indonesia.tif"
+    in_path = "/home/john/work/indonesia/landsat_8_data/RASTER/band2.tif"
+    raster_timezone = pytz.timezone("UTC")
+    raster_datetime = dt.datetime(2015, 7, 5, 3, 5, 42, tzinfo=raster_timezone)
+    out_path = "test_outputs/correction_landsat_indonesia.tif"
+    terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime, is_landsat=True)
+    assert gdal.Open(out_path)

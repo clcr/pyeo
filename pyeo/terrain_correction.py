@@ -176,7 +176,7 @@ def _deg_cos(in_array):
     return np.cos(np.deg2rad(in_array))
 
 
-def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime):
+def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime, is_landsat = False):
 
     """
     Corrects for shadow effects due to terrain features.
@@ -215,9 +215,12 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         reproj_dem_path = p.join(td, "reproj_dem.tif")
         ras.reproject_image(dem_path, reproj_dem_path, ref_raster.GetProjection(), do_post_resample=False)
         ras.resample_image_in_place(reproj_dem_path, ref_raster.GetGeoTransform()[1])  # Assuming square pixels
-        ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path)
+        ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path, is_landsat)
 
         ic_array, zenith_array = calculate_illumination_condition_array(clipped_dem_path, raster_datetime)
+        
+        if is_landsat:
+            ref_array = ref_array.T
 
         if len(ref_array.shape) == 2:
             ref_array = np.expand_dims(ref_array, 0)

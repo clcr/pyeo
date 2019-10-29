@@ -48,9 +48,9 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 
 log = logging.getLogger("pyeo")
 
-if os==Windows():
-    def gdal.Raster.GetVirtualMemArray(self, eAccess):
-        return gdal.ReadAsArray(self)
+#if os==Windows():
+#    def gdal.Raster.GetVirtualMemArray(self, eAccess):
+#        return gdal.ReadAsArray(self)
 
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
@@ -768,7 +768,7 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
                      out_image, geometry_mode="intersect")
 
 
-def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
+def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
     """
     Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
     Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.
@@ -795,6 +795,9 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
         aoi = ogr.Open(aoi_path)
         intersection = get_aoi_intersection(raster, aoi)
         min_x_geo, max_x_geo, min_y_geo, max_y_geo = intersection.GetEnvelope()
+        if flip_x_y:
+            min_x_geo, min_y_geo = min_y_geo, min_x_geo
+            max_x_geo, max_y_geo = max_y_geo, max_x_geo
         width_pix = int(np.floor(max_x_geo - min_x_geo)/in_gt[1])
         height_pix = int(np.floor(max_y_geo - min_y_geo)/np.absolute(in_gt[5]))
         write_geometry(intersection, intersection_path, srs_id=srs_id)
@@ -811,7 +814,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
         out = None
 
 
-def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_raster_path):
+def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_raster_path, is_landsat=False):
     """
     Clips one raster to the extent proivded by the other raster, and saves the result at out_raster_path.
     Assumes both raster_to_clip and extent_raster are in the same projection.
@@ -831,7 +834,7 @@ def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_ras
         ext_ras = gdal.Open(extent_raster_path)
         proj = osr.SpatialReference(wkt=ext_ras.GetProjection())
         srs_id = int(proj.GetAttrValue('AUTHORITY', 1))
-        clip_raster(raster_to_clip_path, temp_aoi_path, out_raster_path, srs_id)
+        clip_raster(raster_to_clip_path, temp_aoi_path, out_raster_path, srs_id, flip_x_y = is_landsat)
 
 
 def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
