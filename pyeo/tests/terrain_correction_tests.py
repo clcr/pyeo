@@ -42,7 +42,7 @@ def test_get_pixel_latlon():
     np.testing.assert_allclose(out_lat, target_lat, 0.001)
     np.testing.assert_allclose(out_lon, target_lon, 0.001)
 
-
+@pytest.mark.skip("too slow")
 def test_calculate_latlon_array():
     raster_path = "test_data/dem_test_indonesia.tif"
     raster = gdal.Open(raster_path)
@@ -54,7 +54,7 @@ def test_calculate_latlon_array():
     assert np.all(lat == test_lat)
     assert np.all(lon == test_lon)
 
-
+@pytest.mark.skip
 def test_calculate_illumination_raster(monkeypatch):
 
     # The generate latlon array function is massively time-consuming.
@@ -91,11 +91,20 @@ def test_terrain_correction(monkeypatch):
     terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime)
 
 
-def test_terrain_correction_landsat():
+def test_terrain_correction_landsat(monkeypatch):
     dem_path = "test_data/dem_test_indonesia.tif"
-    in_path = "/home/john/work/indonesia/landsat_8_data/RASTER/band2.tif"
+    in_path = "test_data/landsat_stack.tif"
     raster_timezone = pytz.timezone("UTC")
     raster_datetime = dt.datetime(2015, 7, 5, 3, 5, 42, tzinfo=raster_timezone)
     out_path = "test_outputs/correction_landsat_indonesia.tif"
-    terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime, is_landsat=True)
+    terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime, is_landsat=False)
     assert gdal.Open(out_path)
+
+
+def test_landsat_stacking():
+    from pyeo import raster_manipulation as ras
+    folder_path = "test_data/landsat_8_data/RASTER"
+    out_image_path = "test_outputs/landsat_stack.tif"
+    ras.preprocess_landsat_images(folder_path, out_image_path, new_projection=32748)
+    out_raster = gdal.Open(out_path)
+    assert out_raster

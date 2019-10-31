@@ -40,7 +40,7 @@ def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
     Assumes that the DEM is in meters."""
     log.info("Calculating slope and apsect rasters from")
     dem = gdal.Open(dem_path)
-    gdal.DEMProcessing(slope_out_path, dem, "slope", scale=111120)  # For DEM in meters
+    gdal.DEMProcessing(slope_out_path, dem, "slope")  # For DEM in meters
     gdal.DEMProcessing(aspect_out_path, dem, "aspect")
     dem = None
 
@@ -119,16 +119,18 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
     log.info("Generating illumination condition raster from {}".format(dem_raster_path))
     with TemporaryDirectory() as td:
         log.info("Calculating slope and aspect rasters")
-        slope_raster_path = p.join(td, "slope.tif")
-        aspect_raster_path = p.join(td, "aspect.tif")
+        #slope_raster_path = "test_data/landsat_8_data/DEM/slope.tif"  # FOR NOW: PUT BACK LATER ROBERTS!!!!!
+        #aspect_raster_path = "test_data/landsat_8_data/DEM/aspect.tif"
+        slope_raster_path = p.join(td, 'slope.tif')
+        aspect_raster_path = p.join(td, 'aspect.tif')
         dem_image = gdal.Open(dem_raster_path)
         dem_array = dem_image.GetVirtualMemArray()
 
         get_dem_slope_and_angle(dem_raster_path, slope_raster_path, aspect_raster_path)
         slope_image = gdal.Open(slope_raster_path)
-        slope_array = slope_image.GetVirtualMemArray()
+        slope_array = slope_image.GetVirtualMemArray().T
         aspect_image = gdal.Open(aspect_raster_path)
-        aspect_array = aspect_image.GetVirtualMemArray()
+        aspect_array = aspect_image.GetVirtualMemArray().T
 
         print("Calculating latlon arrays (this takes a while, for some reason.")
         transformer, geotransform = _generate_latlon_transformer(dem_image)
@@ -140,7 +142,7 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
         if ic_raster_out_path:
             ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
 
-        return ic_array, zenith_array
+        return ic_array, zenith_array, slope_array
 
 
 def calc_azimuth_array(lat_array, lon_array, raster_datetime):
@@ -176,6 +178,21 @@ def _deg_cos(in_array):
     return np.cos(np.deg2rad(in_array))
 
 
+def build_sample_array(raster_array, slope_array, red_band_index, ir_band_index):
+    """
+    Returns a set of pixels in raster with slope > 18deg + ndvi > 0.5
+    """
+
+    red_band = raster_array[red_band_index, ...]
+    ir_band = raster_array[ir_band_index, ...]
+    ndvi_array = (ir_band - red_band)/(ir_band + red_band)
+    np.nan_to_num(ndvi_array, nan=0, copy=False)
+    mask_array = np.logical_and(ndvi_array>0.5, slope_array.T > 18)
+    out_array = ras.apply_array_image_mask(raster_array, mask_array, fill_value = 0)
+    
+    return out_array
+
+
 def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime, is_landsat = False):
 
     """
@@ -205,34 +222,47 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
    
     with TemporaryDirectory() as td:
 
-        ref_raster = gdal.Open(raster_path)
-        ref_array = ref_raster.GetVirtualMemArray()
-        out_raster = ras.create_matching_dataset(ref_raster, out_raster_path, bands=ref_raster.RasterCount)
+        in_raster = gdal.Open(raster_path)
+        in_array = in_raster.GetVirtualMemArray()
+        out_raster = ras.create_matching_dataset(in_raster, out_raster_path, bands=in_raster.RasterCount)
         out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
 
         print("Preprocessing DEM")
         clipped_dem_path = p.join(td, "clipped_dem.tif")
         reproj_dem_path = p.join(td, "reproj_dem.tif")
-        ras.reproject_image(dem_path, reproj_dem_path, ref_raster.GetProjection(), do_post_resample=False)
-        ras.resample_image_in_place(reproj_dem_path, ref_raster.GetGeoTransform()[1])  # Assuming square pixels
+        ras.reproject_image(dem_path, reproj_dem_path, in_raster.GetProjection(), do_post_resample=False)
+        ras.resample_image_in_place(reproj_dem_path, in_raster.GetGeoTransform()[1])  # Assuming square pixels
         ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path, is_landsat)
 
-        ic_array, zenith_array = calculate_illumination_condition_array(clipped_dem_path, raster_datetime)
+        ic_array, zenith_array, slope_array = calculate_illumination_condition_array(clipped_dem_path, raster_datetime)
         
         if is_landsat:
-            ref_array = ref_array.T
+            in_array = in_array.T
 
-        if len(ref_array.shape) == 2:
-            ref_array = np.expand_dims(ref_array, 0)
+        if len(in_array.shape) == 2:
+            in_array = np.expand_dims(in_array, 0)
+
+        print("Calculating reflectance array")
+        ref_multi_this_band = 2.0e-5
+        ref_add_this_band = -0.1
+        ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
         
-        import pdb
+        print("Calculating sample array")
+        sample_array = build_sample_array(ref_array, slope_array, 2, 3) # THIS IS LANDAST ONLY RIGHT NOW, CHANGE LATER!
+        
+        band_indicies = sample_array[0, ...].nonzero()
+
         print("Beginning linear regression")
-        for i, band in enumerate(ref_array[:, ...]):
+        for i, band in enumerate(sample_array[:, ...]):
             print("Processing band {} of {}".format(i+1, ref_array.shape[0]))
-            slope, _, _, _, _ = stats.linregress(ic_array.ravel(), band.ravel())
-            out_array[i, ...] = (band - (slope*(ic_array - _deg_cos(zenith_array)))).reshape(band.shape)
+            ic_for_linregress = ic_array.T[band_indicies[0], band_indicies[1]].ravel()
+            band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel()
+            slope, _, _, _, _ = stats.linregress(ic_for_linregress, band_for_linregress)
+            corrected_band = (band - (slope*(ic_array.T - _deg_cos(zenith_array.T))))
+            out_array[i, ...] = np.where(band > 0, corrected_band, ref_array[i, ...])
+            
 
     out_array = None
     out_raster = None
     ref_array = None
-    ref_raster = None
+    in_raster = None
