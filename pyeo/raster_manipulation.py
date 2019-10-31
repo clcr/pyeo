@@ -644,6 +644,10 @@ def reproject_image(in_raster, out_raster_path, new_projection,  driver = "GTiff
     by deafult this function resamples the images back to their original resolution
 
     """
+    if type(new_projection) is int:
+        proj = osr.SpatialReference()
+        proj.ImportFromEPSG(new_projection)
+        new_projection = proj.ExportToWkt()
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
@@ -1140,6 +1144,44 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 shutil.move(mask_path, out_mask_path)
                 resample_image_in_place(out_mask_path, out_resolution)
 
+
+def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
+    """
+    Stacks a set of Landsat images into a single raster and reorders the bands into
+    [bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.
+    """
+    band_path_list = [os.path.join(image_dir, image_name) 
+            for image_name in sorted(os.listdir(image_dir)) if image_name.endswith('.tif')]
+    n_bands = len(band_path_list)
+    driver = gdal.GetDriverByName("GTiff")
+    first_ls_raster = gdal.Open(band_path_list[0])
+    first_ls_array = first_ls_raster.GetVirtualMemArray()
+    out_image = driver.Create(out_image_path,
+            xsize = first_ls_array.shape[1],
+            ysize = first_ls_array.shape[0],
+            bands = n_bands,
+            eType = first_ls_raster.GetRasterBand(1).DataType
+            )
+    out_image.SetGeoTransform(first_ls_raster.GetGeoTransform())
+    out_image.SetProjection(first_ls_raster.GetProjection())
+    out_array = out_image.GetVirtualMemArray(eAccess = gdal.GA_Update)
+    first_ls_array = None
+    first_ls_raster = None
+    for ii, ls_raster_path in enumerate(band_path_list):
+        ls_raster = gdal.Open(ls_raster_path)
+        ls_array = ls_raster.GetVirtualMemArray()
+        out_array[ii, ...] = ls_array[...]
+        ls_array = None
+        ls_raster = None
+    out_array = None
+    out_image = None
+    if new_projection:
+        with TemporaryDirectory() as td:
+            temp_path = os.path.join(td, "reproj_temp.tif")
+            reproject_image(out_image_path, temp_path, new_projection, do_post_resample = False)
+            os.remove(out_image_path)
+            os.rename(temp_path, out_image_path)
+            resample_image_in_place(out_image_path, 30)
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
     """Stacks the specified bands of a .SAFE granule directory into a single geotiff"""
