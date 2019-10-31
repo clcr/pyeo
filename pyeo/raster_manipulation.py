@@ -37,7 +37,7 @@ from tempfile import TemporaryDirectory
 import gdal
 import numpy as np
 from osgeo import gdal_array, osr, ogr
-from skimage import morphology as morph
+#from skimage import morphology as morph
 
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect
@@ -49,16 +49,31 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 
 log = logging.getLogger("pyeo")
 
-if sys.platform() == "win32":
+class _WinHackVirtualMemArray(np.ndarray):
+    
+    def __init__(self,path=None):
+        super.__init__(self)
+        self.out_path = path
+    
+    def __del__(self):
+        gdal.write_array(super, self.out_path)
+
+
+if sys.platform == "win32":
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
     # Monkeypatching outside of test environments is normally Very Bad,
     # and should only be attempted by those with special training or 
     # nothing to lose.
-    log.warn("Windows OS detected; monkeypatching GetVirtualMemArray.
-            Some functiosn may not ")
+    log.warning("Windows OS detected; monkeypatching GetVirtualMemArray. Some functiosn may not respond as expected.")
     def WindowsVirtualMemArray(self, eAccess=None):
-        return gdal.ReadAsArray(self)
-    gdal.Raster.GetVirtualMemArray = WindowsVirtualMemArray
+        if eAccess==0:
+            return self.ReadAsArray(self)
+        if eAccess==1:
+            return _WinHackVirtualMemArray(self.ReadAsArray(), self.GetFileList()[0])
+
+    gdal.Dataset.GetVirtualMemArray = WindowsVirtualMemArray
+
+
 
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
