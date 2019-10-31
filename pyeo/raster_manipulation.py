@@ -51,8 +51,8 @@ log = logging.getLogger("pyeo")
 
 class _WinHackVirtualMemArray(np.ndarray):
     
-    def __init__(self,path=None):
-        super.__init__(self)
+    def __init__(self, path=None):
+        super.__init__(super)
         self.out_path = path
     
     def __del__(self):
