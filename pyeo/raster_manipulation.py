@@ -46,17 +46,26 @@ from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1
     get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
 from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception, NonSquarePixelException
 
-
 log = logging.getLogger("pyeo")
 
-class _WinHackVirtualMemArray(np.ndarray):
+class _WinHackVirtualMemArray(np.memmap):
     
-    def __init__(self, path=None):
-        super.__init__(super)
-        self.out_path = path
-    
+    def __new__(subtype, raster, writeable = False):
+        filepath = NamedTemporaryFile()
+        obj = super(_WinHackVirtualArray, subtype).__new__(subtype,
+                filepath,
+                dtype = raster.GetDataType(),
+                mode = "w+",
+                shape = (raster.RasterCount, raster.RasterXSize, RasterYSize)
+                )
+        obj.geotransform = raster.GetGeoTransform()
+        obj.projection = raster.GetProjection()
+        return obj
+
     def __del__(self):
+        # If appropriate, we want the memmap to close on write
         gdal.write_array(super, self.out_path)
+
 
 
 if sys.platform == "win32":
