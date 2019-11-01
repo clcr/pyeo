@@ -23,9 +23,14 @@ cd pyeo
 conda env create --file environment.yml --name pyeo_env
 conda activate pyeo_env
 python -m pip install -e . -vv
-echo "export PYEO=$PWD" >> ~/.bashrc
-echo "export PATH=$PATH:$PYEO/bin" >> ~/.bashrc
 ```
+If you want access to the Pyeo command line functions, add the following to your .bashrc
+
+```bash
+export PYEO=/path/to/pyeo
+export PATH=$PATH:$PYEO/bin
+```
+You can test this by restarting your shell and then running a set 
 
 If you do not want to edit Pyeo, replace the pip install line with
 
