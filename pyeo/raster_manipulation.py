@@ -32,7 +32,7 @@ import os
 import shutil
 import subprocess
 import re
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 
 import gdal
 import numpy as np
@@ -48,40 +48,41 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 
 log = logging.getLogger("pyeo")
 
+
+
 class _WinHackVirtualMemArray(np.memmap):
     
     def __new__(subtype, raster, writeable = False):
         filepath = NamedTemporaryFile()
-        obj = super(_WinHackVirtualArray, subtype).__new__(subtype,
+        obj = super(_WinHackVirtualMemArray, subtype).__new__(subtype,
                 filepath,
-                dtype = raster.GetDataType(),
+                dtype = np.int32, #raster.GetRasterBand(1).GetDataType(),
                 mode = "w+",
-                shape = (raster.RasterCount, raster.RasterXSize, RasterYSize)
+                shape = (raster.RasterCount, raster.RasterXSize, raster.RasterYSize)
                 )
         obj.geotransform = raster.GetGeoTransform()
         obj.projection = raster.GetProjection()
+        obj.out_path
+        obj[...] = raster.ReadAsArray()
         return obj
 
     def __del__(self):
         # If appropriate, we want the memmap to close on write
-        gdal.write_array(super, self.out_path)
+        if writeable:
+            gdal.Open(self.out_path, 
 
 
-
-if sys.platform == "win32":
+if sys.platform: #== "win32":
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
     # Monkeypatching outside of test environments is normally Very Bad,
     # and should only be attempted by those with special training or 
     # nothing to lose.
     log.warning("Windows OS detected; monkeypatching GetVirtualMemArray. Some functiosn may not respond as expected.")
     def WindowsVirtualMemArray(self, eAccess=None):
-        if eAccess==0:
-            return self.ReadAsArray(self)
-        if eAccess==1:
-            return _WinHackVirtualMemArray(self.ReadAsArray(), self.GetFileList()[0])
+        return _WinHackVirtualMemArray(self)
 
     gdal.Dataset.GetVirtualMemArray = WindowsVirtualMemArray
-
+        
 
 
 def create_matching_dataset(in_dataset, out_path,
