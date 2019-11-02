@@ -39,6 +39,8 @@ import numpy as np
 from osgeo import gdal_array, osr, ogr
 #from skimage import morphology as morph
 
+import pdb
+
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect
 from pyeo.array_utilities import project_array
@@ -49,9 +51,8 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 log = logging.getLogger("pyeo")
 
 
-
 class _WinHackVirtualMemArray(np.memmap):
-    
+   # Maybe spooled  
     def __new__(subtype, raster, writeable = False):
         filepath = NamedTemporaryFile()
         obj = super(_WinHackVirtualMemArray, subtype).__new__(subtype,
@@ -62,15 +63,21 @@ class _WinHackVirtualMemArray(np.memmap):
                 )
         obj.geotransform = raster.GetGeoTransform()
         obj.projection = raster.GetProjection()
-        obj.out_path
+        obj.out_path = raster.GetFileList()[0]
         obj[...] = raster.ReadAsArray()
+        obj.writeable = writeable
         return obj
 
     def __del__(self):
         # If appropriate, we want the memmap to close on write
-        if writeable:
-            gdal.Open(self.out_path, 
-
+        if self.writeable:
+            pdb.set_trace()
+            out_ras = gdal.Open(self.out_path, eAccess = gdal.GA_Update)
+            for band_index, band in self[:, ...]:
+                out_band = out_ras.GetRasterBand(band_index + 1)
+                out_band.WriteArray(band)
+                out_band.FlushCache()
+            out_ras = None
 
 if sys.platform: #== "win32":
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
