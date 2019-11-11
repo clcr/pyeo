@@ -17,7 +17,8 @@ https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry and the
 
 import numpy as np
 from osgeo import osr, ogr
-
+import logging
+log = logging.getLogger("pyeo")
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     """
@@ -379,7 +380,17 @@ def floor_to_resolution(input, resolution):
 
 
     """
-    return input - (input%resolution)
+    if resolution > 1:
+        return input - (input%resolution)
+    else:
+        log.warning("Low resolution detected, assuming in degrees. Rounding to 3 dp.\
+                Probably safer to reproject to meters projection.")
+        import pdb
+        pdb.set_trace()
+        resolution = resolution * 1000
+        input = input * 1000
+        return (input-(input%resolution))/1000
+
 
 
 def get_raster_size(raster):

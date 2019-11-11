@@ -51,33 +51,55 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 log = logging.getLogger("pyeo")
 
 
+
 class _WinHackVirtualMemArray(np.memmap):
    # Maybe spooled  
-    def __new__(subtype, raster, writeable = False):
+    def __new__(subtype, raster, eAccess = False):
         filepath = NamedTemporaryFile()
         obj = super(_WinHackVirtualMemArray, subtype).__new__(subtype,
                 filepath,
-                dtype = np.int32, #raster.GetRasterBand(1).GetDataType(),
+                dtype = gdal.GetDataTypeName(raster.GetRasterBand(1).DataType),
                 mode = "w+",
-                shape = (raster.RasterCount, raster.RasterXSize, raster.RasterYSize)
+                shape = (raster.RasterCount, raster.RasterYSize, raster.RasterXSize)
                 )
         obj.geotransform = raster.GetGeoTransform()
         obj.projection = raster.GetProjection()
         obj.out_path = raster.GetFileList()[0]
+        obj.writeable = eAccess
+        obj.raster = raster
         obj[...] = raster.ReadAsArray()
-        obj.writeable = writeable
+        obj.flush()
+        print("Memarray created at {}".format(filepath))
         return obj
+
+    def __init__(self, raster, eAccess = False):
+       print("Attributes attached to memarray:{}\n{}\n{}\n{}".format(
+            self.geotransform,
+            self.projection,
+            self.out_path,
+            self.writeable))
+
+    def __array_finalize__(self, obj):
+        print("Finalising array as {}".format(obj))
+        if obj is not None:
+            self.geotransform = getattr(obj, 'geotransform', None)
+            self.projection = getattr(obj, 'projection', None)
+            self.out_path = getattr(obj, 'out_path', None)
+            self.raster = None
+            self.writeable = 0
 
     def __del__(self):
         # If appropriate, we want the memmap to close on write
+        print("Preparing to remove {}".format(self))
         if self.writeable:
             pdb.set_trace()
-            out_ras = gdal.Open(self.out_path, eAccess = gdal.GA_Update)
-            for band_index, band in self[:, ...]:
-                out_band = out_ras.GetRasterBand(band_index + 1)
+            for band_index, band in enumerate(self.__array__()[:, ...]):
+                out_band = self.raster.GetRasterBand(band_index + 1)
                 out_band.WriteArray(band)
                 out_band.FlushCache()
-            out_ras = None
+                out_band = None
+            self.raster.FlushCache()
+
 
 if sys.platform: #== "win32":
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
@@ -86,7 +108,7 @@ if sys.platform: #== "win32":
     # nothing to lose.
     log.warning("Windows OS detected; monkeypatching GetVirtualMemArray. Some functiosn may not respond as expected.")
     def WindowsVirtualMemArray(self, eAccess=None):
-        return _WinHackVirtualMemArray(self)
+        return _WinHackVirtualMemArray(self, eAccess)
 
     gdal.Dataset.GetVirtualMemArray = WindowsVirtualMemArray
         
@@ -298,6 +320,8 @@ def stack_images(raster_paths, out_raster_path,
 
     """
     #TODO: Confirm the union works, and confirm that nondata defaults to 0.
+    
+
     log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
@@ -314,6 +338,7 @@ def stack_images(raster_paths, out_raster_path,
                                                total_layers, projection, format, datatype)
 
     # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
+    
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
     for i, in_raster in enumerate(rasters):
@@ -984,7 +1009,6 @@ def get_extent_as_shp(in_ras_path, out_shp_path):
 
 
 def calc_ndvi(raster_path, output_path):
-    import pdb
     raster = gdal.Open(raster_path)
     out_raster = create_matching_dataset(raster, output_path, datatype=gdal.GDT_Float32)
     array = raster.GetVirtualMemArray()
@@ -992,7 +1016,6 @@ def calc_ndvi(raster_path, output_path):
     R = array[2, ...]
     I = array[3, ...]
     out_array[...] = (R-I)/(R+I)
-    pdb.set_trace()
 
     out_array[...] = np.where(out_array == -2147483648, 0, out_array)
 
@@ -1632,7 +1655,6 @@ def apply_fmask(in_safe_dir, out_file, fmask_command="/home/ubuntu/anaconda3/env
         "--safedir", in_safe_dir
     ]
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
-    # pdb.set_trace()
     fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
