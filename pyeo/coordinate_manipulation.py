@@ -19,6 +19,7 @@ import numpy as np
 from osgeo import osr, ogr
 import logging
 log = logging.getLogger("pyeo")
+import pyeo.windows_compatability
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     """
@@ -383,13 +384,11 @@ def floor_to_resolution(input, resolution):
     if resolution > 1:
         return input - (input%resolution)
     else:
-        log.warning("Low resolution detected, assuming in degrees. Rounding to 3 dp.\
+        log.warning("Low resolution detected, assuming in degrees. Rounding to 5 dp.\
                 Probably safer to reproject to meters projection.")
-        import pdb
-        pdb.set_trace()
-        resolution = resolution * 1000
-        input = input * 1000
-        return (input-(input%resolution))/1000
+        resolution = resolution * 100000
+        input = input * 100000
+        return (input-(input%resolution))/100000
 
 
 

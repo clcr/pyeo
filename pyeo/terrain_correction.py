@@ -28,6 +28,8 @@ import logging
 
 log = logging.getLogger("pyeo")
 
+import pyeo.windows_compatability
+
 
 def download_dem():
     #"""Downloads a DEM (probably JAXA) for the relevent area (maybe)"""
