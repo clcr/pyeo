@@ -24,6 +24,7 @@ NOTE: Projections
 
 NOTE: Masks
 """
+import sys
 import datetime
 import glob
 import logging
@@ -31,12 +32,15 @@ import os
 import shutil
 import subprocess
 import re
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 
 import gdal
 import numpy as np
 from osgeo import gdal_array, osr, ogr
-from skimage import morphology as morph
+from osgeo.gdal_array import NumericTypeCodeToGDALTypeCode, GDALTypeCodeToNumericTypeCode
+#from skimage import morphology as morph
+
+import pdb
 
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect
@@ -45,12 +49,13 @@ from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1
     get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
 from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception, NonSquarePixelException
 
-
 log = logging.getLogger("pyeo")
 
-#if os==Windows():
-#    def gdal.Raster.GetVirtualMemArray(self, eAccess):
-#        return gdal.ReadAsArray(self)
+import pyeo.windows_compatability
+
+
+
+
 
 def create_matching_dataset(in_dataset, out_path,
                             format="GTiff", bands=1, datatype = None):
@@ -258,6 +263,8 @@ def stack_images(raster_paths, out_raster_path,
 
     """
     #TODO: Confirm the union works, and confirm that nondata defaults to 0.
+    
+
     log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
@@ -274,6 +281,7 @@ def stack_images(raster_paths, out_raster_path,
                                                total_layers, projection, format, datatype)
 
     # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
+    
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
     for i, in_raster in enumerate(rasters):
@@ -944,7 +952,6 @@ def get_extent_as_shp(in_ras_path, out_shp_path):
 
 
 def calc_ndvi(raster_path, output_path):
-    import pdb
     raster = gdal.Open(raster_path)
     out_raster = create_matching_dataset(raster, output_path, datatype=gdal.GDT_Float32)
     array = raster.GetVirtualMemArray()
@@ -952,7 +959,6 @@ def calc_ndvi(raster_path, output_path):
     R = array[2, ...]
     I = array[3, ...]
     out_array[...] = (R-I)/(R+I)
-    pdb.set_trace()
 
     out_array[...] = np.where(out_array == -2147483648, 0, out_array)
 
@@ -1592,7 +1598,6 @@ def apply_fmask(in_safe_dir, out_file, fmask_command="/home/ubuntu/anaconda3/env
         "--safedir", in_safe_dir
     ]
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
-    # pdb.set_trace()
     fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
