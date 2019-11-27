@@ -2,14 +2,6 @@ from distutils.core import setup
 import os
 import stat
 
-if 'PYEO' not in os.environ:
-    this_directory = os.path.abspath(os.path.dirname(__file__))
-    os.environ['PYEO'] = this_directory
-    os.environ['PATH'] = os.environ['PATH']+r":$PYEO/bin"
-    permissions = stat.S_IEXEC | stat.S_IREAD
-    os.chmod(this_directory+"/bin/*", permissions)
-
-
 setup(
     name='Pyeo',
     version='0.2.0',

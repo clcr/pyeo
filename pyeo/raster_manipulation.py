@@ -298,6 +298,25 @@ def stack_images(raster_paths, out_raster_path,
     out_raster = None
 
 
+def strip_bands(in_raster_path, out_raster_path, bands_to_strip):
+    in_raster = gdal.Open(in_raster_path)
+    out_raster_band_count = in_raster.RasterCount-len(bands_to_strip)
+    out_raster = create_matching_dataset(in_raster, out_raster_path, bands=out_raster_band_count)
+    out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    in_raster_array = in_raster.GetVirtualMemArray()
+
+    bands_to_copy = [band for band in range(in_raster_array.shape[0]) if band not in bands_to_strip]
+
+    out_raster_array[...] = in_raster_array[bands_to_copy, :,:]
+
+    out_raster_array = None
+    in_raster_array = None
+    out_raster = None
+    in_raster = None
+
+    return out_raster_path
+
+
 def average_images(raster_paths, out_raster_path,
                  geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32):
     """
@@ -996,7 +1015,7 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
 
     Returns
     -------
-S2A_MSIL2A_20180802T105621_N0208_R094_T31UCU_20180802T141714.SAFE
+
     """
     # TODO: Include nodata value
     log = logging.getLogger(__name__)
@@ -1064,7 +1083,6 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
 
             out_path = os.path.join(out_dir, os.path.basename(temp_path))
             out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
-            resample_image_in_place(out_mask_path, out_resolution)
 
             if epsg:
                 log.info("Reprojecting images to {}".format(epsg))
