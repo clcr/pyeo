@@ -309,3 +309,18 @@ def test_averaging():
                 ]
     test_output = "test_outputs/averaged.tif"
     pyeo.raster_manipulation.average_images(test_files, test_output)
+
+
+def test_clip_geojson():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    out_path = "test_outputs/clip_from_json.tif"
+    try:
+        os.remove(out_path)
+    except FileNotFoundError:
+        pass
+    test_image = "test_data/composite_T36MZE_20190509T073621_20190519T073621.tif"  # epsg 4326; watch out
+    test_json = "test_data/mt_kippiri.geojson"
+    pyeo.raster_manipulation.clip_raster(test_image, test_json, out_path)
+    result = gdal.Open(out_path)
+    assert result
+    assert result.GetVirtualMemArray().max() > 0
