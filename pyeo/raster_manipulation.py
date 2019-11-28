@@ -39,7 +39,7 @@ from osgeo import gdal_array, osr, ogr
 from skimage import morphology as morph
 
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
-    get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect
+    get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect, reproject_vector
 from pyeo.array_utilities import project_array
 from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1_safe_file, get_sen_2_image_timestamp, \
     get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
@@ -757,10 +757,11 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
                      out_image, geometry_mode="intersect")
 
 
-def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
+def clip_raster(raster_path, aoi_path, out_path):
     """
     Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
     Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.
+    Will also reproject the shapefile to the same projection as the raster if needed.
 
     Parameters
     ----------
@@ -770,31 +771,35 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326):
         Path to a shapefile containing a single polygon
     out_path
         Path to a location to save the final output raster
-    srs_id
-        Projection of the input raster.
 
     """
     # https://gis.stackexchange.com/questions/257257/how-to-use-gdal-warp-cutline-option
     with TemporaryDirectory() as td:
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(srs_id)
-        intersection_path = os.path.join(td, 'intersection')
+        log.info("Clipping {} with {}".format(raster_path, aoi_path))
         raster = gdal.Open(raster_path)
         in_gt = raster.GetGeoTransform()
+        srs = osr.SpatialReference()
+        srs.ImportFromWkt(raster.GetProjection())
+        intersection_path = os.path.join(td, 'intersection')
         aoi = ogr.Open(aoi_path)
+        if aoi.GetLayer(0).GetSpatialRef().ExportToWkt() != srs.ExportToWkt():    # Gross string comparison. Might replace with wkb
+            log.info("Non-matching projections, reprojecting.")
+            aoi = None
+            tmp_aoi_path = os.path.join(td, "tmp_aoi.shp")
+            reproject_vector(aoi_path, tmp_aoi_path, srs)
+            aoi = ogr.Open(tmp_aoi_path)
         intersection = get_aoi_intersection(raster, aoi)
         min_x_geo, max_x_geo, min_y_geo, max_y_geo = intersection.GetEnvelope()
         width_pix = int(np.floor(max_x_geo - min_x_geo)/in_gt[1])
         height_pix = int(np.floor(max_y_geo - min_y_geo)/np.absolute(in_gt[5]))
         new_geotransform = (min_x_geo, in_gt[1], 0, min_y_geo, 0, in_gt[5])
-        write_geometry(intersection, intersection_path)
+        write_geometry(intersection, intersection_path, srs_id=srs.ExportToWkt())
         clip_spec = gdal.WarpOptions(
             format="GTiff",
-            cutlineDSName=intersection_path,
+            cutlineDSName=intersection_path+r"/geometry.shp",   # TODO: Fix the need for this
             cropToCutline=True,
             width=width_pix,
             height=height_pix,
-            srcSRS=srs,
             dstSRS=srs
         )
         out = gdal.Warp(out_path, raster, options=clip_spec)

@@ -326,6 +326,22 @@ def test_clip_geojson():
     assert result.GetVirtualMemArray().max() > 0
 
 
+def test_clip_geojson_projection():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    out_path = "test_outputs/clip_from_json_reprojection.tif"
+    try:
+
+        os.remove(out_path)
+    except FileNotFoundError:
+        pass
+    test_image = "test_data/original_all.tif"  # epsg something else; watch out
+    test_json = "test_data/merak.geojson"
+    pyeo.raster_manipulation.clip_raster(test_image, test_json, out_path)
+    result = gdal.Open(out_path)
+    assert result
+    assert result.GetVirtualMemArray().max() > 0
+
+
 def test_remove_raster_band():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_file = r"/home/localadmin1/projects/pyeo/pyeo/tests/test_data/composite_T36MZE_20190509T073621_20190519T073621_clipped.tif"
