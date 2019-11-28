@@ -394,6 +394,7 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
         elif source=='google':
             download_from_google_cloud([new_data[image_uuid]['identifier']], out_folder=out_path)
         elif source=="scihub":
+            out_path = os.path.dirname(out_path)
             download_from_scihub(image_uuid, out_path, user, passwd)
         else:
             log.error("Invalid data source; valid values are 'aws', 'google' and 'scihub'")
