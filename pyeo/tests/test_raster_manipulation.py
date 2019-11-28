@@ -269,7 +269,7 @@ def test_s2_band_stacking():
     except FileNotFoundError:
         pass
     os.mkdir("test_outputs/band_stacking")
-    test_safe_file = "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE"
+    test_safe_file = "test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE"
     # Stacking only the default 10m bands
     default_out = "test_outputs/band_stacking/default.tif"
     pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, default_out)
@@ -309,6 +309,22 @@ def test_averaging():
                 ]
     test_output = "test_outputs/averaged.tif"
     pyeo.raster_manipulation.average_images(test_files, test_output)
+
+
+def test_clip_geojson():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    out_path = "test_outputs/clip_from_json.tif"
+    try:
+        os.remove(out_path)
+    except FileNotFoundError:
+        pass
+    test_image = "test_data/composite_T36MZE_20190509T073621_20190519T073621.tif"  # epsg 4326; watch out
+    test_json = "test_data/mt_kippiri.geojson"
+    pyeo.raster_manipulation.clip_raster(test_image, test_json, out_path)
+    result = gdal.Open(out_path)
+    assert result
+    assert result.GetVirtualMemArray().max() > 0
+
 
 def test_remove_raster_band():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
