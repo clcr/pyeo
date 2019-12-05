@@ -68,8 +68,8 @@ query_results = pyeo.queries_and_downloads.check_for_s2_data_by_date(
 
 pyeo.queries_and_downloads.download_s2_data(
     query_results,
-    "level_1",
-    "level_2",
+    l1_dir = "level_1",
+    l2_dir = "level_2",
     source='scihub',
     user=conf["sent_2"]["user"],
     passwd=conf["sent_2"]["pass"]
