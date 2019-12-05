@@ -83,10 +83,21 @@ def calculate_time_offset(eqtime, longitude, timezone):
     time offset in minutes."""
     return eqtime + 4*longitude - 60*timezone
 
+<<<<<<< Updated upstream
 
 def calculate_true_solar_time(sensing_dt, time_offset):
     """Given the datetime object and a time offset, returns the true solar time in minutes"""
     return sensing_dt.hour*60 + sensing_dt.minute + sensing_dt.second/60 + time_offset
+=======
+    print("Precomputing -azimuth and zenith arrays")
+    azimuth_array = calc_azimuth_array(lat_array, lon_array, raster_datetime)
+    altitude_array = calc_altitude_array(lat_array, lon_array, raster_datetime)
+    zenith_array = 90-altitude_array
+    print("Beginning IC calculation.")
+    ic_array = _deg_cos(zenith_array) * _deg_cos(slope_array) + \
+               _deg_sin(zenith_array) * _deg_sin(slope_array) * _deg_cos(azimuth_array - aspect_array)  # Oddly enough, this is the time-consuming bit
+    return ic_array, zenith_array
+>>>>>>> Stashed changes
 
 
 def calculate_hour_angle(true_solar_time):
