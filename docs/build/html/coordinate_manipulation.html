@@ -546,6 +546,15 @@ An ogr.Geometry object containing a single point</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.coordinate_manipulation.reproject_vector">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">reproject_vector</code><span class="sig-paren">(</span><em class="sig-param">in_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">dest_srs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.reproject_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.
+:param in_path:
+:param out_path:
+:param dest_srs:</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.coordinate_manipulation.write_geometry">
 <code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">write_geometry</code><span class="sig-paren">(</span><em class="sig-param">geometry</em>, <em class="sig-param">out_path</em>, <em class="sig-param">srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.write_geometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves the geometry in an ogr.Geometry object to a shapefile.</p>
