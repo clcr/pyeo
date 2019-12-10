@@ -406,16 +406,22 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
     name containing a shapefile of the same name. For example, in the folder training_data:
 
     training_data
-    ---area1.tif
-    ---area1
-       ---area1.shp
-       ---area1.dbx
-       ...rest of shapefile for area 1 ...
-    ---area2.tif
-    ---area2
-       ---area2.shp
-       ---area2.dbx
-       ...rest of shapefile for area 2...
+
+      - area1.tif
+      - area1
+
+        - area1.shp
+        - area1.dbx
+
+       ... rest of shapefile for area 1 ...
+
+      - area2.tif
+      - area2
+
+        - area2.shp
+        - area2.dbx
+
+       ... rest of shapefile for area 2 ...
 
 
     Parameters

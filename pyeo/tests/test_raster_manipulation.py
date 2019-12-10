@@ -139,13 +139,14 @@ def test_composite_off_by_one():
 
 
 def test_raster_sum():
-    test_dir = "/media/ubuntu/data_archive/F2020/Kenya/outputs/classifications/mt_elgon"
-    test_pattern = '*_T37MDR_*_rcl.tif'
-    tile_id = 'T37MDR'
-    fn = 'KEN_cherangany_' + tile_id + '_forestChange_sum2018.tif'
-    out_fn = os.path.join(test_dir, fn)
-    test_image_list = glob.glob(os.path.join(test_dir, test_pattern))
-    pyeo.raster_manipulation.raster_sum(inRstList=test_image_list, outFn=out_fn)
+    test_dir = "test_data"
+    out_path = "test_outputs/raster_sum.tif"
+
+    test_image_list = [
+        "test_data/all.tif",
+        "test_data/original_all.tif"
+    ]
+    pyeo.raster_manipulation.raster_sum(inRstList=test_image_list, outFn=out_path)
 
 
 def test_mask_buffering():
@@ -204,7 +205,7 @@ def test_mask_from_confidence_layer():
     except FileNotFoundError:
         pass
     pyeo.raster_manipulation.create_mask_from_confidence_layer(
-        "test_data/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+        "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE",
         "test_outputs/masks/confidence_mask.tif",
         cloud_conf_threshold=0,
         buffer_size=3)
@@ -217,7 +218,7 @@ def test_fmask():
     except FileNotFoundError:
         pass
     pyeo.raster_manipulation.apply_fmask(
-        "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+        "test_data/S2A_MSIL1C_20170922T025541_N0205_R032_T48MXU_20191021T161210.SAFE",
         "test_outputs/masks/fmask.tif"
     )
     assert gdal.Open("test_outputs/masks/fmask.tif")
@@ -230,7 +231,7 @@ def test_fmask_cloud_mask():
     except FileNotFoundError:
         pass
     pyeo.raster_manipulation.create_mask_from_fmask(
-        "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+        "test_data/S2A_MSIL1C_20170922T025541_N0205_R032_T48MXU_20191021T161210.SAFE",
         "test_outputs/masks/fmask_cloud_and_shadow.tif"
     )
 
@@ -242,8 +243,8 @@ def test_combination_mask():
     except FileNotFoundError:
         pass
     pyeo.raster_manipulation.create_mask_from_sen2cor_and_fmask(
-        "test_data/L1/S2A_MSIL1C_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
-        "test_data/L2/S2A_MSIL2A_20180329T171921_N0206_R012_T13QFB_20180329T221746.SAFE",
+        "test_data/S2A_MSIL1C_20170922T025541_N0205_R032_T48MXU_20191021T161210.SAFE",
+        "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE",
         "test_outputs/masks/combined_mask.tif")
 
 
@@ -269,7 +270,7 @@ def test_s2_band_stacking():
     except FileNotFoundError:
         pass
     os.mkdir("test_outputs/band_stacking")
-    test_safe_file = "test_data/S2A_MSIL2A_20180626T110621_N0208_R137_T31UCU_20180626T120032.SAFE"
+    test_safe_file = "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE"
     # Stacking only the default 10m bands
     default_out = "test_outputs/band_stacking/default.tif"
     pyeo.raster_manipulation.stack_sentinel_2_bands(test_safe_file, default_out)
@@ -344,7 +345,7 @@ def test_clip_geojson_projection():
 
 def test_remove_raster_band():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    test_file = r"/home/localadmin1/projects/pyeo/pyeo/tests/test_data/composite_T36MZE_20190509T073621_20190519T073621_clipped.tif"
+    test_file = "test_data/composite_T36MZE_20190509T073621_20190519T073621_clipped.tif"
     try:
         os.remove("test_outputs/band_removal.tif")
     except FileNotFoundError:

@@ -265,9 +265,6 @@ def reproject_vector(in_path, out_path, dest_srs):
     out_path
     dest_srs
 
-    Returns
-    -------
-
     """
     subprocess.run(["ogr2ogr", out_path, in_path, '-t_srs', dest_srs.ExportToWkt()])
 

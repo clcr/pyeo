@@ -27,7 +27,7 @@ def test_classification():
 
 def test_raster_reclass_binary():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    test_image_name = 'test_outputs/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif'
+    test_image_name = 'test_data/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif'
     test_value = 1
     out_filename = 'test_outputs/class_composite_T36NYF_20180112T075259_20180117T075241_rcl.tif'
     a = pyeo.classification.raster_reclass_binary(test_image_name, test_value, outFn=out_filename)

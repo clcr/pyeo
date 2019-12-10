@@ -15,8 +15,8 @@ def test_query_and_download():
     user = test_conf["sent_2"]["user"]
     passwd = test_conf["sent_2"]["pass"]
     images = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
-                     "test_data/marque_de_com_really_simple.geojson",
-                     "20180101", "20180110")
+                     "test_data/merak.geojson",
+                     "20180101", "20180120")
     assert len(images) > 0
     try:
         shutil.rmtree("test_outputs/L1")
@@ -61,9 +61,9 @@ def test_old_format_google_cloud_dl():
 def test_pair_filter_with_dl():
     # Pickle this at some point so it down't depend on having a download
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    test_aoi = r"test_data/marque_de_com_really_simple.geojson"
-    start = "20170101"
-    end = "20171231"
+    test_aoi = r"test_data/merak.geojson"
+    start = "20180101"
+    end = "20181210"
     conf = load_test_conf()
     test_results = pyeo.queries_and_downloads.check_for_s2_data_by_date(test_aoi, start, end, conf)
     filtered_test_results = pyeo.queries_and_downloads.filter_non_matching_s2_data(test_results)

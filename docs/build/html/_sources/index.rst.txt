@@ -10,7 +10,6 @@ Welcome to Pyeo's documentation!
 .. toctree::
    :caption: Contents:
 
-   index
    array_utilities
    classification
    coordinate_manipulation
