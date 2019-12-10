@@ -1102,14 +1102,12 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 shutil.move(mask_path, out_mask_path)
 
 
-<<<<<<< Updated upstream
-=======
 def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
     """
     Stacks a set of Landsat images into a single raster and reorders the bands into
     [bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.
     """
-    band_path_list = [os.path.join(image_dir, image_name) 
+    band_path_list = [os.path.join(image_dir, image_name)
             for image_name in sorted(os.listdir(image_dir)) if image_name.endswith('.tif')]
     n_bands = len(band_path_list)
     driver = gdal.GetDriverByName("GTiff")
@@ -1143,7 +1141,6 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
             resample_image_in_place(out_image_path, 30)
 
 
->>>>>>> Stashed changes
 def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
     """Stacks the specified bands of a .SAFE granule directory into a single geotiff"""
 
