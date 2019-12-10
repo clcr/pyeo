@@ -1,34 +1,22 @@
 
 import os
-import pyeo.pyeo as pyeo
-import pyeo.pyeo.terrain_correction as terrain_correction
-import gdal
+from os import path as p
+
+import pyeo.terrain_correction as terrain_correction
+import osgeo.gdal as gdal
 import pathlib
 import numpy as np
 import pytest
 import datetime as dt
+import pytz
+import joblib
+from tempfile import TemporaryDirectory
 
 gdal.UseExceptions()
 
 
 def setup_module():
-    os.chdir(pathlib.Path(__file__).parent/"dem_tests")
-
-
-def test_setup():
-    assert pathlib.Path().cwd().is_absolute()
-    assert pathlib.Path.cwd().stem == "dem_tests"
-
-
-@pytest.mark.skip("Not implemented yet")
-def test_terrain_correction():
-    input_image_path = "test_data/terrain_test_before.tif"
-    target_image_path = "test_data/terrain_test_after.tif"
-    output_image_path = "test_outputs/terrain_test_output.tif"
-    pyeo.terrain_correction(input_image_path, output_image_path)
-    output_image = gdal.Open(output_image_path)
-    target_image = gdal.Open(target_image_path)
-    assert np.all(output_image.GetVirtualMemArray() == target_image.GetVirtualMemArray())
+    os.chdir(pathlib.Path(__file__).parent)
 
 
 @pytest.mark.skip("Test is too slow for dev right now")
@@ -89,11 +77,11 @@ def test_calculate_illumination_raster(monkeypatch):
 def test_terrain_correction(monkeypatch):
     os.chdir(pathlib.Path(__file__).parent)
 
-    def mock_latlon(foo, bar, baz):
-        lat = joblib.load("test_data/clipped_lat")
-        lon = joblib.load("test_data/clipped_lon")
-        return lat, lon
-    monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)
+#    def mock_latlon(foo, bar, baz):
+#        lat = joblib.load("test_data/clipped_lat")
+#        lon = joblib.load("test_data/clipped_lon")
+#        return lat, lon
+ #   monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)#
 
     dem_path = "test_data/dem_test_indonesia.tif"
     in_path = "test_data/indonesia_s2_l1_image.tif"

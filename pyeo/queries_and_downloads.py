@@ -66,6 +66,8 @@ from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, 
 
 log = logging.getLogger("pyeo")
 
+import pyeo.windows_compatability
+
 try:
     from google.cloud import storage
 except ImportError:

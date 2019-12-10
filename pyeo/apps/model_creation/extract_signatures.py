@@ -1,3 +1,4 @@
+
 """Command line application for extracting signatures from a .tif
  file and a folder containing a .shp of the same name. Example of use:
     python extract_signatures.py in_ras.tif training_polys.shp sigs.csv
