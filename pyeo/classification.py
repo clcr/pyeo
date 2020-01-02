@@ -156,13 +156,14 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     good_mask = np.all(image_array != nodata, axis=1)
     good_sample_count = np.count_nonzero(good_mask)
     log.info("No. good values: {}".format(good_sample_count))
-    if good_sample_count <= 0.5*len(good_mask):  # If the images is less than 50% good pixels, do filtering
+    #if good_sample_count <= 0.5*len(good_mask):  # If the images is less than 50% good pixels, do filtering
+    if 1 == 0:  # Removing the filter until we fix the classification issue with it
         log.info("Filtering nodata values")
         good_indices = np.nonzero(good_mask)
         good_samples = np.take(image_array, good_indices, axis=0).squeeze()
         n_good_samples = len(good_samples)
     else:
-        log.info("Not worth filtering nodata, skipping.")
+        #log.info("Not worth filtering nodata, skipping.")
         good_samples = image_array
         good_indices = range(0, n_samples)
         n_good_samples = n_samples
