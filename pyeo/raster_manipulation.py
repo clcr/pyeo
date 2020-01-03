@@ -1068,7 +1068,7 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 
 
 def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None,
-                           bands=("B08", "B04", "B03", "B02"), out_resolution=10):
+                           bands=("B02", "B03", "B04", "B8A"), out_resolution=10):
     """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
     the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided"""
     safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
