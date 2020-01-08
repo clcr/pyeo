@@ -15,6 +15,8 @@ import shutil
 
 from pyeo.exceptions import CreateNewStacksException
 
+import pyeo.windows_compatability
+
 # Set up logging on import
 log = logging.getLogger("pyeo")
 formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")

@@ -20,6 +20,8 @@ import itertools
 
 gdal.UseExceptions()
 
+import pyeo.windows_compatability
+
 
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None, produce_csv=False):

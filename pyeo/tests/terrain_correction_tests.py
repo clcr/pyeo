@@ -1,34 +1,22 @@
 
 import os
-import pyeo.pyeo as pyeo
-import pyeo.pyeo.terrain_correction as terrain_correction
-import gdal
+from os import path as p
+
+import pyeo.terrain_correction as terrain_correction
+import osgeo.gdal as gdal
 import pathlib
 import numpy as np
 import pytest
 import datetime as dt
+import pytz
+import joblib
+from tempfile import TemporaryDirectory
 
 gdal.UseExceptions()
 
 
 def setup_module():
-    os.chdir(pathlib.Path(__file__).parent/"dem_tests")
-
-
-def test_setup():
-    assert pathlib.Path().cwd().is_absolute()
-    assert pathlib.Path.cwd().stem == "dem_tests"
-
-
-@pytest.mark.skip("Not implemented yet")
-def test_terrain_correction():
-    input_image_path = "test_data/terrain_test_before.tif"
-    target_image_path = "test_data/terrain_test_after.tif"
-    output_image_path = "test_outputs/terrain_test_output.tif"
-    pyeo.terrain_correction(input_image_path, output_image_path)
-    output_image = gdal.Open(output_image_path)
-    target_image = gdal.Open(target_image_path)
-    assert np.all(output_image.GetVirtualMemArray() == target_image.GetVirtualMemArray())
+    os.chdir(pathlib.Path(__file__).parent)
 
 
 @pytest.mark.skip("Test is too slow for dev right now")
@@ -41,68 +29,82 @@ def test_get_dem_slope_and_angle():
     assert gdal.Open(angle_path)
 
 
-def test_calculate_fractional_year():
-    test_1_dt = dt.datetime(1990, 1, 1, 12, 0, 0)
-    assert terrain_correction.calculate_fractional_year(test_1_dt) == 0
-    test_2_dt = dt.datetime(1990, 7, 2, 12, 0, 0)   #Halfway through the year
-    np.testing.assert_allclose(terrain_correction.calculate_fractional_year(test_2_dt), np.pi, 1e-2)
-    test_2_dt = dt.datetime(1990, 12, 31, 12, 0, 0)   #End of year
-    np.testing.assert_allclose(terrain_correction.calculate_fractional_year(test_2_dt), 2*np.pi, 1e-2)
+def test_get_pixel_latlon():
+    # Expected out for  top-left corner of test image, (0,0)
+    # Test image is in EPSG 32748, QGIS says that TL corner coords are 600001.8, 9399997.9
+    # epsg.io says that this is 105.9026743, -5.4275703 in latlon
+    os.chdir(pathlib.Path(__file__).parent)
+    test_image_path = "test_data/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.SAFE/GRANULE/L2A_T48MXU_A011755_20170922T031450/IMG_DATA/R20m/L2A_T48MXU_20170922T025541_AOT_20m.jp2"
+    target_lon = 105.9026743
+    target_lat = -5.4275703
+    test_image = gdal.Open(test_image_path)
+    out_lat, out_lon = terrain_correction.get_pixel_latlon(test_image, 0, 0)
+    np.testing.assert_allclose(out_lat, target_lat, 0.001)
+    np.testing.assert_allclose(out_lon, target_lon, 0.001)
+
+@pytest.mark.skip("too slow")
+def test_calculate_latlon_array():
+    raster_path = "test_data/dem_test_indonesia.tif"
+    raster = gdal.Open(raster_path)
+    array = raster.GetVirtualMemArray()
+    transformer, gt = terrain_correction._generate_latlon_transformer(raster)
+    lon, lat = terrain_correction._generate_latlon_arrays(array, transformer, gt)
+    test_lat = joblib.load("test_data/lat_array_indo")
+    test_lon = joblib.load("test_data/lon_array_indo")
+    assert np.all(lat == test_lat)
+    assert np.all(lon == test_lon)
+
+@pytest.mark.skip
+def test_calculate_illumination_raster(monkeypatch):
+
+    # The generate latlon array function is massively time-consuming.
+    # This replaces it with precomputed data.
+    def mock_latlon(foo, bar, baz):
+        lat = joblib.load("test_data/lat_array_indo")
+        lon = joblib.load("test_data/lon_array_indo")
+        return lat, lon
+    monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)
+
+    os.chdir(pathlib.Path(__file__).parent)
+    dem_path = "test_data/dem_test_indonesia.tif"
+    raster_timezone = pytz.timezone("Asia/Jakarta")
+    raster_datetime = dt.datetime(2019, 6, 1, 12, 00, 00, tzinfo=raster_timezone)
+    out_path = "test_outputs/illumination_indonesia.tif"
+    terrain_correction.calculate_illumination_condition_array(dem_path, raster_datetime, out_path)
 
 
-def test_calculate_declination_angle():
-    # Declination angle for noon on the 1st Jan 1990 (fractional_year = 0)
-    # From https://www.esrl.noaa.gov/gmd/grad/solcalc
-    np.testing.assert_allclose(terrain_correction.calculate_declination_angle(0), -23.01, 1e-1)
+@pytest.mark.filterwarnings("ignore:numeric")
+def test_terrain_correction(monkeypatch):
+    os.chdir(pathlib.Path(__file__).parent)
+
+#    def mock_latlon(foo, bar, baz):
+#        lat = joblib.load("test_data/clipped_lat")
+#        lon = joblib.load("test_data/clipped_lon")
+#        return lat, lon
+ #   monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)#
+
+    dem_path = "test_data/dem_test_indonesia.tif"
+    in_path = "test_data/indonesia_s2_l1_image.tif"
+    raster_timezone = pytz.timezone("UTC")
+    raster_datetime = dt.datetime(2017, 9, 22, 2, 55, 41, tzinfo=raster_timezone)
+    out_path = "test_outputs/correction_indonesia.tif"
+    terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime)
 
 
-def test_calculate_eqtime():
-    # Equation of time for noon on the 1st Jan 1990 (fractional_year = 0)
-    # Target value from https://www.esrl.noaa.gov/gmd/grad/solcalc on the 1st Jan 1990
-    #NOTE: Sahid said there was a discrepency between eqtime from paper and eqtime from solarcalc
-    np.testing.assert_allclose(terrain_correction.calculate_eqtime(0), -3.53, 1e-1)
+def test_terrain_correction_landsat(monkeypatch):
+    dem_path = "test_data/dem_test_indonesia.tif"
+    in_path = "test_data/landsat_stack.tif"
+    raster_timezone = pytz.timezone("UTC")
+    raster_datetime = dt.datetime(2015, 7, 5, 3, 5, 42, tzinfo=raster_timezone)
+    out_path = "test_outputs/correction_landsat_indonesia.tif"
+    terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime, is_landsat=False)
+    assert gdal.Open(out_path)
 
 
-def test_calculate_time_offset():
-    # Time offset at 0,0 on the 1st Jan, 1990.
-    # This should be degenerate, and shake out to eqtime: everything else is 0
-    assert terrain_correction.calculate_time_offset(-3.53, 0, 0) == -3.53
-
-
-def test_calculate_true_solar_time():
-    # TST at 0,0 on 1st Jan, 1990
-    # https://www.esrl.noaa.gov/gmd/grad/solcal for time_offset and toarget value (true solar noon)
-    target = (21*60) + 3 + (32/60)
-    test_1_dt = dt.datetime(1990, 1, 1, 12, 0, 0)
-    np.testing.assert_allclose(terrain_correction.calculate_true_solar_time(test_1_dt, -3.53), target)
-
-
-def test_calcuate_hour_angle():
-    # Need to find a test value for this
-    print(terrain_correction.calculate_hour_angle(-3.53))
-
-
-def test_calculate_solar_zenith():
-    # Test values from
-    ha = -180.8825
-    lat = 0
-    dec = -23.01
-    target = 90 - 66.99  # From https://www.esrl.noaa.gov/gmd/grad/solcalc
-
-    out = terrain_correction.calculate_solar_zenith(ha, lat, dec)
-    np.testing.assert_allclose(out, target, 1e-1)
-
-
-def test_calculate_sun_position():
-    expected_output = {
-        "solar_zenith_angle": 45.627,
-        "solar_azimuth_angle": 142.83,
-        "solar_elevation_angle": 44.39
-    }
-    actual_output = terrain_correction.calculate_sun_position(
-        latitude=13.0421,
-        longitude=100.4726,
-        timezone=7,
-        local_datetime=dt.datetime(2008, 12, 18, 10, 22, 28)
-    )
-    assert expected_output == actual_output
+def test_landsat_stacking():
+    from pyeo import raster_manipulation as ras
+    folder_path = "test_data/landsat_8_data/RASTER"
+    out_image_path = "test_outputs/landsat_stack.tif"
+    ras.preprocess_landsat_images(folder_path, out_image_path, new_projection=32748)
+    out_raster = gdal.Open(out_path)
+    assert out_raster

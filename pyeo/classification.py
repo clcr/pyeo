@@ -24,6 +24,8 @@ from pyeo.filesystem_utilities import get_mask_path
 
 from pyeo.raster_manipulation import stack_images, create_matching_dataset, apply_array_image_mask, get_masked_array
 
+import pyeo.windows_compatability
+
 log = logging.getLogger(__name__)
 
 def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path=None):
@@ -120,6 +122,9 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     try:
         model = sklearn_joblib.load(model_path)
     except KeyError:
+        log.warning("Sklearn joblib import failed,trying generic joblib")
+        model = joblib.load(model_path)
+    except TypeError:
         log.warning("Sklearn joblib import failed,trying generic joblib")
         model = joblib.load(model_path)
     class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)

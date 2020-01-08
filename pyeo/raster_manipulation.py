@@ -24,6 +24,7 @@ NOTE: Projections
 
 NOTE: Masks
 """
+import sys
 import datetime
 import glob
 import logging
@@ -31,12 +32,15 @@ import os
 import shutil
 import subprocess
 import re
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 
 import gdal
 import numpy as np
 from osgeo import gdal_array, osr, ogr
-from skimage import morphology as morph
+from osgeo.gdal_array import NumericTypeCodeToGDALTypeCode, GDALTypeCodeToNumericTypeCode
+#from skimage import morphology as morph
+
+import pdb
 
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect, reproject_vector
@@ -45,8 +49,12 @@ from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1
     get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
 from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception, NonSquarePixelException
 
-
 log = logging.getLogger("pyeo")
+
+import pyeo.windows_compatability
+
+
+
 
 
 def create_matching_dataset(in_dataset, out_path,
@@ -111,6 +119,9 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
     """
     driver = gdal.GetDriverByName(format)
     type_code = gdal_array.NumericTypeCodeToGDALTypeCode(array.dtype)
+    # If array is 2d, give it an extra dimension.
+    if len(array.shape) == 2:
+        array = np.expand_dims(array, axis=0)
     out_dataset = driver.Create(
         path,
         xsize=array.shape[2],
@@ -252,6 +263,8 @@ def stack_images(raster_paths, out_raster_path,
 
     """
     #TODO: Confirm the union works, and confirm that nondata defaults to 0.
+    
+
     log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
@@ -268,6 +281,7 @@ def stack_images(raster_paths, out_raster_path,
                                                total_layers, projection, format, datatype)
 
     # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
+    
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
     for i, in_raster in enumerate(rasters):
@@ -638,6 +652,10 @@ def reproject_image(in_raster, out_raster_path, new_projection,  driver = "GTiff
     by deafult this function resamples the images back to their original resolution
 
     """
+    if type(new_projection) is int:
+        proj = osr.SpatialReference()
+        proj.ImportFromEPSG(new_projection)
+        new_projection = proj.ExportToWkt()
     log = logging.getLogger(__name__)
     log.info("Reprojecting {} to {}".format(in_raster, new_projection))
     if type(in_raster) is str:
@@ -667,6 +685,10 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
     generate_date_images
         If true, generates a corresponding date image for the composite. See docs for composite_images_with_mask.
 
+    Returns
+    -------
+    The path to the new composite
+
     """
     log = logging.getLogger(__name__)
     log.info("Compositing {}".format(image_dir))
@@ -676,6 +698,7 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
     last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
     composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format, generate_date_image=generate_date_images)
+    return composite_out_path
 
 
 def flatten_probability_image(prob_image, out_path):
@@ -757,7 +780,8 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
                      out_image, geometry_mode="intersect")
 
 
-def clip_raster(raster_path, aoi_path, out_path):
+
+def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
     """
     Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
     Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.
@@ -790,6 +814,9 @@ def clip_raster(raster_path, aoi_path, out_path):
             aoi = ogr.Open(tmp_aoi_path)
         intersection = get_aoi_intersection(raster, aoi)
         min_x_geo, max_x_geo, min_y_geo, max_y_geo = intersection.GetEnvelope()
+        if flip_x_y:
+            min_x_geo, min_y_geo = min_y_geo, min_x_geo
+            max_x_geo, max_y_geo = max_y_geo, max_x_geo
         width_pix = int(np.floor(max_x_geo - min_x_geo)/in_gt[1])
         height_pix = int(np.floor(max_y_geo - min_y_geo)/np.absolute(in_gt[5]))
         new_geotransform = (min_x_geo, in_gt[1], 0, min_y_geo, 0, in_gt[5])
@@ -803,8 +830,30 @@ def clip_raster(raster_path, aoi_path, out_path):
             dstSRS=srs
         )
         out = gdal.Warp(out_path, raster, options=clip_spec)
-        out.SetGeoTransform(new_geotransform)
         out = None
+
+
+def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_raster_path, is_landsat=False):
+    """
+    Clips one raster to the extent proivded by the other raster, and saves the result at out_raster_path.
+    Assumes both raster_to_clip and extent_raster are in the same projection.
+    Parameters
+    ----------
+    raster_to_clip_path
+        The location of the raster to be clipped.
+    extent_raster_path
+        The location of the raster that will provide the extent to clip to
+    out_raster_path
+        A location for the finished raster
+    """
+
+    with TemporaryDirectory() as td:
+        temp_aoi_path = os.path.join(td, "temp_clip.shp")
+        get_extent_as_shp(extent_raster_path, temp_aoi_path)
+        ext_ras = gdal.Open(extent_raster_path)
+        proj = osr.SpatialReference(wkt=ext_ras.GetProjection())
+        srs_id = int(proj.GetAttrValue('AUTHORITY', 1))
+        clip_raster(raster_to_clip_path, temp_aoi_path, out_raster_path, srs_id, flip_x_y = is_landsat)
 
 
 def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
@@ -881,7 +930,7 @@ def resample_image_in_place(image_path, new_res):
             yRes=new_res
         )
         temp_image = os.path.join(td, "temp_image.tif")
-        gdal.Warp(temp_image, image_path, options=args)
+        error = gdal.Warp(temp_image, image_path, options=args)
         shutil.move(temp_image, image_path)
 
 
@@ -902,9 +951,14 @@ def raster_to_array(rst_pth):
 
     return out_array
 
+def get_extent_as_shp(in_ras_path, out_shp_path):
+    """"""
+    #By Qing
+    os.system('gdaltindex ' + out_shp_path + ' ' + in_ras_path)
+    return out_shp_path
+
 
 def calc_ndvi(raster_path, output_path):
-    import pdb
     raster = gdal.Open(raster_path)
     out_raster = create_matching_dataset(raster, output_path, datatype=gdal.GDT_Float32)
     array = raster.GetVirtualMemArray()
@@ -912,7 +966,6 @@ def calc_ndvi(raster_path, output_path):
     R = array[2, ...]
     I = array[3, ...]
     out_array[...] = (R-I)/(R+I)
-    pdb.set_trace()
 
     out_array[...] = np.where(out_array == -2147483648, 0, out_array)
 
@@ -1086,6 +1139,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
             log.info("Cloudmask created")
 
+            # Fold the output resolution bits into
             out_path = os.path.join(out_dir, os.path.basename(temp_path))
             out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
 
@@ -1096,11 +1150,51 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 wkt = proj.ExportToWkt()
                 reproject_image(temp_path, out_path, wkt)
                 reproject_image(mask_path, out_mask_path, wkt)
+                resample_image_in_place(out_mask_path, out_resolution)
             else:
                 log.info("Moving images to {}".format(out_dir))
                 shutil.move(temp_path, out_path)
                 shutil.move(mask_path, out_mask_path)
+                resample_image_in_place(out_mask_path, out_resolution)
 
+
+def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
+    """
+    Stacks a set of Landsat images into a single raster and reorders the bands into
+    [bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.
+    """
+    band_path_list = [os.path.join(image_dir, image_name) 
+            for image_name in sorted(os.listdir(image_dir)) if image_name.endswith('.tif')]
+    n_bands = len(band_path_list)
+    driver = gdal.GetDriverByName("GTiff")
+    first_ls_raster = gdal.Open(band_path_list[0])
+    first_ls_array = first_ls_raster.GetVirtualMemArray()
+    out_image = driver.Create(out_image_path,
+            xsize = first_ls_array.shape[1],
+            ysize = first_ls_array.shape[0],
+            bands = n_bands,
+            eType = first_ls_raster.GetRasterBand(1).DataType
+            )
+    out_image.SetGeoTransform(first_ls_raster.GetGeoTransform())
+    out_image.SetProjection(first_ls_raster.GetProjection())
+    out_array = out_image.GetVirtualMemArray(eAccess = gdal.GA_Update)
+    first_ls_array = None
+    first_ls_raster = None
+    for ii, ls_raster_path in enumerate(band_path_list):
+        ls_raster = gdal.Open(ls_raster_path)
+        ls_array = ls_raster.GetVirtualMemArray()
+        out_array[ii, ...] = ls_array[...]
+        ls_array = None
+        ls_raster = None
+    out_array = None
+    out_image = None
+    if new_projection:
+        with TemporaryDirectory() as td:
+            temp_path = os.path.join(td, "reproj_temp.tif")
+            reproject_image(out_image_path, temp_path, new_projection, do_post_resample = False)
+            os.remove(out_image_path)
+            os.rename(temp_path, out_image_path)
+            resample_image_in_place(out_image_path, 30)
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
     """Stacks the specified bands of a .SAFE granule directory into a single geotiff"""
@@ -1170,7 +1264,6 @@ def get_image_resolution(image_path):
     if gt[1] != gt[5]*-1:
         raise NonSquarePixelException("Image at {} has non-square pixels - this is currently not implemented in Pyeo")
     return gt[1]
-
 
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
@@ -1395,7 +1488,7 @@ def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, bu
     if out_resolution:
         resample_image_in_place(out_path, out_resolution)
     if buffer_size:
-        buffer_mask_in_place(out_path)
+        buffer_mask_in_place(out_path, buffer_size)
     return out_path
 
 
@@ -1512,7 +1605,6 @@ def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"
         "--safedir", in_safe_dir
     ]
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
-    # pdb.set_trace()
     fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
