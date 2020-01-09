@@ -34,7 +34,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="pyeo.validaion" href="validation.html" />
+    <link rel="prev" title="pyeo.queries_and_downloads" href="queries_and_downloads.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -79,14 +81,27 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pyeo.raster_manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.raster_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
 </ul>
 
             
@@ -138,7 +153,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/raster_manipulations.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/raster_manipulation.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -186,7 +201,7 @@ Function should be a function ofblect of the form f(band_input_A, band_input_B, 
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.apply_fmask">
-<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_fmask</code><span class="sig-paren">(</span><em class="sig-param">in_safe_dir</em>, <em class="sig-param">out_file</em>, <em class="sig-param">fmask_command='/home/ubuntu/anaconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_fmask" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">apply_fmask</code><span class="sig-paren">(</span><em class="sig-param">in_safe_dir</em>, <em class="sig-param">out_file</em>, <em class="sig-param">fmask_command='fmask_sentinel2Stacked.py'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_fmask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls fmask to create a new mask for L1 data</p>
 </dd></dl>
 
@@ -250,29 +265,19 @@ have their pixel values set to 0.</p></li>
 
 <dl class="function">
 <dt id="pyeo.raster_manipulation.clip_raster">
-<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param">raster_path</em>, <em class="sig-param">aoi_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">srs_id=4326</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param">raster_path</em>, <em class="sig-param">aoi_path</em>, <em class="sig-param">out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
-Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.</p>
+Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.
+Will also reproject the shapefile to the same projection as the raster if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>raster_path</strong> – Path to the raster to be clipped.</p></li>
 <li><p><strong>aoi_path</strong> – Path to a shapefile containing a single polygon</p></li>
 <li><p><strong>out_path</strong> – Path to a location to save the final output raster</p></li>
-<li><p><strong>srs_id</strong> – Projection of the input raster.</p></li>
 </ul>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyeo.raster_manipulation.clip_raster_to_intersection">
-<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster_to_intersection</code><span class="sig-paren">(</span><em class="sig-param">raster_to_clip_path</em>, <em class="sig-param">extent_raster_path</em>, <em class="sig-param">out_raster_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster_to_intersection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clips one raster to the extent proivded by the other raster, and saves the result at out_raster_path.
-Assumes both raster_to_clip and extent_raster are in the same projection.
-:param raster_to_clip_path: The location of the raster to be clipped.
-:param extent_raster_path: The location of the raster that will provide the extent to clip to
-:param out_raster_path: A location for the finished raster</p>
 </dd></dl>
 
 <dl class="function">
@@ -297,12 +302,6 @@ Python true or false. Also assumes that all masks are the same projection for no
 <li><p><strong>format</strong> – The raster format of the output image.</p></li>
 <li><p><strong>generate_date_images</strong> – If true, generates a corresponding date image for the composite. See docs for composite_images_with_mask.</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>The path to the new composite</p>
 </dd>
 </dl>
 </dd></dl>
@@ -536,6 +535,13 @@ raster.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.raster_manipulation.preprocess_landsat_images">
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">preprocess_landsat_images</code><span class="sig-paren">(</span><em class="sig-param">image_dir</em>, <em class="sig-param">out_image_path</em>, <em class="sig-param">new_projection=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.preprocess_landsat_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks a set of Landsat images into a single raster and reorders the bands into
+[bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.raster_manipulation.preprocess_sen2_images">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">preprocess_sen2_images</code><span class="sig-paren">(</span><em class="sig-param">l2_dir</em>, <em class="sig-param">out_dir</em>, <em class="sig-param">l1_dir</em>, <em class="sig-param">cloud_threshold=60</em>, <em class="sig-param">buffer_size=0</em>, <em class="sig-param">epsg=None</em>, <em class="sig-param">bands=('B08'</em>, <em class="sig-param">'B04'</em>, <em class="sig-param">'B03'</em>, <em class="sig-param">'B02')</em>, <em class="sig-param">out_resolution=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.preprocess_sen2_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
@@ -751,6 +757,15 @@ followed by processing run date and then time</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="validation.html" class="btn btn-neutral float-right" title="pyeo.validaion" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="queries_and_downloads.html" class="btn btn-neutral float-left" title="pyeo.queries_and_downloads" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

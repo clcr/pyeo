@@ -87,6 +87,7 @@
 <li class="toctree-l2"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
@@ -100,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
 <li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
 </ul>
@@ -543,6 +545,15 @@ An ogr.Geometry object containing a single point</p>
 <dd class="field-odd"><p>out_gt</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.coordinate_manipulation.reproject_vector">
+<code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">reproject_vector</code><span class="sig-paren">(</span><em class="sig-param">in_path</em>, <em class="sig-param">out_path</em>, <em class="sig-param">dest_srs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.reproject_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.
+:param in_path:
+:param out_path:
+:param dest_srs:</p>
 </dd></dl>
 
 <dl class="function">

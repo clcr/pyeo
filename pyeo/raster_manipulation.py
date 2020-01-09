@@ -263,8 +263,6 @@ def stack_images(raster_paths, out_raster_path,
 
     """
     #TODO: Confirm the union works, and confirm that nondata defaults to 0.
-    
-
     log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
@@ -281,7 +279,6 @@ def stack_images(raster_paths, out_raster_path,
                                                total_layers, projection, format, datatype)
 
     # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
-    
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
     present_layer = 0
     for i, in_raster in enumerate(rasters):
@@ -830,6 +827,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
             dstSRS=srs
         )
         out = gdal.Warp(out_path, raster, options=clip_spec)
+        out.SetGeoTransform(new_geotransform)
         out = None
 
 
@@ -1121,7 +1119,7 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 
 
 def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None,
-                           bands=("B08", "B04", "B03", "B02"), out_resolution=10):
+                           bands=("B02", "B03", "B04", "B08"), out_resolution=10):
     """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
     the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided"""
     safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
@@ -1139,7 +1137,6 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
             create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
             log.info("Cloudmask created")
 
-            # Fold the output resolution bits into
             out_path = os.path.join(out_dir, os.path.basename(temp_path))
             out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
 
@@ -1163,7 +1160,7 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
     Stacks a set of Landsat images into a single raster and reorders the bands into
     [bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.
     """
-    band_path_list = [os.path.join(image_dir, image_name) 
+    band_path_list = [os.path.join(image_dir, image_name)
             for image_name in sorted(os.listdir(image_dir)) if image_name.endswith('.tif')]
     n_bands = len(band_path_list)
     driver = gdal.GetDriverByName("GTiff")
@@ -1264,6 +1261,7 @@ def get_image_resolution(image_path):
     if gt[1] != gt[5]*-1:
         raise NonSquarePixelException("Image at {} has non-square pixels - this is currently not implemented in Pyeo")
     return gt[1]
+
 
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):

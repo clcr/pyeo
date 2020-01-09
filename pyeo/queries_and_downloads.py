@@ -399,7 +399,7 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
         else:
             log.error("{} is not a Sentinel 2 product".format(identifier))
             raise BadDataSourceExpection
-
+        out_path = os.path.dirname(out_path)
         log.info("Downloading {} from {} to {}".format(new_data[image_uuid]['identifier'], source, out_path))
         if source=='aws':
             if try_scihub_on_fail:

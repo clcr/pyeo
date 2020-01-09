@@ -82,12 +82,17 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
 </ul>
 
             
@@ -181,21 +186,21 @@
 </li>
       <li><a href="validation.html#pyeo.validation.allocate_category_sample_sizes">allocate_category_sample_sizes() (in module pyeo.validation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.apply_array_image_mask">apply_array_image_mask() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.apply_array_image_mask">apply_array_image_mask() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.apply_band_function">apply_band_function() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.apply_band_function">apply_band_function() (in module pyeo.raster_manipulation)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.apply_fmask">apply_fmask() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.apply_fmask">apply_fmask() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.apply_sen2cor">apply_sen2cor() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.apply_sen2cor">apply_sen2cor() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.atmospheric_correction">atmospheric_correction() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.atmospheric_correction">atmospheric_correction() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="classification.html#pyeo.classification.autochunk">autochunk() (in module pyeo.classification)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.average_images">average_images() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.average_images">average_images() (in module pyeo.raster_manipulation)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -203,7 +208,7 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.buffer_mask_in_place">buffer_mask_in_place() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.buffer_mask_in_place">buffer_mask_in_place() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="validation.html#pyeo.validation.build_class_dict">build_class_dict() (in module pyeo.validation)</a>
 </li>
@@ -211,7 +216,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="queries_and_downloads.html#pyeo.queries_and_downloads.build_search_request">build_search_request() (in module pyeo.queries_and_downloads)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.build_sen2cor_output_path">build_sen2cor_output_path() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.build_sen2cor_output_path">build_sen2cor_output_path() (in module pyeo.raster_manipulation)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -222,10 +227,6 @@
       <li><a href="validation.html#pyeo.validation.cal_total_sample_size">cal_total_sample_size() (in module pyeo.validation)</a>
 </li>
       <li><a href="validation.html#pyeo.validation.calc_minimum_n">calc_minimum_n() (in module pyeo.validation)</a>
-</li>
-      <li><a href="terrain_correction.html#pyeo.terrain_correction.calculate_illumination_condition_array">calculate_illumination_condition_array() (in module pyeo.terrain_correction)</a>
-</li>
-      <li><a href="terrain_correction.html#pyeo.terrain_correction.calculate_reflectance">calculate_reflectance() (in module pyeo.terrain_correction)</a>
 </li>
       <li><a href="classification.html#pyeo.classification.change_from_composite">change_from_composite() (in module pyeo.classification)</a>
 </li>
@@ -247,37 +248,35 @@
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.clean_l2_dir">clean_l2_dir() (in module pyeo.filesystem_utilities)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.clip_raster">clip_raster() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.clip_raster">clip_raster() (in module pyeo.raster_manipulation)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.clip_raster_to_intersection">clip_raster_to_intersection() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.combine_masks">combine_masks() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.combine_masks">combine_masks() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.composite_directory">composite_directory() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.composite_directory">composite_directory() (in module pyeo.raster_manipulation)</a>
-</li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.composite_images_with_mask">composite_images_with_mask() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.composite_images_with_mask">composite_images_with_mask() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="validation.html#pyeo.validation.count_pixel_classes">count_pixel_classes() (in module pyeo.validation)</a>
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.create_file_structure">create_file_structure() (in module pyeo.filesystem_utilities)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.create_mask_from_class_map">create_mask_from_class_map() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_class_map">create_mask_from_class_map() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.create_mask_from_confidence_layer">create_mask_from_confidence_layer() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_confidence_layer">create_mask_from_confidence_layer() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.create_mask_from_model">create_mask_from_model() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_model">create_mask_from_model() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.create_matching_dataset">create_matching_dataset() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.create_matching_dataset">create_matching_dataset() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="classification.html#pyeo.classification.create_model_for_region">create_model_for_region() (in module pyeo.classification)</a>
 </li>
       <li><a href="classification.html#pyeo.classification.create_model_from_signatures">create_model_from_signatures() (in module pyeo.classification)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.create_new_image_from_polygon">create_new_image_from_polygon() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.create_new_image_from_polygon">create_new_image_from_polygon() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.create_new_stacks">create_new_stacks() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.create_new_stacks">create_new_stacks() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="classification.html#pyeo.classification.create_trained_model">create_trained_model() (in module pyeo.classification)</a>
 </li>
@@ -319,7 +318,7 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.filter_by_class_map">filter_by_class_map() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.filter_by_class_map">filter_by_class_map() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="queries_and_downloads.html#pyeo.queries_and_downloads.filter_non_matching_s2_data">filter_non_matching_s2_data() (in module pyeo.queries_and_downloads)</a>
 </li>
@@ -329,7 +328,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="queries_and_downloads.html#pyeo.queries_and_downloads.filter_to_l2_data">filter_to_l2_data() (in module pyeo.queries_and_downloads)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.flatten_probability_image">flatten_probability_image() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.flatten_probability_image">flatten_probability_image() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.floor_to_resolution">floor_to_resolution() (in module pyeo.coordinate_manipulation)</a>
 </li>
@@ -349,13 +348,11 @@
 </li>
       <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_combined_polygon">get_combined_polygon() (in module pyeo.coordinate_manipulation)</a>
 </li>
-      <li><a href="terrain_correction.html#pyeo.terrain_correction.get_dem_slope_and_angle">get_dem_slope_and_angle() (in module pyeo.terrain_correction)</a>
-</li>
       <li><a href="queries_and_downloads.html#pyeo.queries_and_downloads.get_granule_identifiers">get_granule_identifiers() (in module pyeo.queries_and_downloads)</a>
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.get_image_acquisition_time">get_image_acquisition_time() (in module pyeo.filesystem_utilities)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.get_image_resolution">get_image_resolution() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.get_image_resolution">get_image_resolution() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.get_l1_safe_file">get_l1_safe_file() (in module pyeo.filesystem_utilities)</a>
 </li>
@@ -365,11 +362,9 @@
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.get_mask_path">get_mask_path() (in module pyeo.filesystem_utilities)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.get_masked_array">get_masked_array() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.get_masked_array">get_masked_array() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="queries_and_downloads.html#pyeo.queries_and_downloads.get_paginated_items">get_paginated_items() (in module pyeo.queries_and_downloads)</a>
-</li>
-      <li><a href="terrain_correction.html#pyeo.terrain_correction.get_pixel_latlon">get_pixel_latlon() (in module pyeo.terrain_correction)</a>
 </li>
       <li><a href="queries_and_downloads.html#pyeo.queries_and_downloads.get_planet_product_path">get_planet_product_path() (in module pyeo.queries_and_downloads)</a>
 </li>
@@ -377,10 +372,10 @@
 </li>
       <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_poly_intersection">get_poly_intersection() (in module pyeo.coordinate_manipulation)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_poly_size">get_poly_size() (in module pyeo.coordinate_manipulation)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.get_preceding_image_path">get_preceding_image_path() (in module pyeo.filesystem_utilities)</a>
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.get_pyeo_timestamp">get_pyeo_timestamp() (in module pyeo.filesystem_utilities)</a>
@@ -401,9 +396,9 @@
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.get_related_images">get_related_images() (in module pyeo.filesystem_utilities)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.get_sen2cor_version">get_sen2cor_version() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.get_sen2cor_version">get_sen2cor_version() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.get_sen_2_band_path">get_sen_2_band_path() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.get_sen_2_band_path">get_sen_2_band_path() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="filesystem_utilities.html#pyeo.filesystem_utilities.get_sen_2_baseline">get_sen_2_baseline() (in module pyeo.filesystem_utilities)</a>
 </li>
@@ -449,7 +444,7 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.mosaic_images">mosaic_images() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.mosaic_images">mosaic_images() (in module pyeo.raster_manipulation)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -463,7 +458,7 @@
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.open_dataset_from_safe">open_dataset_from_safe() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.open_dataset_from_safe">open_dataset_from_safe() (in module pyeo.raster_manipulation)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -481,7 +476,9 @@
 </li>
       <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.point_to_pixel_coordinates">point_to_pixel_coordinates() (in module pyeo.coordinate_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.preprocess_sen2_images">preprocess_sen2_images() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.preprocess_landsat_images">preprocess_landsat_images() (in module pyeo.raster_manipulation)</a>
+</li>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.preprocess_sen2_images">preprocess_sen2_images() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="validation.html#pyeo.validation.produce_stratified_validation_points">produce_stratified_validation_points() (in module pyeo.validation)</a>
 </li>
@@ -489,10 +486,10 @@
 </li>
       <li><a href="index.html#module-pyeo.apps.change_detection.image_comparison">pyeo.apps.change_detection.image_comparison (module)</a>
 </li>
-      <li><a href="index.html#module-pyeo.apps.change_detection.rolling_composite_s2_change_detection">pyeo.apps.change_detection.rolling_composite_s2_change_detection (module)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="index.html#module-pyeo.apps.change_detection.rolling_composite_s2_change_detection">pyeo.apps.change_detection.rolling_composite_s2_change_detection (module)</a>
+</li>
       <li><a href="index.html#module-pyeo.apps.change_detection.simple_s2_change_detection">pyeo.apps.change_detection.simple_s2_change_detection (module)</a>
 </li>
       <li><a href="index.html#module-pyeo.apps.masking.filter_by_class_map">pyeo.apps.masking.filter_by_class_map (module)</a>
@@ -509,9 +506,7 @@
 </li>
       <li><a href="queries_and_downloads.html#module-pyeo.queries_and_downloads">pyeo.queries_and_downloads (module)</a>
 </li>
-      <li><a href="raster_manipulations.html#module-pyeo.raster_manipulation">pyeo.raster_manipulation (module)</a>
-</li>
-      <li><a href="terrain_correction.html#module-pyeo.terrain_correction">pyeo.terrain_correction (module)</a>
+      <li><a href="raster_manipulation.html#module-pyeo.raster_manipulation">pyeo.raster_manipulation (module)</a>
 </li>
       <li><a href="validation.html#module-pyeo.validation">pyeo.validation (module)</a>
 </li>
@@ -523,21 +518,23 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="classification.html#pyeo.classification.raster_reclass_binary">raster_reclass_binary() (in module pyeo.classification)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.raster_sum">raster_sum() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.raster_sum">raster_sum() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.raster_to_array">raster_to_array() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.raster_to_array">raster_to_array() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="queries_and_downloads.html#pyeo.queries_and_downloads.read_aoi">read_aoi() (in module pyeo.queries_and_downloads)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.reproject_directory">reproject_directory() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.reproject_directory">reproject_directory() (in module pyeo.raster_manipulation)</a>
+</li>
+      <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.reproject_geotransform">reproject_geotransform() (in module pyeo.coordinate_manipulation)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.reproject_geotransform">reproject_geotransform() (in module pyeo.coordinate_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.reproject_image">reproject_image() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.reproject_image">reproject_image() (in module pyeo.raster_manipulation)</a>
+      <li><a href="coordinate_manipulation.html#pyeo.coordinate_manipulation.reproject_vector">reproject_vector() (in module pyeo.coordinate_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.resample_image_in_place">resample_image_in_place() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.resample_image_in_place">resample_image_in_place() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="classification.html#pyeo.classification.reshape_ml_out_to_raster">reshape_ml_out_to_raster() (in module pyeo.classification)</a>
 </li>
@@ -551,7 +548,7 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.save_array_as_image">save_array_as_image() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.save_array_as_image">save_array_as_image() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="validation.html#pyeo.validation.save_point_list_to_shapefile">save_point_list_to_shapefile() (in module pyeo.validation)</a>
 </li>
@@ -563,15 +560,15 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.stack_and_trim_images">stack_and_trim_images() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.stack_and_trim_images">stack_and_trim_images() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.stack_image_with_composite">stack_image_with_composite() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.stack_image_with_composite">stack_image_with_composite() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.stack_images">stack_images() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.stack_images">stack_images() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.stack_old_and_new_images">stack_old_and_new_images() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.stack_old_and_new_images">stack_old_and_new_images() (in module pyeo.raster_manipulation)</a>
 </li>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.stack_sentinel_2_bands">stack_sentinel_2_bands() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.stack_sentinel_2_bands">stack_sentinel_2_bands() (in module pyeo.raster_manipulation)</a>
 </li>
       <li><a href="validation.html#pyeo.validation.stratified_random_sample">stratified_random_sample() (in module pyeo.validation)</a>
 </li>
@@ -581,7 +578,7 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="raster_manipulations.html#pyeo.raster_manipulation.trim_image">trim_image() (in module pyeo.raster_manipulation)</a>
+      <li><a href="raster_manipulation.html#pyeo.raster_manipulation.trim_image">trim_image() (in module pyeo.raster_manipulation)</a>
 </li>
   </ul></td>
 </tr></table>
