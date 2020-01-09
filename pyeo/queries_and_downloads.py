@@ -115,12 +115,26 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     # Originally by Ciaran Robb
     api = SentinelAPI(user, passwd)
     footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    log.info("Sending query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
+    log.info("Sending Sentinel-2 query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
                          date=(start_date, end_date), platformname="Sentinel-2",
                          cloudcoverpercentage="[0 TO {}]".format(cloud))
     return products
+
+
+def landsat_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
+        """
+
+        """
+        api = SentinelAPI(user, passwd)
+        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+        log.info("Sending Landsat query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
+            footprint, start_date, end_date, cloud))
+        products = api.query(footprint,
+                             date=(start_date, end_date), platformname="Landsat",
+                             cloudcoverpercentage="[0 TO {}]".format(cloud))
+        return products
 
 
 def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
@@ -511,6 +525,9 @@ def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
     log.info("Downloading from {} to {}".format(s2_object, object_out_path))
     with open(object_out_path, 'w+b') as f:
         blob.download_to_file(f)
+
+
+
 
 
 def load_api_key(path_to_api):
