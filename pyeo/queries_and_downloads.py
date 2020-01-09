@@ -53,6 +53,7 @@ import os
 import shutil
 import zipfile
 from multiprocessing.dummy import Pool
+from urllib.parse import urlencode
 
 import requests
 import tenacity
@@ -123,14 +124,43 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     return products
 
 
-def landsat_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
+def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
         """
 
         """
+        user = conf['landsat']['user']
+        passwd = conf['landsat']['pass']
         api = SentinelAPI(user, passwd)
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
+
+        api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.0/"
+        log.info("Logging into USGS")
+        session = requests.Session()
+        login_post = {
+            "username": user,
+            "password": passwd,
+            "catalogId": "EE"
+        }
+        session_key = session.post(
+            url=api_root+"login/",
+            data=urlencode({"jsonRequest": login_post}).replace("+", "") .replace("%27", "%22"), # Hand-mangling the request for POST. Might remove later.
+            headers={"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8"}
+        ).json()["data"]
+
+        if not session_key:
+            log.error("Login to USGS failed.")
+            return None
+
+
+
+
+
         log.info("Sending Landsat query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
             footprint, start_date, end_date, cloud))
+
+
+
+
         products = api.query(footprint,
                              date=(start_date, end_date), platformname="Landsat",
                              cloudcoverpercentage="[0 TO {}]".format(cloud))
