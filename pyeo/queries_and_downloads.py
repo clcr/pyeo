@@ -54,11 +54,13 @@ import shutil
 import zipfile
 from multiprocessing.dummy import Pool
 from urllib.parse import urlencode
+import numpy as np
 
 import ogr
 import requests
 import tenacity
 from botocore.exceptions import ClientError
+from requests import Request
 
 from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
@@ -132,9 +134,16 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
         user = conf['landsat']['user']
         passwd = conf['landsat']['pass']
         api = SentinelAPI(user, passwd)
-        with open(geojsonfile, 'r') as file:
-            geojson_string = file.read()
-        geojson_string.replace("\n","")
+        footprint = ogr.Open(geojsonfile)
+        feature = footprint.GetLayer(0).GetFeature(0)
+        geometry = feature.GetGeometryRef()
+        lat_west, lat_east, lon_south, lon_north = geometry.GetEnvelope()
+        geometry = None
+        feature = None
+        footprint = None
+
+        start_date = "{}-{}-{}".format(start_date[0:4], start_date[4:6], start_date[6:8])
+        end_date = "{}-{}-{}".format(end_date[0:4], end_date[4:6], end_date[6:8])
 
         api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.0/"
         log.info("Logging into USGS")
@@ -154,12 +163,19 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
             log.error("Login to USGS failed.")
             return None
 
-        data_request={
+        data_request = {
             "apiKey": session_key,
-            "datasetName"
+            "datasetName": "landsat-8",
             "spatialFilter": {
-                "filterType": "GeoJSON",
-                "geoJson": geojson_string
+                "filterType": "mbr",
+                "lowerLeft": {
+                    "latitude": np.round(lat_west, 4),
+                    "longitude": np.round(lon_south, 4)
+                },
+                "upperRight": {
+                    "latitude": np.round(lat_east, 4),
+                    "longitude": np.round(lon_north, 4),
+                },
             },
             "temporalFilter": {
                 "startDate": start_date,
@@ -167,11 +183,14 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
             },
             "maxCloudCover": cloud
         }
-        response = session.post(
+        request = Request("GET",
             url=api_root+"search/",
-            json=urlencode({"jsonRequest": data_request}).replace("+", "") .replace("%27", "%22"),
-            headers={"Content-Type": "application/x-www-urlencoded; charset=UTF-8"}
+            params={"jsonRequest": json.dumps(data_request)},
+            headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
         )
+        req_string = session.prepare_request(request)
+        req_string.url = req_string.url.replace("+", "").replace("%27", "%22")   #  usgs why dont you like real url encoding -_-
+        response = session.send(req_string)
 
         log.info("Sending Landsat query:\n{}".format(data_request))
         return products
