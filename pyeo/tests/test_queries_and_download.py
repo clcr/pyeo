@@ -16,7 +16,7 @@ def test_query_and_download():
     passwd = test_conf["sent_2"]["pass"]
     images = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
                      "test_data/merak.geojson",
-                     "20180101", "20180110")
+                     "20180101", "20180130")
     assert len(images) > 0
     try:
         shutil.rmtree("test_outputs/L1")
@@ -32,7 +32,7 @@ def test_landsat_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_conf = load_test_conf()
 
-    images = pyeo.queries_and_downloads.landsat_query(test_conf, "test_data/merak.geojson", "20180101", "20180110")
+    images = pyeo.queries_and_downloads.landsat_query(test_conf, "test_data/merak.geojson", "20180101", "20180630")
     assert len(images) > 0
     out_dir = "test_outputs/landsat"
     try:
@@ -40,7 +40,7 @@ def test_landsat_query_and_download():
     except FileNotFoundError:
         pass
     os.mkdir(out_dir)
-    pyeo.queries_and_downloads.download_landsat_data(images, out_dir, source='scihub', user=user, passwd=passwd)
+    products = pyeo.queries_and_downloads.download_landsat_data(images, out_dir, source='scihub', user=user, passwd=passwd)
 
 
 @pytest.mark.webtest

@@ -131,33 +131,19 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
         """
 
         """
-        user = conf['landsat']['user']
-        passwd = conf['landsat']['pass']
-        api = SentinelAPI(user, passwd)
         footprint = ogr.Open(geojsonfile)
         feature = footprint.GetLayer(0).GetFeature(0)
         geometry = feature.GetGeometryRef()
-        lat_west, lat_east, lon_south, lon_north = geometry.GetEnvelope()
+        lon_south, lon_north, lat_west, lat_east = geometry.GetEnvelope()
         geometry = None
         feature = None
         footprint = None
-
         start_date = "{}-{}-{}".format(start_date[0:4], start_date[4:6], start_date[6:8])
         end_date = "{}-{}-{}".format(end_date[0:4], end_date[4:6], end_date[6:8])
 
-        api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.0/"
-        log.info("Logging into USGS")
         session = requests.Session()
-        login_post = {
-            "username": user,
-            "password": passwd,
-            "catalogId": "EE"
-        }
-        session_key = session.post(
-            url=api_root+"login/",
-            data=urlencode({"jsonRequest": login_post}).replace("+", "") .replace("%27", "%22"), # Hand-mangling the request for POST. Might remove later.
-            headers={"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8"}
-        ).json()["data"]
+        api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.1/"
+        session_key = get_landsat_api_key(conf, session)
 
         if not session_key:
             log.error("Login to USGS failed.")
@@ -165,7 +151,7 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
 
         data_request = {
             "apiKey": session_key,
-            "datasetName": "landsat-8",
+            "datasetName": "LANDSAT_8_C1",
             "spatialFilter": {
                 "filterType": "mbr",
                 "lowerLeft": {
@@ -183,17 +169,54 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
             },
             "maxCloudCover": cloud
         }
+        log.info("Sending Landsat query:\n{}".format(data_request))
         request = Request("GET",
-            url=api_root+"search/",
+            url=api_root+"search",
             params={"jsonRequest": json.dumps(data_request)},
             headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
         )
         req_string = session.prepare_request(request)
         req_string.url = req_string.url.replace("+", "").replace("%27", "%22")   #  usgs why dont you like real url encoding -_-
         response = session.send(req_string)
-
-        log.info("Sending Landsat query:\n{}".format(data_request))
+        products = response.json()["data"]["results"]
+        log.info("Retrieved {} product(s)".format(len(products)))
+        log.info("Logging out of USGS")
+        session.get(
+            url=api_root+"logout",
+            params={"jsonRequest":json.dumps({"apiKey": session_key})},
+            headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+        )
         return products
+
+
+def download_landsat_data(products, out_dir, conf):
+    #Get API key for this sesh
+    session = requests.Session()
+    session_key = get_landsat_api_key(conf, session)
+
+    # for each product in landsat, do stuff
+    for product in products.values():
+        download_landing_page = pro
+
+
+
+def get_landsat_api_key(conf, session):
+    user = conf['landsat']['user']
+    passwd = conf['landsat']['pass']
+    api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.1/"
+    log.info("Logging into USGS")
+    login_post = {
+        "username": user,
+        "password": passwd,
+        "catalogId": "EE"
+    }
+    session_key = session.post(
+        url=api_root + "login/",
+        data=urlencode({"jsonRequest": login_post}).replace("+", "").replace("%27", "%22"),
+        # Hand-mangling the request for POST. Might remove later.
+        headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+    ).json()["data"]
+    return session_key
 
 
 def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
