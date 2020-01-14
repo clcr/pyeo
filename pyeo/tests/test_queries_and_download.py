@@ -40,7 +40,7 @@ def test_landsat_query_and_download():
     except FileNotFoundError:
         pass
     os.mkdir(out_dir)
-    products = pyeo.queries_and_downloads.download_landsat_data(images, out_dir, source='scihub', user=user, passwd=passwd)
+    products = pyeo.queries_and_downloads.download_landsat_data(images, out_dir, test_conf)
 
 
 @pytest.mark.webtest

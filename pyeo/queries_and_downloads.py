@@ -55,6 +55,7 @@ import zipfile
 from multiprocessing.dummy import Pool
 from urllib.parse import urlencode
 import numpy as np
+from bs4 import BeautifulSoup  # I didn't really want to use BS, but I can't see a choice.
 
 import ogr
 import requests
@@ -128,76 +129,110 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
 
 
 def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
-        """
+    """
 
         """
-        footprint = ogr.Open(geojsonfile)
-        feature = footprint.GetLayer(0).GetFeature(0)
-        geometry = feature.GetGeometryRef()
-        lon_south, lon_north, lat_west, lat_east = geometry.GetEnvelope()
-        geometry = None
-        feature = None
-        footprint = None
-        start_date = "{}-{}-{}".format(start_date[0:4], start_date[4:6], start_date[6:8])
-        end_date = "{}-{}-{}".format(end_date[0:4], end_date[4:6], end_date[6:8])
+    footprint = ogr.Open(geojsonfile)
+    feature = footprint.GetLayer(0).GetFeature(0)
+    geometry = feature.GetGeometryRef()
+    lon_south, lon_north, lat_west, lat_east = geometry.GetEnvelope()
+    geometry = None
+    feature = None
+    footprint = None
+    start_date = "{}-{}-{}".format(start_date[0:4], start_date[4:6], start_date[6:8])
+    end_date = "{}-{}-{}".format(end_date[0:4], end_date[4:6], end_date[6:8])
 
-        session = requests.Session()
-        api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.1/"
-        session_key = get_landsat_api_key(conf, session)
+    session = requests.Session()
+    api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.1/"
+    session_key = get_landsat_api_key(conf, session)
 
-        if not session_key:
-            log.error("Login to USGS failed.")
-            return None
+    if not session_key:
+        log.error("Login to USGS failed.")
+        return None
 
-        data_request = {
-            "apiKey": session_key,
-            "datasetName": "LANDSAT_8_C1",
-            "spatialFilter": {
-                "filterType": "mbr",
-                "lowerLeft": {
-                    "latitude": np.round(lat_west, 4),
-                    "longitude": np.round(lon_south, 4)
-                },
-                "upperRight": {
-                    "latitude": np.round(lat_east, 4),
-                    "longitude": np.round(lon_north, 4),
-                },
+    data_request = {
+        "apiKey": session_key,
+        "datasetName": "LANDSAT_8_C1",
+        "spatialFilter": {
+            "filterType": "mbr",
+            "lowerLeft": {
+                "latitude": np.round(lat_west, 4),
+                "longitude": np.round(lon_south, 4)
             },
-            "temporalFilter": {
-                "startDate": start_date,
-                "endDate": end_date
+            "upperRight": {
+                "latitude": np.round(lat_east, 4),
+                "longitude": np.round(lon_north, 4),
             },
-            "maxCloudCover": cloud
-        }
-        log.info("Sending Landsat query:\n{}".format(data_request))
-        request = Request("GET",
-            url=api_root+"search",
-            params={"jsonRequest": json.dumps(data_request)},
-            headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
-        )
-        req_string = session.prepare_request(request)
-        req_string.url = req_string.url.replace("+", "").replace("%27", "%22")   #  usgs why dont you like real url encoding -_-
-        response = session.send(req_string)
-        products = response.json()["data"]["results"]
-        log.info("Retrieved {} product(s)".format(len(products)))
-        log.info("Logging out of USGS")
-        session.get(
-            url=api_root+"logout",
-            params={"jsonRequest":json.dumps({"apiKey": session_key})},
-            headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
-        )
-        return products
+        },
+        "temporalFilter": {
+            "startDate": start_date,
+            "endDate": end_date
+        },
+        "maxCloudCover": cloud
+    }
+    log.info("Sending Landsat query:\n{}".format(data_request))
+    request = Request("GET",
+                      url=api_root + "search",
+                      params={"jsonRequest": json.dumps(data_request)},
+                      headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+                      )
+    req_string = session.prepare_request(request)
+    req_string.url = req_string.url.replace("+", "").replace("%27",
+                                                             "%22")  # usgs why dont you like real url encoding -_-
+    response = session.send(req_string)
+    products = response.json()["data"]["results"]
+    log.info("Retrieved {} product(s)".format(len(products)))
+    log.info("Logging out of USGS")
+    session.get(
+        url=api_root + "logout",
+        params={"jsonRequest": json.dumps({"apiKey": session_key})},
+        headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+    )
+    return products
 
 
 def download_landsat_data(products, out_dir, conf):
-    #Get API key for this sesh
-    session = requests.Session()
-    session_key = get_landsat_api_key(conf, session)
+    # The API key is no good here, we need the auth cookie. Time to pretend to be a browser.
+    dl_session = requests.Session()
+    page = dl_session.get("https://ers.cr.usgs.gov/login/").content
+    # We also need the
+    login_soup = BeautifulSoup(page)
+    inputs = login_soup.find_all("input")
+    token = list(input.attrs['value'] for input in inputs
+                 if 'name' in input.attrs
+                 and input.attrs['name'] == 'csrf_token')[0]
+    ncforminfo = list(input.attrs['value'] for input in inputs
+                 if 'name' in input.attrs
+                 and input.attrs['name'] == '__ncforminfo')[0]
+
+    dl_session.post("https://ers.cr.usgs.gov/login/",
+                    data={
+                        "jfr10": conf["landsat"]["user"],
+                        "password": conf["landsat"]["pass"],
+                        "csrf_token": token,
+                        "__ncforminfo": ncforminfo
+                    })
 
     # for each product in landsat, do stuff
-    for product in products.values():
-        download_landing_page = pro
+    for product in products:
+        download_landing_url = product["downloadUrl"]
+        # BeautifulSoup is a library for finding things in webpages - in this case, every download link
+        lp_soup = BeautifulSoup(requests.get(download_landing_url).content, 'html.parser')
+        download_buttons = lp_soup.find_all("input")
+        dirty_url = \
+        list(button.attrs['onclick'] for button in download_buttons if "STANDARD" in button.attrs['onclick'])[0]
+        clean_url = dirty_url.partition("=")[2].strip("\\'")
+        log.info("Downloading landsat imagery from {}".format(clean_url))
+        out_folder_path = os.path.join(out_dir, product['displayId'])
+        os.mkdir(out_folder_path)
+        zip_path = out_folder_path + ".zip"
+        with open(zip_path, 'wb+') as fp:
+            image_response = dl_session.get(clean_url)
+            fp.write(image_response.content)
+            log.info("Item {} downloaded to {}".format(product['displayId'], zip_path))
 
+        pass
+    # download_url = filter(url: url.contains(""))
 
 
 def get_landsat_api_key(conf, session):
@@ -251,8 +286,8 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
     log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
     user = conf['sent_2']['user']
     password = conf['sent_2']['pass']
-    start_timestamp = dt.datetime.strptime(start_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
-    end_timestamp = dt.datetime.strptime(end_date, '%Y%m%d').isoformat(timespec='seconds')+'Z'
+    start_timestamp = dt.datetime.strptime(start_date, '%Y%m%d').isoformat(timespec='seconds') + 'Z'
+    end_timestamp = dt.datetime.strptime(end_date, '%Y%m%d').isoformat(timespec='seconds') + 'Z'
     result = sent2_query(user, password, aoi_path, start_timestamp, end_timestamp, cloud=cloud_cover)
     log.info("Search returned {} images".format(len(result)))
     return result
@@ -329,20 +364,22 @@ def filter_non_matching_s2_data(query_output):
     for granule, item_list in granule_groups.items():
         item_list.sort(key=get_query_datatake)
         granule_date_groups.update(
-            {str(granule)+str(key): list(group) for key, group in itertools.groupby(item_list, key=get_query_datatake)})
+            {str(granule) + str(key): list(group) for key, group in
+             itertools.groupby(item_list, key=get_query_datatake)})
 
     # On debug inspection, turns out sometimes S2 products get replicated. Lets filter those.
     out_set = {}
     for key, image_set in granule_date_groups.items():
-        #if sum(1 for image in image_set if get_query_level(image) == "Level-2A") <= 2:
-            #list(filter(lambda x: get_query_level(x) == "Level-2A", image_set)).sort(key=get_query_processing_time)[0].pop()
+        # if sum(1 for image in image_set if get_query_level(image) == "Level-2A") <= 2:
+        # list(filter(lambda x: get_query_level(x) == "Level-2A", image_set)).sort(key=get_query_processing_time)[0].pop()
         if (sum(1 for image in image_set if get_query_level(image) == "Level-2A") == 1
-        and sum(1 for image in image_set if get_query_level(image) == "Level-1C") == 1):
+                and sum(1 for image in image_set if get_query_level(image) == "Level-1C") == 1):
             out_set.update({image["uuid"]: image for image in image_set})
 
-    #Finally, check that there is actually something here.
+    # Finally, check that there is actually something here.
     if len(out_set) == 0:
-        log.error("No L2 data detected for query. Please remove the --download_l2_data flag or request more recent images.")
+        log.error(
+            "No L2 data detected for query. Please remove the --download_l2_data flag or request more recent images.")
         raise NoL2DataAvailableException
     return out_set
 
@@ -469,12 +506,12 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
     for image_uuid in new_data:
         identifier = new_data[image_uuid]['identifier']
         if 'L1C' in identifier:
-            out_path = os.path.join(l1_dir, identifier+".SAFE")
+            out_path = os.path.join(l1_dir, identifier + ".SAFE")
             if check_for_invalid_l1_data(out_path) == 1:
                 log.info("L1 imagery exists, skipping download")
                 continue
         elif 'L2A' in identifier:
-            out_path = os.path.join(l2_dir, identifier+".SAFE")
+            out_path = os.path.join(l2_dir, identifier + ".SAFE")
             if check_for_invalid_l2_data(out_path) == 1:
                 log.info("L2 imagery exists, skipping download")
                 continue
@@ -483,15 +520,15 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
             raise BadDataSourceExpection
         out_path = os.path.dirname(out_path)
         log.info("Downloading {} from {} to {}".format(new_data[image_uuid]['identifier'], source, out_path))
-        if source=='aws':
+        if source == 'aws':
             if try_scihub_on_fail:
                 download_from_aws_with_rollback(product_id=new_data[image_uuid]['identifier'], folder=out_path,
                                                 uuid=image_uuid, user=user, passwd=passwd)
             else:
                 download_safe_format(product_id=new_data[image_uuid]['identifier'], folder=out_path)
-        elif source=='google':
+        elif source == 'google':
             download_from_google_cloud([new_data[image_uuid]['identifier']], out_folder=out_path)
-        elif source=="scihub":
+        elif source == "scihub":
             download_from_scihub(image_uuid, out_path, user, passwd)
         else:
             log.error("Invalid data source; valid values are 'aws', 'google' and 'scihub'")
@@ -520,7 +557,9 @@ def download_from_aws_with_rollback(product_id, folder, uuid, user, passwd):
     try:
         download_safe_format(product_id=product_id, folder=folder)
     except ClientError:
-        log.warning("Something wrong with AWS for products id {}; rolling back to Scihub using uuid {}".format(product_id, uuid))
+        log.warning(
+            "Something wrong with AWS for products id {}; rolling back to Scihub using uuid {}".format(product_id,
+                                                                                                       uuid))
         download_from_scihub(uuid, folder, user, passwd)
 
 
@@ -550,7 +589,7 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     prod = api.download(product_uuid, out_folder)
     if not prod:
         log.error("{} failed to download".format(product_uuid))
-    zip_path = os.path.join(out_folder, prod['title']+".zip")
+    zip_path = os.path.join(out_folder, prod['title'] + ".zip")
     log.info("Unzipping {} to {}".format(zip_path, out_folder))
     zip_ref = zipfile.ZipFile(zip_path, 'r')
     zip_ref.extractall(out_folder)
@@ -559,7 +598,7 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     os.remove(zip_path)
 
 
-def download_from_google_cloud(product_ids, out_folder, redownload = False):
+def download_from_google_cloud(product_ids, out_folder, redownload=False):
     """Still experimental."""
     log = logging.getLogger(__name__)
     log.info("Downloading following products from Google Cloud:".format(product_ids))
@@ -567,7 +606,7 @@ def download_from_google_cloud(product_ids, out_folder, redownload = False):
     bucket = storage_client.get_bucket("gcp-public-data-sentinel-2")
     for safe_id in product_ids:
         if not safe_id.endswith(".SAFE"):
-            safe_id = safe_id+".SAFE"
+            safe_id = safe_id + ".SAFE"
         if check_for_invalid_l1_data(os.path.join(out_folder, safe_id)) and not redownload:
             log.info("File exists, skipping.")
             return
@@ -609,9 +648,6 @@ def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
         blob.download_to_file(f)
 
 
-
-
-
 def load_api_key(path_to_api):
     """
     Returns an API key from a single-line text file containing that API
@@ -638,7 +674,7 @@ def get_planet_product_path(planet_dir, product):
 
 
 def download_planet_image_on_day(aoi_path, date, out_path, api_key, item_type="PSScene4Band", search_name="auto",
-                 asset_type="analytic", threads=5):
+                                 asset_type="analytic", threads=5):
     """Queries and downloads all images on the date in the aoi given"""
     log = logging.getLogger(__name__)
     start_time = date + "T00:00:00.000Z"
@@ -749,8 +785,8 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     #  TODO: Implement more robust error handling here (not just 429)
     item_id = item["id"]
     item_type = item["properties"]["item_type"]
-    item_url = "https://api.planet.com/data/v1/"+ \
-        "item-types/{}/items/{}/assets/".format(item_type, item_id)
+    item_url = "https://api.planet.com/data/v1/" + \
+               "item-types/{}/items/{}/assets/".format(item_type, item_id)
     item_response = session.get(item_url)
     log.info("Activating " + item_id)
     activate_response = session.post(item_response.json()[asset_type]["_links"]["activate"])
@@ -769,7 +805,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
         image_response = session.get(dl_link)
         if image_response.status_code == 429:
             raise TooManyRequests
-        fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
+        fp.write(image_response.content)  # Don't like this; it might store the image twice. Check.
         log.info("Item {} download complete".format(item_id))
 
 
