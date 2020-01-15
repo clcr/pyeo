@@ -32,7 +32,7 @@ def test_landsat_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_conf = load_test_conf()
 
-    images = pyeo.queries_and_downloads.landsat_query(test_conf, "test_data/merak.geojson", "20180101", "20180630")
+    images = pyeo.queries_and_downloads.landsat_query(test_conf, "test_data/merak.geojson", "20180101", "20180110")
     assert len(images) > 0
     out_dir = "test_outputs/landsat"
     try:

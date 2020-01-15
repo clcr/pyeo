@@ -51,6 +51,7 @@ import json
 import logging
 import os
 import shutil
+import tarfile
 import zipfile
 from multiprocessing.dummy import Pool
 from urllib.parse import urlencode
@@ -130,8 +131,29 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
 
 def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
     """
+    Queries the USGS dataset LANDSAT_8_C1 for imagery between the start_date and end_date, inclusive.
+    This downloads all imagery touched by the bounding box of the provided geojson file.
 
-        """
+    Parameters
+    ----------
+    conf
+        A dictionary with ['landsat']['user'] and ['landsat']['pass'] values, containing your USGS credentials.
+    geojsonfile
+        The geojson file
+    start_date
+        The start date, in "yyyymmdd" format. Will truncate any longer string.
+    end_date
+        The end query date, in "yyyymmdd" format. Will truncate any longer string.
+    cloud
+        The maximum cloud cover to return.
+
+    Returns
+    -------
+    A list of products; each item being a dictionary returned from the USGS API.
+    See https://earthexplorer.usgs.gov/inventory/documentation/datamodel#Scene
+
+    """
+
     footprint = ogr.Open(geojsonfile)
     feature = footprint.GetLayer(0).GetFeature(0)
     geometry = feature.GetGeometryRef()
@@ -192,10 +214,23 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
 
 
 def download_landsat_data(products, out_dir, conf):
+    """
+    Given an output from landsat_query, will download al L1C products to out_dir.
+
+    Parameters
+    ----------
+    products
+        Dictionary of landsat products; must include downloadUrl and displayId
+    out_dir
+        Directory to save Landsat files in. Folder structure is out_dir->displayId->products
+    conf
+        Dictionary containing USGS login credentials. See docs for landsat_query.
+    """
     # The API key is no good here, we need the auth cookie. Time to pretend to be a browser.
     dl_session = requests.Session()
     page = dl_session.get("https://ers.cr.usgs.gov/login/").content
-    # We also need the
+    # We also need the cross-site request forgery prevention token and the __ncforminfo (dunno?) value.
+    # For this, we use BeautifulSoup; a library for finding things in webpages.
     login_soup = BeautifulSoup(page)
     inputs = login_soup.find_all("input")
     token = list(input.attrs['value'] for input in inputs
@@ -207,10 +242,13 @@ def download_landsat_data(products, out_dir, conf):
 
     dl_session.post("https://ers.cr.usgs.gov/login/",
                     data={
-                        "jfr10": conf["landsat"]["user"],
+                        "username": conf["landsat"]["user"],
                         "password": conf["landsat"]["pass"],
                         "csrf_token": token,
                         "__ncforminfo": ncforminfo
+                    },
+                    headers={
+                        'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0"
                     })
 
     # for each product in landsat, do stuff
@@ -220,19 +258,21 @@ def download_landsat_data(products, out_dir, conf):
         lp_soup = BeautifulSoup(requests.get(download_landing_url).content, 'html.parser')
         download_buttons = lp_soup.find_all("input")
         dirty_url = \
-        list(button.attrs['onclick'] for button in download_buttons if "STANDARD" in button.attrs['onclick'])[0]
+            list(button.attrs['onclick'] for button in download_buttons if "STANDARD" in button.attrs['onclick'])[0]
         clean_url = dirty_url.partition("=")[2].strip("\\'")
         log.info("Downloading landsat imagery from {}".format(clean_url))
         out_folder_path = os.path.join(out_dir, product['displayId'])
         os.mkdir(out_folder_path)
-        zip_path = out_folder_path + ".zip"
-        with open(zip_path, 'wb+') as fp:
+        tar_path = out_folder_path + ".tar.gz"
+        with open(tar_path, 'wb+') as fp:
             image_response = dl_session.get(clean_url)
             fp.write(image_response.content)
-            log.info("Item {} downloaded to {}".format(product['displayId'], zip_path))
-
-        pass
-    # download_url = filter(url: url.contains(""))
+            log.info("Item {} downloaded to {}".format(product['displayId'], tar_path))
+        log.info("Unzipping {} to {}".format(tar_path, out_folder_path))
+        with tarfile.open(tar_path, 'r:gz') as tar_ref:
+            tar_ref.extractall(out_folder_path)
+        log.info("Removing {}".format(tar_path))
+        os.remove(tar_path)
 
 
 def get_landsat_api_key(conf, session):
