@@ -12,7 +12,7 @@ from pyeo.tests.utilities import load_test_conf
 def test_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_conf = load_test_conf()
-    user = test_conf["sent_2"]["user"]
+    user = test_cnf["sent_2"]["user"]
     passwd = test_conf["sent_2"]["pass"]
     images = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
                      "test_data/merak.geojson",
