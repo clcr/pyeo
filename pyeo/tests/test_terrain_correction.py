@@ -29,6 +29,7 @@ def test_get_dem_slope_and_angle():
     assert gdal.Open(angle_path)
 
 
+@pytest.mark.filterwarnings("ignore:numeric")
 def test_get_pixel_latlon():
     # Expected out for  top-left corner of test image, (0,0)
     # Test image is in EPSG 32748, QGIS says that TL corner coords are 600001.8, 9399997.9
@@ -91,6 +92,7 @@ def test_terrain_correction(monkeypatch):
     terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime)
 
 
+@pytest.mark.filterwarnings("ignore:numeric")
 def test_terrain_correction_landsat(monkeypatch):
     dem_path = "test_data/dem_test_indonesia.tif"
     in_path = "test_data/landsat_stack.tif"
@@ -101,10 +103,11 @@ def test_terrain_correction_landsat(monkeypatch):
     assert gdal.Open(out_path)
 
 
+@pytest.mark.filterwarnings("ignore:numeric")
 def test_landsat_stacking():
     from pyeo import raster_manipulation as ras
-    folder_path = "test_data/landsat_8_data/RASTER"
+    folder_path = "test_data/landsat_from_usgs/LC08_L1TP_123064_20180102_20180104_01_T1"
     out_image_path = "test_outputs/landsat_stack.tif"
     ras.preprocess_landsat_images(folder_path, out_image_path, new_projection=32748)
-    out_raster = gdal.Open(out_path)
+    out_raster = gdal.Open(out_image_path)
     assert out_raster

@@ -12,7 +12,7 @@ from pyeo.tests.utilities import load_test_conf
 def test_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_conf = load_test_conf()
-    user = test_cnf["sent_2"]["user"]
+    user = test_conf["sent_2"]["user"]
     passwd = test_conf["sent_2"]["pass"]
     images = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
                      "test_data/merak.geojson",
@@ -34,7 +34,7 @@ def test_landsat_query_and_download():
 
     images = pyeo.queries_and_downloads.landsat_query(test_conf, "test_data/merak.geojson", "20180101", "20180110")
     assert len(images) > 0
-    out_dir = "test_outputs/landsat"
+    out_dir = "test_data/landsat_from_usgs"
     try:
         shutil.rmtree(out_dir)
     except FileNotFoundError:

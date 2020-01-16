@@ -1160,8 +1160,9 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
     Stacks a set of Landsat images into a single raster and reorders the bands into
     [bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.
     """
+    log.info("Stacking Landsat rasters in folder {}".format(image_dir))
     band_path_list = [os.path.join(image_dir, image_name)
-            for image_name in sorted(os.listdir(image_dir)) if image_name.endswith('.tif')]
+            for image_name in sorted(os.listdir(image_dir)) if image_name.lower().endswith('.tif')]
     n_bands = len(band_path_list)
     driver = gdal.GetDriverByName("GTiff")
     first_ls_raster = gdal.Open(band_path_list[0])
@@ -1178,6 +1179,7 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
     first_ls_array = None
     first_ls_raster = None
     for ii, ls_raster_path in enumerate(band_path_list):
+        log.info("Stacking {} to raster layer {}".format(ls_raster_path, ii))
         ls_raster = gdal.Open(ls_raster_path)
         ls_array = ls_raster.GetVirtualMemArray()
         out_array[ii, ...] = ls_array[...]
@@ -1187,11 +1189,15 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
     out_image = None
     if new_projection:
         with TemporaryDirectory() as td:
+            log.info("Reprojecting to {}")
             temp_path = os.path.join(td, "reproj_temp.tif")
+            log.info("Temporary image path at {}".format(temp_path))
             reproject_image(out_image_path, temp_path, new_projection, do_post_resample = False)
             os.remove(out_image_path)
             os.rename(temp_path, out_image_path)
             resample_image_in_place(out_image_path, 30)
+    log.info("Stacked image at {}".format(out_image_path))
+
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
     """Stacks the specified bands of a .SAFE granule directory into a single geotiff"""
