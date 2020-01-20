@@ -103,6 +103,15 @@ def test_terrain_correction_landsat(monkeypatch):
     assert gdal.Open(out_path)
 
 
+def test_terrain_correction_s2():
+    dem_path = "test_data/dem_test_indonesia.tif"
+    in_path = "test_data/test_cirrus/T48MYT_20180803T025539_band_RGB_Cirrus.tif"
+    out_path = "test_outputs/correction_s2_indonesia.tif"
+    raster_timezone = pytz.timezone("UTC")
+    raster_datetime = dt.datetime(2018, 8, 3, 2, 55, 39, tzinfo=raster_timezone)
+    terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime)
+
+
 @pytest.mark.filterwarnings("ignore:numeric")
 def test_landsat_stacking():
     from pyeo import raster_manipulation as ras

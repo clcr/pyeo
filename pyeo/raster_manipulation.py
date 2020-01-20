@@ -1155,14 +1155,17 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 resample_image_in_place(out_mask_path, out_resolution)
 
 
-def preprocess_landsat_images(image_dir, out_image_path, new_projection = None):
+def preprocess_landsat_images(image_dir, out_image_path, new_projection = None, bands_to_stack=("B2","B3","B4")):
     """
     Stacks a set of Landsat images into a single raster and reorders the bands into
     [bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.
     """
     log.info("Stacking Landsat rasters in folder {}".format(image_dir))
-    band_path_list = [os.path.join(image_dir, image_name)
-            for image_name in sorted(os.listdir(image_dir)) if image_name.lower().endswith('.tif')]
+    band_path_list = []     # This still feels like a Python antipattern, but hey.
+    for band_id in bands_to_stack:
+        band_glob = os.path.join(image_dir, "LC08_*_{}.TIF".format(band_id))
+        band_path_list.append(glob.glob(band_glob)[0])
+
     n_bands = len(band_path_list)
     driver = gdal.GetDriverByName("GTiff")
     first_ls_raster = gdal.Open(band_path_list[0])
@@ -1340,7 +1343,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
 
 def build_sen2cor_output_path(image_path, timestamp, version):
     """
-    Creates a sen2cor output path dependent on the version of sen2cor
+    Creates a sen2cor output path dependent on the version ofr sen2cor
     Parameters
     ----------
     image_path
