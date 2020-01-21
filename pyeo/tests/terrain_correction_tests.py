@@ -103,7 +103,7 @@ def test_terrain_correction_landsat(monkeypatch):
 
 def test_landsat_stacking():
     from pyeo import raster_manipulation as ras
-    folder_path = "test_data/landsat_8_data/RASTER"
+    folder_path = "test_data/landsat_from_usgs/"
     out_image_path = "test_outputs/landsat_stack.tif"
     ras.preprocess_landsat_images(folder_path, out_image_path, new_projection=32748)
     out_raster = gdal.Open(out_path)
