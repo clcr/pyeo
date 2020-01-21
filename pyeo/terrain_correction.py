@@ -245,6 +245,7 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
             in_array = np.expand_dims(in_array, 0)
 
         print("Calculating reflectance array")
+        # Oh no, magic numbers. I think these were from the original paper? Are they for Landsat?
         ref_multi_this_band = 2.0e-5
         ref_add_this_band = -0.1
         ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)

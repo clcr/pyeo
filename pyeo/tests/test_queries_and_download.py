@@ -34,7 +34,7 @@ def test_landsat_query_and_download():
 
     images = pyeo.queries_and_downloads.landsat_query(test_conf, "test_data/merak.geojson", "20180101", "20180110")
     assert len(images) > 0
-    out_dir = "test_outputs/landsat"
+    out_dir = "test_data/landsat_from_usgs"
     try:
         shutil.rmtree(out_dir)
     except FileNotFoundError:
