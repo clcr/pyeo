@@ -102,7 +102,7 @@ def test_terrain_correction_landsat(monkeypatch):
     terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime, is_landsat=False)
     assert gdal.Open(out_path)
 
-
+@pytest.mark.filterwarnings("ignore:numeric")
 def test_terrain_correction_s2():
     dem_path = "test_data/dem_test_indonesia.tif"
     in_path = "test_data/test_cirrus/T48MYT_20180803T025539_band_RGB_Cirrus.tif"

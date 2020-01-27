@@ -23,7 +23,8 @@ a further set of nested dictionaries containing information about the product to
 
 Data download sources
 ---------------------
-This library presently offers two options for download sources; Scihub and Amazon Web Services. If in doubt, use Scihub.
+This library presently offers three options for download sources; Scihub and Amazon Web Services, for Sentinel, and
+USGS, for Landsat. If in doubt, use Scihub.
 
 - Scihub
 
@@ -39,6 +40,10 @@ This library presently offers two options for download sources; Scihub and Amazo
    payment details) and obtain an API key for that account. See https://aws.amazon.com/s3/pricing/ for pricing details;
    the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
    for the AWS bucket.
+
+- USGS
+
+   Landsat data is hosted and provided by the US Geological Survey. You can sign up at https://ers.cr.usgs.gov/register/
 
 Functions
 ---------
