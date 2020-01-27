@@ -30,6 +30,8 @@ log = logging.getLogger("pyeo")
 
 import pyeo.windows_compatability
 
+import pdb
+
 
 def download_dem():
     #"""Downloads a DEM (probably JAXA) for the relevent area (maybe)"""
@@ -121,8 +123,6 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
     log.info("Generating illumination condition raster from {}".format(dem_raster_path))
     with TemporaryDirectory() as td:
         log.info("Calculating slope and aspect rasters")
-        #slope_raster_path = "test_data/landsat_8_data/DEM/slope.tif"  # FOR NOW: PUT BACK LATER ROBERTS!!!!!
-        #aspect_raster_path = "test_data/landsat_8_data/DEM/aspect.tif"
         slope_raster_path = p.join(td, 'slope.tif')
         aspect_raster_path = p.join(td, 'aspect.tif')
         dem_image = gdal.Open(dem_raster_path)
@@ -130,7 +130,7 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
 
         get_dem_slope_and_angle(dem_raster_path, slope_raster_path, aspect_raster_path)
         slope_image = gdal.Open(slope_raster_path)
-        slope_array = slope_image.GetVirtualMemArray().T
+        slope_array = slope_image.ReadAsArray().T   # This is returned, so we can't use GetVirtualMemArray()
         aspect_image = gdal.Open(aspect_raster_path)
         aspect_array = aspect_image.GetVirtualMemArray().T
 
@@ -143,7 +143,6 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
         
         if ic_raster_out_path:
             ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
-
         return ic_array, zenith_array, slope_array
 
 
@@ -226,7 +225,8 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
 
         in_raster = gdal.Open(raster_path)
         in_array = in_raster.GetVirtualMemArray()
-        out_raster = ras.create_matching_dataset(in_raster, out_raster_path, bands=in_raster.RasterCount)
+        out_raster = ras.create_matching_dataset(in_raster, out_raster_path, bands=in_raster.RasterCount,
+                                                 datatype=gdal.GDT_Float32)
         out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
 
         print("Preprocessing DEM")
@@ -244,15 +244,18 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         if len(in_array.shape) == 2:
             in_array = np.expand_dims(in_array, 0)
 
+       # if is_landsat:
         print("Calculating reflectance array")
         # Oh no, magic numbers. I think these were from the original paper? Are they for Landsat?
         ref_multi_this_band = 2.0e-5
         ref_add_this_band = -0.1
         ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
-        
+       # else:
+       #     ref_array = in_array
+
         print("Calculating sample array")
-        sample_array = build_sample_array(ref_array, slope_array, 2, 3) # THIS IS LANDAST ONLY RIGHT NOW, CHANGE LATER!
-        
+        #pdb.set_trace()
+        sample_array = build_sample_array(ref_array, slope_array, 2, 3)
         band_indicies = sample_array[0, ...].nonzero()
 
         print("Beginning linear regression")
@@ -263,7 +266,6 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
             slope, _, _, _, _ = stats.linregress(ic_for_linregress, band_for_linregress)
             corrected_band = (band - (slope*(ic_array.T - _deg_cos(zenith_array.T))))
             out_array[i, ...] = np.where(band > 0, corrected_band, ref_array[i, ...])
-            
 
     out_array = None
     out_raster = None
