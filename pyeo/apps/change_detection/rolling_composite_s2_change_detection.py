@@ -166,6 +166,9 @@ if __name__ == "__main__":
                     log.info("Filtering query results for matching L1 and L2 products")
                     composite_products = pyeo.queries_and_downloads.filter_non_matching_s2_data(composite_products)
                     log.info("{} products remain".format(len(composite_products)))
+                else:
+                    log.info("Filtering query results to L1 only")
+                    composite_products = pyeo.queries_and_downloads.filter_to_l1_data(composite_products)
                 pyeo.queries_and_downloads.download_s2_data(composite_products, composite_l1_image_dir, composite_l2_image_dir,
                                                             source=args.download_source, user=sen_user, passwd=sen_pass, try_scihub_on_fail=True)
             if args.do_preprocess or do_all and not args.download_l2_data:
@@ -186,6 +189,9 @@ if __name__ == "__main__":
                 log.info("Filtering query results for matching L1 and L2 products")
                 products = pyeo.queries_and_downloads.filter_non_matching_s2_data(products)
                 log.info("{} products remain".format(len(products)))
+            else:
+                log.info("Filtering query results to L1 only")
+                products = pyeo.queries_and_downloads.filter_to_l1_data(products)
             log.info("Downloading")
             pyeo.queries_and_downloads.download_s2_data(products, l1_image_dir, l2_image_dir, args.download_source, user=sen_user, passwd=sen_pass, try_scihub_on_fail=True)
 
