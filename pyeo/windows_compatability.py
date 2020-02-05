@@ -6,6 +6,9 @@ from osgeo.gdal_array import GDALTypeCodeToNumericTypeCode
 import logging
 from tempfile import NamedTemporaryFile
 
+WINDOWS_PREFIX = "win"
+
+# May rewrite to use numpy
 
 class _WinHackVirtualMemArray(np.memmap):
     """
@@ -30,8 +33,10 @@ class _WinHackVirtualMemArray(np.memmap):
         print("Memarray created at {}".format(filepath))
         return obj
 
-    def __init__(self, raster, eAccess = False):
-       print("Attributes attached to memarray:{}\n{}\n{}\n{}".format(
+    def __init__(self, raster, eAccess=False):
+        shape = (raster.RasterCount, raster.RasterYSize, raster.RasterXSize)
+        super().__init__()
+        print("Attributes attached to memarray:{}\n{}\n{}\n{}".format(
             self.geotransform,
             self.projection,
             self.out_path,
@@ -59,7 +64,7 @@ class _WinHackVirtualMemArray(np.memmap):
             self.raster.FlushCache()
 
 
-if sys.platform.startswith("win"):
+if sys.platform.startswith(WINDOWS_PREFIX):
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
     # Monkeypatching outside of test environments is normally Very Bad,
     # and should only be attempted by those with special training or 

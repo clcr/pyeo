@@ -398,11 +398,11 @@ def floor_to_resolution(input, resolution):
     if resolution > 1:
         return input - (input%resolution)
     else:
-        log.warning("Low resolution detected, assuming in degrees. Rounding to 5 dp.\
+        log.warning("Low resolution detected, assuming in degrees. Rounding to 6 dp.\
                 Probably safer to reproject to meters projection.")
-        resolution = resolution * 100000
-        input = input * 100000
-        return (input-(input%resolution))/100000
+        resolution = resolution * 1000000
+        input = input * 1000000
+        return (input-(input%resolution))/1000000
 
 
 
