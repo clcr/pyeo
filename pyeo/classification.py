@@ -24,6 +24,8 @@ from pyeo.filesystem_utilities import get_mask_path
 
 from pyeo.raster_manipulation import stack_images, create_matching_dataset, apply_array_image_mask, get_masked_array
 
+import pyeo.windows_compatability
+
 log = logging.getLogger(__name__)
 
 def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path=None):
@@ -122,6 +124,9 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     except KeyError:
         log.warning("Sklearn joblib import failed,trying generic joblib")
         model = joblib.load(model_path)
+    except TypeError:
+        log.warning("Sklearn joblib import failed,trying generic joblib")
+        model = joblib.load(model_path)
     class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_path))
     if prob_out_path:
@@ -156,13 +161,14 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     good_mask = np.all(image_array != nodata, axis=1)
     good_sample_count = np.count_nonzero(good_mask)
     log.info("No. good values: {}".format(good_sample_count))
-    if good_sample_count <= 0.5*len(good_mask):  # If the images is less than 50% good pixels, do filtering
+    #if good_sample_count <= 0.5*len(good_mask):  # If the images is less than 50% good pixels, do filtering
+    if 1 == 0:  # Removing the filter until we fix the classification issue with it
         log.info("Filtering nodata values")
         good_indices = np.nonzero(good_mask)
         good_samples = np.take(image_array, good_indices, axis=0).squeeze()
         n_good_samples = len(good_samples)
     else:
-        log.info("Not worth filtering nodata, skipping.")
+        #log.info("Not worth filtering nodata, skipping.")
         good_samples = image_array
         good_indices = range(0, n_samples)
         n_good_samples = n_samples
@@ -401,16 +407,22 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
     name containing a shapefile of the same name. For example, in the folder training_data:
 
     training_data
-    ---area1.tif
-    ---area1
-       ---area1.shp
-       ---area1.dbx
-       ...rest of shapefile for area 1 ...
-    ---area2.tif
-    ---area2
-       ---area2.shp
-       ---area2.dbx
-       ...rest of shapefile for area 2...
+
+      - area1.tif
+      - area1
+
+        - area1.shp
+        - area1.dbx
+
+       ... rest of shapefile for area 1 ...
+
+      - area2.tif
+      - area2
+
+        - area2.shp
+        - area2.dbx
+
+       ... rest of shapefile for area 2 ...
 
 
     Parameters
@@ -588,7 +600,7 @@ def get_training_data(image_path, shape_path, attribute="CODE", shape_projection
         rasterised_shapefile = gdal.Open(ras_path)
         shape_array = rasterised_shapefile.GetVirtualMemArray()
         local_x, local_y = get_local_top_left(image, rasterised_shapefile)
-        shape_sparse = sp.coo_matrix(shape_array)
+        shape_sparse = sp.coo_matrix(np.asarray(shape_array).squeeze())
         y, x, features = sp.find(shape_sparse)
         training_data = np.empty((len(features), image.RasterCount))
         image_array = image.GetVirtualMemArray()

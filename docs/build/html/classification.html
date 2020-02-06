@@ -82,24 +82,13 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">pyeo.classification</a></li>
-<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
-<li class="toctree-l2"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
 </ul>
 
             
@@ -221,7 +210,7 @@ The image that is classified is has the following bands</p>
 
 <dl class="function">
 <dt id="pyeo.classification.classify_directory">
-<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">classify_directory</code><span class="sig-paren">(</span><em class="sig-param">in_dir</em>, <em class="sig-param">model_path</em>, <em class="sig-param">class_out_dir</em>, <em class="sig-param">prob_out_dir</em>, <em class="sig-param">apply_mask=False</em>, <em class="sig-param">out_type='GTiff'</em>, <em class="sig-param">num_chunks=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_directory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">classify_directory</code><span class="sig-paren">(</span><em class="sig-param">in_dir</em>, <em class="sig-param">model_path</em>, <em class="sig-param">class_out_dir</em>, <em class="sig-param">prob_out_dir=None</em>, <em class="sig-param">apply_mask=False</em>, <em class="sig-param">out_type='GTiff'</em>, <em class="sig-param">num_chunks=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
 in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.</p>
 <p>See the documentation for classification.classify_image() for more details.</p>
@@ -300,7 +289,7 @@ Wraps classification.create_trained_model() ; see docs for that for the details.
 
 <dl class="function">
 <dt id="pyeo.classification.create_model_from_signatures">
-<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">create_model_from_signatures</code><span class="sig-paren">(</span><em class="sig-param">sig_csv_path</em>, <em class="sig-param">model_out</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_from_signatures" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">create_model_from_signatures</code><span class="sig-paren">(</span><em class="sig-param">sig_csv_path</em>, <em class="sig-param">model_out</em>, <em class="sig-param">sig_datatype=&lt;class 'numpy.int32'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_from_signatures" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
 and pickle a scikit-learn model.</p>
 <dl class="field-list simple">
@@ -308,6 +297,7 @@ and pickle a scikit-learn model.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sig_csv_path</strong> – The path to the signatures file</p></li>
 <li><p><strong>model_out</strong> – The location to save the pickled model to.</p></li>
+<li><p><strong>sig_datatype</strong> – The datatype to read the csv as. Defaults to int32.</p></li>
 </ul>
 </dd>
 </dl>
@@ -325,20 +315,32 @@ model = ens.ExtraTreesClassifier(bootstrap=False, criterion=”gini”, max_feat
 <dd><p>Creates a trained model from a set of training images with associated shapefiles.</p>
 <p>This assumes that each image in training_image_file_paths has in the same directory a folder of the same
 name containing a shapefile of the same name. For example, in the folder training_data:</p>
-<p>training_data
-—area1.tif
-—area1</p>
+<p>training_data</p>
 <blockquote>
-<div><p>—area1.shp
-—area1.dbx
-…rest of shapefile for area 1 …</p>
+<div><ul class="simple">
+<li><p>area1.tif</p></li>
+<li><p>area1</p>
+<ul>
+<li><p>area1.shp</p></li>
+<li><p>area1.dbx</p></li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<div><p>… rest of shapefile for area 1 …</p>
 </div></blockquote>
-<p>—area2.tif
-—area2</p>
+<ul class="simple">
+<li><p>area2.tif</p></li>
+<li><p>area2</p>
+<ul>
+<li><p>area2.shp</p></li>
+<li><p>area2.dbx</p></li>
+</ul>
+</li>
+</ul>
 <blockquote>
-<div><p>—area2.shp
-—area2.dbx
-…rest of shapefile for area 2…</p>
+<div><p>… rest of shapefile for area 2 …</p>
+</div></blockquote>
 </div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -414,6 +416,23 @@ for fitting a scikit-learn classifier.</p>
 <p class="rubric">Notes</p>
 <p>For performance, this uses scikit’s sparse.nonzero() function to get the location of each training data pixel.
 This means that this will ignore any classes with a label of ‘0’.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.classification.load_signatures">
+<code class="sig-prename descclassname">pyeo.classification.</code><code class="sig-name descname">load_signatures</code><span class="sig-paren">(</span><em class="sig-param">sig_csv_path</em>, <em class="sig-param">sig_datatype=&lt;class 'numpy.int32'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.load_signatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts features and class labels from a signature CSV
+:param sig_csv_path:
+:param sig_datatype:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>features</em> – a numpy array of the shape (feature_count, sample_count)</p></li>
+<li><p><em>class_labels</em> – a 1d numpy array of class labels corresponding to the samples in features.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">

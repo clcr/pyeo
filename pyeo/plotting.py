@@ -2,6 +2,7 @@
 
 import gdal
 from matplotlib import pyplot as plt
+import pyeo.windows_compatability
 
 
 def show_satellite_image(image_path):

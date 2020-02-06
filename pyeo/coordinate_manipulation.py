@@ -14,10 +14,13 @@ processing, a gdal.Image object is usually the output from gdal.Open() and an og
 a well-known text (wkt) string using the  snipped `object=ogr.ImportFromWkt("mywkt"). For more information on wkt, see
 https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry and the "QuickWKT" QGIS plugin.
 """
+import subprocess
 
 import numpy as np
 from osgeo import osr, ogr
-
+import logging
+log = logging.getLogger("pyeo")
+import pyeo.windows_compatability
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     """
@@ -233,6 +236,7 @@ def write_geometry(geometry, out_path, srs_id=4326):
 
 
     """
+    # TODO: Fix this needing an extra filepath on the end
     driver = ogr.GetDriverByName("ESRI Shapefile")
     data_source = driver.CreateDataSource(out_path)
     srs = osr.SpatialReference()
@@ -252,6 +256,19 @@ def write_geometry(geometry, out_path, srs_id=4326):
     data_source = None
 
 
+def reproject_vector(in_path, out_path, dest_srs):
+    """
+    Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.
+    Parameters
+    ----------
+    in_path
+    out_path
+    dest_srs
+
+    """
+    subprocess.run(["ogr2ogr", out_path, in_path, '-t_srs', dest_srs.ExportToWkt()])
+
+
 def get_aoi_intersection(raster, aoi):
     """
     Returns a wkbPolygon geometry with the intersection of a raster and a shpefile containing an area of interest
@@ -267,7 +284,6 @@ def get_aoi_intersection(raster, aoi):
     a ogr.Geometry object containing a single polygon with the area of intersection
 
     """
-    #Not sure why this function exists
     raster_shape = get_raster_bounds(raster)
     aoi.GetLayer(0).ResetReading()  # Just in case the aoi has been accessed by something else
     aoi_feature = aoi.GetLayer(0).GetFeature(0)
@@ -379,7 +395,15 @@ def floor_to_resolution(input, resolution):
 
 
     """
-    return input - (input%resolution)
+    if resolution > 1:
+        return input - (input%resolution)
+    else:
+        log.warning("Low resolution detected, assuming in degrees. Rounding to 6 dp.\
+                Probably safer to reproject to meters projection.")
+        resolution = resolution * 1000000
+        input = input * 1000000
+        return (input-(input%resolution))/1000000
+
 
 
 def get_raster_size(raster):

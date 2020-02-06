@@ -23,7 +23,6 @@ if __name__ == "__main__":
     produce_stratified_validation_points(
         map_path=args.map_path,
         out_path=args.out_path,
-        n_points=args.n_points,
         no_data=args.no_data,
         seed=args.random_seed
     )

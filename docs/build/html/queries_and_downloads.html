@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="pyeo.validaion" href="validation.html" />
+    <link rel="next" title="pyeo.raster_manipulation" href="raster_manipulation.html" />
     <link rel="prev" title="pyeo.coordinate_manipulation" href="coordinate_manipulation.html" /> 
 </head>
 
@@ -82,25 +82,6 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Welcome to Pyeo’s documentation!</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
-<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">pyeo.queries_and_downloads</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#safe-files">SAFE files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#query-data-structure">Query data structure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#data-download-sources">Data download sources</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#introduction">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#installation">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#quick-start">Quick start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#assumptions-and-design-decisions">Assumptions and design decisions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html#module-pyeo.apps.change_detection.image_comparison">Applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
@@ -111,7 +92,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
 </ul>
 
             
@@ -207,19 +190,17 @@ format, and then automatically unzipped. Users are required to register with a u
 and there is a limit to no more than two concurrent downloads per username at a time. Scihub is entirely free.</p>
 </div></blockquote>
 </li>
-</ul>
-<blockquote>
-<div><ul>
 <li><p>AWS</p>
-<p>Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
+<blockquote>
+<div><p>Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
 updated a few hours after new products are made available. There is a small charge associated with downloading this
 data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
 payment details) and obtain an API key for that account. See <a class="reference external" href="https://aws.amazon.com/s3/pricing/">https://aws.amazon.com/s3/pricing/</a> for pricing details;
 the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
 for the AWS bucket.</p>
+</div></blockquote>
 </li>
 </ul>
-</div></blockquote>
 </div>
 <div class="section" id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
@@ -591,7 +572,7 @@ download by granule; there is no need to have a precise polygon at this stage.</
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="validation.html" class="btn btn-neutral float-right" title="pyeo.validaion" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="raster_manipulation.html" class="btn btn-neutral float-right" title="pyeo.raster_manipulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="coordinate_manipulation.html" class="btn btn-neutral float-left" title="pyeo.coordinate_manipulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
