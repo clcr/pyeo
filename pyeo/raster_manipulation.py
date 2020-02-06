@@ -995,6 +995,30 @@ def ndvi_function(r, i):
     return (r-i)/(r+i)
 
 
+def apply_image_function(in_paths, out_path, function, out_datatype = gdal.GDT_Int32):
+    """Applies a pixel-wise function across every image. Assumes each image is exactly contiguous and, for now,
+    single-banded. function() should take a list of values and return a single value."""
+    rasters = [gdal.Open(in_path) for in_path in in_paths]
+    raster_arrays = [raster.GetVirtualMemArray() for raster in rasters]
+    in_array = np.stack(raster_arrays, axis=0)
+
+    out_raster = create_matching_dataset(rasters[0], out_path=out_path, datatype=out_datatype)
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    out_array[...] = np.apply_along_axis(function, 0, in_array)
+
+    # Deallocating. Not taking any chances here.
+    out_array = None
+    out_raster = None
+    in_array = None
+    for raster_array, raster in zip(raster_arrays, rasters):
+        raster_array = None
+        raster = None
+
+
+def sum_function(pixels_in):
+    return np.sum(pixels_in)
+
+
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
     """Creates a raster stack from a list of rasters. Adapted from Chris Gerard's
     book 'Geoprocessing with Python'. The out put data type is the same as the input data type.
