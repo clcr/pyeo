@@ -1,13 +1,12 @@
 import sys
 import gdal
-import numpy
 import os
 
 def setup_module():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def test_windows_monkeypatch(monkeypatch):
-    # monkeypatch.setattr(sys,'platform','win32')
+    #monkeypatch.setattr(sys,'platform','win32')
     out_file = r"test_outputs\windows_stack.tif"
     try:
         os.remove(out_file)
@@ -15,8 +14,8 @@ def test_windows_monkeypatch(monkeypatch):
         pass
     from pyeo import raster_manipulation as ras
     test_rasters = [
-            r"test_data\class_reproj.tif",
-            r"test_data\composite_reproj.tif"
+            r"test_data\class_composite_T36MZE_20190509T073621_20190519T073621.tif",
+            r"test_data\composite_T36MZE_20190509T073621_20190519T073621.tif"
             ]
     ras.stack_images(test_rasters, out_file)
     out = gdal.Open(out_file)

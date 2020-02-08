@@ -59,7 +59,7 @@ class _WinHackVirtualMemArray(np.memmap):
             self.raster.FlushCache()
 
 
-if sys.platform.startswith("win"):
+if sys.platform.startswith(""):
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
     # Monkeypatching outside of test environments is normally Very Bad,
     # and should only be attempted by those with special training or 

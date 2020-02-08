@@ -244,14 +244,15 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         if len(in_array.shape) == 2:
             in_array = np.expand_dims(in_array, 0)
 
-       # if is_landsat:
-        print("Calculating reflectance array")
-        # Oh no, magic numbers. I think these were from the original paper? Are they for Landsat?
-        ref_multi_this_band = 2.0e-5
-        ref_add_this_band = -0.1
-        ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
-       # else:
-       #     ref_array = in_array
+        if is_landsat:
+            print("Calculating reflectance array")
+            # Oh no, magic numbers. I think these were from the original paper? Are they for Landsat?
+            ref_multi_this_band = 2.0e-5
+            ref_add_this_band = -0.1
+            ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
+        else:
+            print("Meatball reflectance test")
+            ref_array = in_array/1000    # Meatball test.
 
         print("Calculating sample array")
         #pdb.set_trace()
