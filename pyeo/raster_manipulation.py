@@ -132,7 +132,7 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
     )
     out_dataset.SetGeoTransform(geotransform)
     out_dataset.SetProjection(projection)
-    out_array = out_dataset.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    out_array = out_dataset.GetVirtualMemArray(eAccess=gdal.GA_Update).squeeze()
     out_array[...] = array
     out_array = None
     out_dataset = None
