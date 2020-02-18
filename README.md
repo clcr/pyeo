@@ -14,7 +14,7 @@ For Sentinel 2 processing, you may need Sen2Cor installed: http://step.esa.int/m
 For AWS downloading, you will need credentials set up on your machine.
 
 ## To install
-To install Pyeo, put the following commands into Bash (Linux/Mac) or the Anaconda **Console** (Windows)
+To install Pyeo, put the following commands into Bash (Linux/Mac) or the Anaconda **Prompt** (Windows)
 
 ```bash
 git clone https://github.com/clcr/pyeo.git
