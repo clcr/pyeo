@@ -939,6 +939,32 @@ def resample_image_in_place(image_path, new_res):
             shutil.move(temp_image, image_path)
 
 
+def align_image_in_place(image_path, target_path):
+    """
+    Adjusts the geotransform of the image at image_path with that of the one at target_path, so they align neatly.
+    Parameters
+    ----------
+    image_path
+    alignment_path
+
+    """
+    # Right, this is actually a lot more complicated than I thought
+    # Step 1
+    target_gt = gdal.Open(target_path).GetGeoTransform()
+    if target_gt[1] != np.abs(target_gt[5]):
+        raise NonSquarePixelException("Target pixel resolution is not uniform")
+    target_resolution = target_gt[1]
+    image = gdal.Open(image_path, gdal.GA_Update)
+    image_gt = image.GetGeoTransform()
+    new_gt = list(image_gt)
+    new_gt[0] = np.floor(image_gt[0])
+    new_gt[4] = np.floor(image_gt[4])
+    image.SetGeoTransform(image_gt)
+    image = None
+    # Lets try a different thing
+
+
+
 def raster_to_array(rst_pth):
     """Reads in a raster file and returns a N-dimensional array.
 

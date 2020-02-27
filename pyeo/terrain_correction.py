@@ -230,10 +230,14 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
 
         print("Preprocessing DEM")
+        # Right, so.
+        # Something in there is going funny, and I'm around 80% sure that it's because the DEM isn't aligning
+        # properly with the
         clipped_dem_path = p.join(td, "clipped_dem.tif")
         reproj_dem_path = p.join(td, "reproj_dem.tif")
         ras.reproject_image(dem_path, reproj_dem_path, in_raster.GetProjection(), do_post_resample=False)
         ras.resample_image_in_place(reproj_dem_path, in_raster.GetGeoTransform()[1])  # Assuming square pixels
+        ras.align_image_in_place(reproj_dem_path, raster_path)
         ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path, is_landsat)
 
         ic_array, zenith_array, slope_array = calculate_illumination_condition_array(clipped_dem_path, raster_datetime)
@@ -245,13 +249,13 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
             in_array = np.expand_dims(in_array, 0)
 
        # if is_landsat:
-        print("Calculating reflectance array")
+        #print("Calculating reflectance array")
         # Oh no, magic numbers. I think these were from the original paper? Are they for Landsat?
-        ref_multi_this_band = 2.0e-5
-        ref_add_this_band = -0.1
-        ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
+        #ref_multi_this_band = 2.0e-5
+        #ref_add_this_band = -0.1
+        #ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
        # else:
-       #     ref_array = in_array
+        ref_array = in_array
 
         print("Calculating sample array")
         #pdb.set_trace()

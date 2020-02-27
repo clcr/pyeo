@@ -298,6 +298,21 @@ this for further processing.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pyeo.queries_and_downloads.download_landsat_data">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_landsat_data</code><span class="sig-paren">(</span><em class="sig-param">products</em>, <em class="sig-param">out_dir</em>, <em class="sig-param">conf</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_landsat_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an output from landsat_query, will download al L1C products to out_dir.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>products</strong> – Dictionary of landsat products; must include downloadUrl and displayId</p></li>
+<li><p><strong>out_dir</strong> – Directory to save Landsat files in. Folder structure is out_dir-&gt;displayId-&gt;products</p></li>
+<li><p><strong>conf</strong> – Dictionary containing USGS login credentials. See docs for landsat_query.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyeo.queries_and_downloads.download_planet_image_on_day">
 <code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_planet_image_on_day</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em>, <em class="sig-param">date</em>, <em class="sig-param">out_path</em>, <em class="sig-param">api_key</em>, <em class="sig-param">item_type='PSScene4Band'</em>, <em class="sig-param">search_name='auto'</em>, <em class="sig-param">asset_type='analytic'</em>, <em class="sig-param">threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_planet_image_on_day" title="Permalink to this definition">¶</a></dt>
 <dd><p>Queries and downloads all images on the date in the aoi given</p>
@@ -470,6 +485,31 @@ this for further processing.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>20190613T123002)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyeo.queries_and_downloads.landsat_query">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">landsat_query</code><span class="sig-paren">(</span><em class="sig-param">conf</em>, <em class="sig-param">geojsonfile</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">cloud=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.landsat_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Queries the USGS dataset LANDSAT_8_C1 for imagery between the start_date and end_date, inclusive.
+This downloads all imagery touched by the bounding box of the provided geojson file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conf</strong> – A dictionary with [‘landsat’][‘user’] and [‘landsat’][‘pass’] values, containing your USGS credentials.</p></li>
+<li><p><strong>geojsonfile</strong> – The geojson file</p></li>
+<li><p><strong>start_date</strong> – The start date, in “yyyymmdd” format. Will truncate any longer string.</p></li>
+<li><p><strong>end_date</strong> – The end query date, in “yyyymmdd” format. Will truncate any longer string.</p></li>
+<li><p><strong>cloud</strong> – The maximum cloud cover to return.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A list of products; each item being a dictionary returned from the USGS API.</em></p></li>
+<li><p><strong>See https</strong> (<em>//earthexplorer.usgs.gov/inventory/documentation/datamodel#Scene</em>)</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
