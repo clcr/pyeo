@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/126246599.svg)](https://zenodo.org/badge/latestdoi/126246599)
+
 # pyeo
 Python for Earth Observation processing chain
 
