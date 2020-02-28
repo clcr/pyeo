@@ -136,6 +136,9 @@ def rolling_detection(config_path,
                 pyeo.raster_manipulation.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir,
                                                                 sen2cor_path,
                                                                 delete_unprocessed_image=False)
+
+
+
             if do_merge or do_all:
                 log.info("Aggregating composite layers")
                 pyeo.raster_manipulation.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir,

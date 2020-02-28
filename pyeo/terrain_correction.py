@@ -32,6 +32,8 @@ import pyeo.windows_compatability
 
 import pdb
 
+gdal.UseExceptions()
+
 
 def download_dem():
     #"""Downloads a DEM (probably JAXA) for the relevent area (maybe)"""
@@ -149,13 +151,13 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
 def calc_azimuth_array(lat_array, lon_array, raster_datetime):
     def calc_azimuth_for_datetime(lat, lon):
         return solar.get_azimuth_fast(lat, lon, raster_datetime)
-    return(np.array(list(map(calc_azimuth_for_datetime, lat_array, lon_array))))
+    return np.array(list(map(calc_azimuth_for_datetime, lat_array, lon_array)))
 
 
 def calc_altitude_array(lat_array, lon_array, raster_datetime):
     def calc_altitude_for_datetime(lat, lon):
         return solar.get_altitude_fast(lat, lon, raster_datetime)
-    return (np.array(list(map(calc_altitude_for_datetime, lat_array, lon_array))))
+    return np.array(list(map(calc_altitude_for_datetime, lat_array, lon_array)))
 
 
 def ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime):
