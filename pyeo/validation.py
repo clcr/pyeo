@@ -65,7 +65,7 @@ def count_pixel_classes(map_path, no_data=None):
     A dictionary of class:count
     """
     map = gdal.Open(map_path)
-    map_array = map.GetVirtualMemArray()
+    map_array = map.GetVirtualMemArray().squeeze()
     unique, counts = np.unique(map_array, return_counts=True)
     out = dict(zip([str(val) for val in unique], counts))
     out.pop(no_data, "_")   # pop the no data value, but don't worry if there's nothing there.
@@ -141,7 +141,7 @@ def stratified_random_sample(map_path, class_sample_count, no_data=None, seed = 
     if not seed:
         seed = datetime.datetime.now().timestamp()
     map = gdal.Open(map_path)
-    map_array = map.GetVirtualMemArray()
+    map_array = map.GetVirtualMemArray().squeeze()
     class_dict = build_class_dict(map_array, no_data)
     map_array = None
     out_coord_dict = {}

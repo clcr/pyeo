@@ -5,7 +5,11 @@ import gdal
 from osgeo.gdal_array import GDALTypeCodeToNumericTypeCode
 import logging
 from tempfile import NamedTemporaryFile
+import logging
 
+WINDOWS_PREFIX = "win"
+log = logging.getLogger("pyeo")
+# May rewrite to use numpy
 
 class _WinHackVirtualMemArray(np.memmap):
     """
@@ -27,18 +31,20 @@ class _WinHackVirtualMemArray(np.memmap):
         obj.raster = raster
         obj[...] = raster.ReadAsArray()
         obj.flush()
-        print("Memarray created at {}".format(filepath))
+        log.debug("Memarray created at {}".format(filepath))
         return obj
 
-    def __init__(self, raster, eAccess = False):
-       print("Attributes attached to memarray:{}\n{}\n{}\n{}".format(
+    def __init__(self, raster, eAccess=False):
+        shape = (raster.RasterCount, raster.RasterYSize, raster.RasterXSize)
+        super().__init__()
+        log.debug("Attributes attached to memarray:{}\n{}\n{}\n{}".format(
             self.geotransform,
             self.projection,
             self.out_path,
             self.writeable))
 
     def __array_finalize__(self, obj):
-        print("Finalising array as {}".format(obj))
+        log.debug("Finalising array as {}".format(obj))
         if obj is not None:
             self.geotransform = getattr(obj, 'geotransform', None)
             self.projection = getattr(obj, 'projection', None)
@@ -48,7 +54,7 @@ class _WinHackVirtualMemArray(np.memmap):
 
     def __del__(self):
         # If appropriate, we want the memmap to write on close
-        print("Preparing to remove {}".format(self))
+        log.debug("Preparing to remove {}".format(self))
         if self.writeable:
             #pdb.set_trace()
             for band_index, band in enumerate(self.__array__()[:, ...]):
@@ -59,12 +65,11 @@ class _WinHackVirtualMemArray(np.memmap):
             self.raster.FlushCache()
 
 
-if sys.platform.startswith(""):
+f sys.platform.startswith(WINDOWS_PREFIX):
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
     # Monkeypatching outside of test environments is normally Very Bad,
     # and should only be attempted by those with special training or 
     # nothing to lose.
-    log = logging.getLogger("pyeo")
     log.warning("Windows OS detected; monkeypatching GetVirtualMemArray. Some functions may not respond as expected.")
     def WindowsVirtualMemArray(self, eAccess=None):
         return _WinHackVirtualMemArray(self, eAccess)

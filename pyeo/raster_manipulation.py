@@ -38,9 +38,10 @@ import gdal
 import numpy as np
 from osgeo import gdal_array, osr, ogr
 from osgeo.gdal_array import NumericTypeCodeToGDALTypeCode, GDALTypeCodeToNumericTypeCode
-#from skimage import morphology as morph
+from skimage import morphology as morph
 
 import pdb
+import faulthandler
 
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect, reproject_vector
@@ -52,7 +53,7 @@ from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS
 log = logging.getLogger("pyeo")
 
 import pyeo.windows_compatability
-
+faulthandler.enable()
 
 
 
@@ -553,7 +554,7 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     if generate_date_image:
         time_out_path = composite_out_path.rsplit('.')[0]+".dates"
         dates_image = create_matching_dataset(composite_image, time_out_path, bands=1, datatype=gdal.GDT_UInt32)
-        dates_array = dates_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
+        dates_array = dates_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write).squeeze()
 
     output_array = composite_image.GetVirtualMemArray(eAccess=gdal.gdalconst.GF_Write)
     if len(output_array.shape) == 2:
@@ -741,11 +742,11 @@ def get_masked_array(raster, mask_path):
 
     """
     mask = gdal.Open(mask_path)
-    mask_array = mask.GetVirtualMemArray()
+    mask_array = mask.GetVirtualMemArray().squeeze()
     raster_array = raster.GetVirtualMemArray()
     # If the shapes do not match, assume single-band mask for multi-band raster
     if len(mask_array.shape) == 2 and len(raster_array.shape) == 3:
-        mask_array = project_array(mask_array, raster_array.shape[0], 0)
+        mask_array = project_array(np.asarray(mask_array), raster_array.shape[0], 0)
     return np.ma.array(raster_array, mask=np.logical_not(mask_array))
 
 
@@ -928,8 +929,14 @@ def resample_image_in_place(image_path, new_res):
             yRes=new_res
         )
         temp_image = os.path.join(td, "temp_image.tif")
-        error = gdal.Warp(temp_image, image_path, options=args)
-        shutil.move(temp_image, image_path)
+        gdal.Warp(temp_image, image_path, options=args)
+
+        # Urrrgh. Stupid Windows permissions.
+        if sys.platform.startswith("win"):
+            os.remove(image_path)
+            shutil.copy(temp_image, image_path)
+        else:
+            shutil.move(temp_image, image_path)
 
 
 def raster_to_array(rst_pth):
@@ -993,6 +1000,30 @@ def apply_band_function(in_path, function, bands, out_path, out_datatype = gdal.
 
 def ndvi_function(r, i):
     return (r-i)/(r+i)
+
+
+def apply_image_function(in_paths, out_path, function, out_datatype = gdal.GDT_Int32):
+    """Applies a pixel-wise function across every image. Assumes each image is exactly contiguous and, for now,
+    single-banded. function() should take a list of values and return a single value."""
+    rasters = [gdal.Open(in_path) for in_path in in_paths]
+    raster_arrays = [raster.GetVirtualMemArray() for raster in rasters]
+    in_array = np.stack(raster_arrays, axis=0)
+
+    out_raster = create_matching_dataset(rasters[0], out_path=out_path, datatype=out_datatype)
+    out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    out_array[...] = np.apply_along_axis(function, 0, in_array)
+
+    # Deallocating. Not taking any chances here.
+    out_array = None
+    out_raster = None
+    in_array = None
+    for raster_array, raster in zip(raster_arrays, rasters):
+        raster_array = None
+        raster = None
+
+
+def sum_function(pixels_in):
+    return np.sum(pixels_in)
 
 
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
@@ -1558,7 +1589,7 @@ def buffer_mask_in_place(mask_path, buffer_size):
     log.info("Buffering {} with buffer size {}".format(mask_path, buffer_size))
     mask = gdal.Open(mask_path, gdal.GA_Update)
     mask_array = mask.GetVirtualMemArray(eAccess=gdal.GA_Update)
-    cache = morph.binary_erosion(mask_array, selem=morph.disk(buffer_size))
+    cache = morph.binary_erosion(mask_array.squeeze(), selem=morph.disk(buffer_size))
     np.copyto(mask_array, cache)
     mask_array = None
     mask = None
@@ -1605,6 +1636,8 @@ def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"
     # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
     if "torque" in os.getenv("PATH"):  # Are we on a HPC? If so, give explicit path to fmask
         fmask_command = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"
+    if sys.platform.startswith("win"):
+        fmask_command = subprocess.check_output(["where", fmask_command], text=True).strip()
     log = logging.getLogger(__name__)
     args = [
         fmask_command,
