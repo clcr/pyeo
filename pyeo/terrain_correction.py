@@ -32,6 +32,8 @@ import pyeo.windows_compatability
 
 import pdb
 
+gdal.UseExceptions()
+
 
 def download_dem():
     #"""Downloads a DEM (probably JAXA) for the relevent area (maybe)"""
@@ -149,13 +151,13 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
 def calc_azimuth_array(lat_array, lon_array, raster_datetime):
     def calc_azimuth_for_datetime(lat, lon):
         return solar.get_azimuth_fast(lat, lon, raster_datetime)
-    return(np.array(list(map(calc_azimuth_for_datetime, lat_array, lon_array))))
+    return np.array(list(map(calc_azimuth_for_datetime, lat_array, lon_array)))
 
 
 def calc_altitude_array(lat_array, lon_array, raster_datetime):
     def calc_altitude_for_datetime(lat, lon):
         return solar.get_altitude_fast(lat, lon, raster_datetime)
-    return (np.array(list(map(calc_altitude_for_datetime, lat_array, lon_array))))
+    return np.array(list(map(calc_altitude_for_datetime, lat_array, lon_array)))
 
 
 def ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime):
@@ -230,10 +232,14 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
 
         print("Preprocessing DEM")
+        # Right, so.
+        # Something in there is going funny, and I'm around 80% sure that it's because the DEM isn't aligning
+        # properly with the
         clipped_dem_path = p.join(td, "clipped_dem.tif")
         reproj_dem_path = p.join(td, "reproj_dem.tif")
         ras.reproject_image(dem_path, reproj_dem_path, in_raster.GetProjection(), do_post_resample=False)
         ras.resample_image_in_place(reproj_dem_path, in_raster.GetGeoTransform()[1])  # Assuming square pixels
+        ras.align_image_in_place(reproj_dem_path, raster_path)
         ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path, is_landsat)
 
         ic_array, zenith_array, slope_array = calculate_illumination_condition_array(clipped_dem_path, raster_datetime)

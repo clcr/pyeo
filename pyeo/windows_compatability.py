@@ -44,7 +44,7 @@ class _WinHackVirtualMemArray(np.memmap):
             self.writeable))
 
     def __array_finalize__(self, obj):
-        log.debug("Finalising array as {}".format(obj))
+#        log.debug("Finalising array as {}".format(obj))
         if obj is not None:
             self.geotransform = getattr(obj, 'geotransform', None)
             self.projection = getattr(obj, 'projection', None)

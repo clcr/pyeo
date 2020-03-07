@@ -43,6 +43,7 @@ def test_get_pixel_latlon():
     np.testing.assert_allclose(out_lat, target_lat, 0.001)
     np.testing.assert_allclose(out_lon, target_lon, 0.001)
 
+
 @pytest.mark.skip("too slow")
 def test_calculate_latlon_array():
     raster_path = "test_data/dem_test_indonesia.tif"
@@ -54,6 +55,7 @@ def test_calculate_latlon_array():
     test_lon = joblib.load("test_data/lon_array_indo")
     assert np.all(lat == test_lat)
     assert np.all(lon == test_lon)
+
 
 @pytest.mark.skip
 def test_calculate_illumination_raster(monkeypatch):
@@ -85,7 +87,7 @@ def test_terrain_correction(monkeypatch):
  #   monkeypatch.setattr(terrain_correction, "_generate_latlon_arrays", mock_latlon)#
 
     dem_path = "test_data/dem_test_indonesia.tif"
-    in_path = "test_data/indonesia_s2_l1_image.tif"
+    in_path = "test_data/indonesia_s2_image_clipped.tif"
     raster_timezone = pytz.timezone("UTC")
     raster_datetime = dt.datetime(2017, 9, 22, 2, 55, 41, tzinfo=raster_timezone)
     out_path = "test_outputs/correction_indonesia.tif"
@@ -101,6 +103,7 @@ def test_terrain_correction_landsat(monkeypatch):
     out_path = "test_outputs/correction_landsat_indonesia.tif"
     terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime, is_landsat=False)
     assert gdal.Open(out_path)
+
 
 @pytest.mark.filterwarnings("ignore:numeric")
 def test_terrain_correction_s2():

@@ -44,7 +44,8 @@ import pdb
 import faulthandler
 
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
-    get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect, reproject_vector
+    get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect, reproject_vector, \
+    get_local_top_left
 from pyeo.array_utilities import project_array
 from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1_safe_file, get_sen_2_image_timestamp, \
     get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
@@ -132,7 +133,7 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
     )
     out_dataset.SetGeoTransform(geotransform)
     out_dataset.SetProjection(projection)
-    out_array = out_dataset.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    out_array = out_dataset.GetVirtualMemArray(eAccess=gdal.GA_Update).squeeze()
     out_array[...] = array
     out_array = None
     out_dataset = None
@@ -937,6 +938,68 @@ def resample_image_in_place(image_path, new_res):
             shutil.copy(temp_image, image_path)
         else:
             shutil.move(temp_image, image_path)
+
+
+def align_image_in_place(image_path, target_path):
+    """
+    Adjusts the geotransform of the image at image_path with that of the one at target_path, so they align neatly with
+    the smallest magnitude of movement
+    Parameters
+    ----------
+    image_path
+    alignment_path
+
+    """
+    log.info("Aligning {} with{}")
+    # Right, this is actually a lot more complicated than I thought
+    # Step 1
+    target = gdal.Open(target_path)
+    target_gt = target.GetGeoTransform()
+    if target_gt[1] != np.abs(target_gt[5]):
+        raise NonSquarePixelException("Target pixel resolution is not uniform")
+
+    image = gdal.Open(image_path, gdal.GA_Update)
+    image_gt = image.GetGeoTransform()
+    if image_gt[1] != np.abs(image_gt[5]):
+        raise NonSquarePixelException("Image pixel resolution is not uniform")
+
+    # need to find the nearest grid intersection to image tl
+    pixel_index_x, pixel_index_y = get_local_top_left(image, target)
+
+    target_res = target_gt[1]
+
+    image_x = image_gt[0]
+    image_y = image_gt[3]
+    image_res = image_gt[1]
+
+    if target_res%image_res != 0:
+        log.warning("Target and image resolutions are not divisible, grids will not align. Consider resampling.")
+
+    # First, do we want to move the image left or right and up or down?
+    x_offset = image_x%target_res
+    y_offset = image_y%target_res
+
+    if x_offset == 0 and y_offset == 0:
+        log.info("Images are already aligned")
+        return
+
+    # If x is nearest to pixel line
+    if -1*(image_res/2) <= x_offset <= image_res/2:
+        new_x = image_x - x_offset
+    else:
+        new_x = image_x + (image_res - x_offset)
+        
+    # Likewise with y
+    if -1 * (image_res / 2) <= y_offset <= image_res / 2:
+        new_y = image_y - y_offset
+    else:
+        new_y = image_y + (image_res - y_offset)
+
+    new_gt = list(image_gt)
+    new_gt[0] = new_x
+    new_gt[3] = new_y
+    image.SetGeoTransform(new_gt)
+    image = None
 
 
 def raster_to_array(rst_pth):
