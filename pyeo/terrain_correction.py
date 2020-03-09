@@ -80,26 +80,23 @@ def generate_latlon(x, y,geotransform, transformer):
     lon, lat, _ = transformer.TransformPoint(x_geo, y_geo)
     return np.fromiter((lat, lon),np.float)
 
-# This is very slow.
+
 def _generate_latlon_arrays(array, transformer, geotransform):
     
-    def generate_latlon_for_here(x,y):
-        return generate_latlon(x,y,geotransform, transformer)
+    def generate_latlon_for_here(x, y):
+        return generate_latlon(x, y, geotransform, transformer)
 
-    latlon_array = np.empty((array.size, 2))
-    x_list = np.arange(array.shape[0])
-    y_list = np.arange(array.shape[1])
-    x_mesh, y_mesh = np.meshgrid(x_list, y_list)
-    x_mesh = x_mesh.ravel()
-    y_mesh = y_mesh.ravel()
-    latlon_array[...,:] = list(map(generate_latlon_for_here, x_mesh, y_mesh)) 
-    lat_array = latlon_array[:, 0]
-    lon_array = latlon_array[:, 1]
-    lat_array = np.reshape(lat_array, array.shape).T
-    lon_array = np.reshape(lon_array, array.shape).T
+    # The crude way. Ask someone if it is doable.
+    top_lat, left_lon = generate_latlon_for_here(0,0)
+    bottom_lat, right_lon = generate_latlon_for_here(array.shape[0]-1, array.shape[1]-1)
+
+    lat_list = np.linspace(top_lat, bottom_lat, array.shape[1], dtype=np.half)
+    lon_list = np.linspace(left_lon, right_lon, array.shape[0], dtype=np.half)
+    lat_array = np.stack([lat_list]*array.shape[0])
+    lon_array = np.stack([lon_list]*array.shape[1]).T
+
     return lat_array, lon_array
 
-   
 
 def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_raster_out_path=None):
     """
@@ -132,9 +129,9 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
 
         get_dem_slope_and_angle(dem_raster_path, slope_raster_path, aspect_raster_path)
         slope_image = gdal.Open(slope_raster_path)
-        slope_array = slope_image.ReadAsArray().T   # This is returned, so we can't use GetVirtualMemArray()
+        slope_array = slope_image.ReadAsArray()   # This is returned, so we can't use GetVirtualMemArray()
         aspect_image = gdal.Open(aspect_raster_path)
-        aspect_array = aspect_image.GetVirtualMemArray().T
+        aspect_array = aspect_image.GetVirtualMemArray()
 
         print("Calculating latlon arrays (this takes a while, for some reason.")
         transformer, geotransform = _generate_latlon_transformer(dem_image)
@@ -150,13 +147,13 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
 
 def calc_azimuth_array(lat_array, lon_array, raster_datetime):
     def calc_azimuth_for_datetime(lat, lon):
-        return solar.get_azimuth_fast(lat, lon, raster_datetime)
+        return solar.get_azimuth_fast(lat, lon, raster_datetime).astype(np.dtype(np.half))
     return np.array(list(map(calc_azimuth_for_datetime, lat_array, lon_array)))
 
 
 def calc_altitude_array(lat_array, lon_array, raster_datetime):
     def calc_altitude_for_datetime(lat, lon):
-        return solar.get_altitude_fast(lat, lon, raster_datetime)
+        return solar.get_altitude_fast(lat, lon, raster_datetime).astype(np.dtype('float32'))
     return np.array(list(map(calc_altitude_for_datetime, lat_array, lon_array)))
 
 
@@ -191,9 +188,8 @@ def build_sample_array(raster_array, slope_array, red_band_index, ir_band_index)
     ndvi_array = (ir_band - red_band)/(ir_band + red_band)
     np.nan_to_num(ndvi_array, nan=0, copy=False)
     mask_array = np.logical_and(ndvi_array>0.5, slope_array.T > 18)
-    out_array = ras.apply_array_image_mask(raster_array, mask_array, fill_value = 0)
-    
-    return out_array
+    return ras.apply_array_image_mask(raster_array, mask_array, fill_value = 0)
+
 
 
 def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime, is_landsat = False):
@@ -253,12 +249,12 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         if is_landsat:
             print("Calculating reflectance array")
             # Oh no, magic numbers. I think these were from the original paper? Are they for Landsat?
-            ref_multi_this_band = 2.0e-5
-            ref_add_this_band = -0.1
-            ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
+        #ref_multi_this_band = 2.0e-5
+        #ref_add_this_band = -0.1
+        #ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
         else:
             print("Meatball reflectance test")
-            ref_array = in_array/1000    # Meatball test.
+            ref_array = np.divide(in_array,10000, dtype=np.half)   # This number straight from Sahid.
 
         print("Calculating sample array")
         #pdb.set_trace()
@@ -268,13 +264,17 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         print("Beginning linear regression")
         for i, band in enumerate(sample_array[:, ...]):
             print("Processing band {} of {}".format(i+1, ref_array.shape[0]))
-            ic_for_linregress = ic_array.T[band_indicies[0], band_indicies[1]].ravel()
-            band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel()
-            slope, _, _, _, _ = stats.linregress(ic_for_linregress, band_for_linregress)
-            corrected_band = (band - (slope*(ic_array.T - _deg_cos(zenith_array.T))))
-            out_array[i, ...] = np.where(band > 0, corrected_band, ref_array[i, ...])
+            out_array[i, ...] = correct_reflectance(band, band_indicies, i, ic_array, ref_array, zenith_array)
 
     out_array = None
     out_raster = None
     ref_array = None
     in_raster = None
+
+
+def correct_reflectance(band, band_indicies, i, ic_array, ref_array, zenith_array):
+    ic_for_linregress = ic_array.T[band_indicies[0], band_indicies[1]].ravel()
+    band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel()
+    slope, _, _, _, _ = stats.linregress(ic_for_linregress, band_for_linregress)
+    corrected_band = (band - (slope * (ic_array.T - _deg_cos(zenith_array.T))))
+    return np.where(band > 0, corrected_band, ref_array[i, ...])

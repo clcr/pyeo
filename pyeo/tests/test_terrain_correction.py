@@ -44,7 +44,6 @@ def test_get_pixel_latlon():
     np.testing.assert_allclose(out_lon, target_lon, 0.001)
 
 
-@pytest.mark.skip("too slow")
 def test_calculate_latlon_array():
     raster_path = "test_data/dem_test_indonesia.tif"
     raster = gdal.Open(raster_path)
@@ -107,9 +106,11 @@ def test_terrain_correction_landsat(monkeypatch):
 
 @pytest.mark.filterwarnings("ignore:numeric")
 def test_terrain_correction_s2():
-    dem_path = "test_data/indonesia_dem_clipped.tif"
-    in_path = "test_data/test_cirrus/T48MYT_20180803T025539_band_RGB_Cirrus.tif"
+    dem_path = "test_data/dem_test_indonesia.tif"
+    in_path = "test_data/indonesia.tif"
     out_path = "test_outputs/correction_s2_indonesia.tif"
+    if os.path.exists(out_path):
+        os.remove(out_path)
     raster_timezone = pytz.timezone("UTC")
     raster_datetime = dt.datetime(2018, 8, 3, 2, 55, 39, tzinfo=raster_timezone)
     terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime)
