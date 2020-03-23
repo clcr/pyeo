@@ -254,7 +254,8 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         #ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
         else:
             print("Meatball reflectance test")
-            ref_array = np.divide(in_array,10000, dtype=np.half)   # This number straight from Sahid.
+            #ref_array = np.divide(in_array,10000, dtype=np.half)   # This number straight from Sahid.
+            ref_array = in_array
 
         print("Calculating sample array")
         #pdb.set_trace()
@@ -273,8 +274,11 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
 
 
 def correct_reflectance(band, band_indicies, i, ic_array, ref_array, zenith_array):
+    import joblib
     ic_for_linregress = ic_array.T[band_indicies[0], band_indicies[1]].ravel()
     band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel()
     slope, _, _, _, _ = stats.linregress(ic_for_linregress, band_for_linregress)
     corrected_band = (band - (slope * (ic_array.T - _deg_cos(zenith_array.T))))
+    joblib.dump(ic_for_linregress, f"{i}_ic")
+    joblib.dump(band_for_linregress, f"{i}_band")
     return np.where(band > 0, corrected_band, ref_array[i, ...])

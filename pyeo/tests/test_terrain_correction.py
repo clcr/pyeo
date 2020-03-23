@@ -107,12 +107,12 @@ def test_terrain_correction_landsat(monkeypatch):
 @pytest.mark.filterwarnings("ignore:numeric")
 def test_terrain_correction_s2():
     dem_path = "test_data/dem_test_indonesia.tif"
-    in_path = "test_data/indonesia.tif"
+    in_path = "/home/john/work/indonesia/S2A_MSIL2A_20170922T025541_N0205_R032_T48MXU_20170922T031450.tif"
     out_path = "test_outputs/correction_s2_indonesia.tif"
     if os.path.exists(out_path):
         os.remove(out_path)
     raster_timezone = pytz.timezone("UTC")
-    raster_datetime = dt.datetime(2018, 8, 3, 2, 55, 39, tzinfo=raster_timezone)
+    raster_datetime = dt.datetime(2017, 9, 22, 3, 14, 50, tzinfo=raster_timezone)
     terrain_correction.calculate_reflectance(in_path, dem_path, out_path, raster_datetime)
     out = gdal.Open(out_path)
     assert out.GetVirtualMemArray().max() > 10
