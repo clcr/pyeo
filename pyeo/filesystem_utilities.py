@@ -221,6 +221,14 @@ def get_related_images(target_image_name, project_dir):
     return glob.glob(image_glob, project_dir)
 
 
+def get_safe_product_type(image_name):
+    """Returns the product string (MSIL1C or MSIL2A) from a .safe file identifier"""
+    tmp1 = image_name.split("/")[-1]  # remove path
+    tmp2 = tmp1.split(".")[0] # remove file extension
+    comps = tmp2.split("_") # decompose
+    return comps[1]
+
+
 def get_l1_safe_file(image_name, l1_dir):
     """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
     a filename"""

@@ -48,7 +48,8 @@ from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from
     get_local_top_left
 from pyeo.array_utilities import project_array
 from pyeo.filesystem_utilities import sort_by_timestamp, get_sen_2_tiles, get_l1_safe_file, get_sen_2_image_timestamp, \
-    get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline
+    get_sen_2_image_tile, get_sen_2_granule_id, check_for_invalid_l2_data, get_mask_path, get_sen_2_baseline, \
+    get_safe_product_type
 from pyeo.exceptions import CreateNewStacksException, StackImagesException, BadS2Exception, NonSquarePixelException
 
 log = logging.getLogger("pyeo")
@@ -1325,7 +1326,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04",
     return out_image_path
 
 
-def get_sen_2_band_path(l2_safe_dir, band, resolution=None):
+def get_sen_2_band_path(safe_dir, band, resolution=None):
     """Returns the path to the raster of the specified band in the specified safe_dir. """
     if resolution == 10:
         res_string = "10m"
@@ -1336,22 +1337,31 @@ def get_sen_2_band_path(l2_safe_dir, band, resolution=None):
     else:
         res_string = None
 
-    if res_string in ["10m", "20m", "60m"]:  # If resolution is given, then find the band of that resolution
-        band_glob = "GRANULE/*/IMG_DATA/R{}/*_{}_*.*".format(res_string, band)
-        band_glob = os.path.join(l2_safe_dir, band_glob)
-        try:
-            band_path = glob.glob(band_glob)[0]
-        except IndexError:
-            log.warning("Band {} not found of specified resolution, searching in other available resolutions".format(band))
-
-    if res_string is None or 'band_path' not in locals():  # Else use the highest resolution available for that band
-        band_glob = "GRANULE/*/IMG_DATA/R*/*_{}_*.*".format(band)
-        band_glob = os.path.join(l2_safe_dir, band_glob)
+    if get_safe_product_type(safe_dir) == "MSIL1C":
+        band_glob = "GRANULE/*/IMG_DATA/*_{}*.*".format(band)
+        band_glob = os.path.join(safe_dir, band_glob)
         band_paths = glob.glob(band_glob)
-        try:
-            band_path = sorted(band_paths)[0] # Sorting alphabetically gives the highest resolution first
-        except TypeError:
-            raise FileNotFoundError("Band {} not found for safe file {}". format(band, l2_safe_dir))
+        if not band_paths:
+            raise FileNotFoundError("Band {} not found for safe file {}".format(band, safe_dir))
+        band_path = band_paths[0]
+
+    else:
+        if res_string in ["10m", "20m", "60m"]:  # If resolution is given, then find the band of that resolution
+            band_glob = "GRANULE/*/IMG_DATA/R{}/*_{}_*.*".format(res_string, band)
+            band_glob = os.path.join(safe_dir, band_glob)
+            try:
+                band_path = glob.glob(band_glob)[0]
+            except IndexError:
+                log.warning("Band {} not found of specified resolution, searching in other available resolutions".format(band))
+
+        if res_string is None or 'band_path' not in locals():  # Else use the highest resolution available for that band
+            band_glob = "GRANULE/*/IMG_DATA/R*/*_{}_*.*".format(band)
+            band_glob = os.path.join(safe_dir, band_glob)
+            band_paths = glob.glob(band_glob)
+            try:
+                band_path = sorted(band_paths)[0] # Sorting alphabetically gives the highest resolution first
+            except TypeError:
+                raise FileNotFoundError("Band {} not found for safe file {}". format(band, safe_dir))
     return band_path
 
 

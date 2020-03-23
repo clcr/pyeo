@@ -186,8 +186,8 @@ def build_sample_array(raster_array, slope_array, red_band_index, ir_band_index)
     red_band = raster_array[red_band_index, ...]
     ir_band = raster_array[ir_band_index, ...]
     ndvi_array = (ir_band - red_band)/(ir_band + red_band)
-    np.nan_to_num(ndvi_array, nan=0, copy=False)
-    mask_array = np.logical_and(ndvi_array>0.5, slope_array.T > 18)
+    np.nan_to_num(ndvi_array, copy=False)
+    mask_array = np.logical_and(ndvi_array>0.5, slope_array.T > 18)   # Changed from default
     return ras.apply_array_image_mask(raster_array, mask_array, fill_value = 0)
 
 
