@@ -34,6 +34,9 @@ import pdb
 
 gdal.UseExceptions()
 
+DEBUG_PROJECTION = None
+DEBUG_GT = None
+
 
 def download_dem():
     #"""Downloads a DEM (probably JAXA) for the relevent area (maybe)"""
@@ -98,9 +101,21 @@ def _generate_latlon_arrays(array, transformer, geotransform):
     return lat_array, lon_array
 
 
-def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_raster_out_path=None):
+def generate_slope_and_aspect_rasters(dem_raster_path, out_directory):
+    """Using GDAL, splits a DEM into slope and aspect rasters"""
+    #global slope_raster_path, aspect_raster_path, dem_image, dem_array    # Get rid of this later
+    log.info("Calculating slope and aspect rasters")
+    slope_raster_path = p.join(out_directory, 'slope.tif')
+    aspect_raster_path = p.join(out_directory, 'aspect.tif')
+    dem_image = gdal.Open(dem_raster_path)
+    dem_array = dem_image.GetVirtualMemArray()
+    get_dem_slope_and_angle(dem_raster_path, slope_raster_path, aspect_raster_path)
+    return slope_raster_path, aspect_raster_path
+
+
+def calculate_ic_array(slope_raster_path, aspect_raster_path, raster_datetime, ic_raster_out_path = None):
     """
-    Given a DEM, creates an array of the illumination conditions as specified in
+    Given a slope and an aspect raster, creates an array of the illumination conditions as specified in
     https://ieeexplore.ieee.org/document/8356797, equation 9. The Pysolar library is
     used to calculate solar position.
 
@@ -119,29 +134,22 @@ def calculate_illumination_condition_array(dem_raster_path, raster_datetime, ic_
     Each pixel is a value between -1 and 1
 
     """
-    log.info("Generating illumination condition raster from {}".format(dem_raster_path))
-    with TemporaryDirectory() as td:
-        log.info("Calculating slope and aspect rasters")
-        slope_raster_path = p.join(td, 'slope.tif')
-        aspect_raster_path = p.join(td, 'aspect.tif')
-        dem_image = gdal.Open(dem_raster_path)
-        dem_array = dem_image.GetVirtualMemArray()
 
-        get_dem_slope_and_angle(dem_raster_path, slope_raster_path, aspect_raster_path)
+    with TemporaryDirectory() as td:
         slope_image = gdal.Open(slope_raster_path)
         slope_array = slope_image.ReadAsArray()   # This is returned, so we can't use GetVirtualMemArray()
         aspect_image = gdal.Open(aspect_raster_path)
         aspect_array = aspect_image.GetVirtualMemArray()
 
         print("Calculating latlon arrays (this takes a while, for some reason.")
-        transformer, geotransform = _generate_latlon_transformer(dem_image)
-        lat_array, lon_array = _generate_latlon_arrays(dem_array, transformer, geotransform)
+        transformer, geotransform = _generate_latlon_transformer(slope_image)
+        lat_array, lon_array = _generate_latlon_arrays(aspect_array, transformer, geotransform)
 
         print("pixels to process: {}".format(np.product(lat_array.shape)))
         ic_array, zenith_array = ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime)
         
         if ic_raster_out_path:
-            ras.save_array_as_image(ic_array, ic_raster_out_path, dem_image.GetGeoTransform(), dem_image.GetProjection())
+            ras.save_array_as_image(ic_array, ic_raster_out_path, aspect_image.GetGeoTransform(), aspect_image.GetProjection())
         return ic_array, zenith_array, slope_array
 
 
@@ -187,12 +195,11 @@ def build_sample_array(raster_array, slope_array, red_band_index, ir_band_index)
     ir_band = raster_array[ir_band_index, ...]
     ndvi_array = (ir_band - red_band)/(ir_band + red_band)
     np.nan_to_num(ndvi_array, copy=False)
-    mask_array = np.logical_and(ndvi_array>0.5, slope_array.T > 18)   # Changed from default
+    mask_array = np.logical_and(ndvi_array>0.5, slope_array > 18)
     return ras.apply_array_image_mask(raster_array, mask_array, fill_value = 0)
 
 
-
-def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetime, is_landsat = False):
+def do_terrain_correction(raster_path, dem_path, out_raster_path, raster_datetime, is_landsat=False):
 
     """
     Corrects for shadow effects due to terrain features.
@@ -227,18 +234,21 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
                                                  datatype=gdal.GDT_Float32)
         out_array = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
 
-        print("Preprocessing DEM")
-        # Right, so.
-        # Something in there is going funny, and I'm around 80% sure that it's because the DEM isn't aligning
-        # properly with the
-        clipped_dem_path = p.join(td, "clipped_dem.tif")
-        reproj_dem_path = p.join(td, "reproj_dem.tif")
-        ras.reproject_image(dem_path, reproj_dem_path, in_raster.GetProjection(), do_post_resample=False)
-        ras.resample_image_in_place(reproj_dem_path, in_raster.GetGeoTransform()[1])  # Assuming square pixels
-        ras.align_image_in_place(reproj_dem_path, raster_path)
-        ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path, is_landsat)
+        # These are being saved for convenience of ras.save_array_as_image
+        # Using globals like this is a Bad Idea in real code
+        global DEBUG_PROJECTION
+        global DEBUG_GT
+        DEBUG_PROJECTION = in_raster.GetProjection()
+        DEBUG_GT = in_raster.GetGeoTransform()
 
-        ic_array, zenith_array, slope_array = calculate_illumination_condition_array(clipped_dem_path, raster_datetime)
+        print("Preprocessing DEM")
+        # If we resample then extract slope and angle, then they have Weird Holes in them that correspond to the centre
+        # of pixels. So we need to extract then preprocess -_-
+        slope_raster_path, angle_raster_path = generate_slope_and_aspect_rasters(dem_path, td)
+        slope_raster_path = preprocess_dem(slope_raster_path, raster_path, td)
+        angle_raster_path = preprocess_dem(angle_raster_path, raster_path, td)
+        ic_array, zenith_array, slope_array = calculate_ic_array(slope_raster_path, angle_raster_path, raster_datetime,
+                                                                 "ic_array.tif")
         
         if is_landsat:
             in_array = in_array.T
@@ -254,8 +264,8 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
         #ref_array = (ref_multi_this_band * in_array + ref_add_this_band) / _deg_cos(zenith_array.T)
         else:
             print("Meatball reflectance test")
-            #ref_array = np.divide(in_array,10000, dtype=np.half)   # This number straight from Sahid.
-            ref_array = in_array
+            ref_array = np.divide(in_array,10000, dtype=np.half)   # This number straight from Sahid.
+            #ref_array = in_array
 
         print("Calculating sample array")
         #pdb.set_trace()
@@ -273,12 +283,23 @@ def calculate_reflectance(raster_path, dem_path, out_raster_path, raster_datetim
     in_raster = None
 
 
+def preprocess_dem(dem_path, raster_path, out_directory):
+    in_raster = gdal.Open(raster_path)
+    clipped_dem_path = p.join(out_directory, "clipped_dem.tif")
+    reproj_dem_path = p.join(out_directory, "reproj_dem.tif")
+    ras.reproject_image(dem_path, reproj_dem_path, in_raster.GetProjection(), do_post_resample=False)
+    ras.resample_image_in_place(reproj_dem_path, in_raster.GetGeoTransform()[1])  # Assuming square pixels
+    ras.align_image_in_place(reproj_dem_path, raster_path)
+    ras.clip_raster_to_intersection(reproj_dem_path, raster_path, clipped_dem_path)
+    return clipped_dem_path
+
+
 def correct_reflectance(band, band_indicies, i, ic_array, ref_array, zenith_array):
     import joblib
-    ic_for_linregress = ic_array.T[band_indicies[0], band_indicies[1]].ravel()
-    band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel()
+    ic_for_linregress = ic_array[band_indicies[0], band_indicies[1]].ravel().astype(np.float64)
+    band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel().astype(np.float64)
     slope, _, _, _, _ = stats.linregress(ic_for_linregress, band_for_linregress)
-    corrected_band = (band - (slope * (ic_array.T - _deg_cos(zenith_array.T))))
+    corrected_band = (band - (slope * (ic_array - _deg_cos(zenith_array))))
     joblib.dump(ic_for_linregress, f"{i}_ic")
     joblib.dump(band_for_linregress, f"{i}_band")
     return np.where(band > 0, corrected_band, ref_array[i, ...])
