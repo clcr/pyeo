@@ -26,6 +26,9 @@ import pyeo.windows_compatability
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None, produce_csv=False):
     log = pyeo.filesystem_utilities.init_log("validation_log.log")
+    for map_class in user_accuracies:
+        if map_class not in pinned_samples:
+            pinned_samples.update({map_class: None})
     class_counts = count_pixel_classes(in_map_path, no_data_class)
     log.info("Class counts: {}".format(class_counts))
     sample_size = cal_total_sample_size(target_standard_error, user_accuracies, class_counts)
@@ -332,7 +335,7 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, class_total
 
 def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sample_size):
     """
-
+    Calculates the
     Parameters
     ----------
     pinned_sample_numbers
