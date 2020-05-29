@@ -780,7 +780,6 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
                      out_image, geometry_mode="intersect")
 
 
-
 def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
     """
     Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
@@ -1606,7 +1605,6 @@ def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, bu
 def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func ="intersect"):
     """ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
     Python true or false. Also assumes that all masks are the same projection for now."""
-    # TODO Implement intersection and union
     log = logging.getLogger(__name__)
     log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
         mask_paths, combination_func, geometry_func))
@@ -1623,9 +1621,11 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     # This bit here is similar to stack_raster, but different enough to not be worth spinning into a combination_func
     # I might reconsider this later, but I think it'll overcomplicate things.
     out_mask_array = out_mask.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    out_mask_array = out_mask_array.squeeze() # This here to account for unaccountable extra dimension Windows patch adds
     out_mask_array[:, :] = 1
-    for i, in_mask in enumerate(masks):
+    for mask_index, in_mask in enumerate(masks):
         in_mask_array = in_mask.GetVirtualMemArray()
+        in_mask_array = in_mask_array.squeeze()  # See previous comment
         if geometry_func == "intersect":
             out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_mask, combined_polygon)
             in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_mask, combined_polygon)
@@ -1636,7 +1636,7 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
             raise Exception("Invalid geometry_func; can be 'intersect' or 'union'")
         out_mask_view = out_mask_array[out_y_min: out_y_max, out_x_min: out_x_max]
         in_mask_view = in_mask_array[in_y_min: in_y_max, in_x_min: in_x_max]
-        if i is 0:
+        if mask_index is 0:
             out_mask_view[:,:] = in_mask_view
         else:
             if combination_func is 'or':
