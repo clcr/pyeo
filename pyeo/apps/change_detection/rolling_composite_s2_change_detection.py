@@ -38,8 +38,8 @@ import datetime as dt
 
 
 def rolling_detection(config_path,
-                      start_date=None,
-                      end_date=None,
+                      arg_start_date=None,
+                      arg_end_date=None,
                       build_composite=False,
                       num_chunks=None,
                       download_source="scihub",
@@ -96,20 +96,20 @@ def rolling_detection(config_path,
         if skip_prob_image:
             probability_image_dir = None
 
-        if start_date == "LATEST":
+        if arg_start_date == "LATEST":
             # This isn't nice, but returns the yyyymmdd string of the latest classified image
             start_date = pyeo.filesystem_utilities.get_image_acquisition_time(
                 pyeo.filesystem_utilities.sort_by_timestamp(
                     [image_name for image_name in os.listdir(catagorised_image_dir) if image_name.endswith(".tif")],
                     recent_first=True
                 )[0]).strftime("%Y%m%d")
-        elif start_date:
-            start_date = start_date
+        elif arg_start_date:
+            start_date = arg_start_date
 
-        if end_date == "TODAY":
+        if arg_end_date == "TODAY":
             end_date = dt.date.today().strftime("%Y%m%d")
-        elif end_date:
-            end_date = end_date
+        elif arg_end_date:
+            end_date = arg_end_date
 
         # Download and build the initial composite. Does not do by default
         if build_composite:
@@ -262,9 +262,9 @@ if __name__ == "__main__":
     parser.add_argument(dest='config_path', action='store', default=r'change_detection.ini',
                         help="A path to a .ini file containing the specification for the job. See "
                              "pyeo/apps/change_detection/change_detection.ini for an example.")
-    parser.add_argument('--start_date', dest='start_date', help="Overrides the start date in the config file. Set to "
+    parser.add_argument('--start_date', dest='arg_start_date', help="Overrides the start date in the config file. Set to "
                                                                 "LATEST to get the date of the last merged accquistion")
-    parser.add_argument('--end_date', dest='end_date', help="Overrides the end date in the config file. Set to TODAY"
+    parser.add_argument('--end_date', dest='arg_end_date', help="Overrides the end date in the config file. Set to TODAY"
                                                             "to get today's date")
     parser.add_argument('-b', '--build_composite', dest='build_composite', action='store_true', default=False,
                         help="If present, creates a cloud-free (ish) composite between the two dates specified in the "

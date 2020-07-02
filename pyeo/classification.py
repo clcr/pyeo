@@ -610,6 +610,10 @@ def get_training_data(image_path, shape_path, attribute="CODE", shape_projection
                     ]
         for index in range(len(features)):
             training_data[index, :] = image_view[:, y[index], x[index]]
+        image_view = None
+        image_array = None
+        shape_array = None
+        rasterised_shapefile = None
         return training_data, features
 
 
