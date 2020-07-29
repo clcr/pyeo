@@ -14,7 +14,7 @@ dependencies:
   - scikit-image
   - setuptools
   - numpy
-  - scikit-learn
+  - scikit-learn=0.22.2
   - python-fmask
   - beautifulsoup4
   - pip:
