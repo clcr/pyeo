@@ -31,7 +31,6 @@ If you want access to the Pyeo command line functions, add the following to your
 export PYEO=/path/to/pyeo
 export PATH=$PATH:$PYEO/bin
 ```
-You can test this by restarting your shell and then running a set 
 
 If you do not want to edit Pyeo, replace the pip install line with
 
