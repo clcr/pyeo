@@ -71,7 +71,8 @@ def count_pixel_classes(map_path, no_data=None):
     map_array = map.GetVirtualMemArray().squeeze()
     unique, counts = np.unique(map_array, return_counts=True)
     out = dict(zip([str(val) for val in unique], counts))
-    out.pop(no_data, "_")   # pop the no data value, but don't worry if there's nothing there.
+    if no_data:
+      out.pop(no_data, "_")   # pop the no data value, but don't worry if there's nothing there.
     map_array=None
     map=None
     return out
