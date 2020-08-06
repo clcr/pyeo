@@ -17,6 +17,7 @@ dependencies:
   - scikit-learn==0.22
   - python-fmask==0.5.4
   - beautifulsoup4==4.8.2
+  - pytz
   - pip:
     - geojson
     - google-cloud
