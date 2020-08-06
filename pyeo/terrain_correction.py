@@ -47,10 +47,12 @@ def download_dem():
 def get_dem_slope_and_angle(dem_path, slope_out_path, aspect_out_path):
     """Produces two .tifs, slope and aspect, from an imput DEM.
     Assumes that the DEM is in meters."""
-    log.info("Calculating slope and apsect rasters from")
+    log.info("Calculating slope and apsect rasters from {}".format(dem_path))
     dem = gdal.Open(dem_path)
-    gdal.DEMProcessing(slope_out_path, dem, "slope")  # For DEM in meters
-    gdal.DEMProcessing(aspect_out_path, dem, "aspect")
+    slope_options = gdal.DEMProcessingOptions(slopeFormat="degree", scale=111139)  # Scale from latlon to meters
+    gdal.DEMProcessing(slope_out_path, dem, "slope", options=slope_options)  # For DEM in latlon
+    aspect_options = gdal.DEMProcessingOptions(zeroForFlat=True, scale=111139)
+    gdal.DEMProcessing(aspect_out_path, dem, "aspect", options=aspect_options)
     dem = None
 
 
@@ -81,7 +83,7 @@ def _generate_latlon_transformer(raster):
 def generate_latlon(x, y,geotransform, transformer):
     x_geo, y_geo = cm.pixel_to_point_coordinates([y,x], geotransform)
     lon, lat, _ = transformer.TransformPoint(x_geo, y_geo)
-    return np.fromiter((lat, lon),np.float)
+    return np.fromiter((lat, lon), np.half)
 
 
 def _generate_latlon_arrays(array, transformer, geotransform):
@@ -90,15 +92,18 @@ def _generate_latlon_arrays(array, transformer, geotransform):
         return generate_latlon(x, y, geotransform, transformer)
 
     # The crude way. Ask someone if it is doable.
-    top_lat, left_lon = generate_latlon_for_here(0,0)
-    bottom_lat, right_lon = generate_latlon_for_here(array.shape[0]-1, array.shape[1]-1)
+    # Turns out it's not, at least not this way.
+    # Time for more linspace!
 
-    lat_list = np.linspace(top_lat, bottom_lat, array.shape[1], dtype=np.half)
-    lon_list = np.linspace(left_lon, right_lon, array.shape[0], dtype=np.half)
-    lat_array = np.stack([lat_list]*array.shape[0])
-    lon_array = np.stack([lon_list]*array.shape[1]).T
 
-    return lat_array, lon_array
+    latlon_array = np.empty((array.size, 2))
+    x_list = np.arange(array.shape[0])
+    y_list = np.arange(array.shape[1])
+    x_mesh, y_mesh = np.meshgrid(x_list, y_list)
+    x_mesh = x_mesh.ravel()
+    y_mesh = y_mesh.ravel()
+    latlon_array[...,:] = list(map(generate_latlon_for_here, x_mesh, y_mesh))
+    return latlon_array[0], latlon_array[1]
 
 
 def generate_slope_and_aspect_rasters(dem_raster_path, out_directory):
@@ -107,8 +112,6 @@ def generate_slope_and_aspect_rasters(dem_raster_path, out_directory):
     log.info("Calculating slope and aspect rasters")
     slope_raster_path = p.join(out_directory, 'slope.tif')
     aspect_raster_path = p.join(out_directory, 'aspect.tif')
-    dem_image = gdal.Open(dem_raster_path)
-    dem_array = dem_image.GetVirtualMemArray()
     get_dem_slope_and_angle(dem_raster_path, slope_raster_path, aspect_raster_path)
     return slope_raster_path, aspect_raster_path
 
@@ -155,7 +158,7 @@ def calculate_ic_array(slope_raster_path, aspect_raster_path, raster_datetime, i
 
 def calc_azimuth_array(lat_array, lon_array, raster_datetime):
     def calc_azimuth_for_datetime(lat, lon):
-        return solar.get_azimuth_fast(lat, lon, raster_datetime).astype(np.dtype(np.half))
+        return solar.get_azimuth_fast(lat, lon, raster_datetime).astype(np.dtype('float32'))
     return np.array(list(map(calc_azimuth_for_datetime, lat_array, lon_array)))
 
 
@@ -166,15 +169,13 @@ def calc_altitude_array(lat_array, lon_array, raster_datetime):
 
 
 def ic_calculation(lat_array, lon_array, aspect_array, slope_array, raster_datetime):
-
-    print("Precomputing -azimuth and zenith arrays")
+    print("Precomputing azimuth, altitude and and zenith arrays")
     azimuth_array = calc_azimuth_array(lat_array, lon_array, raster_datetime)
     altitude_array = calc_altitude_array(lat_array, lon_array, raster_datetime)
     zenith_array = 90-altitude_array
     print("Beginning IC calculation.")
     ic_array = _deg_cos(zenith_array) * _deg_cos(slope_array) + \
                _deg_sin(zenith_array) * _deg_sin(slope_array) * _deg_cos(azimuth_array - aspect_array)
-
     return ic_array, zenith_array
 
 
@@ -195,8 +196,8 @@ def build_sample_array(raster_array, slope_array, red_band_index, ir_band_index)
     ir_band = raster_array[ir_band_index, ...]
     ndvi_array = (ir_band - red_band)/(ir_band + red_band)
     np.nan_to_num(ndvi_array, copy=False)
-    mask_array = np.logical_and(ndvi_array>0.5, slope_array > 18)
-    return ras.apply_array_image_mask(raster_array, mask_array, fill_value = 0)
+    mask_array = np.logical_and(ndvi_array > 0.5, slope_array > 18)
+    return ras.apply_array_image_mask(raster_array, mask_array, fill_value=0)
 
 
 def do_terrain_correction(raster_path, dem_path, out_raster_path, raster_datetime, is_landsat=False):
@@ -268,8 +269,8 @@ def do_terrain_correction(raster_path, dem_path, out_raster_path, raster_datetim
             #ref_array = in_array
 
         print("Calculating sample array")
-        #pdb.set_trace()
-        sample_array = build_sample_array(ref_array, slope_array, 2, 3)
+        sample_array = build_sample_array(ref_array, slope_array, red_band_index=2, ir_band_index=3)
+        ras.save_array_as_image(sample_array.astype(np.short), 'sample_array.tif', DEBUG_GT, DEBUG_PROJECTION)
         band_indicies = sample_array[0, ...].nonzero()
 
         print("Beginning linear regression")
@@ -285,8 +286,9 @@ def do_terrain_correction(raster_path, dem_path, out_raster_path, raster_datetim
 
 def preprocess_dem(dem_path, raster_path, out_directory):
     in_raster = gdal.Open(raster_path)
-    clipped_dem_path = p.join(out_directory, "clipped_dem.tif")
-    reproj_dem_path = p.join(out_directory, "reproj_dem.tif")
+    dem_name = p.basename(dem_path).partition('.')[0]
+    clipped_dem_path = p.join(out_directory, "{}_clipped.tif".format(dem_name))
+    reproj_dem_path = p.join(out_directory, "{}_reproj.tif".format(dem_name))
     ras.reproject_image(dem_path, reproj_dem_path, in_raster.GetProjection(), do_post_resample=False)
     ras.resample_image_in_place(reproj_dem_path, in_raster.GetGeoTransform()[1])  # Assuming square pixels
     ras.align_image_in_place(reproj_dem_path, raster_path)
@@ -296,8 +298,8 @@ def preprocess_dem(dem_path, raster_path, out_directory):
 
 def correct_reflectance(band, band_indicies, i, ic_array, ref_array, zenith_array):
     import joblib
-    ic_for_linregress = ic_array[band_indicies[0], band_indicies[1]].ravel().astype(np.float64)
-    band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel().astype(np.float64)
+    ic_for_linregress = ic_array[band_indicies[0], band_indicies[1]].ravel()
+    band_for_linregress = band[band_indicies[0], band_indicies[1]].ravel()
     slope, _, _, _, _ = stats.linregress(ic_for_linregress, band_for_linregress)
     corrected_band = (band - (slope * (ic_array - _deg_cos(zenith_array))))
     joblib.dump(ic_for_linregress, f"{i}_ic")

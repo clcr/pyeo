@@ -19,6 +19,7 @@ DEFAULT_KEY = [
     ["9", "100", "171", "176", "255", "Non-Forest -> Veg"],
     ["10", "43", "131", "186", "255", "Water"]
 ]
+SRS = """PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]"""
 
 
 def create_report(class_path, certainty_path, out_dir, class_color_key=DEFAULT_KEY):
@@ -29,7 +30,6 @@ def create_report(class_path, certainty_path, out_dir, class_color_key=DEFAULT_K
 
 
 def create_display_layer(class_path, out_path, class_color_key):
-    srs = """PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]"""
     class_raster = gdal.Open(class_path)
     display_raster = pyeo.raster_manipulation.create_matching_dataset(class_raster, out_path, bands=3, datatype=gdal.GDT_Byte)
     display_array = display_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
@@ -40,7 +40,7 @@ def create_display_layer(class_path, out_path, class_color_key):
             [class_row[1:4] for class_row in class_color_key if class_row[0] == str(class_pixel)][0]
     display_array = None
     class_array = None
-    gdal.ReprojectImage(display_raster, dst_wkt=srs)
+    gdal.ReprojectImage(display_raster, dst_wkt=SRS)
     display_raster = None
     class_raster = None
 

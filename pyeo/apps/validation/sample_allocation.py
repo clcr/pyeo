@@ -17,9 +17,7 @@ def main():
     pinned_samples = conf._sections["pinned_samples"]
     pinned_samples = {map_class: int(number) for map_class, number in pinned_samples.items()}
     user_accuracies = {map_class: float(number) for map_class, number in user_accuracies.items()}
-    for map_class in user_accuracies:
-        if map_class not in pinned_samples:
-            pinned_samples.update({map_class: None})
+
 
     validation.create_validation_scenario(
         in_map_path=conf["paths"]["input_path"],

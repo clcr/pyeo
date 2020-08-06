@@ -9,6 +9,8 @@ import pytest
 import pyeo.filesystem_utilities
 import pyeo.raster_manipulation
 
+import pyeo.windows_compatability
+
 
 @pytest.mark.skip
 def test_composite_images_with_mask():
@@ -182,20 +184,33 @@ def test_ml_masking():
 
 def test_mask_combination():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    masks = [r"test_data/"+mask for mask in os.listdir("test_data") if mask.endswith(".msk")]
+    masks = ["test_data/S2B_MSIL2A_20200322T074609_N0214_R135_T36MYE_20200322T121000.msk",
+             "test_data/S2B_MSIL2A_20200322T074609_N0214_R135_T36MZE_20200322T121000.msk",
+             "test_data/S2B_MSIL2A_20200322T074609_N0214_R135_T36NZF_20200322T121000.msk"]
     try:
         os.remove("test_outputs/union_or_combination.tif")
         os.remove("test_outputs/intersection_and_combination.tif")
+        os.remove("test_outputs/intersection_or_combination.tif")
+        os.remove("test_outputs/union_and_combination.tif")
+
     except FileNotFoundError:
         pass
     pyeo.raster_manipulation.combine_masks(masks, "test_outputs/union_or_combination.tif",
                                            geometry_func="union", combination_func="or")
     pyeo.raster_manipulation.combine_masks(masks, "test_outputs/intersection_and_combination.tif",
                                            geometry_func="intersect", combination_func="and")
+    pyeo.raster_manipulation.combine_masks(masks, "test_outputs/intersection_or_combination.tif",
+                                           geometry_func="intersect", combination_func="or")
+    pyeo.raster_manipulation.combine_masks(masks, "test_outputs/union_and_combination.tif",
+                                           geometry_func="union", combination_func="and")
     mask_1 = gdal.Open("test_outputs/union_or_combination.tif")
     assert not mask_1.GetVirtualMemArray().all == False
     mask_2 = gdal.Open("test_outputs/intersection_and_combination.tif")
     assert not mask_2.GetVirtualMemArray().all == False
+    mask_3 = gdal.Open("test_outputs/intersection_or_combination.tif")
+    assert not mask_3.GetVirtualMemArray().all == False
+    mask_4 = gdal.Open("test_outputs/union_and_combination.tif")
+    assert not mask_4.GetVirtualMemArray().all == False
 
 
 def test_mask_from_confidence_layer():

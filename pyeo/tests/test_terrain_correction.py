@@ -112,7 +112,7 @@ def test_terrain_correction_s2():
     if os.path.exists(out_path):
         os.remove(out_path)
     raster_timezone = pytz.timezone("UTC")
-    raster_datetime = dt.datetime(2020, 3, 10, 2, 55, 41, tzinfo=raster_timezone)
+    raster_datetime = dt.datetime(2020, 3, 10, 2, 55, 41, tzinfo=raster_timezone) # Timezone?
     terrain_correction.do_terrain_correction(in_path, dem_path, out_path, raster_datetime)
     out = gdal.Open(out_path)
     assert out.GetVirtualMemArray().max() > 10
