@@ -14,7 +14,7 @@ dependencies:
   - scikit-image==0.16.2
   - setuptools
   - numpy==1.18.1
-  - scikit-learn==0.22.2
+  - scikit-learn==0.22
   - python-fmask==0.5.4
   - beautifulsoup4==4.8.2
   - pip:
