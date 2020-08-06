@@ -4,7 +4,7 @@ channels:
 dependencies:
   - boto3
   - botocore
-  - gdal=2.4.3
+  - gdal
   - joblib
   - matplotlib
   - pip
