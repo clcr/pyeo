@@ -2,21 +2,21 @@ name: pyeo_env
 channels:
   - conda-forge
 dependencies:
-  - boto3
-  - botocore
-  - gdal
-  - joblib
-  - matplotlib
+  - boto3==1.12.30
+  - botocore==1.15.30
+  - gdal==2.4.3
+  - joblib==0.14.1
+  - matplotlib==3.2.1
   - pip
   - pytest
   - python>=3.6
-  - requests
-  - scikit-image
+  - requests==2.23.0
+  - scikit-image==0.16.2
   - setuptools
-  - numpy
-  - scikit-learn=0.22.2
-  - python-fmask
-  - beautifulsoup4
+  - numpy==1.18.1
+  - scikit-learn==0.22.2
+  - python-fmask==0.5.4
+  - beautifulsoup4==4.8.2
   - pip:
     - geojson
     - google-cloud
