@@ -9,7 +9,7 @@ dependencies:
   - matplotlib
   - pip
   - pytest
-  - python
+  - python>=3.6
   - requests
   - scikit-image
   - setuptools
