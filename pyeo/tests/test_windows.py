@@ -6,7 +6,7 @@ import pyeo.windows_compatability
 def setup_module():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-ef test_windows_stacking(monkeypatch):
+def test_windows_stacking(monkeypatch):
     monkeypatch.setattr(pyeo.windows_compatability, 'WINDOWS_PREFIX', '')
     out_file = r"test_outputs/windows_stack.tif"
     try:
