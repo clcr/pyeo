@@ -27,7 +27,7 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
                                no_data_class=None, pinned_samples=None, produce_csv=False):
     log = pyeo.filesystem_utilities.init_log("validation_log.log")
     for map_class in user_accuracies:
-        if map_class not in pinned_samples:
+        if pinned_samples and map_class not in pinned_samples:
             pinned_samples.update({map_class: None})
     class_counts = count_pixel_classes(in_map_path, no_data_class)
     log.info("Class counts: {}".format(class_counts))
@@ -70,8 +70,8 @@ def count_pixel_classes(map_path, no_data=None):
     map = gdal.Open(map_path)
     map_array = map.GetVirtualMemArray().squeeze()
     unique, counts = np.unique(map_array, return_counts=True)
-    out = dict(zip([str(val) for val in unique], counts))
-    if no_data:
+    out = dict(zip([int(val) for val in unique], counts))
+    if no_data is not None:
       out.pop(no_data, "_")   # pop the no data value, but don't worry if there's nothing there.
     map_array=None
     map=None
@@ -88,7 +88,9 @@ def produce_stratified_validation_points(map_path, out_path, class_sample_counts
     gt = map.GetGeoTransform()
     proj = map.GetProjection()
     map = None
-    point_dict = stratified_random_sample(map_path, class_sample_counts, int(no_data), seed)
+    if no_data:
+        no_data = int(no_data)
+    point_dict = stratified_random_sample(map_path, class_sample_counts, no_data, seed)
     save_point_list_to_shapefile(point_dict, out_path, gt, proj, produce_csv)
     log.info("Complete. Output saved at {}.".format(out_path))
 
@@ -347,6 +349,9 @@ def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sa
     -------
 
     """
+    # hack; what to do if there are no pinned samples
+    if not pinned_sample_numbers:
+        pinned_sample_numbers = {class_key:None for class_key in class_total_sizes.keys()}
     pinned_sample_total = sum(sample_size for sample_size in pinned_sample_numbers.values() if sample_size is not None)
     pinned_map_total = sum(map_sample_size for map_class, map_sample_size
                            in class_total_sizes.items() if pinned_sample_numbers[map_class] is not None)

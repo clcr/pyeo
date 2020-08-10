@@ -10,7 +10,6 @@ def setup_module():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-
 @pytest.mark.hi_mem
 def test_stratified_random_sample():
     image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621_clipped.tif"
@@ -36,6 +35,19 @@ def test_produce_stratifed_validation_points():
     image_path = r"test_data/class_composite_T36MZE_20190509T073621_20190519T073621.tif"
     out_path = r"test_outputs/strat_sample_test/strat_sample_test.shp"
     validation.produce_stratified_validation_points(image_path, 500, out_path, no_data=0)
+
+
+@pytest.mark.hi_mem
+def test_produce_binary_stratifed_validation_points():
+    # Tests production for a binary image
+    image_path = r"test_data/flood_probability_map_SAR_linear_filtered_SYorkshire_SAR_UTM_binary.tif"
+    out_path = r"test_outputs/strat_sample_test/binary_strat_sample_test.shp"
+    target_se = 0.01
+    strat_dict = {
+        0:0.95,
+        1:0.7
+    }
+    validation.create_validation_scenario(image_path, out_path, target_se, strat_dict)
 
 
 @pytest.mark.hi_mem
