@@ -1,7 +1,4 @@
 language: python
-os:
- - windows
- - linux
 python:
   - "3.7"
 install:
