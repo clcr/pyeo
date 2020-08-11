@@ -19,10 +19,10 @@ def main():
 
 
     user_accuracies = conf["user_accuracy"]
-    user_accuracies = {map_class: float(number) for map_class, number in user_accuracies.items()}
+    user_accuracies = {int(map_class): float(number) for map_class, number in user_accuracies.items()}
     if "pinned_samples" in conf:
         pinned_samples = conf["pinned_samples"]
-        pinned_samples = {map_class: int(number) for map_class, number in pinned_samples.items()}
+        pinned_samples = {int(map_class): int(number) for map_class, number in pinned_samples.items()}
     else:
         pinned_samples = None
 
