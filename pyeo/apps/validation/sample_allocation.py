@@ -10,13 +10,21 @@ def main():
                                      " creates a set of points to pass to CollectEarth. MORE HERE.")
     parser.add_argument("conf_path")
     args = parser.parse_args()
+    args.conf_path = os.path.abspath(args.conf_path)
+    if not os.path.exists(args.conf_path):
+        raise FileNotFoundError(
+            "No configuration found at {}, please check path to .ini file".format(args.conf_path))
     conf = configparser.ConfigParser()
     conf.read(args.conf_path)
 
-    user_accuracies = conf._sections["user_accuracy"]
-    pinned_samples = conf._sections["pinned_samples"]
-    pinned_samples = {map_class: int(number) for map_class, number in pinned_samples.items()}
+
+    user_accuracies = conf["user_accuracy"]
     user_accuracies = {map_class: float(number) for map_class, number in user_accuracies.items()}
+    if "pinned_samples" in conf:
+        pinned_samples = conf["pinned_samples"]
+        pinned_samples = {map_class: int(number) for map_class, number in pinned_samples.items()}
+    else:
+        pinned_samples = None
 
 
     validation.create_validation_scenario(
