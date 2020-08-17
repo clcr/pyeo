@@ -5,9 +5,11 @@ import csv
 import gdal
 import numpy as np
 import argparse
+from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 
 # Class, R, G, B, A, label
-DEFAULT_KEY = [
+DEFAULT_KEY = (
     ["1", "12", "193", "76", "255", "Stable Forest"],
     ["2", "229", "232", "23", "255", "Forest -> Veg"],
     ["3", "249", "31", "45", "255", "Forest -> Non-Forest"],
@@ -18,15 +20,22 @@ DEFAULT_KEY = [
     ["8", "157", "211", "167", "255", "Non-Forest -> Forest"],
     ["9", "100", "171", "176", "255", "Non-Forest -> Veg"],
     ["10", "43", "131", "186", "255", "Water"]
-]
+)
 SRS = """PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]"""
 
 
-def create_report(class_path, certainty_path, out_dir, class_color_key=DEFAULT_KEY):
+def create_report(class_path, out_path, class_color_key=DEFAULT_KEY, certainty_path=None):
     if class_color_key != DEFAULT_KEY:
         class_color_key = load_color_pallet(class_color_key)
-    pyeo.raster_manipulation.flatten_probability_image(certainty_path, os.path.join(out_dir, "prob.tif"))
-    create_display_layer(class_path, os.path.join(out_dir, "display.tif"), class_color_key)
+    if certainty_path:
+        pyeo.raster_manipulation.flatten_probability_image(certainty_path, os.path.join(out_dir, "prob.tif"))
+    with TemporaryDirectory() as td:
+        display_path = os.path.join(td, "display.tif")
+        pallet_path = os.path.join(td, "pallet.tif")
+        create_display_layer(class_path, os.path.join(td, "display.tif"), class_color_key)
+        write_color_pallet(class_color_key, pallet_path)
+        with ZipFile(out_path) as out_zip:
+            out_zip.write()
 
 
 def create_display_layer(class_path, out_path, class_color_key):
@@ -65,6 +74,6 @@ if __name__ == "__main__":
     parser.add_argument("-p" "--pallet", dest="pallet")
     args = parser.parse_args()
 
-    create_report(args.class_path, args.certainty_path, args.output_folder)
+    create_report(args.class_path, args.output_folder, certainty_path=args.certainty_path)
 
 
