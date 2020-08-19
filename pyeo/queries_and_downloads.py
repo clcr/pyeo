@@ -664,7 +664,10 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     log.info("Downloading {} from scihub".format(product_uuid))
     prod = api.download(product_uuid, out_folder)
     if not prod:
-        log.error("{} failed to download".format(product_uuid))
+        log.error("{} not found. Please check.".format(product_uuid))
+    if not prod["Online"]:
+        log.info("{} is being retrieved from long-term archive. Please try again later.".format(product_uuid))
+        return 1
     zip_path = os.path.join(out_folder, prod['title'] + ".zip")
     log.info("Unzipping {} to {}".format(zip_path, out_folder))
     zip_ref = zipfile.ZipFile(zip_path, 'r')
@@ -672,6 +675,7 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
     zip_ref.close()
     log.info("Removing {}".format(zip_path))
     os.remove(zip_path)
+    return 0
 
 
 def download_from_google_cloud(product_ids, out_folder, redownload=False):
