@@ -40,6 +40,11 @@ class NoL2DataAvailableException(PyeoException):
 class FMaskException(PyeoException):
     pass
 
+
+class InvalidGeometryFormatException(PyeoException):
+    pass
+
+
 class NonSquarePixelException(PyeoException):
     pass
 

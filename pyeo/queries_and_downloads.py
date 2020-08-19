@@ -34,7 +34,7 @@ USGS, for Landsat. If in doubt, use Scihub.
 
 - AWS
 
-   Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
+   Sentinel data is also publicly hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
    updated a few hours after new products are made available. There is a small charge associated with downloading this
    data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
    payment details) and obtain an API key for that account. See https://aws.amazon.com/s3/pricing/ for pricing details;
@@ -73,7 +73,8 @@ from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
-from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests
+from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests, \
+    InvalidGeometryFormatException
 
 log = logging.getLogger("pyeo")
 
@@ -83,6 +84,7 @@ try:
     from google.cloud import storage
 except ImportError:
     pass
+
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
@@ -99,7 +101,8 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
              password for the ESA Open Access hub
 
     geojsonfile : string
-                  Path to a geojson file containing a polygon of the outline of the area you wish to download.
+                  Path to a geometry file containing a polygon of the outline of the area you wish to download.
+                  Can be a geojson (.json/.geojson) or a shapefile (.shp)
                   See www.geojson.io for a tool to build these.
 
     start_date : string
@@ -125,13 +128,41 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
     # Originally by Ciaran Robb
     api = SentinelAPI(user, passwd)
-    footprint = geojson_to_wkt(read_geojson(geojsonfile))
+    if geojsonfile.endswith("json"):
+        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+    elif geojsonfile.endswith("shp"):
+        footprint = shapefile_to_wkt(geojsonfile)
+    else:
+        raise InvalidGeometryFormatException("Please provide a .json, .geojson or a .shp as geometry.")
     log.info("Sending Sentinel-2 query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
         footprint, start_date, end_date, cloud))
     products = api.query(footprint,
                          date=(start_date, end_date), platformname="Sentinel-2",
                          cloudcoverpercentage="[0 TO {}]".format(cloud))
     return products
+
+
+def shapefile_to_wkt(shapefile_path):
+    """
+    Converts a shapefile to a well-known text (wkt) format
+
+    Parameters
+    ----------
+    shapefile_path
+        Path to the shapefile to convert
+
+    Returns
+    -------
+        A wkt - string containing the geometry of the first feature of the first layer of the shapefile shapefile
+    """
+    dataset = ogr.Open(shapefile_path)
+    layer = dataset.GetLayer(0)
+    feature = layer.GetFeature(0)
+    geometry = feature.GetGeometryRef()
+    wkt = geometry.ExportToWkt()
+    geometry, feature, layer, dataset = None, None, None, None
+    return wkt
+
 
 
 def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
