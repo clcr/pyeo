@@ -835,7 +835,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
 
 def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_raster_path, is_landsat=False):
     """
-    Clips one raster to the extent proivded by the other raster, and saves the result at out_raster_path.
+    Clips one raster to the extent proivded by the other raster, and saves the result at temp_file.
     Assumes both raster_to_clip and extent_raster are in the same projection.
     Parameters
     ----------
