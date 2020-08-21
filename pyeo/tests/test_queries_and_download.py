@@ -89,3 +89,16 @@ def test_list_filter():
     input = joblib.load("test_data/test_query.pkl")
     out = pyeo.queries_and_downloads.filter_non_matching_s2_data(input)
     assert len(out) == 10
+
+
+def mock_download(to_download, l1_dir, l2_dir, user, passwd):
+    print("Not downloading {}".format(to_download))
+    assert len(to_download) == 2
+
+
+def test_download_s2_pairs(monkeypatch):
+    monkeypatch.setattr(pyeo.queries_and_downloads,"download_s2_data", mock_download)
+    l1_dir = "test_data/test_pairs/L1"
+    l2_dir = "test_data/test_pairs/L2"
+    test_conf = load_test_conf()
+    pyeo.queries_and_downloads.download_s2_pairs(l1_dir, l2_dir, test_conf)

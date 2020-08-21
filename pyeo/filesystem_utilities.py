@@ -15,6 +15,7 @@ import shutil
 
 from pyeo.exceptions import CreateNewStacksException
 
+
 import pyeo.windows_compatability
 
 # Set up logging on import
@@ -231,22 +232,26 @@ def get_safe_product_type(image_name):
 
 def get_l1_safe_file(image_name, l1_dir):
     """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
-    a filename"""
+    a filename. Returns None if not found."""
     timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
     granule = get_sen_2_image_tile(os.path.basename(image_name))
     safe_glob = "S2[A|B]_MSIL1C_{}_*_{}_*.SAFE".format(timestamp, granule)
-    out = glob.glob(os.path.join(l1_dir, safe_glob))[0]
-    return out
+    out = glob.glob(os.path.join(l1_dir, safe_glob))
+    if len(out) == 0:
+        return None
+    return out[0]
 
 
 def get_l2_safe_file(image_name, l2_dir):
     """Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
-    a filename"""
+    a filename. Returns None if not found"""
     timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
     granule = get_sen_2_image_tile(os.path.basename(image_name))
     safe_glob = "S2[A|B]_MSIL2A_{}_*_{}_*.SAFE".format(timestamp, granule)
-    out = glob.glob(os.path.join(l2_dir, safe_glob))[0]
-    return out
+    out = glob.glob(os.path.join(l2_dir, safe_glob))
+    if len(out) == 0:
+        return None
+    return out[0]
 
 
 def get_sen_2_image_timestamp(image_name):

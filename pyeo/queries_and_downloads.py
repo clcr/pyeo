@@ -73,6 +73,7 @@ from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
+import pyeo.filesystem_utilities as fu
 from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests, \
     InvalidGeometryFormatException
 
@@ -609,6 +610,51 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
         else:
             log.error("Invalid data source; valid values are 'aws', 'google' and 'scihub'")
             raise BadDataSourceExpection
+
+
+def download_s2_pairs(l1_dir, l2_dir, conf):
+    """Given a pair of folders, one containing l1 products and the other containing l2 products, will query and download
+    missing data. At the end of the run, you will have two folders with a set of paired L1 and L2 products."""
+    # God, this is a faff.
+    l1_product_list = os.listdir(l1_dir)
+    l2_product_list = os.listdir(l2_dir)
+    missing_products = []
+    for l1_prod in l1_product_list:
+        if not fu.get_l2_safe_file(l1_prod, l2_dir):
+            missing_products.append(l1_prod)
+    for l2_prod in l2_product_list:
+        if not fu.get_l1_safe_file(l2_prod, l1_dir):
+            missing_products.append(l2_prod)
+    to_download = {}
+    log.info("{} missing products: {}".format(len(missing_products), missing_products))
+    for prod in missing_products:
+        to_download.update(query_for_corresponding_image(prod, conf))
+    if len(to_download) < len(missing_products):
+        log.warning("Could not find all corresponding products - please check folder after download")
+    download_s2_data(to_download, l1_dir, l2_dir, user=conf['sent_2']['user'], passwd=conf['sent_2']['pass'])
+
+
+def query_for_corresponding_image(prod,conf):
+    """Queries Copnernicus Hub for the corresponding l1/l2 image to 'prod'"""
+    date_string = fu.get_sen_2_image_timestamp(prod)
+    date = dt.datetime.strptime(date_string, "%Y%m%dT%H%M%S").date()
+    tile = fu.get_sen_2_image_tile(prod)[1:]  # Strip first 'T'
+    if fu.get_safe_product_type(prod) == "MSIL1C":
+        level = "Level-2A"
+    elif fu.get_safe_product_type(prod) == "MSIL2A":
+        level = "Level-1C"
+    user = conf['sent_2']['user']
+    passwd = conf['sent_2']['pass']
+    api = SentinelAPI(user, passwd)
+    # These from https://sentinelsat.readthedocs.io/en/stable/api.html#search-sentinel-2-by-tile
+    query_kwargs = {
+        'platformname': 'Sentinel-2',
+        'date': (date-dt.timedelta(days=1), date+dt.timedelta(days=1)),
+        'tileid': tile,
+        'processinglevel': level
+    }
+    out = api.query(**query_kwargs)
+    return out
 
 
 def download_from_aws_with_rollback(product_id, folder, uuid, user, passwd):
