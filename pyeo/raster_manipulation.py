@@ -12,6 +12,8 @@ Key functions
 
     :py:func:`preprocess_sen2_images` Preprocesses a set of of Sentinel-2 images into single raster files.
 
+    :py:func:`clip_raster` Clips a raster to a shapefile
+
 Rasters
 -------
 

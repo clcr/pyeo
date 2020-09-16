@@ -175,6 +175,7 @@
 <div><p><a class="reference internal" href="#pyeo.raster_manipulation.create_matching_dataset" title="pyeo.raster_manipulation.create_matching_dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_matching_dataset()</span></code></a> Creates an empty raster of the same shape as a source, ready for writing.</p>
 <p><code class="xref py py-func docutils literal notranslate"><span class="pre">stack_rasters()</span></code> Stacks a list of rasters into a single raster.</p>
 <p><a class="reference internal" href="#pyeo.raster_manipulation.preprocess_sen2_images" title="pyeo.raster_manipulation.preprocess_sen2_images"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_sen2_images()</span></code></a> Preprocesses a set of of Sentinel-2 images into single raster files.</p>
+<p><a class="reference internal" href="#pyeo.raster_manipulation.clip_raster" title="pyeo.raster_manipulation.clip_raster"><code class="xref py py-func docutils literal notranslate"><span class="pre">clip_raster()</span></code></a> Clips a raster to a shapefile</p>
 </div></blockquote>
 </div>
 <div class="section" id="rasters">
@@ -471,7 +472,7 @@ proejctions are provided.</p>
 
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.clip_raster">
-<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">aoi_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em>, <em class="sig-param"><span class="n">srs_id</span><span class="o">=</span><span class="default_value">4326</span></em>, <em class="sig-param"><span class="n">flip_x_y</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">aoi_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em>, <em class="sig-param"><span class="n">srs_id</span><span class="o">=</span><span class="default_value">4326</span></em>, <em class="sig-param"><span class="n">flip_x_y</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dest_nodata</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
 Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.
 Will also reproject the shapefile to the same projection as the raster if needed.</p>
@@ -481,6 +482,9 @@ Will also reproject the shapefile to the same projection as the raster if needed
 <li><p><strong>raster_path</strong> (<em>str</em>) – Path to the raster to be clipped.</p></li>
 <li><p><strong>aoi_path</strong> (<em>str</em>) – Path to a shapefile containing a single polygon</p></li>
 <li><p><strong>out_path</strong> (<em>str</em>) – Path to a location to save the final output raster</p></li>
+<li><p><strong>flip_x_y</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, swaps the x and y axis of the raster image before clipping. For compatability with Landsat.
+Default is False.</p></li>
+<li><p><strong>dest_nodata</strong> (<em>number</em><em>, </em><em>optional</em>) – The fill value for outside of the clipped area. Deafults to 0.</p></li>
 </ul>
 </dd>
 </dl>
