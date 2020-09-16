@@ -1162,6 +1162,7 @@ def raster_to_array(rst_pth):
 def get_extent_as_shp(in_ras_path, out_shp_path):
     """
     Gets the extent of a raster as a shapefile
+
     Parameters
     ----------
     in_ras_path : str
@@ -1182,6 +1183,7 @@ def get_extent_as_shp(in_ras_path, out_shp_path):
 def calc_ndvi(raster_path, output_path):
     """
     Creates a raster of NDVI from the input raster at output_path
+
     Parameters
     ----------
     raster_path : str
@@ -1818,6 +1820,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
 def build_sen2cor_output_path(image_path, timestamp, version):
     """
     Creates a sen2cor output path dependent on the version ofr sen2cor
+
     Parameters
     ----------
     image_path : str
@@ -1847,6 +1850,7 @@ def build_sen2cor_output_path(image_path, timestamp, version):
 def get_sen2cor_version(sen2cor_path):
     """
     Gets the version number of sen2cor from the help string.
+
     Parameters
     ----------
     sen2cor_path : str
@@ -2132,6 +2136,7 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
 def buffer_mask_in_place(mask_path, buffer_size):
     """
     Expands a mask in-place, overwriting the previous mask
+
     Parameters
     ----------
     mask_path : str
@@ -2202,6 +2207,7 @@ def create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, out_mask_path
 def create_mask_from_fmask(in_l1_dir, out_path):
     """
     Creates a cloud mask from a level 1 Sentinel-2 product using fmask
+
     Parameters
     ----------
     in_l1_dir : str

@@ -463,11 +463,15 @@ proejctions are provided.</p>
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.calc_ndvi">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">calc_ndvi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">output_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.calc_ndvi" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a raster of NDVI from the input raster at output_path
-:param raster_path: Path to a raster with blue, green, red and infrared bands (in that order)
-:type raster_path: str
-:param output_path: Path to a location to save the output raster
-:type output_path: str</p>
+<dd><p>Creates a raster of NDVI from the input raster at output_path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster_path</strong> (<em>str</em>) – Path to a raster with blue, green, red and infrared bands (in that order)</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – Path to a location to save the output raster</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -811,17 +815,19 @@ value from each pixel.</p>
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.get_extent_as_shp">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">get_extent_as_shp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_ras_path</span></em>, <em class="sig-param"><span class="n">out_shp_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.get_extent_as_shp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the extent of a raster as a shapefile
-:param in_ras_path: The raster to get
-:type in_ras_path: str
-:param out_shp_path: The shape path
-:type out_shp_path: str</p>
+<dd><p>Gets the extent of a raster as a shapefile</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>out_shp_path</strong> – The path to the new shapefile</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_ras_path</strong> (<em>str</em>) – The raster to get</p></li>
+<li><p><strong>out_shp_path</strong> (<em>str</em>) – The shape path</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>out_shp_path</strong> – The path to the new shapefile</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
