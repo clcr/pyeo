@@ -1,7 +1,46 @@
 """
-pyeo.validaion
---------------
-A small set of functions for producing validation points from maps
+pyeo.validation
+==============
+A function for producing sufficient sample points for validation to a specified confidence using
+the method detailed in Olafsson et al [1]_. You provide a configuration file containing expected user accuracy for each
+class, a minimum number of samples for any class that is sparse and a target standard error value.
+
+An example validation file for an classification map with three classes [1,2 and 3] with a no-data value of 0.
+Class 1 is sparse, and needs at least 100 validation points.
+
+
+This can be called with the script at :py:mod:`apps.validation.sample_allocation`
+
+.. code::
+
+    [paths]
+    #Specifiy the paths to your input and outputs.
+    input_path=/path/to/your/image
+    output_path=/where/to/save/your/output/shapefile
+
+    [augments]
+    # The target standard error
+    target_standard_error=0.01
+    no_data_class=0
+
+    [user_accuracy]
+    #Add the expected user accuracy for each class in your image as below:
+    #class_label=expected_accuracy (between 0 and 1)
+    1=0.3
+    2=0.7
+    3=0.88
+
+    [pinned_samples]
+    # For sparse classes, please provde a specified number of validation points
+    # as listed in olafsson etal. Any classes not listed here will be presumed to
+    # be non-sparse, and will have their pixel values automatically filled.
+    1=100
+
+.. [1] Olofsson, P., Foody, G.M., Herold, M., Stehman, S.V., Woodcock, C.E. and Wulder, M.A., 2014. Good practices for
+    estimating area and assessing accuracy of land change. Remote Sensing of Environment, 148, pp.42-57.
+
+Function reference
+------------------
 """
 
 import numpy as np
@@ -25,6 +64,22 @@ import pyeo.windows_compatability
 
 def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_error, user_accuracies,
                                no_data_class=None, pinned_samples=None, produce_csv=False):
+    """
+    Creates a set of validation points based on
+
+    Parameters
+    ----------
+    in_map_path
+    out_shapefile_path
+    target_standard_error
+    user_accuracies
+    no_data_class
+    pinned_samples
+
+    Returns
+    -------
+
+    """
     log = pyeo.filesystem_utilities.init_log("validation_log.log")
     for map_class in user_accuracies:
         if pinned_samples and map_class not in pinned_samples:
@@ -57,6 +112,7 @@ def create_validation_scenario(in_map_path, out_shapefile_path, target_standard_
 
 def count_pixel_classes(map_path, no_data=None):
     """
+    :meta private:
     Counts pixels in a map. Returns a dictionary of pixels.
     Parameters
     ----------
@@ -80,7 +136,21 @@ def count_pixel_classes(map_path, no_data=None):
 
 def produce_stratified_validation_points(map_path, out_path, class_sample_counts,
                                          no_data=None, seed=None, produce_csv=False):
-    """Produces a set of stratified validation points from map_path"""
+    """
+    :meta private:
+    Parameters
+    ----------
+    map_path
+    out_path
+    class_sample_counts
+    no_data
+    seed
+    produce_csv
+
+    Returns
+    -------
+
+    """
     log = logging.getLogger(__name__)
     log.info("Producing random sampling of {}.".format(map_path))
     log.info("Class sample count: {}".format(class_sample_counts))
@@ -96,8 +166,20 @@ def produce_stratified_validation_points(map_path, out_path, class_sample_counts
 
 
 def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform, projection_wkt, produce_csv=False):
-    """Saves a list of points to a shapefile at out_path. Need the gt and projection of the raster.
-    GT is needed to move each point to the centre of the pixel. Can also produce a .csv file for CoolEarth"""
+    """
+    :meta private:
+    Parameters
+    ----------
+    class_sample_point_dict
+    out_path
+    geotransform
+    projection_wkt
+    produce_csv
+
+    Returns
+    -------
+
+    """
     log = logging.getLogger(__name__)
     log.info("Saving point list to shapefile")
     log.debug("GT: {}\nProjection: {}".format(geotransform, projection_wkt))
@@ -142,7 +224,19 @@ def save_point_list_to_shapefile(class_sample_point_dict, out_path, geotransform
 
 
 def stratified_random_sample(map_path, class_sample_count, no_data=None, seed = None):
-    """Produces a stratified list of pixel coordinates. WARNING: high mem!"""
+    """
+    :meta private:
+    Parameters
+    ----------
+    map_path
+    class_sample_count
+    no_data
+    seed
+
+    Returns
+    -------
+
+    """
     log = logging.getLogger(__name__)
     if not seed:
         seed = datetime.datetime.now().timestamp()
@@ -158,7 +252,9 @@ def stratified_random_sample(map_path, class_sample_count, no_data=None, seed = 
 
 
 def build_class_dict(class_array, no_data=None):
-    """Returns a dict of coordinates of the following shape:
+    """
+    :meta private:
+    Returns a dict of coordinates of the following shape:
     [class, coord].
     WARNING: This will take up a LOT of memory!"""
     out_dict = {}
@@ -231,6 +327,7 @@ def cal_sd_for_user_accuracy(u_i,sample_size_i):
 
 def cal_total_sample_size(desired_standard_error, user_accuracy, total_class_sizes, type ='simple'):
     """
+    :meta private:
     Calculates the number of sample points for a map to get a specified standard error.
     Parameters
     ----------
@@ -271,7 +368,8 @@ def cal_total_sample_size(desired_standard_error, user_accuracy, total_class_siz
 
 def calc_minimum_n(expected_accuracy, variance_tolerance):
     """
-    Calculates the rminimum number of points required to achieve the specified accuracy
+    :meta private:
+    Calculates the minimum number of points required to achieve the specified accuracy
     Parameters
     ----------
     expected_accuracy: Between 0 and 1
@@ -288,6 +386,7 @@ def calc_minimum_n(expected_accuracy, variance_tolerance):
 def allocate_category_sample_sizes(total_sample_size, user_accuracy, class_total_sizes, variance_tolerance,
                                    allocate_type='olofsson'):
     """
+    :meta private:
     Allocates a number of pixels to sample per class that will fulfil the parameters given
 
     Parameters
@@ -338,6 +437,7 @@ def allocate_category_sample_sizes(total_sample_size, user_accuracy, class_total
 
 def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sample_size):
     """
+    :meta private:
     Calculates the
     Parameters
     ----------
@@ -373,7 +473,9 @@ def part_fixed_value_sampling(pinned_sample_numbers, class_total_sizes, total_sa
 
 def save_validation_maifest(out_path, class_counts, sample_size, class_sample_counts, target_standard_error,
                             user_accuracies):
-    """Creates a json file containing the parameters used to produce this validation set"""
+    """
+    :meta private:
+    Creates a json file containing the parameters used to produce this validation set"""
     out_dict = {
         "class_counts": class_counts,
         "sample_size": sample_size,

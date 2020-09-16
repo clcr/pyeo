@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,27 +11,29 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="pyeo.raster_manipulation" href="raster_manipulation.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> Pyeo
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Pyeo
           
 
           
@@ -73,6 +74,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -82,10 +84,10 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.queries_and_downloads</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#safe-files">SAFE files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#query-data-structure">Query data structure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-download-sources">Data download sources</a></li>
@@ -93,13 +95,15 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">pyeo.filesystem_utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Applications</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -138,7 +142,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>pyeo.queries_and_downloads</li>
     
@@ -162,6 +166,11 @@
   <span class="target" id="module-pyeo.queries_and_downloads"></span><div class="section" id="pyeo-queries-and-downloads">
 <h1>pyeo.queries_and_downloads<a class="headerlink" href="#pyeo-queries-and-downloads" title="Permalink to this headline">¶</a></h1>
 <p>Functions for querying, filtering and downloading data.</p>
+<div class="section" id="key-functions">
+<h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date" title="pyeo.queries_and_downloads.check_for_s2_data_by_date"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_for_s2_data_by_date()</span></code></a> Queries the Sentinel 2 archive for products between two dates
+<a class="reference internal" href="#pyeo.queries_and_downloads.download_s2_data" title="pyeo.queries_and_downloads.download_s2_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_s2_data()</span></code></a> Downloads Sentinel 2 data from Scihub by default</p>
+</div>
 <div class="section" id="safe-files">
 <h2>SAFE files<a class="headerlink" href="#safe-files" title="Permalink to this headline">¶</a></h2>
 <p>Sentinel 2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
@@ -181,7 +190,8 @@ a further set of nested dictionaries containing information about the product to
 </div>
 <div class="section" id="data-download-sources">
 <h2>Data download sources<a class="headerlink" href="#data-download-sources" title="Permalink to this headline">¶</a></h2>
-<p>This library presently offers two options for download sources; Scihub and Amazon Web Services. If in doubt, use Scihub.</p>
+<p>This library presently offers three options for download sources; Scihub and Amazon Web Services, for Sentinel, and
+USGS, for Landsat. If in doubt, use Scihub.</p>
 <ul>
 <li><p>Scihub</p>
 <blockquote>
@@ -192,103 +202,81 @@ and there is a limit to no more than two concurrent downloads per username at a 
 </li>
 <li><p>AWS</p>
 <blockquote>
-<div><p>Sentinel data is also publically hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
+<div><p>Sentinel data is also publicly hosted on Amazon Web Services. This storage is provided by Sinergise, and is normally
 updated a few hours after new products are made available. There is a small charge associated with downloading this
 data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
 payment details) and obtain an API key for that account. See <a class="reference external" href="https://aws.amazon.com/s3/pricing/">https://aws.amazon.com/s3/pricing/</a> for pricing details;
-the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
-for the AWS bucket.</p>
+the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent
+downloads for the AWS bucket.</p>
+</div></blockquote>
+</li>
+<li><p>USGS</p>
+<blockquote>
+<div><p>Landsat data is hosted and provided by the US Geological Survey. You can sign up at <a class="reference external" href="https://ers.cr.usgs.gov/register/">https://ers.cr.usgs.gov/register/</a></p>
 </div></blockquote>
 </li>
 </ul>
 </div>
 <div class="section" id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.activate_and_dl_planet_item">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">activate_and_dl_planet_item</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">item</em>, <em class="sig-param">asset_type</em>, <em class="sig-param">file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.activate_and_dl_planet_item" title="Permalink to this definition">¶</a></dt>
-<dd><p>Activates and downloads a single planet item</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.build_search_request">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">build_search_request</code><span class="sig-paren">(</span><em class="sig-param">aoi</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">item_type</em>, <em class="sig-param">search_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.build_search_request" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds a search request for the planet API</p>
-</dd></dl>
-
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.check_for_s2_data_by_date">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">check_for_s2_data_by_date</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">conf</em>, <em class="sig-param">cloud_cover=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">check_for_s2_data_by_date</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">aoi_path</span></em>, <em class="sig-param"><span class="n">start_date</span></em>, <em class="sig-param"><span class="n">end_date</span></em>, <em class="sig-param"><span class="n">conf</span></em>, <em class="sig-param"><span class="n">cloud_cover</span><span class="o">=</span><span class="default_value">50</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets all the products between start_date and end_date. Wraps sent2_query to avoid having passwords and
 long-format timestamps in code.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>aoi_path</strong> – Path to a geojson file containing a polygon of the outline of the area you wish to download.
+<li><p><strong>aoi_path</strong> (<em>str</em>) – Path to a geojson file containing a polygon of the outline of the area you wish to download.
 See www.geojson.io for a tool to build these.</p></li>
-<li><p><strong>start_date</strong> – Start date in the format yyyymmdd.</p></li>
-<li><p><strong>end_date</strong> – End date of the query in the format yyyymmdd</p></li>
-<li><p><strong>conf</strong> – Output from a configuration file containing your username and password for the ESA hub.
-If needed, this can be dummied with a dictionary of the following format:
-conf={‘sent_2’:{‘user’:’your_username’, ‘pass’:’your_pass’}}</p></li>
-<li><p><strong>cloud_cover</strong> – The maximem level of cloud cover in images to be downloaded.</p></li>
+<li><p><strong>start_date</strong> (<em>str</em>) – Start date in the format yyyymmdd.</p></li>
+<li><p><strong>end_date</strong> (<em>str</em>) – End date of the query in the format yyyymmdd</p></li>
+<li><p><strong>conf</strong> (<em>dict</em>) – <p>Output from a configuration file containing your username and password for the ESA hub.
+If needed, this can be dummied with a dictionary of the following format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;sent_2&#39;</span><span class="p">:{</span><span class="s1">&#39;user&#39;</span><span class="p">:</span><span class="s1">&#39;your_username&#39;</span><span class="p">,</span> <span class="s1">&#39;pass&#39;</span><span class="p">:</span><span class="s1">&#39;your_pass&#39;</span><span class="p">}}</span>
+</pre></div>
+</div>
+</p></li>
+<li><p><strong>cloud_cover</strong> (<em>int</em>) – The maximum level of cloud cover in images to be downloaded.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>result</strong> – A dictionary of Sentinel 2 products.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.do_quick_search">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">do_quick_search</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">search_request</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.do_quick_search" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tries the quick search; returns a dict of features</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.do_saved_search">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">do_saved_search</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">search_request</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.do_saved_search" title="Permalink to this definition">¶</a></dt>
-<dd><p>Does a saved search; this doesn’t seem to work yet.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.download_blob_from_google">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_blob_from_google</code><span class="sig-paren">(</span><em class="sig-param">bucket</em>, <em class="sig-param">object_prefix</em>, <em class="sig-param">out_folder</em>, <em class="sig-param">s2_object</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_blob_from_google" title="Permalink to this definition">¶</a></dt>
-<dd><p>Still experimental.</p>
-</dd></dl>
-
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.download_from_aws_with_rollback">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_aws_with_rollback</code><span class="sig-paren">(</span><em class="sig-param">product_id</em>, <em class="sig-param">folder</em>, <em class="sig-param">uuid</em>, <em class="sig-param">user</em>, <em class="sig-param">passwd</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_aws_with_rollback" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_aws_with_rollback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">product_id</span></em>, <em class="sig-param"><span class="n">folder</span></em>, <em class="sig-param"><span class="n">uuid</span></em>, <em class="sig-param"><span class="n">user</span></em>, <em class="sig-param"><span class="n">passwd</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_aws_with_rollback" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attempts to download a single product from AWS using product_id; if not found, rolls back to Scihub using the UUID</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>product_id</strong> – The product ID (“<a href="#id1"><span class="problematic" id="id2">L2A_</span></a>…”)</p></li>
-<li><p><strong>folder</strong> – The folder to download the .SAFE file to.</p></li>
-<li><p><strong>uuid</strong> – The product UUID (4dfB4-432df….)</p></li>
-<li><p><strong>user</strong> – Scihub username</p></li>
-<li><p><strong>passwd</strong> – Scihub password</p></li>
+<li><p><strong>product_id</strong> (<em>str</em>) – The product ID (“<a href="#id1"><span class="problematic" id="id2">L2A_</span></a>…”)</p></li>
+<li><p><strong>folder</strong> (<em>str</em>) – The folder to download the .SAFE file to.</p></li>
+<li><p><strong>uuid</strong> (<em>str</em>) – The product UUID (4dfB4-432df….)</p></li>
+<li><p><strong>user</strong> (<em>str</em>) – Scihub username</p></li>
+<li><p><strong>passwd</strong> (<em>str</em>) – Scihub password</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.download_from_google_cloud">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_google_cloud</code><span class="sig-paren">(</span><em class="sig-param">product_ids</em>, <em class="sig-param">out_folder</em>, <em class="sig-param">redownload=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_google_cloud" title="Permalink to this definition">¶</a></dt>
-<dd><p>Still experimental.</p>
-</dd></dl>
-
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.download_from_scihub">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_scihub</code><span class="sig-paren">(</span><em class="sig-param">product_uuid</em>, <em class="sig-param">out_folder</em>, <em class="sig-param">user</em>, <em class="sig-param">passwd</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_scihub" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_from_scihub</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">product_uuid</span></em>, <em class="sig-param"><span class="n">out_folder</span></em>, <em class="sig-param"><span class="n">user</span></em>, <em class="sig-param"><span class="n">passwd</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_from_scihub" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads and unzips product_uuid from scihub</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>product_uuid</strong> – The product UUID (4dfB4-432df….)</p></li>
-<li><p><strong>out_folder</strong> – The folder to save the .SAFE file to</p></li>
-<li><p><strong>user</strong> – Scihub username</p></li>
-<li><p><strong>passwd</strong> – Scihub password</p></li>
+<li><p><strong>product_uuid</strong> (<em>str</em>) – The product UUID (4dfB4-432df….)</p></li>
+<li><p><strong>out_folder</strong> (<em>str</em>) – The folder to save the .SAFE file to</p></li>
+<li><p><strong>user</strong> (<em>str</em>) – Scihub username</p></li>
+<li><p><strong>passwd</strong> (<em>str</em>) – Scihub password</p></li>
 </ul>
 </dd>
 </dl>
@@ -297,41 +285,36 @@ conf={‘sent_2’:{‘user’:’your_username’, ‘pass’:’your_pass’}}
 this for further processing.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.download_landsat_data">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_landsat_data</code><span class="sig-paren">(</span><em class="sig-param">products</em>, <em class="sig-param">out_dir</em>, <em class="sig-param">conf</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_landsat_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_landsat_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">products</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">conf</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_landsat_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given an output from landsat_query, will download al L1C products to out_dir.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>products</strong> – Dictionary of landsat products; must include downloadUrl and displayId</p></li>
-<li><p><strong>out_dir</strong> – Directory to save Landsat files in. Folder structure is out_dir-&gt;displayId-&gt;products</p></li>
-<li><p><strong>conf</strong> – Dictionary containing USGS login credentials. See docs for landsat_query.</p></li>
+<li><p><strong>products</strong> (<em>str</em>) – Dictionary of landsat products; must include downloadUrl and displayId</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to save Landsat files in. Folder structure is out_dir-&gt;displayId-&gt;products</p></li>
+<li><p><strong>conf</strong> (<em>dict</em>) – Dictionary containing USGS login credentials. See docs for <a class="reference internal" href="#pyeo.queries_and_downloads.landsat_query" title="pyeo.queries_and_downloads.landsat_query"><code class="xref py py-func docutils literal notranslate"><span class="pre">landsat_query()</span></code></a>.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.download_planet_image_on_day">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_planet_image_on_day</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em>, <em class="sig-param">date</em>, <em class="sig-param">out_path</em>, <em class="sig-param">api_key</em>, <em class="sig-param">item_type='PSScene4Band'</em>, <em class="sig-param">search_name='auto'</em>, <em class="sig-param">asset_type='analytic'</em>, <em class="sig-param">threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_planet_image_on_day" title="Permalink to this definition">¶</a></dt>
-<dd><p>Queries and downloads all images on the date in the aoi given</p>
-</dd></dl>
-
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.download_s2_data">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_s2_data</code><span class="sig-paren">(</span><em class="sig-param">new_data</em>, <em class="sig-param">l1_dir</em>, <em class="sig-param">l2_dir</em>, <em class="sig-param">source='scihub'</em>, <em class="sig-param">user=None</em>, <em class="sig-param">passwd=None</em>, <em class="sig-param">try_scihub_on_fail=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_s2_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_s2_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_data</span></em>, <em class="sig-param"><span class="n">l1_dir</span></em>, <em class="sig-param"><span class="n">l2_dir</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">'scihub'</span></em>, <em class="sig-param"><span class="n">user</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">passwd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">try_scihub_on_fail</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_s2_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads S2 imagery from AWS, google_cloud or scihub. new_data is a dict from Sentinel_2.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>new_data</strong> – A query dictionary contining the products you want to download</p></li>
-<li><p><strong>l1_dir</strong> – The directory to download level 1 products to.</p></li>
-<li><p><strong>l2_dir</strong> – The directory to download level 2 products to.</p></li>
-<li><p><strong>source</strong> – The source to download the data from. Can be ‘scihub’ or ‘aws’; see section introduction for details</p></li>
-<li><p><strong>user</strong> – The username for sentinelhub</p></li>
-<li><p><strong>passwd</strong> – The password for sentinelheub</p></li>
-<li><p><strong>try_scihub_on_fail</strong> – If true, this function will roll back to downloading from Scihub on a failure of any other downloader.</p></li>
+<li><p><strong>new_data</strong> (<em>dict</em>) – A query dictionary contining the products you want to download</p></li>
+<li><p><strong>l1_dir</strong> (<em>str</em>) – The directory to download level 1 products to.</p></li>
+<li><p><strong>l2_dir</strong> (<em>str</em>) – The directory to download level 2 products to.</p></li>
+<li><p><strong>source</strong> (<em>{'scihub'</em><em>, </em><em>'aws'}</em>) – The source to download the data from. Can be ‘scihub’ or ‘aws’; see section introduction for details</p></li>
+<li><p><strong>user</strong> (<em>str</em><em>, </em><em>optional</em>) – The username for sentinelhub</p></li>
+<li><p><strong>passwd</strong> (<em>str</em><em>, </em><em>optional</em>) – The password for sentinelhub</p></li>
+<li><p><strong>try_scihub_on_fail</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, this function will roll back to downloading from Scihub on a failure of any other downloader. Defaults
+to <cite>False</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -340,200 +323,202 @@ this for further processing.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="pyeo.queries_and_downloads.download_s2_pairs">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">download_s2_pairs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l1_dir</span></em>, <em class="sig-param"><span class="n">l2_dir</span></em>, <em class="sig-param"><span class="n">conf</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.download_s2_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a pair of folders, one containing l1 products and the other containing l2 products, will query and download
+missing data. At the end of the run, you will have two folders with a set of paired L1 and L2 products.
+:param l1_dir: The directory to download level 1 products to. May contain existing products.
+:type l1_dir: str
+:param l2_dir: The directory to download level 2 products to. May contain existing products.
+:type l2_dir: str
+:param conf: A dictionary containing [‘sent_2’][‘user’] and [‘sent_2’][‘pass’]
+:type conf: dict</p>
+</dd></dl>
+
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.filter_non_matching_s2_data">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_non_matching_s2_data</code><span class="sig-paren">(</span><em class="sig-param">query_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_non_matching_s2_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_non_matching_s2_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_output</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_non_matching_s2_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filters a query such that it only contains paired level 1 and level 2 data products.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_output</strong> – Query list</p>
+<dd class="field-odd"><p><strong>query_output</strong> (<em>dict</em>) – Query list</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>filtered_query</strong> – A dictionary of products containing only L1 and L2 data.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>A dictionary of products contaiing only L1 and L2 data.</p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.filter_to_l1_data">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_to_l1_data</code><span class="sig-paren">(</span><em class="sig-param">query_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_to_l1_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_to_l1_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_output</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_to_l1_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes list of products from check_for_s2_data_by_date and removes all non Level 1 products.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_output</strong> – A dictionary of products</p>
+<dd class="field-odd"><p><strong>query_output</strong> (<em>dict</em>) – A dictionary of products from a S2 query</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>filtered_query</strong> – A dictionary of products containing only the L1C data products</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>A dictionary of products containing only the L1C data products</p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.filter_to_l2_data">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_to_l2_data</code><span class="sig-paren">(</span><em class="sig-param">query_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_to_l2_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">filter_to_l2_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_output</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_to_l2_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes list of products from check_for_s2_data_by_date and removes all non Level 2A products.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_output</strong> – A dictionary of products</p>
+<dd class="field-odd"><p><strong>query_output</strong> (<em>dict</em>) – A dictionary of products from a S2 query</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>filtered_query</strong> – A dictionary of products containing only the L2A data products</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>A dictionary of products containing only the L2A data products</p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.get_granule_identifiers">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_granule_identifiers</code><span class="sig-paren">(</span><em class="sig-param">safe_product_id</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_granule_identifiers" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_granule_identifiers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">safe_product_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_granule_identifiers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the parts of a S2 name that uniquely identify that granulate at a moment in time
-:param safe_product_id: The filename of a SAFE product</p>
+:param safe_product_id: The filename of a SAFE product
+:type safe_product_id: str</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><em>satellite</em> – A string of either “L2A” or “L2B”</p></li>
-<li><p><em>intake_date</em> – The timestamp of the data intoake of this granule</p></li>
-<li><p><em>orbit number</em> – The orbit number of this granule</p></li>
-<li><p><em>granule</em> – The ID of this granule</p></li>
+<li><p><strong>satellite</strong> (<em>str</em>) – A string of either “L2A” or “L2B”</p></li>
+<li><p><strong>intake_date</strong> (<em>str</em>) – The timestamp of the data intake of this granule</p></li>
+<li><p><strong>orbit number</strong> (<em>str</em>) – The orbit number of this granule</p></li>
+<li><p><strong>granule</strong> (<em>str</em>) – The ID of this granule</p></li>
 </ul>
 </p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.get_paginated_items">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_paginated_items</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">search_id</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_paginated_items" title="Permalink to this definition">¶</a></dt>
-<dd><p>Let’s leave this out for now.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.get_planet_product_path">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_planet_product_path</code><span class="sig-paren">(</span><em class="sig-param">planet_dir</em>, <em class="sig-param">product</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_planet_product_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the path to a Planet product within a Planet directory</p>
-</dd></dl>
-
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.get_query_datatake">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_datatake</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_datatake" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_datatake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_item</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_datatake" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the datatake timestamp of a query item.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+<dd class="field-odd"><p><strong>query_item</strong> (<em>dict</em>) – An item from a query results dictionary.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>timestamp</strong> – The timestamp of that item’s datatake in the format yyyymmddThhmmss (Ex: 20190613T123002)</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>The timestamp of that item’s datatake.</p>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.get_query_granule">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_granule</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_granule" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_granule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_item</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_granule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the granule ID (ex: 48MXU) of a query</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+<dd class="field-odd"><p><strong>query_item</strong> (<em>dict</em>) – An item from a query results dictionary.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>granule_id</strong> – The granule ID of that item.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>The granule ID of that item.</p>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.get_query_level">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_level</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_level" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_level</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_item</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_level" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the processing level of the query item.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+<dd class="field-odd"><p><strong>query_item</strong> (<em>dict</em>) – An item from a query results dictionary.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>query_level</strong> – A string of either ‘Level-1C’ or ‘Level-2A’.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>A string of either ‘Level-1C’ or ‘Level-2A’.</p>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.get_query_processing_time">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_processing_time</code><span class="sig-paren">(</span><em class="sig-param">query_item</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_processing_time" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">get_query_processing_time</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">query_item</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.get_query_processing_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the processing timestamps of a query item</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>query_item</strong> – An item from a query results dictionary.</p>
+<dd class="field-odd"><p><strong>query_item</strong> (<em>dict</em>) – An item from a query results dictionary.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>The date processing timestamp in the format yyyymmddThhmmss (Ex</strong></p>
+<dd class="field-even"><p><strong>processing_time</strong> – The date processing timestamp in the format yyyymmddThhmmss (Ex: 20190613T123002)</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>20190613T123002)</p>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.landsat_query">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">landsat_query</code><span class="sig-paren">(</span><em class="sig-param">conf</em>, <em class="sig-param">geojsonfile</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">cloud=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.landsat_query" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">landsat_query</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conf</span></em>, <em class="sig-param"><span class="n">geojsonfile</span></em>, <em class="sig-param"><span class="n">start_date</span></em>, <em class="sig-param"><span class="n">end_date</span></em>, <em class="sig-param"><span class="n">cloud</span><span class="o">=</span><span class="default_value">50</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.landsat_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Queries the USGS dataset LANDSAT_8_C1 for imagery between the start_date and end_date, inclusive.
 This downloads all imagery touched by the bounding box of the provided geojson file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>conf</strong> – A dictionary with [‘landsat’][‘user’] and [‘landsat’][‘pass’] values, containing your USGS credentials.</p></li>
-<li><p><strong>geojsonfile</strong> – The geojson file</p></li>
-<li><p><strong>start_date</strong> – The start date, in “yyyymmdd” format. Will truncate any longer string.</p></li>
-<li><p><strong>end_date</strong> – The end query date, in “yyyymmdd” format. Will truncate any longer string.</p></li>
-<li><p><strong>cloud</strong> – The maximum cloud cover to return.</p></li>
+<li><p><strong>conf</strong> (<em>dict</em>) – A dictionary with [‘landsat’][‘user’] and [‘landsat’][‘pass’] values, containing your USGS credentials.</p></li>
+<li><p><strong>geojsonfile</strong> (<em>str</em>) – The geojson file</p></li>
+<li><p><strong>start_date</strong> (<em>str</em>) – The start date, in “yyyymmdd” format. Will truncate any longer string.</p></li>
+<li><p><strong>end_date</strong> (<em>str</em>) – The end query date, in “yyyymmdd” format. Will truncate any longer string.</p></li>
+<li><p><strong>cloud</strong> (<em>float</em>) – The maximum cloud cover to return.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>A list of products; each item being a dictionary returned from the USGS API.</em></p></li>
-<li><p><strong>See https</strong> (<em>//earthexplorer.usgs.gov/inventory/documentation/datamodel#Scene</em>)</p></li>
-</ul>
-</p>
+<dd class="field-even"><p><strong>products</strong> – A list of products; each item being a dictionary returned from the USGS API.
+See <a class="reference external" href="https://earthexplorer.usgs.gov/inventory/documentation/datamodel#Scene">https://earthexplorer.usgs.gov/inventory/documentation/datamodel#Scene</a></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.load_api_key">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">load_api_key</code><span class="sig-paren">(</span><em class="sig-param">path_to_api</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.load_api_key" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">load_api_key</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_to_api</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.load_api_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an API key from a single-line text file containing that API</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>path_to_api</strong> – The path a text file containing only the API key</p>
+<dd class="field-odd"><p><strong>path_to_api</strong> (<em>str</em>) – The path a text file containing only the API key</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>api_key</strong> – Returns the API key</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Returns the API key</p>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.planet_query">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">planet_query</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">out_path</em>, <em class="sig-param">api_key</em>, <em class="sig-param">item_type='PSScene4Band'</em>, <em class="sig-param">search_name='auto'</em>, <em class="sig-param">asset_type='analytic'</em>, <em class="sig-param">threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.planet_query" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">planet_query</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">aoi_path</span></em>, <em class="sig-param"><span class="n">start_date</span></em>, <em class="sig-param"><span class="n">end_date</span></em>, <em class="sig-param"><span class="n">out_path</span></em>, <em class="sig-param"><span class="n">api_key</span></em>, <em class="sig-param"><span class="n">item_type</span><span class="o">=</span><span class="default_value">'PSScene4Band'</span></em>, <em class="sig-param"><span class="n">search_name</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">asset_type</span><span class="o">=</span><span class="default_value">'analytic'</span></em>, <em class="sig-param"><span class="n">threads</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.planet_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downloads data from Planetlabs for a given time period in the given AOI</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -554,51 +539,89 @@ Any identically-named imagery will be overwritten</p></li>
 <p>IMPORTANT: Will not run for searches returning greater than 250 items.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.queries_and_downloads.read_aoi">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">read_aoi</code><span class="sig-paren">(</span><em class="sig-param">aoi_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.read_aoi" title="Permalink to this definition">¶</a></dt>
-<dd><p>Opens the geojson file for the aoi. If FeatureCollection, return the first feature.</p>
+<dl class="py function">
+<dt id="pyeo.queries_and_downloads.query_for_corresponding_image">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">query_for_corresponding_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prod</span></em>, <em class="sig-param"><span class="n">conf</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.query_for_corresponding_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Queries Copernicus Hub for the corresponding l1/l2 image to ‘prod’</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>aoi_path</strong> – The path to the geojson file</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prod</strong> (<em>str</em>) – The product name to query</p></li>
+<li><p><strong>conf</strong> (<em>dict</em>) – A dictionary containing [‘sent_2’][‘user’] and [‘sent_2’][‘pass’]</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-even"><p><strong>out</strong> – A Sentinel-2 product dictionary</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>A dictionary translation of the feature inside the .json file</p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="pyeo.queries_and_downloads.read_aoi">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">read_aoi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">aoi_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.read_aoi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens the geojson file for the aoi. If FeatureCollection, return the first feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>aoi_path</strong> (<em>str</em>) – The path to the geojson file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>aoi_dict</strong> – A dictionary translation of the feature inside the .json file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="pyeo.queries_and_downloads.sent2_query">
-<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">sent2_query</code><span class="sig-paren">(</span><em class="sig-param">user</em>, <em class="sig-param">passwd</em>, <em class="sig-param">geojsonfile</em>, <em class="sig-param">start_date</em>, <em class="sig-param">end_date</em>, <em class="sig-param">cloud=50</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.sent2_query" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">sent2_query</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">user</span></em>, <em class="sig-param"><span class="n">passwd</span></em>, <em class="sig-param"><span class="n">geojsonfile</span></em>, <em class="sig-param"><span class="n">start_date</span></em>, <em class="sig-param"><span class="n">end_date</span></em>, <em class="sig-param"><span class="n">cloud</span><span class="o">=</span><span class="default_value">50</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.sent2_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetches a list of Sentienl-2 products</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>user</strong> (<em>string</em>) – Username for ESA hub. Register at <a class="reference external" href="https://scihub.copernicus.eu/dhus/#/home">https://scihub.copernicus.eu/dhus/#/home</a></p></li>
 <li><p><strong>passwd</strong> (<em>string</em>) – password for the ESA Open Access hub</p></li>
-<li><p><strong>geojsonfile</strong> (<em>string</em>) – Path to a geojson file containing a polygon of the outline of the area you wish to download.
+<li><p><strong>geojsonfile</strong> (<em>string</em>) – Path to a geometry file containing a polygon of the outline of the area you wish to download.
+Can be a geojson (.json/.geojson) or a shapefile (.shp)
 See www.geojson.io for a tool to build these.</p></li>
 <li><p><strong>start_date</strong> (<em>string</em>) – Date of beginning of search in the format YYYY-MM-DDThh:mm:ssZ (ISO standard)</p></li>
 <li><p><strong>end_date</strong> (<em>string</em>) – Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
 See https://www.w3.org/TR/NOTE-datetime, or use cehck_for_s2_data_by_date</p></li>
-<li><p><strong>cloud</strong> (<em>string</em><em> (</em><em>optional</em><em>)</em>) – The maximum cloud clover (as calculated by Copernicus) to download.</p></li>
+<li><p><strong>cloud</strong> (<em>int</em><em>, </em><em>optional</em>) – The maximum cloud clover percentage (as calculated by Copernicus) to download. Defaults to 50%</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>A dictionary of Sentinel-2 granule products that are touched by your AOI polygon, keyed by product ID.</em></p></li>
-<li><p><em>Returns both level 1 and level 2 data.</em></p></li>
-</ul>
-</p>
+<dd class="field-even"><p><strong>products</strong> – A dictionary of Sentinel-2 granule products that are touched by your AOI polygon, keyed by product ID.
+Returns both level 1 and level 2 data.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
 <p>If you get a ‘request too long’ error, it is likely that your polygon is too complex. The following functions
 download by granule; there is no need to have a precise polygon at this stage.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pyeo.queries_and_downloads.shapefile_to_wkt">
+<code class="sig-prename descclassname">pyeo.queries_and_downloads.</code><code class="sig-name descname">shapefile_to_wkt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">shapefile_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.shapefile_to_wkt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a shapefile to a well-known text (wkt) format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>shapefile_path</strong> (<em>str</em>) – Path to the shapefile to convert</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>wkt</strong> – A wkt - string containing the geometry of the first feature of the first layer of the shapefile shapefile</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -624,11 +647,19 @@ download by granule; there is no need to have a precise polygon at this stage.</
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2018, John Roberts
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -639,7 +670,6 @@ download by granule; there is no need to have a precise polygon at this stage.</
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

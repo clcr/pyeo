@@ -1,29 +1,23 @@
-.. Pyeo documentation master file, created by
-   sphinx-quickstart on Wed Aug 29 11:27:40 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-********************************
-Welcome to Pyeo's documentation!
-********************************
+****
+Pyeo
+****
 
 .. toctree::
    :caption: Contents:
 
-   array_utilities
    classification
    coordinate_manipulation
    queries_and_downloads
    raster_manipulation
+   filesystem_utilities
    validation
-   terrain_correction
+   scripts
 
 Introduction
 ############
 
 Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying
-geospatial raster and vector data. It is intended to require a minimum of dependencies - most functions only require
-the basic GDAL/OGR/OSR stack and Numpy.
+geospatial raster and vector data.
 
 
 Installation
@@ -45,92 +39,33 @@ Quick start
 ###########
 Before you start, you will need:
 
-* A linux (or maybe mac, untested) machine
+* Git
+* Anaconda/Miniconda
 * A raster of your window area
 * A shapefile of polygons over your training areas with a field containing class labels
 * A raster to classify. This can be the same as your original raster.
 
   * All rasters and shapefiles should be in the same projection; ideally in the local projection of your satellite data.
-* Git
-* Anaconda/Miniconda
 
 
 Use
 ***
-To create a model
+You can use Pyeo's command-line functions to create and apply a pixel classification model from a set of polygons
+and a raster. The below example:
+
+* saves the training data defined in :code:`your_raster.tif` and :code:`your_shapefile.tif` into :code:`signatures.csv`
+* creates a model from :code:`signatures.csv` named :code:`model.pkl`
+* Classifies the whole of :code:`your_raster.tif` using :code:`model.pkl`, and saves the result into :code:`output_image.tif`
 
 .. code-block:: bash
 
    conda activate pyeo_env
-   cd (whereever your data is)
-   extract_signatures your_raster.tif your_shapefile.shp output.csv
-   # You can now explore your signatures as a .csv file, and perform any interim processing
-   create_model_from_signatures output.csv model.pkl
+   extract_signatures your_raster.tif your_shapefile.shp signatures.csv
+   create_model_from_signatures signatures.csv model.pkl
    classify_image your_raster model.pkl output_image.tif
-
-Assumptions and design decisions
-################################
-
-Rasters
-*******
-
-When working with raster data (geotiff, .jp2, ect) using Pyeo, the folllowing assumtions have been made:
-
-* Any function that reads a raster can read from any gdal-readable format
-* All interim rasters are stored internally as a geotiff
-* All internal rasters have a .tif extension in the filename
-* Unless otherwise stated, **all rasters are assumed to be in a projected coordinate system** - i.e. in meters.
-  Functions may fail if passed a raster in lat-long projection
-
-Masks
-*****
-Some Pyeo functions include options for applying masks.
-
-* A raster may have an associated mask
-
-* A mask is a geotif with an identical name as the raster it's masking with a .msk extension
-
-   * For example, the mask for my_sat_image.tif is my_sat_image.msk
-
-* A mask is
-
-   * a single band raster
-   * of identical height, width and resolution of the related image
-   * contains values 0 or 1
-
-* A mask is applied by multiplying it with each band of its raster
-
-   * So any pixel with a 0 in its mask will be removed, and a 1 will be kept
-
-Timestamps
-**********
-
-* Pyeo uses the same timestamp convention as ESA: yyyymmddThhmmss
-
-   * For example, 1PM on 27th December 2020 would be 20201227T130000
-* All timestamps are in UTC
-
-Models
-******
-
-* All models are serialised and deserialised using joblib.dump or joblib.load
-
 
 A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.
-
-Applications
-############
-
-.. automodule:: pyeo.apps.change_detection.image_comparison
-
-.. automodule:: pyeo.apps.change_detection.rolling_composite_s2_change_detection
-
-.. automodule:: pyeo.apps.change_detection.simple_s2_change_detection
-
-.. automodule:: pyeo.apps.masking.filter_by_class_map
-
-.. automodule:: pyeo.apps.model_creation.create_model_from_region
 
 

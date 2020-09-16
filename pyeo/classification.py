@@ -3,6 +3,25 @@ pyeo.classification
 ===================
 Contains every function to do with map classification. This includes model creation, map classification and processes
 for array manipulation into scikit-learn compatible forms.
+
+For details on how to build a class shapefile, see :ref:CLASSIFICATION INSTRUCTIONS
+
+All models are serialised and deserialised using :code:`joblib.dump` or :code:`joblib.load`, and saved with the .pkl
+extension
+
+Key functions
+-------------
+
+:py:func:`extract_features_to_csv` Extracts class signatures from a class shapefile and a .tif
+
+:py:func:`create_model_from_signatures` Creates a model from a .csv of classes and band signatures
+
+:py:func:`create_trained_model` Creates a model from a class shapefile and a .tif
+
+:py:func:`classify_image` Produces a classification map from an image using a model.
+
+Function reference
+------------------
 """
 import csv
 import glob
@@ -30,7 +49,8 @@ log = logging.getLogger(__name__)
 
 def change_from_composite(image_path, composite_path, model_path, class_out_path, prob_out_path=None):
     """
-    Stacks an image with a composite and classifies each pixel change with a scikit-learn model
+    Stacks an image with a composite and classifies each pixel change with a scikit-learn model.
+
     The image that is classified is has the following bands
 
     1. composite blue
@@ -44,16 +64,16 @@ def change_from_composite(image_path, composite_path, model_path, class_out_path
 
     Parameters
     ----------
-    image_path
+    image_path : str
         The path to the image
-    composite_path
+    composite_path : str
         The path to the composite
-    model_path
+    model_path : str
         The path to a .pkl of a scikit-learn classifier that takes 8 features
-    class_out_path
+    class_out_path : str
         A location to save the resulting classification .tif
-    prob_out_path
-        A location to save the probability raster of each pixel
+    prob_out_path : str, optional
+        A location to save the probability raster of each pixel.
 
 
     """
@@ -69,36 +89,35 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
     Produces a class map from a raster and a model.
     This applies the model's fit() function to each pixel in the input raster, and saves the result into an output
     raster. The model is presumed to be a scikit-learn fitted model created using one of the other functions in this
-    library (create_model_from_rasters, create_model_from_signatures).
-
-    To fit into a
+    library (:py:func:`create_model_from_signatures` or :py:func:`create_trained_model`).
 
     Parameters
     ----------
-    image_path
+    image_path : str
         The path to the raster image to be classified.
-    model_path
+    model_path : str
         The path to the .pkl file containing the model
-    class_out_path
+    class_out_path : str
         The path that the classified map will be saved at.
-    prob_out_path
-        If present, the path that the class probability map will be stored at.
-    apply_mask
-        If True, uses the .msk file corresponding to the image at image_path to skip any invalid pixels.
-    out_type
-        The raster format of the class image. Defaults to GTiff (geotif)
-    num_chunks
+    prob_out_path : str, optional
+        If present, the path that the class probability map will be stored at. Default None
+    apply_mask : bool, optional
+        If True, uses the .msk file corresponding to the image at image_path to skip any invalid pixels. Default False.
+    out_type : str, optional
+        The raster format of the class image. Defaults to "GTiff" (geotif). See gdal docs for valid types.
+    num_chunks : int, optional
         The number of chunks the image is broken into prior to classification. The smaller this number, the faster
-        classification will run - but the more likely you are to get a outofmemory error.
-    nodata
-        The value to write to masked pixels
-    skip_existing
-        If true, do not run if class_out_path already exists
+        classification will run - but the more likely you are to get a outofmemory error. Default 10.
+    nodata : int, optional
+        The value to write to masked pixels. Defaults to 0.
+    skip_existing : bool, optional
+        If true, do not run if class_out_path already exists. Defaults to False.
 
 
     Notes
     -----
     If you want to create a custom model, the object is presumed to have the following methods and attributes:
+
        - model.n_classes_ : the number of classes the model will produce
        - model.n_cores : The number of CPU cores used to run the model
        - model.predict() : A function that will take a set of band inputs from a pixel and produce a class.
@@ -229,6 +248,7 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
 
 def autochunk(dataset, mem_limit=None):
     """
+    :meta private:
     EXPERIMENTAL Calculates the number of chunks to break a dataset into without a memory error. Presumes that 80% of the
     memory on the host machine is available for use by Pyeo.
     We want to break the dataset into as few chunks as possible without going over mem_limit.
@@ -244,6 +264,7 @@ def autochunk(dataset, mem_limit=None):
     Returns
     -------
     The number of chunks to most efficiently break the image into.
+
     """
     pixels = dataset.RasterXSize * dataset.RasterYSize
     bytes_per_pixel = dataset.GetVirtualMemArray().dtype.itemsize*dataset.RasterCount
@@ -272,20 +293,20 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir = None,
 
     Parameters
     ----------
-    in_dir
+    in_dir : str
         The path to the directory containing the rasters to be classified.
-    model_path
+    model_path : str
         The path to the .pkl file containing the model.
-    class_out_dir
+    class_out_dir : str
         The directory that will store the classified maps
-    prob_out_dir
-        The directory that will store the probability maps of the classified maps
-    apply_mask
-        If present, uses the corresponding .msk files to mask the directories
-    out_type
-        The raster format of the class image. Defaults to GTiff (geotif)
-    num_chunks
-        The number of chunks to break an image into.
+    prob_out_dir : str, optional
+        If present, the directory that will store the probability maps of the classified maps. If not provided, will not generate probability maps.
+    apply_mask : bool, optional
+        If present, uses the corresponding .msk files to mask the directories. Defaults to True.
+    out_type : str, optional
+        The raster format of the class image. Defaults to "GTiff" (geotif). See gdal docs for valid datatypes.
+    num_chunks : int, optional
+        The number of chunks to break each image into for processing. See :py:func:`classify_image`
 
     """
     log = logging.getLogger(__name__)
@@ -305,18 +326,19 @@ def classify_directory(in_dir, model_path, class_out_dir, prob_out_dir = None,
 
 def reshape_raster_for_ml(image_array):
     """
-    A low-level function that reshapes an array from gdal order [band, y, x] to scikit features order [x*y, band]
+    A low-level function that reshapes an array from gdal order `[band, y, x]` to scikit features order `[x*y, band]`
 
     For classification, scikit-learn functions take a 2-dimensional array of features of the shape (samples, features).
     For pixel classification, features correspond to bands and samples correspond to specific pixels.
 
     Parameters
     ----------
-    image_array
-        A 3-dimensional Numpy array of shape (bands, y, x)
+    image_array : array_like
+        A 3-dimensional Numpy array of shape (bands, y, x) containing raster data.
 
     Returns
     -------
+    array_like
         A 2-dimensional Numpy array of shape (samples, features)
 
     """
@@ -332,11 +354,11 @@ def reshape_ml_out_to_raster(classes, width, height):
 
     Parameters
     ----------
-    classes
+    classes : array_like of int
         A 1-d numpy array of classes from a pixel classifier
-    width
+    width : int
         The width in pixels of the image the produced the classification
-    height
+    height : int
         The height in pixels of the image that produced the classification
 
     Returns
@@ -355,16 +377,17 @@ def reshape_prob_out_to_raster(probs, width, height):
 
     Parameters
     ----------
-    probs
+    probs : array_like
         A numpy array of shape(n_pixels, n_classes)
-    width
+    width : int
         The width in pixels of the image that produced the probability classification
-    height
+    height : int
         The height in pixels of the image that produced the probability classification
 
     Returns
     -------
-    The reshaped image array
+    array_like
+        The reshaped image array
 
     """
     classes = probs.shape[1]
@@ -379,18 +402,18 @@ def extract_features_to_csv(in_ras_path, training_shape_path, out_path, attribut
 
     This produces a CSV file where each row corresponds to a pixel. The columns are as follows:
         Column 1: Class labels from the shapefile field labelled as 'attribute'.
-        Column 2... : Band values from the raster at in_ras_path.
+        Column 2+ : Band values from the raster at in_ras_path.
 
     Parameters
     ----------
-    in_ras_path
+    in_ras_path : str
         The path to the raster used for creating the training dataset
-    training_shape_path
+    training_shape_path : str
         The path to the shapefile containing classification polygons
-    out_path
+    out_path : str
         The path for the new .csv file
-    attribute
-        The label of the field in the training shapefile that contains the classification labels.
+    attribute : str, optional.
+        The label of the field in the training shapefile that contains the classification labels. Defaults to "CODE"
 
     """
     this_training_data, this_classes = get_training_data(in_ras_path, training_shape_path, attribute=attribute)
@@ -424,29 +447,31 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
 
        ... rest of shapefile for area 2 ...
 
-
     Parameters
     ----------
-    training_image_file_paths
+    training_image_file_paths : list of str
         A list of filepaths to training images.
-    cross_val_repeats
-        The number of cross-validation repeats to use
-    attribute
-        The label of the field in the training shapefiles that contains the classification labels.
+    cross_val_repeats : int, optional
+        The number of cross-validation repeats to use. Defaults to 5.
+    attribute : str, optional.
+        The label of the field in the training shapefiles that contains the classification labels. Defaults to CODE.
 
     Returns
     -------
-    model
+    model : sklearn.classifier
         A fitted scikit-learn model. See notes.
-    scores
+    scores : tuple of floats
         The cross-validation scores for model
 
     Notes
     ----
     For full details of how to create an appropriate shapefile, see [here](../index.html#training_data).
     At present, the model is an ExtraTreesClassifier arrived at by tpot:
-    model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
-                                 min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
+    
+    .. code:: python
+
+        model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55,
+            min_samples_leaf=2, min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
 
     """
     # This could be optimised by pre-allocating the training array. but not now.
@@ -473,18 +498,18 @@ def create_trained_model(training_image_file_paths, cross_val_repeats = 5, attri
 def create_model_for_region(path_to_region, model_out, scores_out, attribute="CODE"):
     """
     Takes all .tif files in a given folder and creates a pickled scikit-learn model for classifying them.
-    Wraps classification.create_trained_model() ; see docs for that for the details.
+    Wraps :py:func:`create_trained_model`; see docs for that for the details.
 
     Parameters
     ----------
-    path_to_region
+    path_to_region : str
         Path to the folder containing the tifs.
-    model_out
+    model_out : str
         Path to location to save the .pkl file
-    scores_out
+    scores_out : str
         Path to save the cross-validation scores
-    attribute
-        The label of the field in the training shapefiles that contains the classification labels.
+    attribute : str, optional
+        The label of the field in the training shapefiles that contains the classification labels. Defaults to "CODE".
 
     """
     image_glob = os.path.join(path_to_region, r"*.tif")
@@ -502,18 +527,23 @@ def create_model_from_signatures(sig_csv_path, model_out, sig_datatype=np.int32)
 
     Parameters
     ----------
-    sig_csv_path
+    sig_csv_path : str
         The path to the signatures file
-    model_out
+    model_out : str
         The location to save the pickled model to.
-    sig_datatype
+    sig_datatype : dtype, optional
         The datatype to read the csv as. Defaults to int32.
 
     Notes
     -----
     At present, the model is an ExtraTreesClassifier arrived at by tpot:
-    model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
-                                 min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
+
+    .. code:: python
+    
+        model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
+              min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
+
+
     """
     model = ens.ExtraTreesClassifier(bootstrap=False, criterion="gini", max_features=0.55, min_samples_leaf=2,
                                      min_samples_split=16, n_estimators=100, n_jobs=4, class_weight='balanced')
@@ -527,14 +557,16 @@ def load_signatures(sig_csv_path, sig_datatype=np.int32):
     Extracts features and class labels from a signature CSV
     Parameters
     ----------
-    sig_csv_path
-    sig_datatype
+    sig_csv_path : str
+        The path to the csv
+    sig_datatype : dtype, optional
+        The type of pixel data in the signature CSV. Defaults to np.int32
 
     Returns
     -------
-    features
+    features : array_like
         a numpy array of the shape (feature_count, sample_count)
-    class_labels
+    class_labels : array_like of int
         a 1d numpy array of class labels corresponding to the samples in features.
 
     """
@@ -547,26 +579,24 @@ def get_training_data(image_path, shape_path, attribute="CODE", shape_projection
     Given an image and a shapefile with categories, returns training data and features suitable
     for fitting a scikit-learn classifier.
 
-    This extracts every pixel in image_path touched by the polygons in shape_path
-
     For full details of how to create an appropriate shapefile, see [here](../index.html#training_data).
 
     Parameters
     ----------
-    image_path
+    image_path : str
         The path to the raster image to extract signatures from
-    shape_path
+    shape_path : str
         The path to the shapefile containing labelled class polygons
-    attribute
-        The field containing the class labels
-    shape_projection_id
-        The projection of the shapefile
+    attribute : str, optional
+        The shapefile field containing the class labels. Defaults to "CODE".
+    shape_projection_id : int, optional
+        The EPSG number of the projection of the shapefile. Defaults to EPSG 4326.
 
     Returns
     -------
-    training_data
+    training_data : array_like
         A numpy array of shape (n_pixels, bands), where n_pixels is the number of pixels covered by the training polygons
-    features
+    features : array_like
         A 1-d numpy array of length (n_pixels) containing the class labels for the corresponding pixel in training_data
 
     Notes
@@ -623,16 +653,16 @@ def raster_reclass_binary(img_path, rcl_value, outFn, outFmt='GTiff', write_out=
 
     Parameters
     ----------
-    img_path
+    img_path : str
         Path to 1 band input  raster.
-    rcl_value
+    rcl_value : int
         Integer indication the value that should be reclassified to 1. All other values will be 0.
-    outFn
+    outFn : str
         Output file name.
-    outFmt
+    outFmt : str, optional
         Output format. Set to GTiff by default. Other GDAL options available.
-    write_out
-        Boolean. Set to True by default. Will write raster to disk. If False, only an array is returned
+    write_out : bool, optional.
+        Set to True by default. Will write raster to disk. If False, only an array is returned
 
     Returns
     -------

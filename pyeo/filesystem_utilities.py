@@ -1,8 +1,20 @@
 """
 pyeo.filesystem_utilities
--------------------------
+=========================
 Contains functions for sorting, creating and comparing images as part of the filesystem. Includes any function
 that works on a generic pyeo timestamp and sentinel 2 functions.
+
+Key functions
+-------------
+
+:py:func:`init_log` Sets up logging to both console and file
+
+:py:func:`create_file_structure` Creates a recommended file structure for automated work
+
+:py:func:`sort_by_timestamp` Sorts a set of files by timestamp
+
+Function reference
+-------------
 """
 
 import datetime
@@ -24,8 +36,20 @@ formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
 
 
 def init_log(log_path):
-    """Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
-     Returns the log for the calling script"""
+    """
+    Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
+    Returns the log for the calling script.
+    Parameters
+    ----------
+    log_path : str
+        The path to the file output of this log.
+
+    Returns
+    -------
+    log : logging.Logger
+        The logging object.
+
+    """
     logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     log = logging.getLogger("pyeo")
@@ -39,7 +63,27 @@ def init_log(log_path):
 
 
 def create_file_structure(root):
-    """Creates the file structure if it doesn't exist already"""
+    """
+    Creates the folder structure used in rolling_s2_composite and some other functions: ::
+        root
+        -images
+        --L1
+        --L2
+        --merged
+        --stacked
+        -composite
+        --L1
+        --L2
+        --merged
+        -output
+        --categories
+        --probabilities
+
+    Parameters
+    ----------
+    root : str
+        The root folder for the file strucutre
+    """
     os.chdir(root)
     dirs = [
         "images/",
@@ -73,9 +117,23 @@ def validate_config_file(config_path):
 
 # What was I thinking with these two functions?
 def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
-    """Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
+    """
+    Checks the existence of the specified resolution of imagery. Returns a True-value with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
-    Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
+
+    Parameters
+    ----------
+    l2_SAFE_file : str
+        Path to the L2A file to check
+    resolution : {"10m", "20m", "60m"}
+        The resolution of imagery to check. Defaults to 10m.
+
+    Returns
+    -------
+    result : int
+       1 if imagery is valid, 0 if not and 2 if an invalid .SAFE file
+
+    """
     if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
         log.info("{} does not exist.".format(l2_SAFE_file))
         return 2
@@ -89,9 +147,20 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
 
 
 def check_for_invalid_l1_data(l1_SAFE_file):
-    """Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+    """
+    Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
-    Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file"""
+
+    Parameters
+    ----------
+    l1_SAFE_file : str
+        Path to the L1 file to check
+
+    Returns
+    -------
+    result : int
+        1 if imagery is valid, 0 if not and 2 if not a safe-file
+    """
     if not l1_SAFE_file.endswith(".SAFE") or "L1C" not in l1_SAFE_file:
         log.info("{} does not exist.".format(l1_SAFE_file))
         return 2
@@ -105,8 +174,16 @@ def check_for_invalid_l1_data(l1_SAFE_file):
 
 
 def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
-    """Removes any directories that don't have band 2, 3, 4 or 8 in the specified resolution folder
-    If warning=True, prompts first."""
+    """
+    Removes a safe file if it doesn't have bands 2, 3, 4 or 8 in the specified resolution folder.
+    If warning=True, prompts before removal.
+
+    Parameters
+    ----------
+    l2_SAFE_file : str
+        Path to the L2 .SAFE file
+
+    """
     is_valid = check_for_invalid_l2_data(l2_SAFE_file, resolution)
     if not is_valid:
         if warning:
@@ -117,15 +194,41 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
 
 
 def clean_l2_dir(l2_dir, resolution="10m", warning=True):
-    """Calls clean_l2_data on every SAFE file in l2_dir"""
+    """
+    Calls clean_l2_data on every SAFE file in l2_dir
+
+    Parameters
+    ----------
+    l2_dir : str
+        The L2 directory
+    resolution : {"10m", "20m", "60m"}, optional
+        Resolution to check. Defaults to 10m
+    warning : bool, optional
+        If True, prompts user before deleting files.
+
+
+    Returns
+    -------
+
+    """
     log.info("Scanning {} for incomplete SAFE files".format(l2_dir))
     for safe_file_path in [os.path.join(l2_dir, safe_file_name) for safe_file_name in os.listdir(l2_dir)]:
         clean_l2_data(safe_file_path, resolution, warning)
 
 
-def clean_aoi(aoi_dir, images_to_keep = 4, warning=True):
-    """Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
-    composite directories. Will not affect the output folder."""
+def clean_aoi(aoi_dir, images_to_keep=4, warning=True):
+    """
+    Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
+    composite directories. Will not affect the output folder. Use with caution.
+
+    Parameters
+    ----------
+    aoi_dir : str
+        A directory made by :py:func:`create_file_structure`
+    images_to_keep : int, optional
+        The number of images to keep
+
+    """
     l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1")), recent_first=True)
     l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2")), recent_first=True)
     comp_l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
@@ -149,15 +252,47 @@ def clean_aoi(aoi_dir, images_to_keep = 4, warning=True):
 
 
 def sort_by_timestamp(strings, recent_first=True):
-    """Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
-    guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp"""
+    """
+    Takes a list of strings that contain sen2 timestamps and returns them sorted, from most recent on back by default.
+    Removes any string that does not contain a timestamp
+
+    Parameters
+    ----------
+    strings : list of str
+        list of timestamped strings to sort
+    recent_first : bool, optional
+        If True, `sorted_strings[0]` is the most recent image. If False, `sorted_strings[0]` is the least recent image.
+
+    Returns
+    -------
+    sorted_strings : list of str
+        The strings sorted by timestamp.
+
+    Notes
+    -----
+    Does not guarantee preservation of ordering of strings with the same timestamp.
+
+    """
     strings = list(filter(get_image_acquisition_time, strings))
     strings.sort(key=lambda x: get_image_acquisition_time(x), reverse=recent_first)
     return strings
 
 
 def get_change_detection_dates(image_name):
-    """Takes the source filepath and extracts the before_date and after_date dates from in, in that order."""
+    """
+    Extracts the before_date and after_date dates from a change detection image name.
+
+    Parameters
+    ----------
+    image_name : str
+        A Pyeo-produced image name (example: `class_composite_T36MZE_20190509T073621_20190519T073621.tif`)
+
+    Returns
+    -------
+    before_date, after_date : DateTime
+        The dates associated with the image
+
+    """
     date_regex = r"\d\d\d\d\d\d\d\dT\d\d\d\d\d\d"
     timestamps = re.findall(date_regex, image_name)
     date_times = [datetime.datetime.strptime(timestamp, r"%Y%m%dT%H%M%S") for timestamp in timestamps]
@@ -166,7 +301,27 @@ def get_change_detection_dates(image_name):
 
 
 def get_preceding_image_path(target_image_name, search_dir):
-    """Gets the path to the image in search_dir preceding the image called image_name"""
+    """
+    Finds the image that directly precedes the target image in time.
+
+    Parameters
+    ----------
+    target_image_name : str
+        A Pyeo or Sentinel generated image name
+    search_dir : str
+        The directory to search for the preceding image.
+
+    Returns
+    -------
+    preceding_path : str
+        The path to the preceding image
+
+    Raises
+    ------
+    FileNotFoundError
+        If there is no image older than the target image
+
+    """
     target_time = get_image_acquisition_time(target_image_name)
     image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=True)  # Sort image list newest first
     image_paths = filter(is_tif, image_paths)
@@ -178,7 +333,10 @@ def get_preceding_image_path(target_image_name, search_dir):
 
 
 def is_tif(image_string):
-    """Returns True if image ends with .tif"""
+    """
+    :meta private:
+    Returns True if image ends with .tif
+    """
     if image_string.endswith(".tif"):
         return True
     else:
@@ -186,7 +344,20 @@ def is_tif(image_string):
 
 
 def get_pyeo_timestamp(image_name):
-    """Returns a list of all timestamps in a Pyeo image."""
+    """
+    Returns a list of all timestamps in a Pyeo image (yyyymmddhhmmss)
+
+    Parameters
+    ----------
+    image_name : str
+        The Pyeo image name
+
+    Returns
+    -------
+    timestamp_list : list of str
+        A list of the timestamps in the name
+
+    """
     timestamp_re = r"\d{14}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
@@ -194,7 +365,18 @@ def get_pyeo_timestamp(image_name):
 
 def get_sen_2_tiles(image_dir):
     """
-    gets the list of tiles present in the directory
+    Returns a list of Sentinel-2 tile IDs present in a folder
+
+    Parameters
+    ----------
+    image_dir : str
+        Path to the folder containing images
+
+    Returns
+    -------
+    tiles : list of str
+        A list of the tile identifiers present in the folder
+
     """
     image_files = glob.glob(os.path.join(image_dir, "*.tif"))
     if len(image_files) == 0:
@@ -208,7 +390,18 @@ def get_sen_2_tiles(image_dir):
 
 
 def get_image_acquisition_time(image_name):
-    """Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present"""
+    """
+    Gets the datetime object from a .safe filename of a Sentinel image. No test. Returns None if no timestamp present
+    Parameters
+    ----------
+    image_name : str
+        The .SAFE filename
+
+    Returns
+    -------
+    acquisition_time : DateTime
+        A DateTime object providing the acquisition time
+    """
     try:
         return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
     except AttributeError:
@@ -216,14 +409,41 @@ def get_image_acquisition_time(image_name):
 
 
 def get_related_images(target_image_name, project_dir):
-    """Gets the paths of all images related to that one in a project, by timestamp"""
+    """
+    Finds every image related to the target image (L1, L2, merged, stacked and classified). Based on timestamp, and
+    assumes a project structured by :py:func:`create_file_structure`
+    Parameters
+    ----------
+    target_image_name : str
+        The target image
+    project_dir : str
+        The root of the project directory
+
+    Returns
+    -------
+    related_images : list of str
+        A list of all the images related to target_image
+
+    """
     timestamp = get_sen_2_image_timestamp(target_image_name)
     image_glob = r"*{}*".format(timestamp)
     return glob.glob(image_glob, project_dir)
 
 
 def get_safe_product_type(image_name):
-    """Returns the product string (MSIL1C or MSIL2A) from a .safe file identifier"""
+    """
+    Returns the product string (MSIL1C or MSIL2A) from a .safe file identifier
+    Parameters
+    ----------
+    image_name : str
+        The name of the image
+
+    Returns
+    -------
+    product_string : {"MSIL1C" or "MSIL2A"}
+        The product string
+
+    """
     tmp1 = image_name.split("/")[-1]  # remove path
     tmp2 = tmp1.split(".")[0] # remove file extension
     comps = tmp2.split("_") # decompose
@@ -231,8 +451,23 @@ def get_safe_product_type(image_name):
 
 
 def get_l1_safe_file(image_name, l1_dir):
-    """Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
-    a filename. Returns None if not found."""
+    """
+    Returns the path to the L1 .SAFE file of a L2 image. Gets from granule and timestamp. image_name can be a path or
+    a filename. Returns None if not found.
+
+    Parameters
+    ----------
+    image_name : str
+        The name of the L2 image.
+    l1_dir : str
+        The path to the folder containing L1 images.
+
+    Returns
+    -------
+    l1_image : str or None
+        The path to the L1 image, or None if not found.
+
+    """
     timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
     granule = get_sen_2_image_tile(os.path.basename(image_name))
     safe_glob = "S2[A|B]_MSIL1C_{}_*_{}_*.SAFE".format(timestamp, granule)
@@ -243,8 +478,23 @@ def get_l1_safe_file(image_name, l1_dir):
 
 
 def get_l2_safe_file(image_name, l2_dir):
-    """Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
-    a filename. Returns None if not found"""
+    """
+    Returns the path to the L2 .SAFE file of a L1 image. Gets from granule and timestamp. image_name can be a path or
+    a filename. Returns None if not found.
+
+    Parameters
+    ----------
+    image_name : str
+        The name of the L1 image.
+    l2_dir : str
+        The path to the folder containing L2 images.
+
+    Returns
+    -------
+    l2_image : str or None
+        The path to the L2 image, or None if not found.
+
+    """
     timestamp = get_sen_2_image_timestamp(os.path.basename(image_name))
     granule = get_sen_2_image_tile(os.path.basename(image_name))
     safe_glob = "S2[A|B]_MSIL2A_{}_*_{}_*.SAFE".format(timestamp, granule)
@@ -255,14 +505,40 @@ def get_l2_safe_file(image_name, l2_dir):
 
 
 def get_sen_2_image_timestamp(image_name):
-    """Returns the timestamps part of a Sentinel 2 image"""
+    """
+    Returns the timestamps part of a Sentinel image
+
+    Parameters
+    ----------
+    image_name : str
+        The Sentinel image name or path
+
+    Returns
+    -------
+    timestamp : str
+        The timestamp (yyyymmddThhmmss)
+
+    """
     timestamp_re = r"\d{8}T\d{6}"
     ts_result = re.search(timestamp_re, image_name)
     return ts_result.group(0)
 
 
 def get_sen_2_image_orbit(image_name):
-    """Returns the relative orbit number of a Sentinel 2 image"""
+    """
+    Returns the relative orbit identifer of a Sentinel 2 image
+
+    Parameters
+    ----------
+    image_name : str
+        The Sentinel image name or path
+
+    Returns
+    -------
+    orbit_number : str
+        The orbit. (eg: 'R012')
+
+    """
     tmp1 = image_name.split("/")[-1]  # remove path
     tmp2 = tmp1.split(".")[0] # remove file extension
     comps = tmp2.split("_") # decompose
@@ -270,7 +546,19 @@ def get_sen_2_image_orbit(image_name):
 
 
 def get_sen_2_baseline(image_name):
-    """Returns the baseline string of a s2 image"""
+    """
+    "Returns the baseline orbit identifier of a Sentinel 2 image
+    Parameters
+    ----------
+    image_name : str
+        The Sentinel image name or path
+
+    Returns
+    -------
+    baseline : str
+        The baseline orbit identifier (eg: 'N0214')
+
+    """
     tmp1 = image_name.split("/")[-1]  # remove path
     tmp2 = tmp1.split(".")[0] # remove file extension
     comps = tmp2.split("_") # decompose
@@ -278,21 +566,57 @@ def get_sen_2_baseline(image_name):
 
 
 def get_sen_2_image_tile(image_name):
-    """Returns the tile number of a Sentinel 2 image or path"""
+    """
+    Returns the tile number of a Sentinel 2 image or path
+    Parameters
+    ----------
+    image_name : str
+        The Sentinel image name or path
+
+    Returns
+    -------
+    tile_id : str
+        The tile ID (eg: 'T13QFB')
+    """
     name = os.path.basename(image_name)
     tile = re.findall(r"T\d{2}[A-Z]{3}", name)[0]  # Matches tile ID, but not timestamp
     return tile
 
 
 def get_sen_2_granule_id(safe_dir):
-    """Returns the unique ID of a Sentinel 2 granule from a SAFE directory path"""
+    """
+    Returns the unique ID of a Sentinel 2 granule from a SAFE directory path
+
+    Parameters
+    ----------
+    safe_dir : str
+        Path to a .SAFE file
+
+    Returns
+    -------
+    id : str
+        The full ID of that S2 product (eg: 'S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359')
+
+    """
     tmp = os.path.basename(safe_dir) # removes path to SAFE directory
     id = tmp.split(".")[0] # removes ".SAFE" from the ID name
     return id
 
 
 def get_mask_path(image_path):
-    """A gdal mask is an image with the same name as the image it's masking, but with a .msk extension"""
+    """
+    Returns the path to the mask file of the image. Does not verify that the mask exists.
+    Parameters
+    ----------
+    image_path : str
+        Path to the image
+
+    Returns
+    -------
+    mask_path : str
+        Path to the corresponding mask.
+
+    """
     image_name = os.path.basename(image_path)
     image_dir = os.path.dirname(image_path)
     mask_name = image_name.rsplit('.')[0] + ".msk"

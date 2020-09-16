@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,31 +11,31 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="pyeo.classification" href="classification.html" />
-    <link rel="prev" title="Welcome to Pyeo’s documentation!" href="index.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -50,7 +49,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> Pyeo
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Pyeo
           
 
           
@@ -73,6 +72,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -81,19 +81,20 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.array_utilities</a></li>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
 <li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">pyeo.filesystem_utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Applications</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -132,7 +133,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>pyeo.array_utilities</li>
     
@@ -156,9 +157,9 @@
   <span class="target" id="module-pyeo.array_utilities"></span><div class="section" id="pyeo-array-utilities">
 <h1>pyeo.array_utilities<a class="headerlink" href="#pyeo-array-utilities" title="Permalink to this headline">¶</a></h1>
 <p>Contains routines for manipulating arrays.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.array_utilities.project_array">
-<code class="sig-prename descclassname">pyeo.array_utilities.</code><code class="sig-name descname">project_array</code><span class="sig-paren">(</span><em class="sig-param">array_in</em>, <em class="sig-param">depth</em>, <em class="sig-param">axis</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.array_utilities.project_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.array_utilities.</code><code class="sig-name descname">project_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array_in</span></em>, <em class="sig-param"><span class="n">depth</span></em>, <em class="sig-param"><span class="n">axis</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.array_utilities.project_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a new array with an extra dimension. Data is projected along that dimension to depth.</p>
 </dd></dl>
 
@@ -170,25 +171,24 @@
           </div>
           <footer>
   
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="classification.html" class="btn btn-neutral float-right" title="pyeo.classification" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Pyeo’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2018, John Roberts
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -199,7 +199,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

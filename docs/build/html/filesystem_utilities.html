@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,29 +11,33 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="pyeo.validation" href="validation.html" />
+    <link rel="prev" title="pyeo.raster_manipulation" href="raster_manipulation.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -48,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> Pyeo
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Pyeo
           
 
           
@@ -71,6 +74,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -79,19 +83,24 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
 <li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terrain_correction.html">Terrain correction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.filesystem_utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#function-reference">Function reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Applications</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -130,7 +139,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>pyeo.filesystem_utilities</li>
     
@@ -155,154 +164,428 @@
 <h1>pyeo.filesystem_utilities<a class="headerlink" href="#pyeo-filesystem-utilities" title="Permalink to this headline">¶</a></h1>
 <p>Contains functions for sorting, creating and comparing images as part of the filesystem. Includes any function
 that works on a generic pyeo timestamp and sentinel 2 functions.</p>
-<dl class="function">
+<div class="section" id="key-functions">
+<h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="#pyeo.filesystem_utilities.init_log" title="pyeo.filesystem_utilities.init_log"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_log()</span></code></a> Sets up logging to both console and file</p>
+<p><a class="reference internal" href="#pyeo.filesystem_utilities.create_file_structure" title="pyeo.filesystem_utilities.create_file_structure"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_file_structure()</span></code></a> Creates a recommended file structure for automated work</p>
+<p><a class="reference internal" href="#pyeo.filesystem_utilities.sort_by_timestamp" title="pyeo.filesystem_utilities.sort_by_timestamp"><code class="xref py py-func docutils literal notranslate"><span class="pre">sort_by_timestamp()</span></code></a> Sorts a set of files by timestamp</p>
+</div>
+<div class="section" id="function-reference">
+<h2>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.check_for_invalid_l1_data">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l1_data</code><span class="sig-paren">(</span><em class="sig-param">l1_SAFE_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l1_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l1_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l1_SAFE_file</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l1_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
-an invalid SAFE directory; this will prevent disconnected files from being deleted.
-Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+an invalid SAFE directory; this will prevent disconnected files from being deleted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>l1_SAFE_file</strong> (<em>str</em>) – Path to the L1 file to check</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>result</strong> – 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.check_for_invalid_l2_data">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l2_data</code><span class="sig-paren">(</span><em class="sig-param">l2_SAFE_file</em>, <em class="sig-param">resolution='10m'</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l2_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks the existance of the specified resolution of imagery. Returns a True-value with a warning if passed
-an invalid SAFE directory; this will prevent disconnected files from being deleted.
-Retuns 1 if imagery is valid, 0 if not and 2 if not a safe-file</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">check_for_invalid_l2_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l2_SAFE_file</span></em>, <em class="sig-param"><span class="n">resolution</span><span class="o">=</span><span class="default_value">'10m'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.check_for_invalid_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the existence of the specified resolution of imagery. Returns a True-value with a warning if passed
+an invalid SAFE directory; this will prevent disconnected files from being deleted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l2_SAFE_file</strong> (<em>str</em>) – Path to the L2A file to check</p></li>
+<li><p><strong>resolution</strong> (<em>{&quot;10m&quot;</em><em>, </em><em>&quot;20m&quot;</em><em>, </em><em>&quot;60m&quot;}</em>) – The resolution of imagery to check. Defaults to 10m.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>result</strong> – 1 if imagery is valid, 0 if not and 2 if an invalid .SAFE file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.clean_aoi">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_aoi</code><span class="sig-paren">(</span><em class="sig-param">aoi_dir</em>, <em class="sig-param">images_to_keep=4</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_aoi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_aoi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">aoi_dir</span></em>, <em class="sig-param"><span class="n">images_to_keep</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">warning</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_aoi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes all but the last images_to_keep newest images in the L1, L2, merged, stacked and
-composite directories. Will not affect the output folder.</p>
+composite directories. Will not affect the output folder. Use with caution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aoi_dir</strong> (<em>str</em>) – A directory made by <a class="reference internal" href="#pyeo.filesystem_utilities.create_file_structure" title="pyeo.filesystem_utilities.create_file_structure"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_file_structure()</span></code></a></p></li>
+<li><p><strong>images_to_keep</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of images to keep</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.clean_l2_data">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_data</code><span class="sig-paren">(</span><em class="sig-param">l2_SAFE_file</em>, <em class="sig-param">resolution='10m'</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes any directories that don’t have band 2, 3, 4 or 8 in the specified resolution folder
-If warning=True, prompts first.</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l2_SAFE_file</span></em>, <em class="sig-param"><span class="n">resolution</span><span class="o">=</span><span class="default_value">'10m'</span></em>, <em class="sig-param"><span class="n">warning</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes a safe file if it doesn’t have bands 2, 3, 4 or 8 in the specified resolution folder.
+If warning=True, prompts before removal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>l2_SAFE_file</strong> (<em>str</em>) – Path to the L2 .SAFE file</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.clean_l2_dir">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_dir</code><span class="sig-paren">(</span><em class="sig-param">l2_dir</em>, <em class="sig-param">resolution='10m'</em>, <em class="sig-param">warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_dir" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">clean_l2_dir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l2_dir</span></em>, <em class="sig-param"><span class="n">resolution</span><span class="o">=</span><span class="default_value">'10m'</span></em>, <em class="sig-param"><span class="n">warning</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.clean_l2_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls clean_l2_data on every SAFE file in l2_dir</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l2_dir</strong> (<em>str</em>) – The L2 directory</p></li>
+<li><p><strong>resolution</strong> (<em>{&quot;10m&quot;</em><em>, </em><em>&quot;20m&quot;</em><em>, </em><em>&quot;60m&quot;}</em><em>, </em><em>optional</em>) – Resolution to check. Defaults to 10m</p></li>
+<li><p><strong>warning</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prompts user before deleting files.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.create_file_structure">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">create_file_structure</code><span class="sig-paren">(</span><em class="sig-param">root</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.create_file_structure" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates the file structure if it doesn’t exist already</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">create_file_structure</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.create_file_structure" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Creates the folder structure used in rolling_s2_composite and some other functions: ::</dt><dd><p>root
+-images
+–L1
+–L2
+–merged
+–stacked
+-composite
+–L1
+–L2
+–merged
+-output
+–categories
+–probabilities</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>root</strong> (<em>str</em>) – The root folder for the file strucutre</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_change_detection_dates">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_change_detection_dates</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_change_detection_dates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes the source filepath and extracts the before_date and after_date dates from in, in that order.</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_change_detection_dates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_change_detection_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts the before_date and after_date dates from a change detection image name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_name</strong> (<em>str</em>) – A Pyeo-produced image name (example: <cite>class_composite_T36MZE_20190509T073621_20190519T073621.tif</cite>)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>before_date, after_date</strong> – The dates associated with the image</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>DateTime</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_image_acquisition_time">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_image_acquisition_time</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_image_acquisition_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the datetime object from a .safe filename of a planet image. No test. Returns None if no timestamp present</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_image_acquisition_time</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_image_acquisition_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the datetime object from a .safe filename of a Sentinel image. No test. Returns None if no timestamp present
+:param image_name: The .SAFE filename
+:type image_name: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>acquisition_time</strong> – A DateTime object providing the acquisition time</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>DateTime</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_l1_safe_file">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l1_safe_file</code><span class="sig-paren">(</span><em class="sig-param">image_name</em>, <em class="sig-param">l1_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l1_safe_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the path to the L1 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
-a filename</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l1_safe_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em>, <em class="sig-param"><span class="n">l1_dir</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l1_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L1 .SAFE file of a L2 image. Gets from granule and timestamp. image_name can be a path or
+a filename. Returns None if not found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_name</strong> (<em>str</em>) – The name of the L2 image.</p></li>
+<li><p><strong>l1_dir</strong> (<em>str</em>) – The path to the folder containing L1 images.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>l1_image</strong> – The path to the L1 image, or None if not found.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_l2_safe_file">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l2_safe_file</code><span class="sig-paren">(</span><em class="sig-param">image_name</em>, <em class="sig-param">l2_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l2_safe_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the path to the L2 .SAFE directory of image. Gets from granule and timestamp. image_name can be a path or
-a filename</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_l2_safe_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em>, <em class="sig-param"><span class="n">l2_dir</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_l2_safe_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the L2 .SAFE file of a L1 image. Gets from granule and timestamp. image_name can be a path or
+a filename. Returns None if not found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_name</strong> (<em>str</em>) – The name of the L1 image.</p></li>
+<li><p><strong>l2_dir</strong> (<em>str</em>) – The path to the folder containing L2 images.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>l2_image</strong> – The path to the L2 image, or None if not found.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_mask_path">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_mask_path</code><span class="sig-paren">(</span><em class="sig-param">image_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_mask_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>A gdal mask is an image with the same name as the image it’s masking, but with a .msk extension</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_mask_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_mask_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to the mask file of the image. Does not verify that the mask exists.
+:param image_path: Path to the image
+:type image_path: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>mask_path</strong> – Path to the corresponding mask.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_preceding_image_path">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_preceding_image_path</code><span class="sig-paren">(</span><em class="sig-param">target_image_name</em>, <em class="sig-param">search_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_preceding_image_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the path to the image in search_dir preceding the image called image_name</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_preceding_image_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_image_name</span></em>, <em class="sig-param"><span class="n">search_dir</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_preceding_image_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the image that directly precedes the target image in time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_image_name</strong> (<em>str</em>) – A Pyeo or Sentinel generated image name</p></li>
+<li><p><strong>search_dir</strong> (<em>str</em>) – The directory to search for the preceding image.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>preceding_path</strong> – The path to the preceding image</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – If there is no image older than the target image</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_pyeo_timestamp">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_pyeo_timestamp</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_pyeo_timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of all timestamps in a Pyeo image.</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_pyeo_timestamp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_pyeo_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all timestamps in a Pyeo image (yyyymmddhhmmss)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_name</strong> (<em>str</em>) – The Pyeo image name</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>timestamp_list</strong> – A list of the timestamps in the name</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_related_images">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_related_images</code><span class="sig-paren">(</span><em class="sig-param">target_image_name</em>, <em class="sig-param">project_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_related_images" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the paths of all images related to that one in a project, by timestamp</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_related_images</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_image_name</span></em>, <em class="sig-param"><span class="n">project_dir</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_related_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds every image related to the target image (L1, L2, merged, stacked and classified). Based on timestamp, and
+assumes a project structured by <a class="reference internal" href="#pyeo.filesystem_utilities.create_file_structure" title="pyeo.filesystem_utilities.create_file_structure"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_file_structure()</span></code></a>
+:param target_image_name: The target image
+:type target_image_name: str
+:param project_dir: The root of the project directory
+:type project_dir: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>related_images</strong> – A list of all the images related to target_image</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list of str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="pyeo.filesystem_utilities.get_safe_product_type">
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_safe_product_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_safe_product_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the product string (MSIL1C or MSIL2A) from a .safe file identifier
+:param image_name: The name of the image
+:type image_name: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>product_string</strong> – The product string</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>{“MSIL1C” or “MSIL2A”}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_baseline">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_baseline</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_baseline" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the baseline string of a s2 image</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_baseline</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>“Returns the baseline orbit identifier of a Sentinel 2 image
+:param image_name: The Sentinel image name or path
+:type image_name: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>baseline</strong> – The baseline orbit identifier (eg: ‘N0214’)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_granule_id">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_granule_id</code><span class="sig-paren">(</span><em class="sig-param">safe_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_granule_id" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_granule_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">safe_dir</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_granule_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the unique ID of a Sentinel 2 granule from a SAFE directory path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>safe_dir</strong> (<em>str</em>) – Path to a .SAFE file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>id</strong> – The full ID of that S2 product (eg: ‘S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359’)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_image_orbit">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_orbit</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_orbit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the relative orbit number of a Sentinel 2 image</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_orbit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_orbit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the relative orbit identifer of a Sentinel 2 image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_name</strong> (<em>str</em>) – The Sentinel image name or path</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>orbit_number</strong> – The orbit. (eg: ‘R012’)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_image_tile">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_tile</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_tile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the tile number of a Sentinel 2 image or path</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_tile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tile number of a Sentinel 2 image or path
+:param image_name: The Sentinel image name or path
+:type image_name: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>tile_id</strong> – The tile ID (eg: ‘T13QFB’)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_image_timestamp">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_timestamp</code><span class="sig-paren">(</span><em class="sig-param">image_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the timestamps part of a Sentinel 2 image</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_image_timestamp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_image_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the timestamps part of a Sentinel image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_name</strong> (<em>str</em>) – The Sentinel image name or path</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>timestamp</strong> – The timestamp (yyyymmddThhmmss)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.get_sen_2_tiles">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_tiles</code><span class="sig-paren">(</span><em class="sig-param">image_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_tiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>gets the list of tiles present in the directory</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">get_sen_2_tiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_dir</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.get_sen_2_tiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of Sentinel-2 tile IDs present in a folder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_dir</strong> (<em>str</em>) – Path to the folder containing images</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>tiles</strong> – A list of the tile identifiers present in the folder</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.init_log">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">init_log</code><span class="sig-paren">(</span><em class="sig-param">log_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.init_log" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">init_log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">log_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.init_log" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets up the log format and log handlers; one for stdout and to write to a file, ‘log_path’.
-Returns the log for the calling script</p>
+Returns the log for the calling script.
+:param log_path: The path to the file output of this log.
+:type log_path: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>log</strong> – The logging object.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>logging.Logger</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.filesystem_utilities.is_tif">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">is_tif</code><span class="sig-paren">(</span><em class="sig-param">image_string</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.is_tif" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns True if image ends with .tif</p>
-</dd></dl>
-
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.filesystem_utilities.sort_by_timestamp">
-<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">sort_by_timestamp</code><span class="sig-paren">(</span><em class="sig-param">strings</em>, <em class="sig-param">recent_first=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted, most recent first. Does not
-guarantee ordering of strings with the same timestamp. Removes any string that does not contain a timestamp</p>
+<code class="sig-prename descclassname">pyeo.filesystem_utilities.</code><code class="sig-name descname">sort_by_timestamp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">strings</span></em>, <em class="sig-param"><span class="n">recent_first</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.filesystem_utilities.sort_by_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of strings that contain sen2 timestamps and returns them sorted, from most recent on back by default.
+Removes any string that does not contain a timestamp</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>strings</strong> (<em>list of str</em>) – list of timestamped strings to sort</p></li>
+<li><p><strong>recent_first</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, <cite>sorted_strings[0]</cite> is the most recent image. If False, <cite>sorted_strings[0]</cite> is the least recent image.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>sorted_strings</strong> – The strings sorted by timestamp.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Does not guarantee preservation of ordering of strings with the same timestamp.</p>
 </dd></dl>
 
+</div>
 </div>
 
 
@@ -311,16 +594,33 @@ guarantee ordering of strings with the same timestamp. Removes any string that d
           </div>
           <footer>
   
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="validation.html" class="btn btn-neutral float-right" title="pyeo.validation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="raster_manipulation.html" class="btn btn-neutral float-left" title="pyeo.raster_manipulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2018, John Roberts
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -331,7 +631,6 @@ guarantee ordering of strings with the same timestamp. Removes any string that d
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

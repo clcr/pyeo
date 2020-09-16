@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,30 +11,31 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="pyeo.validaion" href="validation.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -49,7 +49,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> Pyeo
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Pyeo
           
 
           
@@ -72,6 +72,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -80,19 +81,20 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="array_utilities.html">pyeo.array_utilities</a></li>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
 <li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validaion</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Terrain correction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">pyeo.filesystem_utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Applications</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -131,7 +133,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>pyeo.terrain_correction</li>
     
@@ -157,16 +159,16 @@
 <p>Functions for implementing terrain correction algorithm (credit to Wim Nursal and team, LAPAN)</p>
 <p>Original code at <a class="reference external" href="https://github.com/Forests2020-Indonesia/Topographic-Correction/blob/master/Topographic%20Correction.py">https://github.com/Forests2020-Indonesia/Topographic-Correction/blob/master/Topographic%20Correction.py</a>
 Method b: <a class="reference external" href="https://ieeexplore.ieee.org/document/8356797">https://ieeexplore.ieee.org/document/8356797</a></p>
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.terrain_correction.build_sample_array">
-<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">build_sample_array</code><span class="sig-paren">(</span><em class="sig-param">raster_array</em>, <em class="sig-param">slope_array</em>, <em class="sig-param">red_band_index</em>, <em class="sig-param">ir_band_index</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.build_sample_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">build_sample_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster_array</span></em>, <em class="sig-param"><span class="n">slope_array</span></em>, <em class="sig-param"><span class="n">red_band_index</span></em>, <em class="sig-param"><span class="n">ir_band_index</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.build_sample_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a set of pixels in raster with slope &gt; 18deg + ndvi &gt; 0.5</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.terrain_correction.calculate_illumination_condition_array">
-<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">calculate_illumination_condition_array</code><span class="sig-paren">(</span><em class="sig-param">dem_raster_path</em>, <em class="sig-param">raster_datetime</em>, <em class="sig-param">ic_raster_out_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.calculate_illumination_condition_array" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a DEM, creates an array of the illumination conditions as specified in
+<dl class="py function">
+<dt id="pyeo.terrain_correction.calculate_ic_array">
+<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">calculate_ic_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">slope_raster_path</span></em>, <em class="sig-param"><span class="n">aspect_raster_path</span></em>, <em class="sig-param"><span class="n">raster_datetime</span></em>, <em class="sig-param"><span class="n">ic_raster_out_path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.calculate_ic_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a slope and an aspect raster, creates an array of the illumination conditions as specified in
 <a class="reference external" href="https://ieeexplore.ieee.org/document/8356797">https://ieeexplore.ieee.org/document/8356797</a>, equation 9. The Pysolar library is
 used to calculate solar position.</p>
 <dl class="field-list simple">
@@ -187,9 +189,9 @@ used to calculate solar position.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="pyeo.terrain_correction.calculate_reflectance">
-<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">calculate_reflectance</code><span class="sig-paren">(</span><em class="sig-param">raster_path</em>, <em class="sig-param">dem_path</em>, <em class="sig-param">out_raster_path</em>, <em class="sig-param">raster_datetime</em>, <em class="sig-param">is_landsat=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.calculate_reflectance" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt id="pyeo.terrain_correction.do_terrain_correction">
+<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">do_terrain_correction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">dem_path</span></em>, <em class="sig-param"><span class="n">out_raster_path</span></em>, <em class="sig-param"><span class="n">raster_datetime</span></em>, <em class="sig-param"><span class="n">is_landsat</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.do_terrain_correction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Corrects for shadow effects due to terrain features.
 Algorithm:</p>
 <ul class="simple">
@@ -213,16 +215,22 @@ Algorithm:</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="pyeo.terrain_correction.generate_slope_and_aspect_rasters">
+<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">generate_slope_and_aspect_rasters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dem_raster_path</span></em>, <em class="sig-param"><span class="n">out_directory</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.generate_slope_and_aspect_rasters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using GDAL, splits a DEM into slope and aspect rasters</p>
+</dd></dl>
+
+<dl class="py function">
 <dt id="pyeo.terrain_correction.get_dem_slope_and_angle">
-<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">get_dem_slope_and_angle</code><span class="sig-paren">(</span><em class="sig-param">dem_path</em>, <em class="sig-param">slope_out_path</em>, <em class="sig-param">aspect_out_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.get_dem_slope_and_angle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">get_dem_slope_and_angle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dem_path</span></em>, <em class="sig-param"><span class="n">slope_out_path</span></em>, <em class="sig-param"><span class="n">aspect_out_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.get_dem_slope_and_angle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces two .tifs, slope and aspect, from an imput DEM.
 Assumes that the DEM is in meters.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="pyeo.terrain_correction.get_pixel_latlon">
-<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">get_pixel_latlon</code><span class="sig-paren">(</span><em class="sig-param">raster</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.get_pixel_latlon" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pyeo.terrain_correction.</code><code class="sig-name descname">get_pixel_latlon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.terrain_correction.get_pixel_latlon" title="Permalink to this definition">¶</a></dt>
 <dd><p>For a given pixel in raster, gets the lat-lon value in EPSG 4326.</p>
 </dd></dl>
 
@@ -234,23 +242,24 @@ Assumes that the DEM is in meters.</p>
           </div>
           <footer>
   
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-      
-        <a href="validation.html" class="btn btn-neutral float-left" title="pyeo.validaion" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2018, John Roberts
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -261,7 +270,6 @@ Assumes that the DEM is in meters.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

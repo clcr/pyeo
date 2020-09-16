@@ -3,6 +3,12 @@ pyeo.queries_and_downloads
 ==========================
 Functions for querying, filtering and downloading data.
 
+Key functions
+-------------
+:py:func:`check_for_s2_data_by_date` Queries the Sentinel 2 archive for products between two dates
+:py:func:`download_s2_data` Downloads Sentinel 2 data from Scihub by default
+
+
 SAFE files
 ----------
 Sentinel 2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
@@ -38,12 +44,13 @@ USGS, for Landsat. If in doubt, use Scihub.
    updated a few hours after new products are made available. There is a small charge associated with downloading this
    data. To access the AWS repository, you are required to register an Amazon Web Services account (including providing
    payment details) and obtain an API key for that account. See https://aws.amazon.com/s3/pricing/ for pricing details;
-   the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent downloads
-   for the AWS bucket.
+   the relevant table is Data Transfer Pricing for the EU (Frankfurt) region. There is no limit to the concurrent
+   downloads for the AWS bucket.
 
 - USGS
 
    Landsat data is hosted and provided by the US Geological Survey. You can sign up at https://ers.cr.usgs.gov/register/
+
 
 Functions
 ---------
@@ -113,13 +120,14 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
                Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
                See https://www.w3.org/TR/NOTE-datetime, or use cehck_for_s2_data_by_date
 
-    cloud : string (optional)
-            The maximum cloud clover (as calculated by Copernicus) to download.
+    cloud : int, optional
+            The maximum cloud clover percentage (as calculated by Copernicus) to download. Defaults to 50%
 
     Returns
     -------
-    A dictionary of Sentinel-2 granule products that are touched by your AOI polygon, keyed by product ID.
-    Returns both level 1 and level 2 data.
+    products : dict
+        A dictionary of Sentinel-2 granule products that are touched by your AOI polygon, keyed by product ID.
+        Returns both level 1 and level 2 data.
 
     Notes
     -----
@@ -149,11 +157,12 @@ def shapefile_to_wkt(shapefile_path):
 
     Parameters
     ----------
-    shapefile_path
+    shapefile_path : str
         Path to the shapefile to convert
 
     Returns
     -------
+    wkt : str
         A wkt - string containing the geometry of the first feature of the first layer of the shapefile shapefile
     """
     dataset = ogr.Open(shapefile_path)
@@ -173,21 +182,22 @@ def landsat_query(conf, geojsonfile, start_date, end_date, cloud=50):
 
     Parameters
     ----------
-    conf
+    conf : dict
         A dictionary with ['landsat']['user'] and ['landsat']['pass'] values, containing your USGS credentials.
-    geojsonfile
+    geojsonfile : str
         The geojson file
-    start_date
+    start_date : str
         The start date, in "yyyymmdd" format. Will truncate any longer string.
-    end_date
+    end_date : str
         The end query date, in "yyyymmdd" format. Will truncate any longer string.
-    cloud
+    cloud : float
         The maximum cloud cover to return.
 
     Returns
     -------
-    A list of products; each item being a dictionary returned from the USGS API.
-    See https://earthexplorer.usgs.gov/inventory/documentation/datamodel#Scene
+    products : list of dict
+        A list of products; each item being a dictionary returned from the USGS API.
+        See https://earthexplorer.usgs.gov/inventory/documentation/datamodel#Scene
 
     """
 
@@ -256,12 +266,12 @@ def download_landsat_data(products, out_dir, conf):
 
     Parameters
     ----------
-    products
+    products : str
         Dictionary of landsat products; must include downloadUrl and displayId
-    out_dir
+    out_dir : str
         Directory to save Landsat files in. Folder structure is out_dir->displayId->products
-    conf
-        Dictionary containing USGS login credentials. See docs for landsat_query.
+    conf : dict
+        Dictionary containing USGS login credentials. See docs for :py:func:`landsat_query`.
     """
     # The API key is no good here, we need the auth cookie. Time to pretend to be a browser.
     dl_session = requests.Session()
@@ -313,6 +323,17 @@ def download_landsat_data(products, out_dir, conf):
 
 
 def get_landsat_api_key(conf, session):
+    """
+    :meta private:
+    Parameters
+    ----------
+    conf
+    session
+
+    Returns
+    -------
+
+    """
     user = conf['landsat']['user']
     passwd = conf['landsat']['pass']
     api_root = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.1/"
@@ -338,26 +359,31 @@ def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=
 
     Parameters
     ----------
-    aoi_path
+    aoi_path : str
         Path to a geojson file containing a polygon of the outline of the area you wish to download.
         See www.geojson.io for a tool to build these.
 
-    start_date
+    start_date : str
         Start date in the format yyyymmdd.
 
-    end_date
+    end_date : str
         End date of the query in the format yyyymmdd
 
-    conf
+    conf : dict
         Output from a configuration file containing your username and password for the ESA hub.
         If needed, this can be dummied with a dictionary of the following format:
-        conf={'sent_2':{'user':'your_username', 'pass':'your_pass'}}
 
-    cloud_cover
-        The maximem level of cloud cover in images to be downloaded.
+        .. code:: python
+
+            conf={'sent_2':{'user':'your_username', 'pass':'your_pass'}}
+
+    cloud_cover : int
+        The maximum level of cloud cover in images to be downloaded.
 
     Returns
     -------
+    result : dict
+        A dictionary of Sentinel 2 products.
 
     """
     log.info("Querying for imagery between {} and {} for aoi {}".format(start_date, end_date, aoi_path))
@@ -376,13 +402,13 @@ def filter_to_l1_data(query_output):
 
     Parameters
     ----------
-    query_output
-        A dictionary of products
-
+    query_output : dict
+        A dictionary of products from a S2 query
 
     Returns
     -------
-    A dictionary of products containing only the L1C data products
+    filtered_query : dict
+        A dictionary of products containing only the L1C data products
 
     """
     log.info("Extracting only L1 data from {} products".format(len(query_output)))
@@ -396,13 +422,13 @@ def filter_to_l2_data(query_output):
 
     Parameters
     ----------
-    query_output
-        A dictionary of products
-
+    query_output : dict
+        A dictionary of products from a S2 query
 
     Returns
     -------
-    A dictionary of products containing only the L2A data products
+    filtered_query : dict
+        A dictionary of products containing only the L2A data products
 
     """
     log.info("Extracting only L2 data from {} products".format(len(query_output)))
@@ -416,12 +442,13 @@ def filter_non_matching_s2_data(query_output):
 
     Parameters
     ----------
-    query_output
+    query_output : dict
         Query list
 
     Returns
     -------
-    A dictionary of products contaiing only L1 and L2 data.
+    filtered_query : dict
+        A dictionary of products containing only L1 and L2 data.
 
     """
     # Here be algorithms
@@ -467,12 +494,13 @@ def get_query_datatake(query_item):
 
     Parameters
     ----------
-    query_item
+    query_item : dict
         An item from a query results dictionary.
 
     Returns
     -------
-    The timestamp of that item's datatake.
+    timestamp : str
+        The timestamp of that item's datatake in the format yyyymmddThhmmss (Ex: 20190613T123002)
     """
     return query_item['beginposition']
 
@@ -483,12 +511,13 @@ def get_query_granule(query_item):
 
     Parameters
     ----------
-    query_item
+    query_item : dict
         An item from a query results dictionary.
 
     Returns
     -------
-    The granule ID of that item.
+    granule_id : str
+        The granule ID of that item.
 
     """
     return query_item["title"].split("_")[5]
@@ -500,12 +529,13 @@ def get_query_processing_time(query_item):
 
     Parameters
     ----------
-    query_item
+    query_item : dict
         An item from a query results dictionary.
 
     Returns
     -------
-    The date processing timestamp in the format yyyymmddThhmmss (Ex: 20190613T123002)
+    processing_time : str
+        The date processing timestamp in the format yyyymmddThhmmss (Ex: 20190613T123002)
 
     """
     ingestion_string = query_item["title"].split("_")[6]
@@ -518,12 +548,13 @@ def get_query_level(query_item):
 
     Parameters
     ----------
-    query_item
+    query_item : dict
          An item from a query results dictionary.
 
     Returns
     -------
-    A string of either 'Level-1C' or 'Level-2A'.
+    query_level : str
+        A string of either 'Level-1C' or 'Level-2A'.
 
     """
     return query_item["processinglevel"]
@@ -534,18 +565,18 @@ def get_granule_identifiers(safe_product_id):
     Returns the parts of a S2 name that uniquely identify that granulate at a moment in time
     Parameters
     ----------
-    safe_product_id
+    safe_product_id : str
         The filename of a SAFE product
 
     Returns
     -------
-    satellite
+    satellite : str
         A string of either "L2A" or "L2B"
-    intake_date
-        The timestamp of the data intoake of this granule
-    orbit number
+    intake_date : str
+        The timestamp of the data intake of this granule
+    orbit number : str
         The orbit number of this granule
-    granule
+    granule : str
         The ID of this granule
 
     """
@@ -559,20 +590,21 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
 
     Parameters
     ----------
-    new_data
+    new_data : dict
         A query dictionary contining the products you want to download
-    l1_dir
+    l1_dir : str
         The directory to download level 1 products to.
-    l2_dir
+    l2_dir : str
         The directory to download level 2 products to.
-    source
+    source : {'scihub', 'aws'}
         The source to download the data from. Can be 'scihub' or 'aws'; see section introduction for details
-    user
+    user : str, optional
         The username for sentinelhub
-    passwd
-        The password for sentinelheub
-    try_scihub_on_fail
-        If true, this function will roll back to downloading from Scihub on a failure of any other downloader.
+    passwd : str, optional
+        The password for sentinelhub
+    try_scihub_on_fail : bool, optional
+        If true, this function will roll back to downloading from Scihub on a failure of any other downloader. Defaults
+        to `False`.
 
     Raises
     ------
@@ -613,8 +645,19 @@ def download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passw
 
 
 def download_s2_pairs(l1_dir, l2_dir, conf):
-    """Given a pair of folders, one containing l1 products and the other containing l2 products, will query and download
-    missing data. At the end of the run, you will have two folders with a set of paired L1 and L2 products."""
+    """
+    Given a pair of folders, one containing l1 products and the other containing l2 products, will query and download
+    missing data. At the end of the run, you will have two folders with a set of paired L1 and L2 products.
+    Parameters
+    ----------
+    l1_dir : str
+        The directory to download level 1 products to. May contain existing products.
+    l2_dir : str
+        The directory to download level 2 products to. May contain existing products.
+    conf : dict
+        A dictionary containing ['sent_2']['user'] and ['sent_2']['pass']
+
+    """
     # God, this is a faff.
     l1_product_list = os.listdir(l1_dir)
     l2_product_list = os.listdir(l2_dir)
@@ -635,7 +678,23 @@ def download_s2_pairs(l1_dir, l2_dir, conf):
 
 
 def query_for_corresponding_image(prod,conf):
-    """Queries Copnernicus Hub for the corresponding l1/l2 image to 'prod'"""
+    """
+    Queries Copernicus Hub for the corresponding l1/l2 image to 'prod'
+
+    Parameters
+    ----------
+    prod : str
+        The product name to query
+
+    conf : dict
+        A dictionary containing ['sent_2']['user'] and ['sent_2']['pass']
+
+    Returns
+    -------
+    out : dict
+        A Sentinel-2 product dictionary
+
+    """
     date_string = fu.get_sen_2_image_timestamp(prod)
     date = dt.datetime.strptime(date_string, "%Y%m%dT%H%M%S").date()
     tile = fu.get_sen_2_image_tile(prod)[1:]  # Strip first 'T'
@@ -663,15 +722,15 @@ def download_from_aws_with_rollback(product_id, folder, uuid, user, passwd):
 
     Parameters
     ----------
-    product_id
+    product_id : str
         The product ID ("L2A_...")
-    folder
+    folder : str
         The folder to download the .SAFE file to.
-    uuid
+    uuid : str
         The product UUID (4dfB4-432df....)
-    user
+    user : str
         Scihub username
-    passwd
+    passwd : str
         Scihub password
 
     """
@@ -691,13 +750,13 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
 
     Parameters
     ----------
-    product_uuid
+    product_uuid : str
         The product UUID (4dfB4-432df....)
-    out_folder
+    out_folder : str
         The folder to save the .SAFE file to
-    user
+    user : str
         Scihub username
-    passwd
+    passwd : str
         Scihub password
 
     Notes
@@ -725,7 +784,10 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
 
 
 def download_from_google_cloud(product_ids, out_folder, redownload=False):
-    """Still experimental."""
+    """
+    :meta private:
+    Still experimental.
+    """
     log = logging.getLogger(__name__)
     log.info("Downloading following products from Google Cloud:".format(product_ids))
     storage_client = storage.Client()
@@ -761,7 +823,10 @@ def download_from_google_cloud(product_ids, out_folder, redownload=False):
 
 
 def download_blob_from_google(bucket, object_prefix, out_folder, s2_object):
-    """Still experimental."""
+    """
+    :meta private:
+    Still experimental.
+    """
     log = logging.getLogger(__name__)
     blob = bucket.get_blob(s2_object.name)
     object_out_path = os.path.join(
@@ -780,11 +845,13 @@ def load_api_key(path_to_api):
 
     Parameters
     ----------
-    path_to_api
+    path_to_api : str
         The path a text file containing only the API key
+
     Returns
     -------
-    Returns the API key
+    api_key : str
+        Returns the API key
     """
     with open(path_to_api, 'r') as api_file:
         return api_file.read()
@@ -792,6 +859,7 @@ def load_api_key(path_to_api):
 
 def get_planet_product_path(planet_dir, product):
     """
+    :meta private:
     Returns the path to a Planet product within a Planet directory
     """
     planet_folder = os.path.dirname(planet_dir)
@@ -801,7 +869,10 @@ def get_planet_product_path(planet_dir, product):
 
 def download_planet_image_on_day(aoi_path, date, out_path, api_key, item_type="PSScene4Band", search_name="auto",
                                  asset_type="analytic", threads=5):
-    """Queries and downloads all images on the date in the aoi given"""
+    """
+    :meta private:
+    Queries and downloads all images on the date in the aoi given
+    """
     log = logging.getLogger(__name__)
     start_time = date + "T00:00:00.000Z"
     end_time = date + "T23:59:59.000Z"
@@ -861,7 +932,10 @@ def planet_query(aoi_path, start_date, end_date, out_path, api_key, item_type="P
 
 
 def build_search_request(aoi, start_date, end_date, item_type, search_name):
-    """Builds a search request for the planet API"""
+    """
+    :meta private:
+    Builds a search request for the planet API
+    """
     date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
     aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
@@ -871,7 +945,10 @@ def build_search_request(aoi, start_date, end_date, item_type, search_name):
 
 
 def do_quick_search(session, search_request):
-    """Tries the quick search; returns a dict of features"""
+    """
+    :meta private:
+    Tries the quick search; returns a dict of features
+    """
     search_url = "https://api.planet.com/data/v1/quick-search"
     search_request.pop("name")
     print("Sending quick search")
@@ -882,7 +959,10 @@ def do_quick_search(session, search_request):
 
 
 def do_saved_search(session, search_request):
-    """Does a saved search; this doesn't seem to work yet."""
+    """
+    :meta private:
+    Does a saved search; this doesn't seem to work yet.
+    """
     search_url = "https://api.planet.com/data/v1/searches/"
     search_response = session.post(search_url, json=search_request)
     search_id = search_response.json()['id']
@@ -896,7 +976,10 @@ def do_saved_search(session, search_request):
 
 
 def get_paginated_items(session, search_id):
-    """Let's leave this out for now."""
+    """
+    :meta private:
+    Let's leave this out for now.
+    """
     raise Exception("pagination not handled yet")
 
 
@@ -906,7 +989,10 @@ def get_paginated_items(session, search_id):
     retry=tenacity.retry_if_exception_type(TooManyRequests)
 )
 def activate_and_dl_planet_item(session, item, asset_type, file_path):
-    """Activates and downloads a single planet item"""
+    """
+    :meta private:
+    Activates and downloads a single planet item
+    """
     log = logging.getLogger(__name__)
     #  TODO: Implement more robust error handling here (not just 429)
     item_id = item["id"]
@@ -941,11 +1027,12 @@ def read_aoi(aoi_path):
 
     Parameters
     ----------
-    aoi_path
+    aoi_path : str
         The path to the geojson file
     Returns
     -------
-    A dictionary translation of the feature inside the .json file
+    aoi_dict : dict
+        A dictionary translation of the feature inside the .json file
 
     """
     with open(aoi_path, 'r') as aoi_fp:

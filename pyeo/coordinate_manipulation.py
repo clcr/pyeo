@@ -1,6 +1,6 @@
 """
 pyeo.coordinate_manipulation
-----------------------------
+============================
 Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.
 
 Unless otherwise stated, all functions assume that any geometry, rasters and shapefiles are using the same projection.
@@ -9,10 +9,17 @@ If they are not, there may be unexpected errors.
 Some of these functions call for an AOI shapefile. This is a single-layer shapefile containing only the geometry
 of one polygon.
 
-These functions all work on the objects provided by the ogr and gdal libraries. If you wish to use them in your own
-processing, a gdal.Image object is usually the output from gdal.Open() and an ogr.Geometry object can be obtained from
-a well-known text (wkt) string using the  snipped `object=ogr.ImportFromWkt("mywkt"). For more information on wkt, see
+These functions mainly work on the objects provided by the ogr and gdal libraries. If you wish to use them in your own
+processing, a ``gdal.Image`` object is usually the output from gdal.Open() and an ogr.Geometry object can be obtained from
+a well-known text (wkt) string using the  snippet ``object=ogr.ImportFromWkt("mywkt")``. For more information on wkt, see
 https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry and the "QuickWKT" QGIS plugin.
+
+Key functions
+-------------
+:py:func:`pixel_bounds_from_polygon` Gets the indicies of the bounding box of a polygon within a raster
+
+Function reference
+------------------
 """
 import subprocess
 
@@ -29,15 +36,15 @@ def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
 
     Parameters
     ----------
-    in_gt
+    in_gt : array_like
         A six-element numpy array, usually an output from gdal_image.GetGeoTransform()
-    old_proj_wkt
+    old_proj_wkt : str
         The projection of the old geotransform in well-known text.
-    new_proj_wkt
+    new_proj_wkt : str
         The projection of the new geotrasform in well-known text.
     Returns
     -------
-    out_gt
+    out_gt : array_like
         The geotransform in the new projection
 
     """
@@ -57,14 +64,14 @@ def get_combined_polygon(rasters, geometry_mode ="intersect"):
 
     Parameters
     ----------
-    rasters
+    rasters : List of gdal.Image
         A list of raster objects opened with gdal.Open()
-    geometry_mode
+    geometry_mode : {'intersect', 'union'}
         If 'intersect', returns the boundary of the area that all rasters cover.
         If 'union', returns the boundary of the area that any raster covers.
-
     Returns
     -------
+    combination : ogr.Geometry
         ogr.Geometry() containing a polygon.
 
     """
@@ -87,11 +94,12 @@ def multiple_union(polygons):
 
     Parameters
     ----------
-    polygons
+    polygons : list of ogr.Geometry
         A list of ogr.Geometry objects, each containing a single polygon.
 
     Returns
     -------
+    union : ogr.Geometry
         An ogr.Geometry object containing a single polygon
 
     """
@@ -109,11 +117,12 @@ def multiple_intersection(polygons):
 
     Parameters
     ----------
-    polygons
+    polygons : list of ogr.Geometry
         A list of ogr.Geometry objects, each containing a single polygon.
 
     Returns
     -------
+    intersection : ogr.Geometry
         An ogr.Geometry object containing a single polygon
     """
     running_intersection = polygons[0]
@@ -128,15 +137,16 @@ def pixel_bounds_from_polygon(raster, polygon):
 
     Parameters
     ----------
-    raster
+    raster : gdal.Image
         A gdal raster object
 
-    polygon
+    polygon : ogr.Geometry
         A ogr.Geometry object containing a single polygon
 
     Returns
     -------
-    A tuple (x_min, x_max, y_min, y_max)
+    x_min, x_max, y_min, y_max : int
+        The bounding box in the pixels of the raster
 
     """
     raster_bounds = get_raster_bounds(raster)
@@ -160,9 +170,9 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
 
     Parameters
     ----------
-    raster
+    raster : gdal.Image
         A gdal raster object
-    point
+    point : str, iterable or ogr.Geometry
         One of:
             A well-known text string of a single point
             An iterable of the form (x,y)
@@ -200,14 +210,15 @@ def pixel_to_point_coordinates(pixel, GT):
 
     Parameters
     ----------
-    pixel
+    pixel : iterable
         A tuple (y, x) of the coordinates of the pixel
-    GT
+    GT : iterable
         A six-element numpy array containing a geotransform
 
     Returns
     -------
-    A tuple containing the geographic coordinates of the top-left corner of the pixel.
+    Xgeo, Ygeo : number
+        The geographic coordinates of the top-left corner of the pixel.
 
     """
     Xpixel = pixel[1]
@@ -223,11 +234,11 @@ def write_geometry(geometry, out_path, srs_id=4326):
 
     Parameters
     ----------
-    geometry
+    geometry : ogr.Geometry
         An ogr.Geometry object
-    out_path
+    out_path : str
         The location to save the output shapefile
-    srs_id
+    srs_id : int or str, optional
         The projection of the output shapefile. Can be an EPSG number or a WKT string.
 
     Notes
@@ -261,9 +272,12 @@ def reproject_vector(in_path, out_path, dest_srs):
     Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.
     Parameters
     ----------
-    in_path
-    out_path
-    dest_srs
+    in_path : str
+        Path to the vector file
+    out_path : str
+        Path to output vector file
+    dest_srs : ogr.SpatialReference
+        The spatial reference system to reproject to
 
     """
     subprocess.run(["ogr2ogr", out_path, in_path, '-t_srs', dest_srs.ExportToWkt()])
@@ -275,13 +289,14 @@ def get_aoi_intersection(raster, aoi):
 
     Parameters
     ----------
-    raster
+    raster : gdal.Image
         A raster containing image data
-    aoi
-        A shapefile with a single layer and feature
+    aoi : ogr.DataSource
+        A datasource with a single layer and feature
     Returns
     -------
-    a ogr.Geometry object containing a single polygon with the area of intersection
+    intersection : ogr.Geometry
+        An ogr.Geometry object containing a single polygon with the area of intersection
 
     """
     raster_shape = get_raster_bounds(raster)
@@ -297,10 +312,11 @@ def get_raster_intersection(raster1, raster2):
 
     Parameters
     ----------
-    raster1, raster2
-        A gdal.Image() object
+    raster1, raster2 : gdal.Image
+        The gdal.Image
     Returns
     -------
+    intersections : ogr.Geometry
         a ogr.Geometry object containing a single polygon
 
     """
@@ -310,7 +326,19 @@ def get_raster_intersection(raster1, raster2):
 
 
 def get_poly_intersection(poly1, poly2):
-    """A functional wrapper for ogr.Geometry.Intersection()"""
+    """
+    A functional wrapper for ogr.Geometry.Intersection()
+
+    Parameters
+    ----------
+    poly1, poly2: ogr.Geometry
+        The two geometries to intersect
+    Returns
+    -------
+    intersection : ogr.Geometry
+        A polygon of the intersection
+
+    """
     return poly1.Intersection(poly2)
 
 
@@ -319,13 +347,14 @@ def check_overlap(raster, aoi):
     A test to see if a raster and an AOI overlap.
     Parameters
     ----------
-    raster
+    raster : gdal.Image
         A gdal.Image object
-    aoi
+    aoi : ogr.Dataset
         A ogr.Dataset object containing a single polygon
     Returns
     -------
-    True if the raster and the polygon overlap, oherwise False.
+    is_overlapped : bool
+        True if the raster and the polygon overlap, otherwise False.
 
     """
     raster_shape = get_raster_bounds(raster)
@@ -342,13 +371,14 @@ def get_raster_bounds(raster):
 
     Parameters
     ----------
-    raster
+    raster : gdal.Image
         A gdal.Image object
 
     Returns
     -------
-    An ogr.Geometry object containing a single wkbPolygon with four points defining the bounding rectangle of the
-    raster.
+    boundary : ogr.Geometry
+        An ogr.Geometry object containing a single wkbPolygon with four points defining the bounding rectangle of the
+        raster.
 
     Notes
     -----
@@ -380,19 +410,21 @@ def floor_to_resolution(input, resolution):
 
     Parameters
     ----------
-    input
+    input : number
         The value to be rounded
-    resolution
+    resolution : number
         The resolution
 
     Returns
     -------
-    The largest value between input and 0 that is divisible by resolution.
+    output : number
+        The largest value between input and 0 that is wholly divisible by resolution.
 
     Notes
     -----
-    Uses the following formula: input-(input%resolution)
-
+    Uses the following formula: ``input-(input%resolution)``
+    If resolution is less than 1, then this assumes that the projection is in decmial degrees and will be rounded to 6dp
+    before flooring. However, it is not recommended to use this function in that situation.
 
     """
     if resolution > 1:
@@ -412,12 +444,13 @@ def get_raster_size(raster):
 
     Parameters
     ----------
-    raster
+    raster : gdal.Image
         A gdal.Image object
 
     Returns
     -------
-    A tuple containing (width, height)
+    width, height : number
+        A tuple containing (width, height)
     """
     geotrans = raster.GetGeoTransform()
     width = geotrans[1]*raster.RasterXSize
@@ -427,15 +460,17 @@ def get_raster_size(raster):
 
 def get_aoi_bounds(aoi):
     """
-    Returns a wkbPolygon geometry with the bounding rectangle of a single-polygon shapefile
+    Returns a wkbPolygon geometry with the bounding rectangle of a single-layer shapefile
 
     Parameters
     ----------
-    aoi
+    aoi : ogr.Dataset
         An ogr.Dataset object containing a single layer.
 
     Returns
     -------
+    bounds_poly : ogr.Geometry
+        A polygon containing the bounding rectangle
 
     """
     aoi_bounds = ogr.Geometry(ogr.wkbLinearRing)
@@ -456,12 +491,13 @@ def align_bounds_to_whole_number(bounding_box):
 
     Parameters
     ----------
-    bounding_box
+    bounding_box : ogr.Geometry
         An ogr.Geometry object containing a raster's bounding box as a polygon.
 
     Returns
     -------
-    An ogr.Geometry object containing the aligned bounding box.
+    bounds_poly : ogr.Geometry
+        An ogr.Geometry object containing the aligned bounding box.
 
     """
     # This should prevent off-by-one errors caused by bad image alignment
@@ -486,12 +522,13 @@ def get_aoi_size(aoi):
 
     Parameters
     ----------
-    aoi
+    aoi : ogr.Geometry
         A shapefile containing a single layer with a single polygon
 
     Returns
     -------
-     A tuple of (width, height).
+    width, height : number
+        Width and height of the bounding box
 
     """
     (x_min, x_max, y_min, y_max) = aoi.GetLayer(0).GetExtent()
@@ -505,12 +542,13 @@ def get_poly_size(poly):
 
     Parameters
     ----------
-    poly
+    poly : ogr.Geometry
         A ogr.Geometry object containing the polygon.
 
     Returns
     -------
-    A tuple of (width, height).
+    width, height : number
+        Width and height of the polygon
 
     """
     boundary = poly.Boundary()
@@ -525,12 +563,13 @@ def get_poly_bounding_rect(poly):
     Returns a polygon of the bounding rectangle of an input polygon.
     Parameters
     ----------
-    poly
+    poly : ogr.Geometry
         An ogr.Geometry object containing a polygon
 
     Returns
     -------
-    An ogr.Geometry object with a four-point polygon representing the bounding rectangle.
+    bounding_rect : ogr.Geometry
+        An ogr.Geometry object with a four-point polygon representing the bounding rectangle.
 
     """
     aoi_bounds = ogr.Geometry(ogr.wkbLinearRing)
@@ -552,14 +591,15 @@ def get_local_top_left(raster1, raster2):
 
     Parameters
     ----------
-    raster1
+    raster1 : gdal.Image
         The raster to get the top-left corner of.
-    raster2
+    raster2 : gdal.Image
         The raster that raster1's top-left corner is over.
 
     Returns
     -------
-     A tuple of (x_pixel, y_pixel), containing the indicies of the point in the raster.
+    x_pixel, y_pixel : int
+        The indicies of the pixel of top-left corner of raster 1 in raster 2.
 
     """
     # TODO: Test this

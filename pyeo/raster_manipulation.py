@@ -1,28 +1,114 @@
 """
-
 pyeo.raster_manipulation
-------------------------
-Functions for working with raster data.
+========================
+Functions for working with raster data, including masks and platform-specific processing functions.
 
-NOTE: supported datatypes
-gdal.GDT_Unknown
-gdal.GDT_Byte
-gdal.GDT_UInt16
-gdal.GDT_Int16
-gdal.GDT_UInt32
-gdal.GDT_Int32
-gdal.GDT_Float32
-gdal.GDT_Float64
-gdal.GDT_CInt16
-gdal.GDT_CInt32
-gdal.GDT_CFloat32
-gdal.GDT_CFloat64
+Key functions
+-------------
 
-NOTE: Geotransforms
+    :py:func:`create_matching_dataset` Creates an empty raster of the same shape as a source, ready for writing.
 
-NOTE: Projections
+    :py:func:`stack_rasters` Stacks a list of rasters into a single raster.
 
-NOTE: Masks
+    :py:func:`preprocess_sen2_images` Preprocesses a set of of Sentinel-2 images into single raster files.
+
+Rasters
+-------
+
+When working with raster data (geotiff, .jp2, ect) using this module, the following assumptions have been made:
+
+* Any function that reads a raster can read from any gdal-readable format
+* All interim rasters are stored internally as a geotiff
+* All internal rasters have a .tif extension in the filename
+* Unless otherwise stated, **all rasters are assumed to be in a projected coordinate system** - i.e. in meters.
+  Functions may fail if passed a raster in lat-long projection
+
+Timestamps
+----------
+
+Pyeo uses the same timestamp convention as ESA: `yyyymmddThhmmss`; for example, 1PM on 27th December 2020 would be
+`20201227T130000`. All timestamps are in UTC
+
+Supported datatypes
+-------------------
+
+When a function in this library asks for a datatype, it can take one of the following
+
+.. code:: python
+
+    gdal.GDT_Unknown
+    gdal.GDT_Byte
+    gdal.GDT_UInt16
+    gdal.GDT_Int16
+    gdal.GDT_UInt32
+    gdal.GDT_Int32
+    gdal.GDT_Float32
+    gdal.GDT_Float64
+    gdal.GDT_CInt16
+    gdal.GDT_CInt32
+    gdal.GDT_CFloat32
+    gdal.GDT_CFloat64
+
+
+
+
+Geotransforms
+-------------
+Every gdal raster has a geotransform associated with it; this defines it's top-left hand corner in the projection
+and pixel size.
+In Pyeo, it takes the form of a 6-element tuple; for north-up images, these are the following.
+
+.. code:: python
+
+    geotransform[0] = top_left_x
+    geotransfrom[1] = pixel_width
+    geotransform[2] = 0
+    geotransform[3] = top_left_y
+    geotransform[4] = 0
+    geotransform[5] = pixel_height
+
+A projection can be obtained from a raster with the following snippet:
+
+.. code:: python
+
+    image = gdal.Open("my_raster.tif")
+    gt = image.GetGeoTransform()
+
+For more information, see the following: See the following: https://gdal.org/user/raster_data_model.html#affine-geotransform
+
+Projections
+-----------
+Each Gdal raster also has a projection, defining (among other things) the unit of the geotransform.
+Projections in Pyeo are referred to either by EPSG number or passed around as a wkt( well-known text) string.
+You can look up EPSG values at https://epsg.io
+You can use the following snippet to extract the well-known text of a raster
+
+.. code:: python
+
+    projection = image.GetProjection()
+
+Masks
+-----
+Some functions in this module include options for creating and applying masks.
+
+* A raster may have an associated mask
+
+* A mask is a geotif with an identical name as the raster it's masking with a .msk extension
+
+   * For example, the mask for my_sat_image.tif is my_sat_image.msk
+
+* A mask is
+
+   * a single band raster
+   * of identical height, width and resolution of the related image
+   * contains values 0 or 1
+
+* A mask is applied by multiplying it with each band of its raster
+
+   * So any pixel with a 0 in its mask will be removed, and a 1 will be kept
+
+Function reference
+------------------
 """
 import sys
 import datetime
@@ -69,20 +155,22 @@ def create_matching_dataset(in_dataset, out_path,
 
     Parameters
     ----------
-    in_dataset
+    in_dataset : gdal.Dataset
         A gdal.Dataset object
-    out_path
+    out_path : str
         The path to save the copied dataset to
-    format
+    format : str, optional
         The Ggal image format. Defaults to geotiff ("GTiff"); for a full list, see https://gdal.org/drivers/raster/index.html
-    bands
-        The number of bands in the dataset. Defaults to one.
-    datatype
-        The datatype of the returned dataset. See the introduction for this module.
+    bands : int, optional
+        The number of bands in the dataset. Defaults to 1.
+    datatype : gdal constant, optional
+        The datatype of the returned dataset. See the introduction for this module. Defaults to in_dataset's datatype
+        if not supplied.
 
     Returns
     -------
-    An gdal.Dataset of the new, empty dataset that is ready for writing.
+    new_dataset : gdal.Dataset
+        An gdal.Dataset of the new, empty dataset that is ready for writing.
 
     """
     driver = gdal.GetDriverByName(format)
@@ -101,23 +189,25 @@ def create_matching_dataset(in_dataset, out_path,
 def save_array_as_image(array, path, geotransform, projection, format = "GTiff"):
     """
     Saves a given array as a geospatial image to disk in the format 'format'. The datatype will be of one corresponding
-    to
-    Array must be gdal format: [bands, y, x].
+    to Array must be gdal format: [bands, y, x].
 
     Parameters
     ----------
-    array
+    array : array_like
         A Numpy array containing the values to be saved to a raster
-    path
+    path : str
         The path to the location to save the output raster to
-    geotransform
+    geotransform : list
         The geotransform of the image to be saved. See note.
-    projection
+    projection : str
         The projection, as wkt, of the image to be saved. See note.
-    format
+    format : str, optional
+        The image format. Defaults to 'GTiff'; see note for other types.
 
     Returns
     -------
+    path_to_image : str
+        The path to the image
 
     """
     driver = gdal.GetDriverByName(format)
@@ -148,20 +238,26 @@ def create_new_stacks(image_dir, stack_dir):
 
     Parameters
     ----------
-    image_dir
+    image_dir : str
         A path to the directory containing the images to be stacked, all named as Sentinel 2 identifiers
-    stack_dir
+    stack_dir : str
         A path to a directory to save the stacked images to.
     Returns
     -------
-        A list of paths to the new stacks, each names as
+    new_stacks : list of str
+        A list of paths to the new stacks
 
     Notes
     -----
     The pairing algorithm is as follows:
-    Step 1: Group directory b
+    Step 1: Group directory by tile number
     Step 2: For each tile number, sort by time
-    Step 3: For each image in the sorted list, stack wach image with it's next oldest image.
+    Step 3: For each image in the sorted list, stack each image with it's next oldest image.
+
+    Raises
+    ------
+    CreateNewStacksException
+        If the image directory is empty
 
     """
     new_images = []
@@ -194,29 +290,30 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
                                invert_stack = False):
     """
     Creates a single 8-band geotif image with a cloud-free composite, and saves the result in out_dir. Images are named
-    "composite_tile_timestamp-of-composite_timestamp-of-image". Bands 123 and 4 are the BGR and I bands of the
-    composite, and bands 567 and 8 are the BGR and I bands of the image.
+    "composite_tile_timestamp-of-composite_timestamp-of-image". Bands 1,2,3 and 4 are the B,G,R and I bands of the
+    composite, and bands 5,6,7 and 8 are the B,G,R and I bands of the image.
 
     Parameters
     ----------
-    image_path
-        Path to the image to be stacked .
-    composite_path
+    image_path : str
+        Path to the image to be stacked
+    composite_path : str
         Path to the composite to stack the image with
-    out_dir
+    out_dir : str
         The directory to save the resulting composite to
-    create_combined_mask
+    create_combined_mask : bool, optional
         If true, combines the cloud mask files associated with the images into a single mask. The mask will mask out
-        clouds that exist in either image.
-    skip_if_exists
-        If true, skip stacking if a file with the same name is found.
-    invert_stack
-        If true, changes the ordering of the bands to image BGRI - composite BGRI. Included to permit compatability
-        with older models - you can ususally leave this alone.
+        clouds that exist in either image. Defaults to True.
+    skip_if_exists : bool, optional
+        If true, skip stacking if a file with the same name is found. Defaults to True.
+    invert_stack : bool, optional.
+        If true, changes the ordering of the bands to image BGRI - composite BGRI. Included to permit compatibility
+        with older models - you can usually leave this alone.
 
     Returns
     -------
-    The path to the new composite.
+    out_path : str
+        The path to the new composite.
 
     """
     log.info("Stacking {} with composite {}".format(image_path, composite_path))
@@ -250,19 +347,19 @@ def stack_images(raster_paths, out_raster_path,
 
     Parameters
     ----------
-    raster_paths
+    raster_paths : list of str
         A list of paths to the rasters to be stacked, in order.
-    out_raster_path
+    out_raster_path : str
         The path to the saved output raster.
-    geometry_mode
+    geometry_mode : {'intersect' or 'union'}
         Can be either 'instersect' or 'union'.
         - If 'intersect', then the output raster will only contain the pixels of the input rasters that overlap.
         - If 'union', then the output raster will contain every pixel in the outputs. Layers without data will
-        have their pixel values set to 0.
-    format
-        The GDAL image format for the output.
-    datatype
-        The datatype of the gdal array
+          have their pixel values set to 0.
+    format : str, optional
+        The GDAL image format for the output. Defaults to 'GTiff'
+    datatype : gdal datatype, optional
+        The datatype of the gdal array - see introduction. Defaults to gdal.GDT_Int32.
 
     """
     #TODO: Confirm the union works, and confirm that nondata defaults to 0.
@@ -313,6 +410,23 @@ def stack_images(raster_paths, out_raster_path,
 
 
 def strip_bands(in_raster_path, out_raster_path, bands_to_strip):
+    """
+    Removes bands from a raster and saves a copy.
+    Parameters
+    ----------
+    in_raster_path : str
+        Path to the raster
+    out_raster_path : str
+        Path to the output
+    bands_to_strip : list of int
+        0-indexed list of bands to remove
+
+    Returns
+    -------
+    out_path : str
+        The path to the output
+
+    """
     in_raster = gdal.Open(in_raster_path)
     out_raster_band_count = in_raster.RasterCount-len(bands_to_strip)
     out_raster = create_matching_dataset(in_raster, out_raster_path, bands=out_raster_band_count)
@@ -341,19 +455,19 @@ def average_images(raster_paths, out_raster_path,
 
     Parameters
     ----------
-    raster_paths
+    raster_paths : list of str
         A list of paths to the rasters to be stacked, in order.
-    out_raster_path
+    out_raster_path : str
         The path to the saved output raster.
-    geometry_mode
-        Can be either 'instersect' or 'union'.
+    geometry_mode : {'intersect' or 'union'}, optional
+        Can be either 'intersect' or 'union'. Defaults to 'intersect'.
         - If 'intersect', then the output raster will only contain the pixels of the input rasters that overlap.
         - If 'union', then the output raster will contain every pixel in the outputs. Layers without data will
-        have their pixel values set to 0.
-    format
-        The GDAL image format for the output.
-    datatype
-        The datatype of the gdal array
+          have their pixel values set to 0.
+    format : str
+        The GDAL image format for the output. Defaults to 'GTiff'
+    datatype : gdal datatype
+        The datatype of the gdal array - see note. Defaults to gdal.GDT_Int32
 
     """
     # TODO: Confirm the union works, and confirm that nondata defaults to 0.
@@ -411,15 +525,14 @@ def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
 
     Parameters
     ----------
-    in_raster_path
+    in_raster_path : str
         Path to the imput raster
-    out_raster_path
+    out_raster_path : str
         Path of the output raster
-    polygon
+    polygon : ogr.Geometry
         A ogr.Geometry containing a single polygon
-    format
-        Image format of the output raster. Defaults to geotiff.
-
+    format : str
+        Image format of the output raster. Defaults to 'GTiff'.
     """
     with TemporaryDirectory() as td:
         in_raster = gdal.Open(in_raster_path)
@@ -462,16 +575,16 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
 
     Parameters
     ----------
-    raster_paths
+    raster_paths : str
         A list of paths of raster to be mosaiced
-    out_raster_file
+    out_raster_file : str
         The path to the output file
-    format
-        The image format of the output raster.
-    datatype
-        The datatype of the output raster
-    nodata
-        The input nodata value; any pixels in raster_paths with this value will be ignored.
+    format : str
+        The image format of the output raster. Defaults to 'GTiff'
+    datatype : gdal datatype
+        The datatype of the output raster. Defaults to gdal.GDT_Int32
+    nodata : number
+        The input nodata value; any pixels in raster_paths with this value will be ignored. Defaults to 0.
 
     """
 
@@ -506,21 +619,23 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
 
 def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff", generate_date_image=False):
     """
-    Works down in_raster_path_list, updating pixels in composite_out_path if not masked.
+    Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Will also create a mask and
+    (optionally) a date image in the same directory.
 
     Parameters
     ----------
-    in_raster_path_list
+    in_raster_path_list : list of str
         A list of paths to rasters.
-    composite_out_path
+    composite_out_path : str
         The path of the output image
-    format
-        The gdal format of the image.
-    generate_date_image
-        If true, generates a single-layer raster containing the dates of each image detected.
+    format : str, optional
+        The gdal format of the image. Defaults to "GTiff"
+    generate_date_image : bool, optional
+        If true, generates a single-layer raster containing the dates of each image detected - see below.
 
     Returns
     -------
+    composite_path : str
         The path to the composite.
 
     Notes
@@ -529,6 +644,9 @@ def composite_images_with_mask(in_raster_path_list, composite_out_path, format="
     All images must have the same number of layers and resolution, but do not have to be perfectly on top of each
     other. If it does not exist, composite_out_path will be created. Takes projection, resolution, ect from first band
     of first raster in list. Will reproject images and masks if they do not match initial raster.
+
+    If generate_date_images is True, an raster ending with the suffix .date will be created; each pixel will contain the
+    timestamp (yyyymmdd) of the date that pixel was last seen in the composite.
 
     """
 
@@ -607,15 +725,15 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
 
     Parameters
     ----------
-    in_dir
+    in_dir : str
         A directory containing the rasters to be reprojected/
-    out_dir
+    out_dir : str
         The directory to save the output files to. Output files will be saved in out_dir, with the same
         filenames.
-    new_projection
+    new_projection : str
         The new projection in wkt.
-    extension
-        The file extension to reproject
+    extension : str, optional
+        The file extension to reproject. Default is '.tif'
 
     """
     log = logging.getLogger(__name__)
@@ -632,24 +750,26 @@ def reproject_image(in_raster, out_raster_path, new_projection,  driver = "GTiff
 
     Parameters
     ----------
-    in_raster
-        Either a gdal.Raster object or a path to a raster
-    out_raster_path
+    in_raster : str or gdal.Dataset
+        Either a gdal.Dataset object or a path to a raster
+    out_raster_path : str
         The path to the new output raster.
-    new_projection
-        The new projection in .wkt
-    driver
+    new_projection : str or int
+        The new projection in .wkt or as an EPSG number
+    driver : str, optional
         The format of the output raster.
-    memory
-        The amount of memory to give to the reprojection.
-    do_post_resample
-        If set to false, do not resample the image back to the original projection.
+    memory : float, optional
+        The amount of memory to give to the reprojection. Defaults to 2e3
+    do_post_resample : bool, optional
+        If set to false, do not resample the image back to the original projection. Defaults to True
 
     Notes
     -----
     The GDAL reprojection routine changes the size of the pixels by a very small amount; for example, a 10m pixel image
-    can become a 10.002m pixel resolution image. To stop alignment issues,
-    by deafult this function resamples the images back to their original resolution
+    can become a 10.002m pixel resolution image. To stop alignment issues, by default this function resamples the images
+    back to their original resolution. If you are reprojecting from latlon to meters and get an outofmemory error from
+    Gdal, set do_post_resample to False.
+
 
     """
     if type(new_projection) is int:
@@ -676,18 +796,20 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
 
     Parameters
     ----------
-    image_dir
+    image_dir : str
         The directory containing the rasters and associated .msk files to be composited.
-    composite_out_dir
+    composite_out_dir : str
         The directory that will contain the final composite
-    format
-        The raster format of the output image.
-    generate_date_images
+    format : str, optional
+        The raster format of the output image. Defaults to 'GTiff'
+    generate_date_images : bool, optional
         If true, generates a corresponding date image for the composite. See docs for composite_images_with_mask.
+        Defaults to False.
 
     Returns
     -------
-    The path to the new composite
+    composite_out_path : str
+        The path to the new composite
 
     """
     log = logging.getLogger(__name__)
@@ -708,9 +830,9 @@ def flatten_probability_image(prob_image, out_path):
 
     Parameters
     ----------
-    prob_image
+    prob_image : str
         The path to a probability image.
-    out_path
+    out_path : str
         The place to save the flattened image.
 
     """
@@ -733,14 +855,15 @@ def get_masked_array(raster, mask_path):
     the mask is single-band, the mask will be applied to every raster.
     Parameters
     ----------
-    raster
-        A gdal.Image object
-    mask_path
+    raster : gdal.Dataset
+        A gdal.Dataset object
+    mask_path : str
         The path to the mask to use
 
     Returns
     -------
-    A numpy.masked array of the raster.
+    masked_array : numpy.masked
+        A numpy.masked array of the raster.
 
     """
     mask = gdal.Open(mask_path)
@@ -757,13 +880,13 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
     Stacks an old and new S2 image and trims to within an aoi.
     Parameters
     ----------
-    old_image_path
+    old_image_path : str
         Path to the image that will be the first set of bands in the output image
-    new_image_path
+    new_image_path : str
         Path to the image that will be the second set of bands in the output image
-    aoi_path
+    aoi_path : str
         Path to a shapefile containing the AOI
-    out_image
+    out_image : str
         Path to the location of the clipped and stacked image.
 
     """
@@ -788,14 +911,15 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
 
     Parameters
     ----------
-    raster_path
+    raster_path : str
         Path to the raster to be clipped.
-    aoi_path
+    aoi_path : str
         Path to a shapefile containing a single polygon
-    out_path
+    out_path : str
         Path to a location to save the final output raster
 
     """
+    # TODO: Set values outside clip to 0 or to NaN - in irregular polygons
     # https://gis.stackexchange.com/questions/257257/how-to-use-gdal-warp-cutline-option
     with TemporaryDirectory() as td:
         log.info("Clipping {} with {}".format(raster_path, aoi_path))
@@ -839,11 +963,11 @@ def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_ras
     Assumes both raster_to_clip and extent_raster are in the same projection.
     Parameters
     ----------
-    raster_to_clip_path
+    raster_to_clip_path : str
         The location of the raster to be clipped.
-    extent_raster_path
+    extent_raster_path : str
         The location of the raster that will provide the extent to clip to
-    out_raster_path
+    out_raster_path : str
         A location for the finished raster
     """
 
@@ -863,24 +987,22 @@ def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
 
     Parameters
     ----------
-    polygon
+    polygon : ogr.Geometry
         An OGR.Geometry object of a single polygon
-    out_path
+    out_path : str
         The path to save the new image to
-    x_res
+    x_res : number
         Pixel width in the new image
-    y_res
+    y_res : number
         Pixel height in the new image
-    bands
+    bands : int
         Number of bands in the new image.
-    projection
+    projection : str
         The projection, in wkt, of the output image.
-    format
-        The gdal raster format of the output image
-    datatype
-        The gdal datatype of the output image
-    nodata
-        The nodata value of the output image
+    format : str, optional
+        The gdal raster format of the output image. Defaults to "Gtiff"
+    datatype : gdal datatype, optional
+        The gdal datatype of the output image. Defaults to gdal.GDT_Int32
 
     Returns
     -------
@@ -915,10 +1037,10 @@ def resample_image_in_place(image_path, new_res):
 
     Parameters
     ----------
-    image_path
+    image_path : str
         Path to the image to be resampled
 
-    new_res
+    new_res : number
         Pixel edge size in meters
 
     """
@@ -944,10 +1066,18 @@ def align_image_in_place(image_path, target_path):
     """
     Adjusts the geotransform of the image at image_path with that of the one at target_path, so they align neatly with
     the smallest magnitude of movement
+
     Parameters
     ----------
-    image_path
-    alignment_path
+    image_path : str
+        The path to the image to be adjusted.
+    target_path : str
+        The image to align the image at image_path to.
+
+    Raises
+    ------
+    NonSquarePixelException
+        Raised if either image does not have square pixels
 
     """
     log.info("Aligning {} with{}")
@@ -1007,11 +1137,12 @@ def raster_to_array(rst_pth):
 
     Parameters
     ----------
-    rst_pth
+    rst_pth : str
         Path to input raster.
     Returns
     -------
-    As N-dimensional array.
+    out_array : array_like
+        An N-dimensional array.
     """
     log = logging.getLogger(__name__)
     in_ds = gdal.Open(rst_pth)
@@ -1020,13 +1151,36 @@ def raster_to_array(rst_pth):
     return out_array
 
 def get_extent_as_shp(in_ras_path, out_shp_path):
-    """"""
+    """
+    Gets the extent of a raster as a shapefile
+    Parameters
+    ----------
+    in_ras_path : str
+        The raster to get
+    out_shp_path : str
+        The shape path
+    Returns
+    -------
+    out_shp_path : str
+        The path to the new shapefile
+
+    """
     #By Qing
     os.system('gdaltindex ' + out_shp_path + ' ' + in_ras_path)
     return out_shp_path
 
 
 def calc_ndvi(raster_path, output_path):
+    """
+    Creates a raster of NDVI from the input raster at output_path
+    Parameters
+    ----------
+    raster_path : str
+        Path to a raster with blue, green, red and infrared bands (in that order)
+    output_path : str
+        Path to a location to save the output raster
+
+    """
     raster = gdal.Open(raster_path)
     out_raster = create_matching_dataset(raster, output_path, datatype=gdal.GDT_Float32)
     array = raster.GetVirtualMemArray()
@@ -1046,8 +1200,32 @@ def calc_ndvi(raster_path, output_path):
 
 
 def apply_band_function(in_path, function, bands, out_path, out_datatype = gdal.GDT_Int32):
-    """Applys an arbitrary band mathemtics function to an image at in_path and saves the result at out_map.
-    Function should be a function ofblect of the form f(band_input_A, band_input_B, ...)"""
+    """
+    Applys an arbitrary band mathemtics function to an image at in_path and saves the result at out_map.
+    Function should be a function object of the form f(band_input_A, band_input_B, ...)
+
+    Parameters
+    ----------
+    in_path : str
+        The image to process
+    function : Func
+    bands
+    out_path
+    out_datatype
+
+    Examples
+    --------
+    Calculating the NDVI of an image with red band at band 0 and IR band at 4
+    First, define the function to be run across each pixel:
+
+    >>> def ndvi_function(r, i):
+    ...     return (r-i)/(r+i)
+
+
+
+    >>> apply_band_function("my_raster.tif", ndvi_function, [0,1], "my_ndvi.tif")
+
+    """
     raster = gdal.Open(in_path)
     out_raster = create_matching_dataset(raster, out_path=out_path, datatype=out_datatype)
     array = raster.GetVirtualMemArray()
@@ -1062,12 +1240,46 @@ def apply_band_function(in_path, function, bands, out_path, out_datatype = gdal.
 
 
 def ndvi_function(r, i):
+    """
+    :meta private:
+    Parameters
+    ----------
+    r
+    i
+
+    Returns
+    -------
+
+    """
     return (r-i)/(r+i)
 
 
 def apply_image_function(in_paths, out_path, function, out_datatype = gdal.GDT_Int32):
-    """Applies a pixel-wise function across every image. Assumes each image is exactly contiguous and, for now,
-    single-banded. function() should take a list of values and return a single value."""
+    """
+    Applies a pixel-wise function across every image. Assumes each image is exactly contiguous and, for now,
+    single-banded. function() should take a list of values and return a single value.
+
+    Parameters
+    ----------
+    in_paths : list of str
+        list of raster paths to process
+    out_path : str
+        The path to the
+    function : function
+        The function to apply to the list of images. Must take a list of numbers as an input and return a value.
+    out_datatype : gdal datatype, optional
+        The datatype of the final raster. Defaults to gdal.gdt_Int32
+
+    Examples
+    --------
+    Producing a raster where each pixel contains the sum of the corresponding pixels in a list of other rasters
+
+    >>> def sum_function(pixels_in):
+    ...     return np.sum(pixels_in)
+    >>> in_paths = os.listdir("my_raster_dir")
+    >>> apply_image_function(in_paths, "sum_raster.tif", sum_function)
+
+    """
     rasters = [gdal.Open(in_path) for in_path in in_paths]
     raster_arrays = [raster.GetVirtualMemArray() for raster in rasters]
     in_array = np.stack(raster_arrays, axis=0)
@@ -1096,13 +1308,14 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
     Parameters
     ----------
 
-    inRstList
+    inRstList : list of str
         List of rasters to stack.
-    outFmt
-        String specifying the input data format e.g. 'GTiff' or 'VRT'.
-    outFn
+    outFn : str
         Filename output as str including directory else image will be
         written to current working directory.
+    outFmt : str, optional.
+        String specifying the input data format e.g. 'GTiff' or 'VRT'. Defaults to GTiff.
+
 
     """
     log = logging.getLogger(__name__)
@@ -1156,15 +1369,21 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
 
     Parameters
     ----------
-    image_path
-        Path to the imaage to be filtered
-    class_map_path
-    out_map_path
-    classes_of_interest
-    out_resolution
+    image_path : str
+        Path to the raster to be filtered.
+    class_map_path : str
+        Path to the map to use as the filter. Assumes a raster of integer class labels.
+    out_map_path : str
+        Path to the filtered map
+    classes_of_interest : list of int
+        The classes in class_map_path to keep present in the raster to be filtered
+    out_resolution : number, optional
+        The resolution of the output image
 
     Returns
     -------
+    out_map_path : str
+        The path to the new map
 
     """
     # TODO: Include nodata value
@@ -1202,7 +1421,24 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
 
 
 def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
-    """Opens a dataset given a safe file. Give band as a string."""
+    """
+    Opens a dataset given a level 2 .SAFE file.
+
+    Parameters
+    ----------
+    safe_file_path : str
+        The path to the .SAFE file
+    band : int
+        The band to open
+    resolution : {'10m', '20m', '60m'}, optional
+        The resolution of imagery to open. Defaults to "10m".
+
+    Returns
+    -------
+    band_raster : gdal.Dataset
+        A Gdal dataset contining the band
+
+    """
     image_glob = r"GRANULE/*/IMG_DATA/R{}/*_{}_{}.jp2".format(resolution, band, resolution)
     # edited by hb91
     #image_glob = r"GRANULE/*/IMG_DATA/*_{}.jp2".format(band)
@@ -1214,8 +1450,36 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 
 def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None,
                            bands=("B02", "B03", "B04", "B08"), out_resolution=10):
-    """For every .SAFE folder in in_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
-    the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided"""
+    """
+    For every .SAFE folder in l2_dir and L1_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
+    the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided.
+
+    Parameters
+    ----------
+    l2_dir : str
+        The directory containing a set of L2 .SAFE folders to preprocess
+    out_dir : str
+        The directory to store the preprocessed files
+    l1_dir : str
+        The directory containing a set of L1 .SAFE files, corresponding to the L2 files in l2_dir
+    cloud_threshold : number
+        DEPRECIATED; in for backwards compatibility.
+    buffer_size : int, optional
+        The buffer to apply to the sen2cor mask - defaults to 0
+    epsg : int, optional
+        If present, the EPSG number to reproject the final images to.
+    bands : list of str, optional
+        List of names of bands to include in the final rasters. Defaults to ("B02", "B03", "B04", "B08")
+    out_resolution : number, optional
+        Resolution to resample every image to - units are defined by the image projection. Default is 10.
+
+    Warnings
+    --------
+    This functions' augment list is likely to be changed in the near future to (l1_dir, l2_dir, out_dir) - please
+    be aware - September 2020.
+
+
+    """
     safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
     for l2_safe_file in safe_file_path_list:
         with TemporaryDirectory() as temp_dir:
@@ -1251,8 +1515,23 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
 
 def preprocess_landsat_images(image_dir, out_image_path, new_projection = None, bands_to_stack=("B2","B3","B4")):
     """
+
+
     Stacks a set of Landsat images into a single raster and reorders the bands into
     [bands, y, x] - by default, Landsat uses [x,y] and bands are in seperate rasters.
+    If given, will also reproject to an EPSG or .wkt
+
+    Parameters
+    ----------
+    image_dir : str
+        The directory containing the Landsat images
+    out_image_path : str
+        The path to the stacked image
+    new_projection : int or str, optional
+        An EPSG number or a .wkt containing a projection. Defaults to None
+    bands_to_stack : list of str, optional
+        The Landsat bands to put into the stacked
+
     """
     log.info("Stacking Landsat rasters in folder {}".format(image_dir))
     band_path_list = []     # This still feels like a Python antipattern, but hey.
@@ -1297,7 +1576,26 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None, 
 
 
 def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04", "B08"), out_resolution=10):
-    """Stacks the specified bands of a .SAFE granule directory into a single geotiff"""
+    """
+    Stacks the specified bands of a .SAFE granule directory into a single geotiff
+
+    Parameters
+    ----------
+    safe_dir : str
+        Path to the .SAFE file to stack
+    out_image_path : str
+        Location of the new image
+    bands : list of str, optional
+        The band IDs to be stacked
+    out_resolution
+        The final resolution of the geotif- bands will be resampled if needed.
+
+    Returns
+    -------
+    out_image_path : str
+        The path to the new image
+
+    """
 
     band_paths = [get_sen_2_band_path(safe_dir, band, out_resolution) for band in bands]
 
@@ -1326,7 +1624,24 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04",
 
 
 def get_sen_2_band_path(safe_dir, band, resolution=None):
-    """Returns the path to the raster of the specified band in the specified safe_dir. """
+    """
+    Returns the path to the raster of the specified band in the specified safe_dir.
+
+    Parameters
+    ----------
+    safe_dir : str
+        Path to the directory containing the raster
+    band : str
+        The band identifier ('B01', 'B02', ect)
+    resolution : int, optional
+        If given, tries to get that band in that image - if not, tries for the highest resolution
+
+    Returns
+    -------
+    band_path : str
+        The path to the raster containing the band.
+
+    """
     if resolution == 10:
         res_string = "10m"
     elif resolution == 20:
@@ -1365,7 +1680,20 @@ def get_sen_2_band_path(safe_dir, band, resolution=None):
 
 
 def get_image_resolution(image_path):
-    """Returns the resolution of the image in its native projection. Assumes square pixels."""
+    """
+    Returns the resolution of the image in its native projection. Assumes square pixels.
+
+    Parameters
+    ----------
+    image_path : str
+        Path to a raster
+
+    Returns
+    -------
+    resolution : number
+        The size of each pixel in the image, in the units of its native projection.
+
+    """
     image= gdal.Open(image_path)
     if image is None:
         raise FileNotFoundError("Image not found at {}".format(image_path))
@@ -1378,14 +1706,31 @@ def get_image_resolution(image_path):
 
 def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_combined_mask=True):
     """
-    Stacks two images with the same tile
-    Names the result with the two timestamps.
-    First, decompose the granule ID into its components:
-    e.g. S2A, MSIL2A, 20180301, T162211, N0206, R040, T15PXT, 20180301, T194348
-    are the mission ID(S2A/S2B), product level(L2A), datatake sensing start date (YYYYMMDD) and time(THHMMSS),
-    the Processing Baseline number (N0206), Relative Orbit number (RO4O), Tile Number field (T15PXT),
-    followed by processing run date and then time
+    Stacks two images that cover the same tile into a single multi-band raster, old_image_path being the first set of
+    bands and new_image_path being the second. The produced image will have the name `{tile}_{old_date}_{new_date}.tif`.
+
+    Parameters
+    ----------
+    old_image_path : str
+        Path to the older image
+    new_image_path : str
+        Path to the newer image
+    out_dir : str
+        Directory to place the new stacked raster into
+    create_combined_mask : bool, optional
+        If True, finds and combines the associated mask files between
+
+    Returns
+    -------
+    out_image_path : str
+        The path to the new image
+
     """
+    # First, decompose the granule ID into its components:
+    # e.g. S2A, MSIL2A, 20180301, T162211, N0206, R040, T15PXT, 20180301, T194348
+    # are the mission ID(S2A/S2B), product level(L2A), datatake sensing start date (YYYYMMDD) and time(THHMMSS),
+    # the Processing Baseline number (N0206), Relative Orbit number (RO4O), Tile Number field (T15PXT),
+    # followed by processing run date and then time
     log = logging.getLogger(__name__)
     tile_old = get_sen_2_image_tile(old_image_path)
     tile_new = get_sen_2_image_tile(new_image_path)
@@ -1408,7 +1753,24 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
 
 
 def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
-    """Applies sen2cor to the SAFE file at image_path. Returns the path to the new product."""
+    """
+    Applies sen2cor to the SAFE file at image_path. Returns the path to the new product.
+
+    Parameters
+    ----------
+    image_path : str
+        Path to the L1 Sentinel 2 .SAFE file
+    sen2cor_path : str
+        Path to the l2a_process script (Linux) or l2a_process.exe (Windows)
+    delete_unprocessed_image : bool, optional
+        If True, delete the unprocessed image after processing is done. Defaults to False.
+
+    Returns
+    -------
+    out_path : str
+        The path to the new L2 .SAFE file
+
+    """
     # Here be OS magic. Since sen2cor runs in its own process, Python has to spin around and wait
     # for it; since it's doing that, it may as well be logging the output from sen2cor. This
     # approach can be multithreaded in future to process multiple image (1 per core) but that
@@ -1449,16 +1811,17 @@ def build_sen2cor_output_path(image_path, timestamp, version):
     Creates a sen2cor output path dependent on the version ofr sen2cor
     Parameters
     ----------
-    image_path
+    image_path : str
         Path to the image
-    timestamp
+    timestamp : str
         Timestamp that processing was started (required for v >= 2.8)
-    version
+    version : str
         String of the version of sen2cor (ex "2.05.05")
 
     Returns
     -------
-    The path of the finished sen2cor file
+    new_path : str
+        The path of the finished sen2cor file
 
     """
     # Accounting for sen2cors ever-shifting filename format
@@ -1477,12 +1840,13 @@ def get_sen2cor_version(sen2cor_path):
     Gets the version number of sen2cor from the help string.
     Parameters
     ----------
-    sen2cor_path
+    sen2cor_path : str
         Path the the sen2cor executable
 
     Returns
     -------
-    A string of the version of sen2cor at sen2cor_path
+    version : str
+        A string of the version of sen2cor at sen2cor_path
 
     """
     proc = subprocess.run([sen2cor_path, "--help"], stdout=subprocess.PIPE)
@@ -1499,7 +1863,21 @@ def get_sen2cor_version(sen2cor_path):
 
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
-    """Applies Sen2cor cloud correction to level 1C images"""
+    """
+    Applies Sen2cor atmospheric correction to each L1 image in in_directory
+
+    Parameters
+    ----------
+    in_directory : str
+        Path to the directory containing the L1 images
+    out_directory : str
+        Path to the directory that will containg the new L2 images
+    sen2cor_path : str
+        Path to the l2a_process script (Linux) or l2a_process.exe (Windows)
+    delete_unprocessed_image : bool, optional
+        If True, delete the unprocessed image after processing is done. Defaults to False.
+
+    """
     log = logging.getLogger(__name__)
     images = [image for image in os.listdir(in_directory)
               if image.startswith('MSIL1C', 4)]
@@ -1527,7 +1905,28 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
 
 
 def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10, buffer_size=0):
-    """Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the model at model_path."""
+    """
+    Returns a multiplicative mask (0 for cloud, shadow or haze, 1 for clear) built from the ML at model_path.
+
+    Parameters
+    ----------
+    image_path : str
+        Path to the image
+    model_path : str
+        Path to a pickled scikit-learn classification model
+    model_clear : int, optional
+        The class from the model corresponding to non-cloudy pixels. Defaults to 0
+    num_chunks : int, optional
+        The number of chunks to break the processing into. See :py:func:`classification.classify_image`
+    buffer_size : int, optional
+        If present, will apply a buffer of this many pixels to the mask, expanding
+
+    Returns
+    -------
+    mask_path : str
+        The path to the new mask
+
+    """
     from pyeo.classification import classify_image  # Deferred import to deal with circular reference
     with TemporaryDirectory() as td:
         log = logging.getLogger(__name__)
@@ -1551,8 +1950,28 @@ def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10,
 
 
 def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_threshold=0, buffer_size=3):
-    """Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1. If
-    cloud_conf_threshold = 0, use scl mask else use confidence image """
+    """
+    Creates a multiplicative binary mask where cloudy pixels are 0 and non-cloudy pixels are 1. If
+    cloud_conf_threshold = 0, use scl mask else use confidence image
+
+    Parameters
+    ----------
+    l2_safe_path : str
+        Path to the L1
+    out_path : str
+        Path to the new path
+    cloud_conf_threshold : int, optional
+        If 0, uses the sen2cor classification raster as the base for the mask - else uses the cloud confidence image.
+        Defaults to 0
+    buffer_size : int, optional
+        The size of the buffer to apply to the cloudy pixel classes
+
+    Returns
+    -------
+    out_path : str
+        The path to the mask
+
+    """
     log = logging.getLogger(__name__)
     log.info("Creating mask for {} with {} confidence threshold".format(l2_safe_path, cloud_conf_threshold))
     if cloud_conf_threshold:
@@ -1583,7 +2002,29 @@ def create_mask_from_confidence_layer(l2_safe_path, out_path, cloud_conf_thresho
 
 
 def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, buffer_size=0, out_resolution=None):
-    """Creates a mask from a classification mask: 1 for each pixel containing one of classes_of_interest, otherwise 0"""
+    """
+    Creates a multiplicative mask from a classification mask: 1 for each pixel containing one of classes_of_interest,
+    otherwise 0
+
+    Parameters
+    ----------
+    class_map_path : str
+        Path to the classification map to build the mask from
+    out_path : str
+        Path to the new mask
+    classes_of_interest : list of int
+        The list of classes to count as clear pixels
+    buffer_size : int
+        If greater than 0, applies a buffer to the masked pixels of this size. Defaults to 0.
+    out_resolution : int or None, optional
+        If present, resamples the mask to this resoltion. Applied before buffering. Defaults to 0.
+
+    Returns
+    -------
+    out_path : str
+        The path to the new mask.
+
+    """
     # TODO: pull this out of the above function
     class_image = gdal.Open(class_map_path)
     class_array = class_image.GetVirtualMemArray()
@@ -1603,8 +2044,31 @@ def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, bu
 
 
 def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func ="intersect"):
-    """ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
-    Python true or false. Also assumes that all masks are the same projection for now."""
+    """
+    ORs or ANDs several masks. Gets metadata from top mask. Assumes that masks are a
+    Python true or false. Also assumes that all masks are the same projection for now.
+
+    Parameters
+    ----------
+    mask_paths : list of str
+        A list of paths to the masks to combine
+    out_path : str
+        The path to the new mask
+    combination_func : {'and' or 'or}, optional
+        Whether the a pixel in the final mask will be masked if
+        - any pixel ('or') is masked
+        - or all pixels ('and') are masked
+        ..in the corresponding pixels in the list of masks. Defaults to 'and'
+
+    geometry_func : {'intersect' or 'union'}
+        How to handle non-overlapping masks. Defaults to 'intersect'
+
+    Returns
+    -------
+    out_path : str
+        The path to the new mask
+
+    """
     log = logging.getLogger(__name__)
     log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
         mask_paths, combination_func, geometry_func))
@@ -1657,7 +2121,16 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
 
 
 def buffer_mask_in_place(mask_path, buffer_size):
-    """Expands a mask in-place, overwriting the previous mask"""
+    """
+    Expands a mask in-place, overwriting the previous mask
+    Parameters
+    ----------
+    mask_path : str
+        Path to a multiplicative mask (0; masked, 1; unmasked)
+    buffer_size : int
+        The radius of the buffer, in pixel units of the mask
+
+    """
     log = logging.getLogger(__name__)
     log.info("Buffering {} with buffer size {}".format(mask_path, buffer_size))
     mask = gdal.Open(mask_path, gdal.GA_Update)
@@ -1669,13 +2142,46 @@ def buffer_mask_in_place(mask_path, buffer_size):
 
 
 def apply_array_image_mask(array, mask, fill_value=0):
-    """Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value
-    Mask is an a 2 dimensional array of 1 ( unmasked) and 0 (masked)"""
+    """
+    Applies a mask of (y,x) to an image array of (bands, y, x). Replaces any masked pixels with fill_value
+    Mask is an a 2 dimensional array of 1 (unmasked) and 0 (masked)
+
+    Parameters
+    ----------
+    array : array_like
+        The array containing the raster data
+    mask : array_like
+        The array containing the mask
+    fill_value : number, optional
+        The value to replace any masked pixels with. Defaults to 0.
+
+    Returns
+    -------
+    masked_array : array_like
+        The array with masked pixels replaced with fill_value
+
+    """
     stacked_mask = np.broadcast_to(mask, array.shape)
     return np.where(stacked_mask == 1, array, fill_value)
 
 
 def create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, out_mask_path, buffer_size=0):
+    """
+    Creates a cloud mask from a combination of the sen2cor thematic mask and the fmask method. Requires corresponding
+    level 1 and level 2 .SAFE files.
+
+    Parameters
+    ----------
+    l1_safe_file : str
+        Path to the level 1 .SAFE file
+    l2_safe_file : str
+        Path to the level 2 .SAFE file
+    out_mask_path : str
+        Path to the new mask
+    buffer_size : int, optional
+        If greater than 0, the buffer to apply to the Sentinel 2 thematic map
+
+    """
     with TemporaryDirectory() as td:
         s2c_mask_path = os.path.join(td, "s2_mask.tif")
         fmask_mask_path = os.path.join(td, "fmask.tif")
@@ -1685,6 +2191,16 @@ def create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, out_mask_path
 
 
 def create_mask_from_fmask(in_l1_dir, out_path):
+    """
+    Creates a cloud mask from a level 1 Sentinel-2 product using fmask
+    Parameters
+    ----------
+    in_l1_dir : str
+        The path to the l1 .SAFE folder
+    out_path : str
+        The path to new mask
+
+    """
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
     with TemporaryDirectory() as td:
@@ -1704,7 +2220,19 @@ def create_mask_from_fmask(in_l1_dir, out_path):
 
 
 def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"):
-    """Calls fmask to create a new mask for L1 data"""
+    """
+    :meta private:
+    Calls fmask to create a new mask for L1 data
+    Parameters
+    ----------
+    in_safe_dir
+    out_file
+    fmask_command
+
+    Returns
+    -------
+
+    """
     # For reasons known only to the spirits, calling subprocess.run from within this function on a HPC cause the PATH
     # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
     if "torque" in os.getenv("PATH"):  # Are we on a HPC? If so, give explicit path to fmask

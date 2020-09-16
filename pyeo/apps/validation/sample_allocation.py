@@ -1,3 +1,17 @@
+"""
+sample_allocation
+-----------------
+Creates a shapefile of randomly sampled sample points. See `validation`_ for more details, including setup of
+configuration file.
+
+Usage:
+
+::
+
+    sample_allocation config_path.ini
+
+"""
+
 import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..', '..')))
 from pyeo import validation
