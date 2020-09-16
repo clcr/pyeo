@@ -969,6 +969,7 @@ def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_ras
     """
     Clips one raster to the extent proivded by the other raster, and saves the result at temp_file.
     Assumes both raster_to_clip and extent_raster are in the same projection.
+
     Parameters
     ----------
     raster_to_clip_path : str

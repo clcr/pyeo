@@ -494,13 +494,16 @@ Default is False.</p></li>
 <dt id="pyeo.raster_manipulation.clip_raster_to_intersection">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">clip_raster_to_intersection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster_to_clip_path</span></em>, <em class="sig-param"><span class="n">extent_raster_path</span></em>, <em class="sig-param"><span class="n">out_raster_path</span></em>, <em class="sig-param"><span class="n">is_landsat</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.clip_raster_to_intersection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clips one raster to the extent proivded by the other raster, and saves the result at temp_file.
-Assumes both raster_to_clip and extent_raster are in the same projection.
-:param raster_to_clip_path: The location of the raster to be clipped.
-:type raster_to_clip_path: str
-:param extent_raster_path: The location of the raster that will provide the extent to clip to
-:type extent_raster_path: str
-:param out_raster_path: A location for the finished raster
-:type out_raster_path: str</p>
+Assumes both raster_to_clip and extent_raster are in the same projection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster_to_clip_path</strong> (<em>str</em>) – The location of the raster to be clipped.</p></li>
+<li><p><strong>extent_raster_path</strong> (<em>str</em>) – The location of the raster that will provide the extent to clip to</p></li>
+<li><p><strong>out_raster_path</strong> (<em>str</em>) – A location for the finished raster</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
