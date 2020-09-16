@@ -414,6 +414,7 @@ def stack_images(raster_paths, out_raster_path,
 def strip_bands(in_raster_path, out_raster_path, bands_to_strip):
     """
     Removes bands from a raster and saves a copy.
+
     Parameters
     ----------
     in_raster_path : str
@@ -855,6 +856,7 @@ def get_masked_array(raster, mask_path):
     Masked pixels are FALSE in the mask image (multiplicateive map),
     but TRUE in the masked_array (nodata pixels). If the raster is multi-band and
     the mask is single-band, the mask will be applied to every raster.
+
     Parameters
     ----------
     raster : gdal.Dataset
@@ -880,6 +882,7 @@ def get_masked_array(raster, mask_path):
 def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
     """
     Stacks an old and new S2 image and trims to within an aoi.
+
     Parameters
     ----------
     old_image_path : str
