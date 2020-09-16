@@ -903,7 +903,7 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
                      out_image, geometry_mode="intersect")
 
 
-def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
+def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False, dest_nodata = 0):
     """
     Clips a raster at raster_path to a shapefile given by aoi_path. Assumes a shapefile only has one polygon.
     Will np.floor() when converting from geo to pixel units and np.absolute() y resolution form geotransform.
@@ -917,6 +917,11 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
         Path to a shapefile containing a single polygon
     out_path : str
         Path to a location to save the final output raster
+    flip_x_y : bool, optional
+        If True, swaps the x and y axis of the raster image before clipping. For compatability with Landsat.
+        Default is False.
+    dest_nodata : number, optional
+        The fill value for outside of the clipped area. Deafults to 0.
 
     """
     # TODO: Set values outside clip to 0 or to NaN - in irregular polygons
@@ -929,7 +934,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
         srs.ImportFromWkt(raster.GetProjection())
         intersection_path = os.path.join(td, 'intersection')
         aoi = ogr.Open(aoi_path)
-        if aoi.GetLayer(0).GetSpatialRef().ExportToWkt() != srs.ExportToWkt():    # Gross string comparison. Might replace with wkb
+        if aoi.GetLayer(0).GetSpatialRef().ExportToWkt() != srs.ExportToWkt():
             log.info("Non-matching projections, reprojecting.")
             aoi = None
             tmp_aoi_path = os.path.join(td, "tmp_aoi.shp")
@@ -946,11 +951,12 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False):
         write_geometry(intersection, intersection_path, srs_id=srs.ExportToWkt())
         clip_spec = gdal.WarpOptions(
             format="GTiff",
-            cutlineDSName=intersection_path+r"/geometry.shp",   # TODO: Fix the need for this
+            cutlineDSName=intersection_path+r"/geometry.shp",
             cropToCutline=True,
             width=width_pix,
             height=height_pix,
-            dstSRS=srs
+            dstSRS=srs,
+            dstNodata=dest_nodata
         )
         out = gdal.Warp(out_path, raster, options=clip_spec)
         out.SetGeoTransform(new_geotransform)
