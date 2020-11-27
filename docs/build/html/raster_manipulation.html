@@ -173,7 +173,7 @@
 <h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><p><a class="reference internal" href="#pyeo.raster_manipulation.create_matching_dataset" title="pyeo.raster_manipulation.create_matching_dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_matching_dataset()</span></code></a> Creates an empty raster of the same shape as a source, ready for writing.</p>
-<p><code class="xref py py-func docutils literal notranslate"><span class="pre">stack_rasters()</span></code> Stacks a list of rasters into a single raster.</p>
+<p><a class="reference internal" href="#pyeo.raster_manipulation.stack_images" title="pyeo.raster_manipulation.stack_images"><code class="xref py py-func docutils literal notranslate"><span class="pre">stack_images()</span></code></a> Stacks a list of rasters into a single raster.</p>
 <p><a class="reference internal" href="#pyeo.raster_manipulation.preprocess_sen2_images" title="pyeo.raster_manipulation.preprocess_sen2_images"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_sen2_images()</span></code></a> Preprocesses a set of of Sentinel-2 images into single raster files.</p>
 <p><a class="reference internal" href="#pyeo.raster_manipulation.clip_raster" title="pyeo.raster_manipulation.clip_raster"><code class="xref py py-func docutils literal notranslate"><span class="pre">clip_raster()</span></code></a> Clips a raster to a shapefile</p>
 </div></blockquote>
@@ -433,29 +433,34 @@ proejctions are provided.</p>
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.buffer_mask_in_place">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">buffer_mask_in_place</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mask_path</span></em>, <em class="sig-param"><span class="n">buffer_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.buffer_mask_in_place" title="Permalink to this definition">¶</a></dt>
-<dd><p>Expands a mask in-place, overwriting the previous mask
-:param mask_path: Path to a multiplicative mask (0; masked, 1; unmasked)
-:type mask_path: str
-:param buffer_size: The radius of the buffer, in pixel units of the mask
-:type buffer_size: int</p>
+<dd><p>Expands a mask in-place, overwriting the previous mask</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask_path</strong> (<em>str</em>) – Path to a multiplicative mask (0; masked, 1; unmasked)</p></li>
+<li><p><strong>buffer_size</strong> (<em>int</em>) – The radius of the buffer, in pixel units of the mask</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.build_sen2cor_output_path">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">build_sen2cor_output_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image_path</span></em>, <em class="sig-param"><span class="n">timestamp</span></em>, <em class="sig-param"><span class="n">version</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.build_sen2cor_output_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a sen2cor output path dependent on the version ofr sen2cor
-:param image_path: Path to the image
-:type image_path: str
-:param timestamp: Timestamp that processing was started (required for v &gt;= 2.8)
-:type timestamp: str
-:param version: String of the version of sen2cor (ex “2.05.05”)
-:type version: str</p>
+<dd><p>Creates a sen2cor output path dependent on the version ofr sen2cor</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>new_path</strong> – The path of the finished sen2cor file</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_path</strong> (<em>str</em>) – Path to the image</p></li>
+<li><p><strong>timestamp</strong> (<em>str</em>) – Timestamp that processing was started (required for v &gt;= 2.8)</p></li>
+<li><p><strong>version</strong> (<em>str</em>) – String of the version of sen2cor (ex “2.05.05”)</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>new_path</strong> – The path of the finished sen2cor file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -643,11 +648,15 @@ Defaults to 0</p></li>
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.create_mask_from_fmask">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">create_mask_from_fmask</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_l1_dir</span></em>, <em class="sig-param"><span class="n">out_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_mask_from_fmask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a cloud mask from a level 1 Sentinel-2 product using fmask
-:param in_l1_dir: The path to the l1 .SAFE folder
-:type in_l1_dir: str
-:param out_path: The path to new mask
-:type out_path: str</p>
+<dd><p>Creates a cloud mask from a level 1 Sentinel-2 product using fmask</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_l1_dir</strong> (<em>str</em>) – The path to the l1 .SAFE folder</p></li>
+<li><p><strong>out_path</strong> (<em>str</em>) – The path to new mask</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -855,17 +864,19 @@ value from each pixel.</p>
 <dd><p>Returns a numpy.mask masked array for the raster.
 Masked pixels are FALSE in the mask image (multiplicateive map),
 but TRUE in the masked_array (nodata pixels). If the raster is multi-band and
-the mask is single-band, the mask will be applied to every raster.
-:param raster: A gdal.Dataset object
-:type raster: gdal.Dataset
-:param mask_path: The path to the mask to use
-:type mask_path: str</p>
+the mask is single-band, the mask will be applied to every raster.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>masked_array</strong> – A numpy.masked array of the raster.</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raster</strong> (<em>gdal.Dataset</em>) – A gdal.Dataset object</p></li>
+<li><p><strong>mask_path</strong> (<em>str</em>) – The path to the mask to use</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.masked</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>masked_array</strong> – A numpy.masked array of the raster.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.masked</p>
 </dd>
 </dl>
 </dd></dl>
@@ -873,15 +884,16 @@ the mask is single-band, the mask will be applied to every raster.
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.get_sen2cor_version">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">get_sen2cor_version</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sen2cor_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.get_sen2cor_version" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the version number of sen2cor from the help string.
-:param sen2cor_path: Path the the sen2cor executable
-:type sen2cor_path: str</p>
+<dd><p>Gets the version number of sen2cor from the help string.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>version</strong> – A string of the version of sen2cor at sen2cor_path</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sen2cor_path</strong> (<em>str</em>) – Path the the sen2cor executable</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>version</strong> – A string of the version of sen2cor at sen2cor_path</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1107,15 +1119,17 @@ to Array must be gdal format: [bands, y, x].</p>
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.stack_and_trim_images">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">stack_and_trim_images</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">old_image_path</span></em>, <em class="sig-param"><span class="n">new_image_path</span></em>, <em class="sig-param"><span class="n">aoi_path</span></em>, <em class="sig-param"><span class="n">out_image</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.stack_and_trim_images" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stacks an old and new S2 image and trims to within an aoi.
-:param old_image_path: Path to the image that will be the first set of bands in the output image
-:type old_image_path: str
-:param new_image_path: Path to the image that will be the second set of bands in the output image
-:type new_image_path: str
-:param aoi_path: Path to a shapefile containing the AOI
-:type aoi_path: str
-:param out_image: Path to the location of the clipped and stacked image.
-:type out_image: str</p>
+<dd><p>Stacks an old and new S2 image and trims to within an aoi.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>old_image_path</strong> (<em>str</em>) – Path to the image that will be the first set of bands in the output image</p></li>
+<li><p><strong>new_image_path</strong> (<em>str</em>) – Path to the image that will be the second set of bands in the output image</p></li>
+<li><p><strong>aoi_path</strong> (<em>str</em>) – Path to a shapefile containing the AOI</p></li>
+<li><p><strong>out_image</strong> (<em>str</em>) – Path to the location of the clipped and stacked image.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -1220,19 +1234,20 @@ bands and new_image_path being the second. The produced image will have the name
 <dl class="py function">
 <dt id="pyeo.raster_manipulation.strip_bands">
 <code class="sig-prename descclassname">pyeo.raster_manipulation.</code><code class="sig-name descname">strip_bands</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_raster_path</span></em>, <em class="sig-param"><span class="n">out_raster_path</span></em>, <em class="sig-param"><span class="n">bands_to_strip</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.strip_bands" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes bands from a raster and saves a copy.
-:param in_raster_path: Path to the raster
-:type in_raster_path: str
-:param out_raster_path: Path to the output
-:type out_raster_path: str
-:param bands_to_strip: 0-indexed list of bands to remove
-:type bands_to_strip: list of int</p>
+<dd><p>Removes bands from a raster and saves a copy.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>out_path</strong> – The path to the output</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_raster_path</strong> (<em>str</em>) – Path to the raster</p></li>
+<li><p><strong>out_raster_path</strong> (<em>str</em>) – Path to the output</p></li>
+<li><p><strong>bands_to_strip</strong> (<em>list of int</em>) – 0-indexed list of bands to remove</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>out_path</strong> – The path to the output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>

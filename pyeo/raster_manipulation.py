@@ -8,7 +8,7 @@ Key functions
 
     :py:func:`create_matching_dataset` Creates an empty raster of the same shape as a source, ready for writing.
 
-    :py:func:`stack_rasters` Stacks a list of rasters into a single raster.
+    :py:func:`stack_images` Stacks a list of rasters into a single raster.
 
     :py:func:`preprocess_sen2_images` Preprocesses a set of of Sentinel-2 images into single raster files.
 

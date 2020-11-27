@@ -1,7 +1,7 @@
 """
 pyeo.coordinate_manipulation
 ============================
-Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.
+Contains a set of functions for transforming spatial coordinates between projections and pixel indicies.
 
 Unless otherwise stated, all functions assume that any geometry, rasters and shapefiles are using the same projection.
 If they are not, there may be unexpected errors.
@@ -140,8 +140,8 @@ def pixel_bounds_from_polygon(raster, polygon):
     raster : gdal.Image
         A gdal raster object
 
-    polygon : ogr.Geometry
-        A ogr.Geometry object containing a single polygon
+    polygon : ogr.Geometry or str
+        A ogr.Geometry object or wkt string containing a single polygon
 
     Returns
     -------
@@ -149,6 +149,8 @@ def pixel_bounds_from_polygon(raster, polygon):
         The bounding box in the pixels of the raster
 
     """
+    if type(polygon) == str:
+        polygon = ogr.CreateGeometryFromWkt(polygon)
     raster_bounds = get_raster_bounds(raster)
     intersection = get_poly_intersection(raster_bounds, polygon)
     bounds_geo = intersection.Boundary()
@@ -270,17 +272,20 @@ def write_geometry(geometry, out_path, srs_id=4326):
 def reproject_vector(in_path, out_path, dest_srs):
     """
     Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.
+
     Parameters
     ----------
     in_path : str
         Path to the vector file
     out_path : str
         Path to output vector file
-    dest_srs : ogr.SpatialReference
+    dest_srs : osr.SpatialReference or str
         The spatial reference system to reproject to
 
     """
-    subprocess.run(["ogr2ogr", out_path, in_path, '-t_srs', dest_srs.ExportToWkt()])
+    if type(dest_srs) == osr.SpatialReference:
+        dest_srs = dest_srs.ExportToWkt()
+    subprocess.run(["ogr2ogr", out_path, in_path, '-t_srs', dest_srs])
 
 
 def get_aoi_intersection(raster, aoi):

@@ -162,7 +162,7 @@
             
   <span class="target" id="module-pyeo.coordinate_manipulation"></span><div class="section" id="pyeo-coordinate-manipulation">
 <h1>pyeo.coordinate_manipulation<a class="headerlink" href="#pyeo-coordinate-manipulation" title="Permalink to this headline">¶</a></h1>
-<p>Contains a set of functions for transforming spatial coorinates between projections and pixel indicies.</p>
+<p>Contains a set of functions for transforming spatial coordinates between projections and pixel indicies.</p>
 <p>Unless otherwise stated, all functions assume that any geometry, rasters and shapefiles are using the same projection.
 If they are not, there may be unexpected errors.</p>
 <p>Some of these functions call for an AOI shapefile. This is a single-layer shapefile containing only the geometry
@@ -486,7 +486,7 @@ reprojected geotransformations.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>raster</strong> (<em>gdal.Image</em>) – A gdal raster object</p></li>
-<li><p><strong>polygon</strong> (<em>ogr.Geometry</em>) – A ogr.Geometry object containing a single polygon</p></li>
+<li><p><strong>polygon</strong> (<em>ogr.Geometry</em><em> or </em><em>str</em>) – A ogr.Geometry object or wkt string containing a single polygon</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -576,13 +576,16 @@ An ogr.Geometry object containing a single point</p>
 <dl class="py function">
 <dt id="pyeo.coordinate_manipulation.reproject_vector">
 <code class="sig-prename descclassname">pyeo.coordinate_manipulation.</code><code class="sig-name descname">reproject_vector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em>, <em class="sig-param"><span class="n">dest_srs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.coordinate_manipulation.reproject_vector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.
-:param in_path: Path to the vector file
-:type in_path: str
-:param out_path: Path to output vector file
-:type out_path: str
-:param dest_srs: The spatial reference system to reproject to
-:type dest_srs: ogr.SpatialReference</p>
+<dd><p>Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_path</strong> (<em>str</em>) – Path to the vector file</p></li>
+<li><p><strong>out_path</strong> (<em>str</em>) – Path to output vector file</p></li>
+<li><p><strong>dest_srs</strong> (<em>osr.SpatialReference</em><em> or </em><em>str</em>) – The spatial reference system to reproject to</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
