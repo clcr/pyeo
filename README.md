@@ -6,6 +6,10 @@ Python for Earth Observation processing chain
 This is designed to provide a set of portable, extensible and modular Python scripts for earth observation and machine learning,
 including downloading, preprocessing, creation of base layers and classification.
 
+Full documentation at https://clcr.github.io/pyeo/build/html/index.html
+
+Example notebooks are at https://github.com/clcr/pyeo_training_materials
+
 ## Requirements
 Package management is performed by Conda: https://docs.conda.io/en/latest/
 
@@ -88,4 +92,3 @@ pyeo.classification.classify_image(
 )
 ```
 
-Full documentation at https://clcr.github.io/pyeo/build/html/index.html
