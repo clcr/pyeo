@@ -952,8 +952,9 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False, 
             max_x_geo, max_y_geo = max_y_geo, max_x_geo
         width_pix = int(np.floor(max_x_geo - min_x_geo)/in_gt[1])
         height_pix = int(np.floor(max_y_geo - min_y_geo)/np.absolute(in_gt[5]))
-        new_geotransform = (min_x_geo, in_gt[1], 0, max_y_geo, 0, in_gt[5])   # OK, time for hacking
+        new_geotransform = (min_x_geo, in_gt[1], 0, max_y_geo, 0, in_gt[5])
         write_geometry(intersection, intersection_path, srs_id=srs.ExportToWkt())
+        aoi = None
         clip_spec = gdal.WarpOptions(
             format="GTiff",
             cutlineDSName=intersection_path+r"/geometry.shp",
