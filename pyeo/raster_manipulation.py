@@ -2117,14 +2117,14 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
             raise Exception("Invalid geometry_func; can be 'intersect' or 'union'")
         out_mask_view = out_mask_array[out_y_min: out_y_max, out_x_min: out_x_max]
         in_mask_view = in_mask_array[in_y_min: in_y_max, in_x_min: in_x_max]
-        if mask_index is 0:
+        if mask_index == 0:
             out_mask_view[:,:] = in_mask_view
         else:
-            if combination_func is 'or':
+            if combination_func == 'or':
                 out_mask_view[:, :] = np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8)
-            elif combination_func is 'and':
+            elif combination_func == 'and':
                 out_mask_view[:, :] = np.bitwise_and(out_mask_view, in_mask_view, dtype=np.uint8)
-            elif combination_func is 'nor':
+            elif combination_func == 'nor':
                 out_mask_view[:, :] = np.bitwise_not(np.bitwise_or(out_mask_view, in_mask_view, dtype=np.uint8), dtype=np.uint8)
             else:
                 raise Exception("Invalid combination_func; valid values are 'or', 'and', and 'nor'")
