@@ -69,8 +69,9 @@ from multiprocessing.dummy import Pool
 from urllib.parse import urlencode
 import numpy as np
 from bs4 import BeautifulSoup  # I didn't really want to use BS, but I can't see a choice.
+from tempfile import TemporaryDirectory
 
-import ogr
+import ogr, osr
 import requests
 import tenacity
 from botocore.exceptions import ClientError
@@ -81,6 +82,7 @@ from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
 import pyeo.filesystem_utilities as fu
+from pyeo.coordinate_manipulation import reproject_vector, get_vector_projection
 from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests, \
     InvalidGeometryFormatException
 
@@ -137,18 +139,34 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     """
     # Originally by Ciaran Robb
     api = SentinelAPI(user, passwd)
-    if geojsonfile.endswith("json"):
-        footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    elif geojsonfile.endswith("shp"):
-        footprint = shapefile_to_wkt(geojsonfile)
-    else:
-        raise InvalidGeometryFormatException("Please provide a .json, .geojson or a .shp as geometry.")
-    log.info("Sending Sentinel-2 query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
-        footprint, start_date, end_date, cloud))
-    products = api.query(footprint,
-                         date=(start_date, end_date), platformname="Sentinel-2",
-                         cloudcoverpercentage="[0 TO {}]".format(cloud))
+    geom = ogr.Open(geojsonfile)
+    with TemporaryDirectory() as td:
+        if not _is_4326(geom):
+            reproj_geom_path = os.path.join(td, "temp.shp")
+            reproject_vector(geojsonfile, os.path.join(td, "temp.shp"), 4326)
+            geojsonfile = reproj_geom_path
+        if geojsonfile.endswith("json"):
+            footprint = geojson_to_wkt(read_geojson(geojsonfile))
+        elif geojsonfile.endswith("shp"):
+            footprint = shapefile_to_wkt(geojsonfile)
+        else:
+            raise InvalidGeometryFormatException("Please provide a .json, .geojson or a .shp as geometry.")
+        log.info("Sending Sentinel-2 query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
+            footprint, start_date, end_date, cloud))
+        products = api.query(footprint,
+                             date=(start_date, end_date), platformname="Sentinel-2",
+                             cloudcoverpercentage="[0 TO {}]".format(cloud))
     return products
+
+
+def _is_4326(geom):
+    proj_geom = get_vector_projection(geom)
+    proj_4326 = osr.SpatialReference()
+    proj_4326.ImportFromEPSG(4326)
+    if proj_geom == proj_4326:
+        return True
+    else:
+        return False
 
 
 def shapefile_to_wkt(shapefile_path):

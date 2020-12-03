@@ -269,6 +269,13 @@ def write_geometry(geometry, out_path, srs_id=4326):
     data_source = None
 
 
+def get_vector_projection(dataset):
+    # from Layer
+    layer = dataset.GetLayer()
+    spatialRef = layer.GetSpatialRef()
+    return spatialRef
+
+
 def reproject_vector(in_path, out_path, dest_srs):
     """
     Reprojects a vector file to a new SRS. Simple wrapper for ogr2ogr.
@@ -283,8 +290,14 @@ def reproject_vector(in_path, out_path, dest_srs):
         The spatial reference system to reproject to
 
     """
+
+    if type(dest_srs) == int:
+        epsg_no = dest_srs
+        dest_srs = osr.SpatialReference()
+        dest_srs.ImportFromEPSG(epsg_no)
     if type(dest_srs) == osr.SpatialReference:
         dest_srs = dest_srs.ExportToWkt()
+
     subprocess.run(["ogr2ogr", out_path, in_path, '-t_srs', dest_srs])
 
 

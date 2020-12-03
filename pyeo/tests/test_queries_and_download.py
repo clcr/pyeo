@@ -28,6 +28,16 @@ def test_query_and_download():
         assert os.path.exists("test_outputs/L1/{}".format(images[image_id]['title']+".SAFE"))
 
 
+@pytest.mark.webtest
+def test_query_non_4326():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_conf = load_test_conf()
+    query_out = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
+                     "test_data/wuhan_aoi_epsg32650.shp",
+                     "20180101", "20180130")
+    assert len(query_out) > 0
+
+
 def test_landsat_query_and_download():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     test_conf = load_test_conf()
