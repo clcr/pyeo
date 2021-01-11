@@ -8,6 +8,7 @@ from tempfile import NamedTemporaryFile
 import logging
 
 WINDOWS_PREFIX = "win"
+IOS_PREFIX = "darwin"
 log = logging.getLogger("pyeo")
 # May rewrite to use numpy
 
@@ -65,12 +66,12 @@ class _WinHackVirtualMemArray(np.memmap):
             self.raster.FlushCache()
 
 
-if sys.platform.startswith(WINDOWS_PREFIX):
+if sys.platform.startswith(WINDOWS_PREFIX) or sys.platform.startswith(IOS_PREFIX):
     # WARNING. THIS IS A DARK ART AND SHOULD NOT BE REPLICATED
     # Monkeypatching outside of test environments is normally Very Bad,
     # and should only be attempted by those with special training or 
     # nothing to lose.
-    log.warning("Windows OS detected; monkeypatching GetVirtualMemArray. Some functions may not respond as expected.")
+    log.warning("Windows or iOS detected; monkeypatching GetVirtualMemArray. Some functions may not respond as expected.")
     def WindowsVirtualMemArray(self, eAccess=None):
         return _WinHackVirtualMemArray(self, eAccess)
     gdal.Dataset.GetVirtualMemArray = WindowsVirtualMemArray
