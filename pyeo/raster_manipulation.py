@@ -602,14 +602,19 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
     combined_polygon = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode='union'))
     layers = rasters[0].RasterCount
     out_raster = create_new_image_from_polygon(combined_polygon, out_raster_file, x_res, y_res, layers,
-                                               projection, format, datatype)
+                                               projection, format, datatype, nodata=nodata)
     log.info("New empty image created at {}".format(out_raster_file))
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    out_raster_array[...] = nodata
+    old_nodata = nodata
     for i, raster in enumerate(rasters):
         log.info("Now mosaicking raster no. {}".format(i))
         in_raster_array = raster.GetVirtualMemArray()
         if len(in_raster_array.shape) == 2:
             in_raster_array = np.expand_dims(in_raster_array, 0)
+        if np.isnan(old_nodata):
+            nodata = np.nan_to_num(in_raster_array).max() + 1  # This is turning into a _real_ hack now
+            in_raster_array = np.nan_to_num(in_raster_array, nan=nodata, copy=True)
         in_bounds = get_raster_bounds(raster)
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, in_bounds)
         out_raster_view = out_raster_array[:, out_y_min: out_y_max, out_x_min: out_x_max]
@@ -618,6 +623,7 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
         out_raster_view = None
     log.info("Raster mosaicking done")
     out_raster_array = None
+    out_raster = None
 
 
 def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff", generate_date_image=False):
@@ -1033,13 +1039,16 @@ def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
     driver = gdal.GetDriverByName(format)
     out_raster = driver.Create(
         out_path, xsize=final_width_pixels, ysize=final_height_pixels,
-        bands=bands, eType=datatype
-    )
+        bands=bands, eType=datatype)
     out_raster.SetGeoTransform([
         bounds_x_min, x_res, 0,
         bounds_y_max, 0, y_res * -1
     ])
     out_raster.SetProjection(projection)
+    for band_index in range(1, bands):
+        band = out_raster.GetRasterBand(band_index)
+        band.SetNoDataValue(nodata)
+        band = None
     return out_raster
 
 
