@@ -1,10 +1,10 @@
 [![DOI](https://zenodo.org/badge/126246599.svg)](https://zenodo.org/badge/latestdoi/126246599)
 
 # pyeo
-Python for Earth Observation processing chain
+Python for Earth Observation
 
-This is designed to provide a set of portable, extensible and modular Python scripts for earth observation and machine learning,
-including downloading, preprocessing, creation of base layers and classification.
+This is designed to provide a set of portable, extensible and modular Python scripts for machine learning in earth observation and GIS,
+including downloading, preprocessing, creation of base layers, classification and validation.
 
 Full documentation at https://clcr.github.io/pyeo/build/html/index.html
 
