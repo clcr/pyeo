@@ -74,6 +74,6 @@ ras.preprocess_sen2_images("s2_l2", "preprocessed", "s2_l1")
 cls.classify_directory("preprocessed",
                        "model.pkl",
                        "classified",
-                       "apply_mask=True")
+                       apply_mask=True)
 ```
 
