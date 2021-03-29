@@ -76,4 +76,4 @@ cls.classify_directory("preprocessed",
                        "classified",
                        apply_mask=True)
 ```
-
+(This is a toy script; keeping your username and password in your script is not recommended in the real world).
