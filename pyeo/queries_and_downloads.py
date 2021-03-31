@@ -120,7 +120,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
 
     end_date : string
                Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
-               See https://www.w3.org/TR/NOTE-datetime, or use cehck_for_s2_data_by_date
+               See https://www.w3.org/TR/NOTE-datetime, or use check_for_s2_data_by_date
 
     cloud : int, optional
             The maximum cloud clover percentage (as calculated by Copernicus) to download. Defaults to 50%

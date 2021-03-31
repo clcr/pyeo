@@ -120,7 +120,7 @@ import os
 import shutil
 import subprocess
 import re
-from tempfile import TemporaryDirectory, NamedTemporaryFile
+from tempfile import TemporaryDirectory
 
 import gdal
 import numpy as np
@@ -173,6 +173,10 @@ def create_matching_dataset(in_dataset, out_path,
     -------
     new_dataset : gdal.Dataset
         An gdal.Dataset of the new, empty dataset that is ready for writing.
+
+    Warnings
+    --------
+    The default of bands=1 will be changed to match the input dataset in the next release of Pyeo
 
     """
     driver = gdal.GetDriverByName(format)
@@ -1385,7 +1389,7 @@ def raster_sum(inRstList, outFn, outFmt='GTiff'):
     log.info('Finished summing up of raster layers.')
 
 
-def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_interest, out_resolution=10):
+def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_interest, out_resolution=10, invert=False):
     """
     Filters a raster with a set of classes for corresponding for pixels in filter_map_path containing only
     classes_of_interest. Assumes that filter_map_path and class_map_path are same resolution and projection.
@@ -1403,6 +1407,8 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
         The classes in class_map_path to keep present in the raster to be filtered
     out_resolution : number, optional
         The resolution of the output image
+    invert : bool, optional
+        If present, invert mask (ie filter out classes_of_interest)
 
     Returns
     -------
@@ -1424,7 +1430,7 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
 
         image_map = gdal.Open(image_path)
         image_array = image_map.GetVirtualMemArray()
-        out_map = create_matching_dataset(image_map, out_map_path)
+        out_map = create_matching_dataset(image_map, out_map_path, bands=image_map.RasterCount)
         out_array = out_map.GetVirtualMemArray(eAccess=gdal.GA_Update)
         class_bounds = get_raster_bounds(class_map)
         image_bounds = get_raster_bounds(image_map)
@@ -1432,7 +1438,9 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
         image_view = image_array[in_y_min: in_y_max, in_x_min: in_x_max]
         class_x_min, class_x_max, class_y_min, class_y_max = pixel_bounds_from_polygon(class_map, image_bounds)
         class_view = class_array[class_y_min: class_y_max, class_x_min: class_x_max]
-        filtered_array = apply_array_image_mask(class_view, image_view)
+        if invert:
+            class_view = np.logical_not(class_view)
+        filtered_array = apply_array_image_mask(image_view, class_view)
 
         np.copyto(out_array, filtered_array)
         out_array = None
@@ -1776,7 +1784,7 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         log.error("Tiles  of the two images do not match. Aborted.")
 
 
-def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
+def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False, gipp_path = "L2A_GIPP.xml"):
     """
     Applies sen2cor to the SAFE file at image_path. Returns the path to the new product.
 
@@ -1788,6 +1796,8 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
         Path to the l2a_process script (Linux) or l2a_process.exe (Windows)
     delete_unprocessed_image : bool, optional
         If True, delete the unprocessed image after processing is done. Defaults to False.
+    gipp_path : str, optional
+        Path to the GIPP file. Uses L2A_GIPP.xml
 
     Returns
     -------
@@ -1800,11 +1810,13 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     # approach can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
     # added sen2cor_path by hb91
+    gipp_path = os.path.abspath(gipp_path)
     out_dir = os.path.dirname(image_path)
     log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path)]))
     now_time = datetime.datetime.now()   # I can't think of a better way of geting the new outpath from sen2cor
     timestamp = now_time.strftime(r"%Y%m%dT%H%M%S")
-    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path)],
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path),
+                                     '--GIP_L2A', gipp_path],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
     while True:
