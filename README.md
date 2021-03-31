@@ -1,10 +1,10 @@
 [![DOI](https://zenodo.org/badge/126246599.svg)](https://zenodo.org/badge/latestdoi/126246599)
 
 # pyeo
-Python for Earth Observation processing chain
+Python for Earth Observation
 
-This is designed to provide a set of portable, extensible and modular Python scripts for earth observation and machine learning,
-including downloading, preprocessing, creation of base layers and classification.
+This is designed to provide a set of portable, extensible and modular Python scripts for machine learning in earth observation and GIS,
+including downloading, preprocessing, creation of base layers, classification and validation.
 
 Full documentation at https://clcr.github.io/pyeo/build/html/index.html
 
@@ -47,48 +47,33 @@ You can test your installation with
 
 ## Example script
 
-Once credentials.ini is filled in with your Scihub username and password, the following script will download every sentinel 2 image in Kinangop betweem Christmas and New Year, and preprocess and classify one of them.
+This presumes a set of training data exists, you have signed up to Scihub and the folders `s2_l1`, `s2_l2`, `preprocessed` and `classified` have been created.
 
 ```python
-import pyeo.queries_and_downloads
-import pyeo.classification
-import pyeo.filesystem_utilities
-import pyeo.raster_manipulation
+from pyeo import raster_manipulation as ras
+from pyeo import queries_and_downloads as dl
+from pyeo import classification as cls
 
-pyeo.filesystem_utilities.init_log("training_log.log")
+# train_model.py
+cls.extract_features_to_csv("training_raster.tif",
+                            "training_shape.shp",
+                            "features.csv")
+cls.create_model_from_signatures("features.csv", "model.pkl")
 
-import configparser
-conf = configparser.ConfigParser()
-conf.read("credentials.ini")
-conf['sent_2']['user']
 
-query_results = pyeo.queries_and_downloads.check_for_s2_data_by_date(
-    "kinangop_rough.json",
-    "20181225",
-    "20190101",
-    conf,
-    "30"
-)
-
-pyeo.queries_and_downloads.download_s2_data(
-    query_results,
-    l1_dir = "level_1",
-    l2_dir = "level_2",
-    source='scihub',
-    user=conf["sent_2"]["user"],
-    passwd=conf["sent_2"]["pass"]
-)
-
-pyeo.raster_manipulation.stack_sentinel_2_bands(
-    "level_2/S2A_MSIL2A_20181230T074321_N0211_R092_T36MZE_20181230T100827.SAFE",
-    "merged.tif",
-    out_resolution=60
-)
-
-pyeo.classification.classify_image(
-    "merged.tif",
-    "my_model.pkl",
-    "my_classified_image.tif"
-)
+# classify_area.py
+username = "scihub_user"
+password = "scihub_pass"
+conf = {'sent_2':{'user':username, 'pass':password}}
+data = dl.check_for_s2_data_by_date("aoi.shp",
+                                    "20200101",
+                                    "20200201",
+                                    "conf")
+dl.download_s2_data(data, "s2_l1", "s2_l2", username, password)
+ras.preprocess_sen2_images("s2_l2", "preprocessed", "s2_l1")
+cls.classify_directory("preprocessed",
+                       "model.pkl",
+                       "classified",
+                       apply_mask=True)
 ```
-
+(This is a toy script; keeping your username and password in your script is not recommended in the real world).
