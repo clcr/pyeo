@@ -1784,7 +1784,7 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
         log.error("Tiles  of the two images do not match. Aborted.")
 
 
-def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False, gipp_path = "L2A_GIPP.xml"):
+def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     """
     Applies sen2cor to the SAFE file at image_path. Returns the path to the new product.
 
