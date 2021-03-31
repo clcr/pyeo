@@ -1810,7 +1810,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False, gipp
     # approach can be multithreaded in future to process multiple image (1 per core) but that
     # will take some work to make sure they all finish before the program moves on.
     # added sen2cor_path by hb91
-    gipp_path = os.path.abspath(gipp_path)
+    gipp_path = os.path.join(os.path.abspath(__file__), "../L2A_GIPP.xml")
     out_dir = os.path.dirname(image_path)
     log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path)]))
     now_time = datetime.datetime.now()   # I can't think of a better way of geting the new outpath from sen2cor
