@@ -344,7 +344,7 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
 
 
 def stack_images(raster_paths, out_raster_path,
-                 geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32):
+                 geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32, nodata_value=0):
     """
     When provided with a list of rasters, will stack them into a single raster. The nunmber of
     bands in the output is equal to the total number of bands in the input. Geotransform and projection
@@ -386,6 +386,7 @@ def stack_images(raster_paths, out_raster_path,
 
     # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
     out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+    out_raster_array[...] = nodata_value
     present_layer = 0
     for i, in_raster in enumerate(rasters):
         log.info("Stacking image {}".format(i))
