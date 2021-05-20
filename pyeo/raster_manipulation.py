@@ -1513,7 +1513,10 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
 
 
     """
-    safe_file_path_list = [os.path.join(l2_dir, safe_file_path) for safe_file_path in os.listdir(l2_dir)]
+    safe_file_path_list = [os.path.join(l2_dir, safe_file_path)
+                           for safe_file_path
+                           in os.listdir(l2_dir)
+                           if safe_file_path.endswith(".SAFE")]
     for l2_safe_file in safe_file_path_list:
         with TemporaryDirectory() as temp_dir:
             log.info("----------------------------------------------------")
@@ -1524,12 +1527,15 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
 
             log.info("Creating cloudmask for {}".format(temp_path))
             l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
-            mask_path = get_mask_path(temp_path)
-            create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
-            log.info("Cloudmask created")
+            if l1_safe_file:
+                mask_path = get_mask_path(temp_path)
+                create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
+                log.info("Cloudmask created")
+                out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
+            else:
+                log.error("No L1 data found for {}; cannot generate cloudmask.".format(l2_safe_file))
 
             out_path = os.path.join(out_dir, os.path.basename(temp_path))
-            out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
 
             if epsg:
                 log.info("Reprojecting images to {}".format(epsg))
@@ -1537,13 +1543,15 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                 proj.ImportFromEPSG(epsg)
                 wkt = proj.ExportToWkt()
                 reproject_image(temp_path, out_path, wkt)
-                reproject_image(mask_path, out_mask_path, wkt)
-                resample_image_in_place(out_mask_path, out_resolution)
+                if l1_safe_file:
+                    reproject_image(mask_path, out_mask_path, wkt)
+                    resample_image_in_place(out_mask_path, out_resolution)
             else:
                 log.info("Moving images to {}".format(out_dir))
                 shutil.move(temp_path, out_path)
-                shutil.move(mask_path, out_mask_path)
-                resample_image_in_place(out_mask_path, out_resolution)
+                if l1_safe_file:
+                    shutil.move(mask_path, out_mask_path)
+                    resample_image_in_place(out_mask_path, out_resolution)
 
 
 def preprocess_landsat_images(image_dir, out_image_path, new_projection = None, bands_to_stack=("B2","B3","B4")):
@@ -2281,13 +2289,13 @@ def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"
     if sys.platform.startswith("win"):
         fmask_command = subprocess.check_output(["where", fmask_command], text=True).strip()
     log = logging.getLogger(__name__)
-    args = [
+    fmask_args = [
         fmask_command,
         "-o", out_file,
         "--safedir", in_safe_dir
     ]
     log.info("Creating fmask from {}, output at {}".format(in_safe_dir, out_file))
-    fmask_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    fmask_proc = subprocess.Popen(fmask_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     while True:
         nextline = fmask_proc.stdout.readline()
         if len(nextline) > 0:
