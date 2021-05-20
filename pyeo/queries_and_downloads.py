@@ -62,6 +62,7 @@ import itertools
 import json
 import logging
 import os
+import re
 import shutil
 import tarfile
 import zipfile
@@ -70,6 +71,7 @@ from urllib.parse import urlencode
 import numpy as np
 from bs4 import BeautifulSoup  # I didn't really want to use BS, but I can't see a choice.
 from tempfile import TemporaryDirectory
+from xml.etree import ElementTree
 
 import ogr, osr
 import requests
@@ -80,6 +82,7 @@ from requests import Request
 from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
+import exceptions
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
 import pyeo.filesystem_utilities as fu
 from pyeo.coordinate_manipulation import reproject_vector, get_vector_projection
@@ -96,8 +99,85 @@ except ImportError:
     pass
 
 
+def _rest_query(user, passwd, footprint_wkt, start_date, end_date, cloud=50):
+    session = requests.Session()
+    session.auth = (user, passwd)
+    rest_url = "https://apihub.copernicus.eu/apihub/search"
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
+    search_params = {
+        "platformname": "((Sentinel-2))",
+        "footprint": '(\"Intersects({})\")'.format(footprint_wkt),
+        "beginposition": "[{} TO {}]".format(start_date, end_date),
+        "endposition": "[{} TO {}]".format(start_date, end_date),
+        "cloudcoverpercentage": "[0 TO {}]".format(cloud)
+    }
+    search_string = " AND ".join([f"{term}:{query}" for term, query in search_params.items()])
+
+    request_params = {
+        "q": search_string,
+    }
+
+    results = session.get(rest_url, params=request_params)
+    if results.status_code >= 400:
+        print("Bad request: code {}".format(results.status_code))
+        print(results.content)
+        raise requests.exceptions.RequestException
+    return _rest_out_to_json(results)
+
+
+def _rest_out_to_json(result):
+    root = ElementTree.fromstring(result.content.replace(b"\n", b""))
+    total_results = int(root.find("{http://a9.com/-/spec/opensearch/1.1/}totalResults").text)
+    if total_results > 10:
+        log.warning("Local querying does not yet return more than 10 entries in search.")
+    if total_results == 0:
+        log.warning("Query produced no results.")
+    out = {}
+    for element in root.findall("{http://www.w3.org/2005/Atom}entry"):
+        id = element.find("{http://www.w3.org/2005/Atom}id").text
+        out[id] = _parse_element(element)
+        out[id].pop(None)
+    return out
+
+
+def _parse_element(element):
+    if len(element) == 0:
+        if element.get('name'):
+            return(element.text)
+        else:
+            return None
+    else:
+        out = {}
+        for subelement in element:
+            out[subelement.get('name')] = _parse_element(subelement)
+        return out
+
+
+
+def _sentinelsat_query(user, passwd, footprint_wkt, start_date, end_date, cloud=50):
+    """
+    Fetches a list of Sentienl-2 products
+    """
+    # Originally by Ciaran Robb
+    api = SentinelAPI(user, passwd)
+    products = api.query(footprint_wkt,
+                         date=(start_date, end_date), platformname="Sentinel-2",
+                         cloudcoverpercentage="[0 TO {}]".format(cloud),
+                         url="https://apihub.copernicus.eu/apihub/")
+    return products
+
+
+def _is_4326(geom):
+    proj_geom = get_vector_projection(geom)
+    proj_4326 = osr.SpatialReference()
+    proj_4326.ImportFromEPSG(4326)
+    if proj_geom == proj_4326:
+        return True
+    else:
+        return False
+
+
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, query_func=_sentinelsat_query):
     """
     Fetches a list of Sentienl-2 products
 
@@ -125,6 +205,9 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     cloud : int, optional
             The maximum cloud clover percentage (as calculated by Copernicus) to download. Defaults to 50%
 
+    queryfunc : function
+                A function that takes the following args: user, passwd, footprint_wkt, start_date, end_date, cloud
+
     Returns
     -------
     products : dict
@@ -137,10 +220,9 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
     download by granule; there is no need to have a precise polygon at this stage.
 
     """
-    # Originally by Ciaran Robb
-    api = SentinelAPI(user, passwd)
-    geom = ogr.Open(geojsonfile)
     with TemporaryDirectory() as td:
+        # Preprocessing geometry
+        geom = ogr.Open(geojsonfile)
         if not _is_4326(geom):
             reproj_geom_path = os.path.join(td, "temp.shp")
             reproject_vector(geojsonfile, os.path.join(td, "temp.shp"), 4326)
@@ -151,22 +233,27 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50):
             footprint = shapefile_to_wkt(geojsonfile)
         else:
             raise InvalidGeometryFormatException("Please provide a .json, .geojson or a .shp as geometry.")
+
+        # Preprocessing dates
+        start_date = _date_to_timestamp(start_date)
+        end_date = _date_to_timestamp(end_date)
+
         log.info("Sending Sentinel-2 query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
             footprint, start_date, end_date, cloud))
-        products = api.query(footprint,
-                             date=(start_date, end_date), platformname="Sentinel-2",
-                             cloudcoverpercentage="[0 TO {}]".format(cloud))
-    return products
+        return query_func(user,passwd, footprint, start_date, end_date, cloud)
 
-
-def _is_4326(geom):
-    proj_geom = get_vector_projection(geom)
-    proj_4326 = osr.SpatialReference()
-    proj_4326.ImportFromEPSG(4326)
-    if proj_geom == proj_4326:
-        return True
-    else:
-        return False
+def _date_to_timestamp(date):
+    #
+    if type(date) == str:
+        # Matches yyyy-mm-dd, yyyymmdd, yyyy-mm-ddThhmmssMMMZ (but ignores time)
+        # Full regex explanation at: https://regex101.com/r/FjEoUD/1
+        m = re.match(r"(\d{4})\W?(\d{2})\W?(\d{2})", date)
+        if not m:
+            raise exceptions.InvalidDateFormatException
+        year, month, day = m.groups()
+        date = dt.date(int(year), int(month), int(day))
+    if type(date) == dt.date:
+        return date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def shapefile_to_wkt(shapefile_path):
@@ -784,6 +871,7 @@ def download_from_scihub(product_uuid, out_folder, user, passwd):
 
     """
     api = SentinelAPI(user, passwd)
+    api.api_url = "https://apihub.copernicus.eu/apihub/"
     log.info("Downloading {} from scihub".format(product_uuid))
     prod = api.download(product_uuid, out_folder)
     if not prod:

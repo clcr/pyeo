@@ -48,5 +48,8 @@ class InvalidGeometryFormatException(PyeoException):
 class NonSquarePixelException(PyeoException):
     pass
 
+class InvalidDateFormatException(PyeoException):
+    pass
+
 class TooManyRequests(requests.RequestException):
     """Too many requests; do exponential backoff"""

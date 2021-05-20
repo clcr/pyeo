@@ -15,15 +15,21 @@ def test_query_and_download():
     user = test_conf["sent_2"]["user"]
     passwd = test_conf["sent_2"]["pass"]
     images = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
-                     "test_data/merak.geojson",
-                     "20180101", "20180130")
+                     "test_data/mt_kippiri.geojson",
+                     "20210501T00.00.00", "20210504", cloud=100,
+                     query_func=pyeo.queries_and_downloads._rest_query)
     assert len(images) > 0
     try:
         shutil.rmtree("test_outputs/L1")
     except FileNotFoundError:
         pass
+    try:
+        shutil.rmtree("test_outputs/L2")
+    except FileNotFoundError:
+        pass
     os.mkdir("test_outputs/L1")
-    pyeo.queries_and_downloads.download_s2_data(images, "test_outputs/L1", source='scihub', user=user, passwd=passwd)
+    os.mkdir("test_outputs/L2")
+    pyeo.queries_and_downloads.download_s2_data(images, "test_outputs/L1", "test_outputs/L2", source='aws', user=user, passwd=passwd)
     for image_id in images:
         assert os.path.exists("test_outputs/L1/{}".format(images[image_id]['title']+".SAFE"))
 
@@ -35,6 +41,16 @@ def test_query_non_4326():
     query_out = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
                      "test_data/wuhan_aoi_epsg32650.shp",
                      "20180101", "20180130")
+    assert len(query_out) > 0
+
+
+def test_rest_query():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    test_conf = load_test_conf()
+    query_out = pyeo.queries_and_downloads.sent2_query(test_conf["sent_2"]["user"], test_conf["sent_2"]["pass"],
+                     "test_data/wuhan_large.shp",
+                     "2021-01-01T00:00:00.000Z", "2021-03-30T00:00:00.000Z",
+                     cloud=100, query_func=pyeo.queries_and_downloads._rest_query)
     assert len(query_out) > 0
 
 

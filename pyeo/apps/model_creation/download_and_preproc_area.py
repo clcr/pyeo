@@ -68,7 +68,6 @@ if __name__ == "__main__":
     log = pyeo.filesystem_utilities.init_log(args.log_path)
 
     main(args.aoi_path, args.start_date, args.end_date, args.l1_dir, args.l2_dir, args.merge_dir, args.conf_path,
-         args.download_l2_data, args.sen2cor_path, args.stacked_dir, args.bands, args.resolution, args.resolution,
-         args.cloud_cover)
+         args.download_l2_data, args.sen2cor_path, args.stacked_dir, args.bands, args.resolution, args.cloud_cover)
 
 
