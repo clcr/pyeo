@@ -82,12 +82,11 @@ from requests import Request
 from sentinelhub import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
-import exceptions
 from pyeo.filesystem_utilities import check_for_invalid_l2_data, check_for_invalid_l1_data, get_sen_2_image_tile
 import pyeo.filesystem_utilities as fu
 from pyeo.coordinate_manipulation import reproject_vector, get_vector_projection
 from pyeo.exceptions import NoL2DataAvailableException, BadDataSourceExpection, TooManyRequests, \
-    InvalidGeometryFormatException
+    InvalidGeometryFormatException, InvalidDateFormatException
 
 log = logging.getLogger("pyeo")
 
@@ -126,6 +125,8 @@ def _rest_query(user, passwd, footprint_wkt, start_date, end_date, cloud=50):
 
 
 def _rest_out_to_json(result):
+    import pdb
+    pdb.set_trace()
     root = ElementTree.fromstring(result.content.replace(b"\n", b""))
     total_results = int(root.find("{http://a9.com/-/spec/opensearch/1.1/}totalResults").text)
     if total_results > 10:
@@ -137,6 +138,7 @@ def _rest_out_to_json(result):
         id = element.find("{http://www.w3.org/2005/Atom}id").text
         out[id] = _parse_element(element)
         out[id].pop(None)
+        out[id]['title'] = out[id]['identifier']+".SAFE"
     return out
 
 
@@ -177,7 +179,7 @@ def _is_4326(geom):
         return False
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, query_func=_sentinelsat_query):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, query_func=_rest_query):
     """
     Fetches a list of Sentienl-2 products
 
@@ -249,7 +251,7 @@ def _date_to_timestamp(date):
         # Full regex explanation at: https://regex101.com/r/FjEoUD/1
         m = re.match(r"(\d{4})\W?(\d{2})\W?(\d{2})", date)
         if not m:
-            raise exceptions.InvalidDateFormatException
+            raise InvalidDateFormatException
         year, month, day = m.groups()
         date = dt.date(int(year), int(month), int(day))
     if type(date) == dt.date:

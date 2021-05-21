@@ -1787,7 +1787,11 @@ def stack_old_and_new_images(old_image_path, new_image_path, out_dir, create_com
             out_mask_path = out_path + ".msk"
             old_mask_path = get_mask_path(old_image_path)
             new_mask_path = get_mask_path(new_image_path)
-            combine_masks([old_mask_path, new_mask_path], out_mask_path, combination_func="and", geometry_func="intersect")
+            try:
+                combine_masks([old_mask_path, new_mask_path], out_mask_path,
+                              combination_func="and", geometry_func="intersect")
+            except FileNotFoundError:
+                log.error("Mask not found for either {} or {}".format(old_image_path, new_image_path))
         return out_path + ".tif"
     else:
         log.error("Tiles  of the two images do not match. Aborted.")
@@ -2119,7 +2123,11 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
     log = logging.getLogger(__name__)
     log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
         mask_paths, combination_func, geometry_func))
-    masks = [gdal.Open(mask_path) for mask_path in mask_paths]
+    masks = [gdal.Open(mask_path)
+             for mask_path
+             in mask_paths]
+    if None in masks:
+        raise FileNotFoundError("Bad mask path in one of the following: {}".format(mask_paths))
     combined_polygon = align_bounds_to_whole_number(get_combined_polygon(masks, geometry_func))
     gt = masks[0].GetGeoTransform()
     x_res = gt[1]

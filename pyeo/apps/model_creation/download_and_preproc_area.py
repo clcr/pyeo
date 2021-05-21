@@ -13,7 +13,7 @@ import configparser
 
 def main(aoi_path, start_date, end_date, l1_dir, l2_dir, merge_dir, conf_path,
          download_l2_data=False, sen2cor_path=None, stacked_dir=None, bands=("B08", "B04", "B03", "B02"),
-         resolution=10, cloud_cover=100):
+         resolution=10, cloud_cover=100, download_source='scihub'):
 
     conf = configparser.ConfigParser()
     conf.read(conf_path)
@@ -25,11 +25,11 @@ def main(aoi_path, start_date, end_date, l1_dir, l2_dir, merge_dir, conf_path,
         products = pyeo.queries_and_downloads.filter_non_matching_s2_data(products)
         log.info("{} products left after non-matching".format(len(products)))
         pyeo.queries_and_downloads.download_s2_data(products, l1_dir, l2_dir, user=conf["sent_2"]["user"],
-                                                    passwd=conf["sent_2"]["pass"])
+                                                    passwd=conf["sent_2"]["pass"], source=download_source)
     elif sen2cor_path:
         products = pyeo.queries_and_downloads.filter_to_l1_data(products)
         pyeo.queries_and_downloads.download_s2_data(products, l1_dir, l2_dir, user=conf["sent_2"]["user"],
-                                                    passwd=conf["sent_2"]["pass"])
+                                                    passwd=conf["sent_2"]["pass"], source=download_source)
         pyeo.raster_manipulation.atmospheric_correction(l1_dir, l2_dir, sen2cor_path)
     else:
         log.critical("Please provide either the --download_l2_data flag or the arg --sen2cor"
@@ -62,12 +62,14 @@ if __name__ == "__main__":
                              "Ex: --bands B01 B03 B8A")
     parser.add_argument("--resolution", default=10, help="Resolution of final merged image.")
     parser.add_argument("--cloud_cover", default=100, help="Maximum cloud cover of images to download")
+    parser.add_argument("--download_source", default="scihub")
 
     args = parser.parse_args()
 
     log = pyeo.filesystem_utilities.init_log(args.log_path)
 
     main(args.aoi_path, args.start_date, args.end_date, args.l1_dir, args.l2_dir, args.merge_dir, args.conf_path,
-         args.download_l2_data, args.sen2cor_path, args.stacked_dir, args.bands, args.resolution, args.cloud_cover)
+         args.download_l2_data, args.sen2cor_path, args.stacked_dir, args.bands, args.resolution, args.cloud_cover,
+         args.download_source)
 
 
