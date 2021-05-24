@@ -29,7 +29,7 @@ import logging
 import os
 from tempfile import TemporaryDirectory
 
-import gdal
+from osgeo import gdal
 import joblib
 import numpy as np
 from osgeo import osr

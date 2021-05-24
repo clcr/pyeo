@@ -27,7 +27,7 @@ import os
 
 
 import configparser
-import gdal
+from osgeo import gdal
 
 from pyeo.filesystem_utilities import init_log
 

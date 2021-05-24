@@ -1,5 +1,5 @@
 import pytest
-import gdal
+from osgeo import gdal
 
 from pyeo.cirrus_correction import cirrus_correction
 

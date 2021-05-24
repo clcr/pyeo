@@ -2,7 +2,7 @@ import glob
 import os
 import shutil
 
-import gdal
+from osgeo import gdal
 import osr
 import pytest
 

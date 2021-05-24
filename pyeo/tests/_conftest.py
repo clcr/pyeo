@@ -1,6 +1,6 @@
 import pytest
 import tempfile
-import gdal
+from osgeo import gdal
 import ogr
 import osr
 import os

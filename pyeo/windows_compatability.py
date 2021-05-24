@@ -1,7 +1,7 @@
 import os
 import sys
 import numpy as np
-import gdal
+from osgeo import gdal
 from osgeo.gdal_array import GDALTypeCodeToNumericTypeCode
 import logging
 from tempfile import NamedTemporaryFile

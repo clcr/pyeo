@@ -6,7 +6,7 @@ Needs: S2 L1 RGB and Cirrus mask
 """
 
 
-import gdal
+from osgeo import gdal
 import numpy as np
 from pyeo import raster_manipulation as ras
 

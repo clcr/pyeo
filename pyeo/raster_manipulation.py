@@ -122,7 +122,7 @@ import subprocess
 import re
 from tempfile import TemporaryDirectory
 
-import gdal
+from osgeo import gdal
 import numpy as np
 from osgeo import gdal_array, osr, ogr
 from osgeo.gdal_array import NumericTypeCodeToGDALTypeCode, GDALTypeCodeToNumericTypeCode

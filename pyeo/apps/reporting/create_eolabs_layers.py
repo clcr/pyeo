@@ -2,7 +2,7 @@ import os
 
 import pyeo.raster_manipulation
 import csv
-import gdal
+from osgeo import gdal
 import numpy as np
 import argparse
 from tempfile import TemporaryDirectory

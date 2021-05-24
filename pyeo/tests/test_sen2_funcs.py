@@ -1,7 +1,7 @@
 import os
 import shutil
 
-import gdal
+from osgeo import gdal
 import pytest
 
 import pyeo.filesystem_utilities

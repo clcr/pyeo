@@ -27,7 +27,7 @@ import pyeo.filesystem_utilities
 import configparser
 import argparse
 import os
-import gdal
+from osgeo import gdal
 
 if __name__ == "__main__":
 

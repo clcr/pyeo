@@ -44,7 +44,7 @@ Function reference
 """
 
 import numpy as np
-import gdal
+from osgeo import gdal
 import random
 import ogr, osr
 

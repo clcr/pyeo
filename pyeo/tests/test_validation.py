@@ -1,7 +1,7 @@
 from pyeo import validation
 from pyeo.filesystem_utilities import init_log
 import numpy as np
-import gdal
+from osgeo import gdal
 import os
 import pytest
 

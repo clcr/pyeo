@@ -1,6 +1,6 @@
 """A very small plotting library."""
 
-import gdal
+from osgeo import gdal
 from matplotlib import pyplot as plt
 import pyeo.windows_compatability
 

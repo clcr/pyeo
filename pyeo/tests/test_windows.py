@@ -1,5 +1,5 @@
 import sys
-import gdal
+from osgeo import gdal
 import os
 import pyeo.windows_compatability
 

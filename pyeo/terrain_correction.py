@@ -8,7 +8,7 @@ Original code at https://github.com/Forests2020-Indonesia/Topographic-Correction
 Method b: https://ieeexplore.ieee.org/document/8356797
 """
 
-import gdal
+from osgeo import gdal
 from tempfile import TemporaryDirectory
 import os.path as p
 
