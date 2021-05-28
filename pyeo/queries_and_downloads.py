@@ -125,8 +125,6 @@ def _rest_query(user, passwd, footprint_wkt, start_date, end_date, cloud=50):
 
 
 def _rest_out_to_json(result):
-    import pdb
-    pdb.set_trace()
     root = ElementTree.fromstring(result.content.replace(b"\n", b""))
     total_results = int(root.find("{http://a9.com/-/spec/opensearch/1.1/}totalResults").text)
     if total_results > 10:
@@ -243,6 +241,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, query
         log.info("Sending Sentinel-2 query:\nfootprint: {}\nstart_date: {}\nend_date: {}\n cloud_cover: {} ".format(
             footprint, start_date, end_date, cloud))
         return query_func(user,passwd, footprint, start_date, end_date, cloud)
+
 
 def _date_to_timestamp(date):
     #
