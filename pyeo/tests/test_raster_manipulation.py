@@ -2,7 +2,9 @@ import glob
 import os
 import shutil
 
-from osgeo import gdal
+import numpy as np
+
+from osgeo import gdal, ogr
 import osr
 import pytest
 
@@ -370,3 +372,20 @@ def test_remove_raster_band():
     out = gdal.Open(out_path)
     assert out
     assert out.RasterCount == 7
+
+
+def test_create_new_image_from_polygon():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    dataset = ogr.Open("test_data/wuhan_aoi_epsg32650.shp")
+    layer = dataset.GetLayerByIndex(0)
+    feature = layer.GetNextFeature()
+    polygon = feature.GetGeometryRef()
+    out_path = "test_data/polygon_test.tif"
+    x_res=10
+    y_res=10
+    bands=2
+    projection = polygon.GetSpatialReference().ExportToWkt()
+    pyeo.raster_manipulation.create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
+                                  projection, format="GTiff", datatype=gdal.GDT_Int32, nodata=-4)
+    out = gdal.Open(out_path)
+    assert np.all(out.ReadAsArray() == -4)

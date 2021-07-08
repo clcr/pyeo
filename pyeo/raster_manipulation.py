@@ -131,6 +131,7 @@ from skimage import morphology as morph
 import pdb
 import faulthandler
 
+import coordinate_manipulation
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect, reproject_vector, \
     get_local_top_left
@@ -1033,7 +1034,6 @@ def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
     A gdal.Image object
 
     """
-    # TODO: Implement nodata
     bounds_x_min, bounds_x_max, bounds_y_min, bounds_y_max = polygon.GetEnvelope()
     if bounds_x_min >= bounds_x_max:
         bounds_x_min, bounds_x_max = bounds_x_max, bounds_x_min
@@ -1054,7 +1054,11 @@ def create_new_image_from_polygon(polygon, out_path, x_res, y_res, bands,
         band = out_raster.GetRasterBand(band_index)
         band.SetNoDataValue(nodata)
         band = None
+    arr = out_raster.GetVirtualMemArray(eAccess=gdal.GA_Update)
+    arr[...] = nodata
+    arr = None
     return out_raster
+
 
 
 def resample_image_in_place(image_path, new_res):
