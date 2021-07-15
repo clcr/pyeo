@@ -131,7 +131,6 @@ from skimage import morphology as morph
 import pdb
 import faulthandler
 
-import coordinate_manipulation
 from pyeo.coordinate_manipulation import get_combined_polygon, pixel_bounds_from_polygon, write_geometry, \
     get_aoi_intersection, get_raster_bounds, align_bounds_to_whole_number, get_poly_bounding_rect, reproject_vector, \
     get_local_top_left
