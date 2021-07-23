@@ -1913,8 +1913,13 @@ def get_sen2cor_version(sen2cor_path):
     if match:
         return match.group(1)
     else:
-        raise FileNotFoundError("Version information not found; please check your sen2cor path.")
-
+        version_regex = r"Sen2Cor (\d+.\d+.\d+)"
+        match = re.search(version_regex, help_string)
+        if match:
+            return match.group(1)
+        else:
+            raise FileNotFoundError("Version information not found; please check your sen2cor path.")
+            
 
 def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unprocessed_image=False):
     """
