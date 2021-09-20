@@ -72,39 +72,47 @@ if __name__ == "__main__":
     merged_image_path = os.path.join(project_root, r"images/merged")
     stacked_image_path = os.path.join(project_root, r"images/stacked")
     mosaic_image_path = os.path.join(project_root, r"images/mosaic")
-    catagorised_image_path = os.path.join(project_root, r"output/classified")
+    catagorised_image_path = os.path.join(project_root, r"output/categories")
     probability_image_path = os.path.join(project_root, r"output/probabilities")
 
     # Query and download
     if args.do_download or do_all:
+        log.info("-----------------------------------------------------")
+        log.info("Querying available Sentinel-2 imagery for download")
         products = pyeo.queries_and_downloads.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf)
-        log.info("Downloading")
-        pyeo.queries_and_downloads.download_s2_data(products, l1_image_path)
+        log.info("Downloading Sentinel-2 L1 and L2 images")
+        pyeo.queries_and_downloads.download_s2_data(products, l1_image_path, l2_image_path, source='aws')
+        #Args: download_s2_data(new_data, l1_dir, l2_dir, source='scihub', user=None, passwd=None, try_scihub_on_fail=False)
 
     # Atmospheric correction
     if args.do_preprocess or do_all:
-        log.info("Applying sen2cor")
+        log.info("-----------------------------------------------------")
+        log.info("Applying sen2cor atmospheric correction to L1 images")
         pyeo.raster_manipulation.atmospheric_correction(l1_image_path, l2_image_path, sen2cor_path, delete_unprocessed_image=False)
 
     # Merging / Aggregating layers into single image
     if args.do_merge or do_all:
-        log.info("Cleaning L2A directory")
+        log.info("-----------------------------------------------------")
+        log.info("Removing images with missing bands from L2A directory")
         pyeo.filesystem_utilities.clean_l2_dir(l2_image_path, resolution="10m", warning=False)
-        log.info("Aggregating layers")
+        log.info("Merging all 10m band files into single Geotiffs, creating cloud masks and reprojecting output images")
         pyeo.raster_manipulation.preprocess_sen2_images(l2_image_path, merged_image_path, cloud_certainty_threshold)
 
     # Stack layers
     if args.do_stack or do_all:
+        log.info("-----------------------------------------------------")
         log.info("Stacking before and after images")
         pyeo.raster_manipulation.create_new_stacks(merged_image_path, stacked_image_path)
 
     # Mosaic stacked layers
-    if args.do_stack or do_all:
+    if args.do_mosaic or do_all:
+        log.info("-----------------------------------------------------")
         log.info("Mosaicking stacked multitemporal images across tiles")
         pyeo.raster_manipulation.mosaic_images(stacked_image_path, mosaic_image_path, format="GTiff", datatype=gdal.GDT_Int32, nodata=0)
 
     # Classify stacks
     if args.do_classify or do_all:
+        log.info("-----------------------------------------------------")
         log.info("Classifying images")
         pyeo.classification.classify_directory(stacked_image_path, model_path, catagorised_image_path, probability_image_path,
                                                num_chunks=16, apply_mask=False)

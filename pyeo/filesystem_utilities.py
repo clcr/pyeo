@@ -97,7 +97,7 @@ def create_file_structure(root):
         "composite/L2",
         "composite/merged",
         "output/",
-        "output/categories",
+        "output/classified",
         "output/probabilities",
         "output/report_image",
         "output/display_images",
@@ -189,7 +189,7 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
         if warning:
             if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
                 return
-        log.warning("Removing {}".format(l2_SAFE_file))
+        log.warning("Missing band data. Removing {}".format(l2_SAFE_file))
         shutil.rmtree(l2_SAFE_file)
 
 
@@ -211,7 +211,7 @@ def clean_l2_dir(l2_dir, resolution="10m", warning=True):
     -------
 
     """
-    log.info("Scanning {} for incomplete SAFE files".format(l2_dir))
+    log.info("Scanning {} for missing band data in .SAFE files".format(l2_dir))
     for safe_file_path in [os.path.join(l2_dir, safe_file_name) for safe_file_name in os.listdir(l2_dir)]:
         clean_l2_data(safe_file_path, resolution, warning)
 

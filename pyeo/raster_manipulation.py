@@ -10,7 +10,7 @@ Key functions
 
     :py:func:`stack_images` Stacks a list of rasters into a single raster.
 
-    :py:func:`preprocess_sen2_images` Preprocesses a set of of Sentinel-2 images into single raster files.
+    :py:func:`n2_images` Preprocesses a set of of Sentinel-2 images into single raster files.
 
     :py:func:`clip_raster` Clips a raster to a shapefile
 
@@ -240,7 +240,7 @@ def save_array_as_image(array, path, geotransform, projection, format = "GTiff")
 def create_new_stacks(image_dir, stack_dir):
     """
     For each granule present in image_dir Saves the result in stacked_dir.
-    Assumes that each image in image_dir is saved with a Sentinel-2 identifiter name - see merge_raster.
+    Assumes that each image in image_dir is saved with a Sentinel-2 identifier name - see merge_raster.
 
     Parameters
     ----------
@@ -272,7 +272,7 @@ def create_new_stacks(image_dir, stack_dir):
     n_tiles = len(tiles)
     log.info("Found {} unique tile IDs for stacking:".format(n_tiles))
     for tile in tiles:
-        log.info("   {}".format(tile))  # Why in its own loop?
+        log.info("   {}".format(tile))
     for tile in tiles:
         log.info("Tile ID for stacking: {}".format(tile))
         safe_files = glob.glob(os.path.join(image_dir, "*" + tile + "*.tif")) # choose all files with that tile ID
@@ -295,9 +295,9 @@ def create_new_stacks(image_dir, stack_dir):
 def stack_image_with_composite(image_path, composite_path, out_dir, create_combined_mask=True, skip_if_exists=True,
                                invert_stack = False):
     """
-    Creates a single 8-band geotif image with a cloud-free composite, and saves the result in out_dir. Images are named
-    "composite_tile_timestamp-of-composite_timestamp-of-image". Bands 1,2,3 and 4 are the B,G,R and I bands of the
-    composite, and bands 5,6,7 and 8 are the B,G,R and I bands of the image.
+    Creates a single 8-band geotif image with a cloud-free composite and an image, and saves the result in out_dir. Output images are named
+    "composite_tile_timestamp-of-composite_timestamp-of-image". Bands 1,2,3 and 4 are the B,G,R and NIR bands of the
+    composite, and bands 5,6,7 and 8 are the B,G,R and NIR bands of the image.
 
     Parameters
     ----------
@@ -346,10 +346,10 @@ def stack_image_with_composite(image_path, composite_path, out_dir, create_combi
 def stack_images(raster_paths, out_raster_path,
                  geometry_mode="intersect", format="GTiff", datatype=gdal.GDT_Int32, nodata_value=0):
     """
-    When provided with a list of rasters, will stack them into a single raster. The nunmber of
-    bands in the output is equal to the total number of bands in the input. Geotransform and projection
-    are taken from the first raster in the list; there may be unexpected behavior if multiple differing
-    proejctions are provided.
+    When provided with a list of rasters, will stack them into a single raster. The number of
+    bands in the output is equal to the total number of bands in the input raster. Geotransform and projection
+    are taken from the first raster in the list; there may be unexpected behaviour if multiple differing
+    projections are provided.
 
     Parameters
     ----------
@@ -369,7 +369,9 @@ def stack_images(raster_paths, out_raster_path,
 
     """
     #TODO: Confirm the union works, and confirm that nondata defaults to 0.
-    log.info("Stacking images {}".format(raster_paths))
+    log.info("Merging band rasters into a single file:")
+    for path in raster_paths:
+        log.info("   "+path)
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
@@ -389,7 +391,7 @@ def stack_images(raster_paths, out_raster_path,
     out_raster_array[...] = nodata_value
     present_layer = 0
     for i, in_raster in enumerate(rasters):
-        log.info("Stacking image {}".format(i))
+        log.info("Merging image {}".format(i))
         in_raster_array = in_raster.GetVirtualMemArray()
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
         in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
@@ -459,7 +461,7 @@ def average_images(raster_paths, out_raster_path,
     When provided with a list of rasters, will stack them into a single raster. The nunmber of
     bands in the output is equal to the total number of bands in the input. Geotransform and projection
     are taken from the first raster in the list; there may be unexpected behavior if multiple differing
-    proejctions are provided.
+    projections are provided.
 
     Parameters
     ----------
@@ -598,40 +600,44 @@ def mosaic_images(raster_paths, out_raster_file, format="GTiff", datatype=gdal.G
 
     # This, again, is very similar to stack_rasters
     log = logging.getLogger(__name__)
-    log.info("Beginning mosaic")
-    rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
-    projection = rasters[0].GetProjection()
-    in_gt = rasters[0].GetGeoTransform()
-    x_res = in_gt[1]
-    y_res = in_gt[5] * -1  # Y resolution in agt is -ve for Maths reasons
-    combined_polygon = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode='union'))
-    layers = rasters[0].RasterCount
-    out_raster = create_new_image_from_polygon(combined_polygon, out_raster_file, x_res, y_res, layers,
-                                               projection, format, datatype, nodata=nodata)
-    log.info("New empty image created at {}".format(out_raster_file))
-    out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
-    out_raster_array[...] = nodata
-    old_nodata = nodata
-    for i, raster in enumerate(rasters):
-        log.info("Now mosaicking raster no. {}".format(i))
-        in_raster_array = raster.GetVirtualMemArray()
-        if len(in_raster_array.shape) == 2:
-            in_raster_array = np.expand_dims(in_raster_array, 0)
-        if np.isnan(old_nodata):
-            nodata = np.nan_to_num(in_raster_array).max() + 1  # This is turning into a _real_ hack now
-            in_raster_array = np.nan_to_num(in_raster_array, nan=nodata, copy=True)
-        in_bounds = get_raster_bounds(raster)
-        out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, in_bounds)
-        out_raster_view = out_raster_array[:, out_y_min: out_y_max, out_x_min: out_x_max]
-        np.copyto(out_raster_view, in_raster_array, where=in_raster_array != nodata)
-        in_raster_array = None
-        out_raster_view = None
-    log.info("Raster mosaicking done")
-    out_raster_array = None
-    out_raster = None
+    if len(raster_paths[0]) == 1:
+        log.info("WARNING: Mosaicking called with only one raster tile. Doing nothing.")
+        log.info(raster_paths)
+    else:
+        log.info("Beginning mosaic")
+        rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
+        projection = rasters[0].GetProjection()
+        in_gt = rasters[0].GetGeoTransform()
+        x_res = in_gt[1]
+        y_res = in_gt[5] * -1  # Y resolution in agt is -ve for Maths reasons
+        combined_polygon = align_bounds_to_whole_number(get_combined_polygon(rasters, geometry_mode='union'))
+        layers = rasters[0].RasterCount
+        out_raster = create_new_image_from_polygon(combined_polygon, out_raster_file, x_res, y_res, layers,
+                                                   projection, format, datatype, nodata=nodata)
+        log.info("New empty image created at {}".format(out_raster_file))
+        out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
+        out_raster_array[...] = nodata
+        old_nodata = nodata
+        for i, raster in enumerate(rasters):
+            log.info("Now mosaicking raster no. {}".format(i))
+            in_raster_array = raster.GetVirtualMemArray()
+            if len(in_raster_array.shape) == 2:
+                in_raster_array = np.expand_dims(in_raster_array, 0)
+            if np.isnan(old_nodata):
+                nodata = np.nan_to_num(in_raster_array).max() + 1  # This is turning into a _real_ hack now
+                in_raster_array = np.nan_to_num(in_raster_array, nan=nodata, copy=True)
+            in_bounds = get_raster_bounds(raster)
+            out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, in_bounds)
+            out_raster_view = out_raster_array[:, out_y_min: out_y_max, out_x_min: out_x_max]
+            np.copyto(out_raster_view, in_raster_array, where=in_raster_array != nodata)
+            in_raster_array = None
+            out_raster_view = None
+        log.info("Raster mosaicking done")
+        out_raster_array = None
+        out_raster = None
 
 
-def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff", generate_date_image=False):
+def composite_images_with_mask(in_raster_path_list, composite_out_path, format="GTiff", generate_date_image=True):
     """
     Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Will also create a mask and
     (optionally) a date image in the same directory.
@@ -754,7 +760,7 @@ def reproject_directory(in_dir, out_dir, new_projection, extension = '.tif'):
     image_paths = [os.path.join(in_dir, image_path) for image_path in os.listdir(in_dir) if image_path.endswith(extension)]
     for image_path in image_paths:
         reproj_path = os.path.join(out_dir, os.path.basename(image_path))
-        log.info("Reprojecting {} to {}, storing in {}".format(image_path, reproj_path, new_projection))
+        log.info("Reprojecting {} to projection with EPSG code {}, storing in {}".format(image_path, reproj_path, new_projection))
         reproject_image(image_path, reproj_path, new_projection)
 
 
@@ -1233,7 +1239,7 @@ def calc_ndvi(raster_path, output_path):
 
 def apply_band_function(in_path, function, bands, out_path, out_datatype = gdal.GDT_Int32):
     """
-    Applys an arbitrary band mathemtics function to an image at in_path and saves the result at out_map.
+    Applys an arbitrary band mathematics function to an image at in_path and saves the result at out_map.
     Function should be a function object of the form f(band_input_A, band_input_B, ...)
 
     Parameters
@@ -1335,7 +1341,7 @@ def sum_function(pixels_in):
 
 def raster_sum(inRstList, outFn, outFmt='GTiff'):
     """Creates a raster stack from a list of rasters. Adapted from Chris Gerard's
-    book 'Geoprocessing with Python'. The out put data type is the same as the input data type.
+    book 'Geoprocessing with Python'. The output data type is the same as the input data type.
 
     Parameters
     ----------
@@ -1487,8 +1493,8 @@ def open_dataset_from_safe(safe_file_path, band, resolution = "10m"):
 def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_size=0, epsg=None,
                            bands=("B02", "B03", "B04", "B08"), out_resolution=10):
     """
-    For every .SAFE folder in l2_dir and L1_dir, stacks band 2,3,4 and 8  bands into a single geotif, creates a cloudmask from
-    the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided.
+    For every .SAFE folder in l2_dir and L1_dir, merges the rasters of bands 2,3,4 and 8 into a single geotiff file, 
+    creates a cloudmask from the combined fmask and sen2cor cloudmasks and reprojects to a given EPSG if provided.
 
     Parameters
     ----------
@@ -1523,7 +1529,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
     for l2_safe_file in safe_file_path_list:
         with TemporaryDirectory() as temp_dir:
             log.info("----------------------------------------------------")
-            log.info("Merging 10m bands in SAFE dir: {}".format(l2_safe_file))
+            log.info("Merging 10m band files in SAFE dir: {}".format(l2_safe_file))
             temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
             log.info("Output file: {}".format(temp_path))
             stack_sentinel_2_bands(l2_safe_file, temp_path, bands=bands, out_resolution=out_resolution)
@@ -1860,7 +1866,7 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
 
 def build_sen2cor_output_path(image_path, timestamp, version):
     """
-    Creates a sen2cor output path dependent on the version ofr sen2cor
+    Creates a sen2cor output path dependent on the version of sen2cor
 
     Parameters
     ----------
@@ -1903,7 +1909,9 @@ def get_sen2cor_version(sen2cor_path):
         A string of the version of sen2cor at sen2cor_path
 
     """
+    
     proc = subprocess.run([sen2cor_path, "--help"], stdout=subprocess.PIPE)
+
     help_string = proc.stdout.decode("utf-8")
 
     # Looks for the string "Version: " followed by three sets of digits separated by period characters.
@@ -2101,6 +2109,102 @@ def create_mask_from_class_map(class_map_path, out_path, classes_of_interest, bu
         buffer_mask_in_place(out_path, buffer_size)
     return out_path
 
+def apply_mask_to_image(mask_path, image_path, masked_image_path):
+    """
+    Applies a mask of 0 and 1 values to a raster image with one or more bands in Geotiff format
+    by multiplying each pixel values with the mask value.
+    
+    After: 
+        https://pcjericks.github.io/py-gdalogr-cookbook/raster_layers.html
+    
+    Parameters
+    ----------
+    mask_path : str
+        Paths and file name of the mask file
+        
+    image_path : str
+        Path and file name of the raster image file
+        
+    masked_image_path : str
+        Path and file name of the masked raster image file that will be created
+
+    """
+
+    #TODO
+    #import gdal, ogr, osr, os
+    #import numpy as np
+
+
+    def raster2array(rasterfn):
+        raster = gdal.Open(rasterfn)
+        band = raster.GetRasterBand(1)
+        return band.ReadAsArray()
+
+    def array2raster(rasterfn,newRasterfn,array):
+        raster = gdal.Open(rasterfn)
+        geotransform = raster.GetGeoTransform()
+        originX = geotransform[0]
+        originY = geotransform[3]
+        pixelWidth = geotransform[1]
+        pixelHeight = geotransform[5]
+        cols = raster.RasterXSize
+        rows = raster.RasterYSize
+
+        driver = gdal.GetDriverByName('GTiff')
+        outRaster = driver.Create(newRasterfn, cols, rows, 1, gdal.GDT_Float32)
+        outRaster.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
+        outband = outRaster.GetRasterBand(1)
+        outband.WriteArray(array)
+        outRasterSRS = osr.SpatialReference()
+        outRasterSRS.ImportFromWkt(raster.GetProjectionRef())
+        outRaster.SetProjection(outRasterSRS.ExportToWkt())
+        outband.FlushCache()
+    
+    log = logging.getLogger(__name__)
+    
+    log.info("Applying mask {} to raster image {}.".format(mask_path, image_path))
+    
+    mask = gdal.Open(mask_path)
+    if mask == None:
+        raise FileNotFoundError("Mask not found: {}".format(mask_path))
+        
+    # make the name of the masked output image
+    masked_image_path = image_path.split(".")[0]+"_masked.tif"
+    log.info("   masked raster image is at {}.".format(masked_image_path))
+    
+    # gdal apply mask to raster
+    image_as_array = raster2array(image_path)
+
+    # get mask
+    mask_as_array = raster2array(mask_path)
+
+    # Update pixels in the image with zero values in the mask array
+    image_as_array[mask_as_array == 0] = 0
+
+    # Write updated array to new raster
+    array2raster(image_path, masked_image_path, image_as_array)
+
+
+def apply_mask_to_dir(mask_path, image_dir, masked_image_dir):
+    """
+    Iterates over all raster images in image_dir and applies the mask to each image.
+
+    Parameters
+    ----------
+    mask_path : str
+        Paths and file name of the mask file
+        
+    image_dir : str
+        Path and directory name which contains the raster image files in Geotiff format
+        
+    masked_image_dir : str
+        Path and directory name in which the masked raster image files will be created
+    """
+
+    log = logging.getLogger(__name__)
+    for image_path in image_dir:
+        apply_mask_to_image(mask_path, image_path, masked_image_path)
+    
 
 def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func ="intersect"):
     """
@@ -2129,8 +2233,9 @@ def combine_masks(mask_paths, out_path, combination_func = 'and', geometry_func 
 
     """
     log = logging.getLogger(__name__)
-    log.info("Combining masks {}:\n   combination function: '{}'\n   geometry function:'{}'".format(
-        mask_paths, combination_func, geometry_func))
+    log.info("Combining masks using combination function {} and geometry function {}.".format(combination_func, geometry_func))
+    for mask in mask_paths:
+        log.info("   {}".format(mask))
     masks = [gdal.Open(mask_path)
              for mask_path
              in mask_paths]
