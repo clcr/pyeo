@@ -67,16 +67,16 @@ def create_file_structure(root):
     Creates the folder structure used in rolling_s2_composite and some other functions: ::
         root
         -images
-        --L1
-        --L2
-        --merged
+        --L1C
+        --L2A
+        --bandmerged
         --stacked
         -composite
-        --L1
-        --L2
-        --merged
+        --L1C
+        --L2A
+        --bandmerged
         -output
-        --categories
+        --classified
         --probabilities
 
     Parameters
@@ -87,15 +87,15 @@ def create_file_structure(root):
     os.chdir(root)
     dirs = [
         "images/",
-        "images/L1/",
-        "images/L2/",
-        "images/merged/",
+        "images/L1C/",
+        "images/L2A/",
+        "images/bandmerged/",
         "images/stacked/",
         "images/planet/",
         "composite/",
-        "composite/L1",
-        "composite/L2",
-        "composite/merged",
+        "composite/L1C",
+        "composite/L2A",
+        "composite/bandmerged",
         "output/",
         "output/classified",
         "output/probabilities",
@@ -229,18 +229,18 @@ def clean_aoi(aoi_dir, images_to_keep=4, warning=True):
         The number of images to keep
 
     """
-    l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1")), recent_first=True)
-    l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2")), recent_first=True)
-    comp_l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
-    comp_l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2")), recent_first=True)
+    l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1C")), recent_first=True)
+    l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2A")), recent_first=True)
+    comp_l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2A")), recent_first=True)
+    comp_l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2A")), recent_first=True)
     merged_list = sort_by_timestamp(
-        [image for image in os.listdir(os.path.join(aoi_dir, "images/merged")) if image.endswith(".tif")],
+        [image for image in os.listdir(os.path.join(aoi_dir, "images/bandmerged")) if image.endswith(".tif")],
         recent_first=True)
     stacked_list = sort_by_timestamp(
         [image for image in os.listdir(os.path.join(aoi_dir, "images/stacked")) if image.endswith(".tif")],
         recent_first=True)
     comp_merged_list = sort_by_timestamp(
-        [image for image in os.listdir(os.path.join(aoi_dir, "composite/merged")) if image.endswith(".tif")],
+        [image for image in os.listdir(os.path.join(aoi_dir, "composite/bandmerged")) if image.endswith(".tif")],
         recent_first=True)
     for image_list in (l1_list, l2_list, comp_l1_list, comp_l2_list):
         for safe_file in image_list[images_to_keep:]:

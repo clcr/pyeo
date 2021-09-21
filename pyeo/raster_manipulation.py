@@ -837,7 +837,13 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
                           in sort_by_timestamp(os.listdir(image_dir), recent_first=False)  # Let's think about this
                           if image_name.endswith(".tif")]
+    print("*********************")
+    print(sorted_image_paths)
+    print(len(sorted_image_paths))
+
     last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
+    print(last_timestamp)
+    print(len(last_timestamp))
     composite_out_path = os.path.join(composite_out_dir, "composite_{}.tif".format(last_timestamp))
     composite_images_with_mask(sorted_image_paths, composite_out_path, format, generate_date_image=generate_date_images)
     return composite_out_path
@@ -1834,13 +1840,21 @@ def apply_sen2cor(image_path, sen2cor_path, delete_unprocessed_image=False):
     # added sen2cor_path by hb91
     gipp_path = os.path.join(os.path.dirname(__file__), "L2A_GIPP.xml")
     out_dir = os.path.dirname(image_path)
-    log.info("calling subprocess: {}".format([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path)]))
+    log.info("calling sen2cor subprocess command:")
+    log.info(sen2cor_path + " " + image_path + " --output_dir " + os.path.dirname(image_path))
+    #log.info(sen2cor_path + " " + image_path + " --output_dir " + os.path.dirname(image_path) + " --GIP_L2A " + gipp_path)
     now_time = datetime.datetime.now()   # I can't think of a better way of geting the new outpath from sen2cor
     timestamp = now_time.strftime(r"%Y%m%dT%H%M%S")
-    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path),
-                                     '--GIP_L2A', gipp_path],
+    # The application of sen2cor below with the option --GIP_L2A caused an unspecified metadata error in the xml file.
+    # Removing it resolves this problem.
+    sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path)],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
+    #sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path),
+    #                                 '--GIP_L2A', gipp_path],
+    #                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    #                                universal_newlines=True)
+    
     while True:
         nextline = sen2cor_proc.stdout.readline()
         if len(nextline) > 0:
@@ -1956,6 +1970,11 @@ def atmospheric_correction(in_directory, out_directory, sen2cor_path, delete_unp
         out_name = build_sen2cor_output_path(image, image_timestamp, get_sen2cor_version(sen2cor_path))
         out_path = os.path.join(out_directory, out_name)
         out_glob = out_path.rpartition("_")[0] + "*"
+
+        log.info("   **************************")
+        log.info("   image path = " + image_path)
+        log.info("   image time stamp = " + image_timestamp)
+        
         if glob.glob(out_glob):
             log.warning("{} exists. Skipping.".format(out_path))
             continue

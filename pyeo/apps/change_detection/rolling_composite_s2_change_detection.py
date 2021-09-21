@@ -82,9 +82,9 @@ def rolling_detection(config_path,
     composite_end_date = conf['forest_sentinel']['composite_end']
     epsg = int(conf['forest_sentinel']['epsg'])
    
+    pyeo.filesystem_utilities.create_file_structure(project_root)
     log = pyeo.filesystem_utilities.init_log(log_path)
     log.info("Creating the directory structure if not already present")
-    pyeo.filesystem_utilities.create_file_structure(project_root)
 
     try:
         l1_image_dir = os.path.join(project_root, r"images/L1C")
@@ -120,18 +120,18 @@ def rolling_detection(config_path,
         # Download and build the initial composite.
         if build_composite:
             if do_download or do_all:
-                log.info("Downloading for initial composite between {} and {} with cloud cover <= ()".format(
+                log.info("Downloading images for initial composite between {} and {} with cloud cover <= ()".format(
                     composite_start_date, composite_end_date, cloud_cover))
                 composite_products = pyeo.queries_and_downloads.check_for_s2_data_by_date(aoi_path,
                                                                                           composite_start_date,
                                                                                           composite_end_date,
                                                                                           conf, cloud_cover=cloud_cover)
                 if download_l2_data:
-                    log.info("Filtering query results for matching L1 and L2 products")
+                    log.info("Filtering query results for matching L1C and L2A products")
                     composite_products = pyeo.queries_and_downloads.filter_non_matching_s2_data(composite_products)
                     log.info("{} products remain".format(len(composite_products)))
                 else:
-                    log.info("Filtering query results to L1 only")
+                    log.info("Filtering query results to L1C only")
                     composite_products = pyeo.queries_and_downloads.filter_to_l1_data(composite_products)
                 pyeo.queries_and_downloads.download_s2_data(composite_products, composite_l1_image_dir,
                                                             composite_l2_image_dir,
@@ -156,11 +156,11 @@ def rolling_detection(config_path,
             products = pyeo.queries_and_downloads.check_for_s2_data_by_date(aoi_path, start_date, end_date, conf,
                                                                             cloud_cover=cloud_cover)
             if download_l2_data:
-                log.info("Filtering query results for matching L1 and L2 products")
+                log.info("Filtering query results for matching L1C and L2A products")
                 products = pyeo.queries_and_downloads.filter_non_matching_s2_data(products)
                 log.info("{} products remain".format(len(products)))
             else:
-                log.info("Filtering query results to L1 only")
+                log.info("Filtering query results to L1C only")
                 products = pyeo.queries_and_downloads.filter_to_l1_data(products)
             log.info("Downloading")
             pyeo.queries_and_downloads.download_s2_data(products, l1_image_dir, l2_image_dir, download_source,

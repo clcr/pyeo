@@ -177,7 +177,7 @@ def _is_4326(geom):
         return False
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, query_func=_rest_query):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=100, query_func=_rest_query):
     """
     Fetches a list of Sentinel-2 products
 
@@ -458,7 +458,7 @@ def get_landsat_api_key(conf, session):
     return session_key
 
 
-def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
+def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=100):
     """
     Gets all the products between start_date and end_date. Wraps sent2_query to avoid having passwords and
     long-format timestamps in code.
