@@ -391,7 +391,7 @@ def stack_images(raster_paths, out_raster_path,
     out_raster_array[...] = nodata_value
     present_layer = 0
     for i, in_raster in enumerate(rasters):
-        log.info("Merging image {}".format(i))
+        log.info("Merging band image {}".format(i+1))
         in_raster_array = in_raster.GetVirtualMemArray()
         out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(out_raster, combined_polygons)
         in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(in_raster, combined_polygons)
@@ -544,7 +544,8 @@ def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
     format : str
         Image format of the output raster. Defaults to 'GTiff'.
     """
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
+        log.info("Making temp dir {}".format(td))
         in_raster = gdal.Open(in_raster_path)
         in_gt = in_raster.GetGeoTransform()
         x_res = in_gt[1]
@@ -833,13 +834,13 @@ def composite_directory(image_dir, composite_out_dir, format="GTiff", generate_d
 
     """
     log = logging.getLogger(__name__)
-    log.info("Compositing {}".format(image_dir))
+    log.info("Compositing all images in directory {}".format(image_dir))
     sorted_image_paths = [os.path.join(image_dir, image_name) for image_name
                           in sort_by_timestamp(os.listdir(image_dir), recent_first=False)  # Let's think about this
                           if image_name.endswith(".tif")]
-    print("*********************")
-    print(sorted_image_paths)
-    print(len(sorted_image_paths))
+    log.info("*********************")
+    log.info(sorted_image_paths)
+    log.info(len(sorted_image_paths))
 
     last_timestamp = get_sen_2_image_timestamp(os.path.basename(sorted_image_paths[-1]))
     print(last_timestamp)
@@ -922,7 +923,8 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
     if os.path.exists(out_image):
         log.warning("{} exists, skipping.")
         return
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
+        log.info("Making temp dir {}".format(td))
         old_clipped_image_path = os.path.join(td, "old.tif")
         new_clipped_image_path = os.path.join(td, "new.tif")
         clip_raster(old_image_path, aoi_path, old_clipped_image_path)
@@ -954,8 +956,9 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False, 
     """
     # TODO: Set values outside clip to 0 or to NaN - in irregular polygons
     # https://gis.stackexchange.com/questions/257257/how-to-use-gdal-warp-cutline-option
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
         log.info("Clipping {} with {}".format(raster_path, aoi_path))
+        log.info("Making temp dir {}".format(td))
         raster = gdal.Open(raster_path)
         in_gt = raster.GetGeoTransform()
         srs = osr.SpatialReference()
@@ -1007,7 +1010,8 @@ def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_ras
         A location for the finished raster
     """
 
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
+        log.info("Making temp dir {}".format(td))
         temp_aoi_path = os.path.join(td, "temp_clip.shp")
         get_extent_as_shp(extent_raster_path, temp_aoi_path)
         ext_ras = gdal.Open(extent_raster_path)
@@ -1087,7 +1091,8 @@ def resample_image_in_place(image_path, new_res):
 
     """
     # I don't like using a second object here, but hey.
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
+        log.info("Making temp dir {}".format(td))
         # Remember this is used for masks, so any averging resample strat will cock things up.
         args = gdal.WarpOptions(
             xRes=new_res,
@@ -1435,8 +1440,8 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
     # TODO: Include nodata value
     log = logging.getLogger(__name__)
     log.info("Filtering {} using classes{} from map {}".format(class_map_path, classes_of_interest, image_path))
-    with TemporaryDirectory() as td:
-
+    with TemporaryDirectory(dir=os.getcwd(dir=os.getcwd())) as td:
+        log.info("Making temp dir {}".format(td))
         binary_mask_path = os.path.join(td, "binary_mask.tif")
         create_mask_from_class_map(class_map_path, binary_mask_path, classes_of_interest, out_resolution=out_resolution)
 
@@ -1533,40 +1538,44 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
                            in os.listdir(l2_dir)
                            if safe_file_path.endswith(".SAFE")]
     for l2_safe_file in safe_file_path_list:
-        with TemporaryDirectory() as temp_dir:
+        with TemporaryDirectory(dir=os.getcwd()) as temp_dir:
             log.info("----------------------------------------------------")
-            log.info("Merging 10m band files in SAFE dir: {}".format(l2_safe_file))
-            temp_path = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
-            log.info("Output file: {}".format(temp_path))
-            stack_sentinel_2_bands(l2_safe_file, temp_path, bands=bands, out_resolution=out_resolution)
-
-            log.info("Creating cloudmask for {}".format(temp_path))
-            l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
-            if l1_safe_file:
-                mask_path = get_mask_path(temp_path)
-                create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
-                log.info("Cloudmask created")
-                out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
+            log.info("Merging the selected 10m band files in directory {}".format(l2_safe_file))
+            log.info("Making temp dir {}".format(temp_dir))
+            temp_file = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
+            out_path = os.path.join(out_dir, os.path.basename(temp_file))
+            log.info("Output file containing all bands: {}".format(out_path))
+            
+            if os.path.exists(out_path):
+                log.info("WARNING: Output file already exists. Skipping the band merging step.")
             else:
-                log.error("No L1 data found for {}; cannot generate cloudmask.".format(l2_safe_file))
+                stack_sentinel_2_bands(l2_safe_file, temp_file, bands=bands, out_resolution=out_resolution)
 
-            out_path = os.path.join(out_dir, os.path.basename(temp_path))
+                log.info("Creating cloudmask for {}".format(temp_file))
+                l1_safe_file = get_l1_safe_file(l2_safe_file, l1_dir)
+                if l1_safe_file:
+                    mask_path = get_mask_path(temp_file)
+                    create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, mask_path, buffer_size=buffer_size)
+                    log.info("Cloudmask created")
+                    out_mask_path = os.path.join(out_dir, os.path.basename(mask_path))
+                else:
+                    log.error("No L1 data found for {}; cannot generate cloudmask.".format(l2_safe_file))
 
-            if epsg:
-                log.info("Reprojecting images to {}".format(epsg))
-                proj = osr.SpatialReference()
-                proj.ImportFromEPSG(epsg)
-                wkt = proj.ExportToWkt()
-                reproject_image(temp_path, out_path, wkt)
-                if l1_safe_file:
-                    reproject_image(mask_path, out_mask_path, wkt)
-                    resample_image_in_place(out_mask_path, out_resolution)
-            else:
-                log.info("Moving images to {}".format(out_dir))
-                shutil.move(temp_path, out_path)
-                if l1_safe_file:
-                    shutil.move(mask_path, out_mask_path)
-                    resample_image_in_place(out_mask_path, out_resolution)
+                if epsg:
+                    log.info("Reprojecting images to EPSG code {}".format(epsg))
+                    proj = osr.SpatialReference()
+                    proj.ImportFromEPSG(epsg)
+                    wkt = proj.ExportToWkt()
+                    reproject_image(temp_file, out_path, wkt)
+                    if l1_safe_file:
+                        reproject_image(mask_path, out_mask_path, wkt)
+                        resample_image_in_place(out_mask_path, out_resolution)
+                else:
+                    log.info("Moving images to {}".format(out_dir))
+                    shutil.move(temp_file, out_path)
+                    if l1_safe_file:
+                        shutil.move(mask_path, out_mask_path)
+                        resample_image_in_place(out_mask_path, out_resolution)
 
 
 def preprocess_landsat_images(image_dir, out_image_path, new_projection = None, bands_to_stack=("B2","B3","B4")):
@@ -1620,7 +1629,8 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None, 
     out_array = None
     out_image = None
     if new_projection:
-        with TemporaryDirectory() as td:
+        with TemporaryDirectory(dir=os.getcwd()) as td:
+            log.info("Making temp dir {}".format(td))
             log.info("Reprojecting to {}")
             temp_path = os.path.join(td, "reproj_temp.tif")
             log.info("Temporary image path at {}".format(temp_path))
@@ -1656,11 +1666,12 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04",
     band_paths = [get_sen_2_band_path(safe_dir, band, out_resolution) for band in bands]
 
     # Move every image NOT in the requested resolution to resample_dir and resample
-    with TemporaryDirectory() as resample_dir:
+    with TemporaryDirectory(dir=os.getcwd()) as resample_dir:
+        log.info("Making temp dir {}".format(resample_dir))
         new_band_paths = []
         for band_path in band_paths:
             if get_image_resolution(band_path) != out_resolution:
-                log.info("Resampling {} to {}m".format(band_path, out_resolution))
+                log.info("Resampling {} to {}m resolution".format(band_path, out_resolution))
                 resample_path = os.path.join(resample_dir, os.path.basename(band_path))
                 shutil.copy(band_path, resample_path)
                 resample_image_in_place(resample_path, out_resolution)  # why did I make this the only in-place function?
@@ -2014,7 +2025,8 @@ def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10,
 
     """
     from pyeo.classification import classify_image  # Deferred import to deal with circular reference
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
+        log.info("Making temp dir {}".format(td))
         log = logging.getLogger(__name__)
         log.info("Building cloud mask for {} with model {}".format(image_path, model_path))
         temp_mask_path = os.path.join(td, "cat_mask.tif")
@@ -2370,7 +2382,8 @@ def create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, out_mask_path
         If greater than 0, the buffer to apply to the Sentinel 2 thematic map
 
     """
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
+        log.info("Making temp dir {}".format(td))
         s2c_mask_path = os.path.join(td, "s2_mask.tif")
         fmask_mask_path = os.path.join(td, "fmask.tif")
         create_mask_from_confidence_layer(l2_safe_file, s2c_mask_path, buffer_size=buffer_size)
@@ -2392,7 +2405,8 @@ def create_mask_from_fmask(in_l1_dir, out_path):
     """
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
-    with TemporaryDirectory() as td:
+    with TemporaryDirectory(dir=os.getcwd()) as td:
+        log.info("Making temp dir {}".format(td))
         temp_fmask_path = os.path.join(td, "fmask.tif")
         apply_fmask(in_l1_dir, temp_fmask_path)
         fmask_image = gdal.Open(temp_fmask_path)
@@ -2425,7 +2439,7 @@ def apply_fmask(in_safe_dir, out_file, fmask_command="fmask_sentinel2Stacked.py"
     # For reasons known only to the spirits, calling subprocess.run from within this function on a HPC cause the PATH
     # to be prepended with a Windows "eoenv\Library\bin;" that breaks the environment. What follows is a large kludge.
     if "torque" in os.getenv("PATH"):  # Are we on a HPC? If so, give explicit path to fmask
-        fmask_command = "/data/clcr/shared/miniconda3/envs/eoenv/bin/fmask_sentinel2Stacked.py"
+        fmask_command = "/home/h/hb91/python-fmask/bin/fmask_sentinel2Stacked.py"
     if sys.platform.startswith("win"):
         fmask_command = subprocess.check_output(["where", fmask_command], text=True).strip()
     log = logging.getLogger(__name__)

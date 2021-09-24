@@ -119,8 +119,10 @@ def rolling_detection(config_path,
 
         # Download and build the initial composite.
         if build_composite:
+            log.info("------------------------------------------")
+            log.info("Building image composite")
             if do_download or do_all:
-                log.info("Downloading images for initial composite between {} and {} with cloud cover <= ()".format(
+                log.info("Searching for images for initial composite between {} and {} with cloud cover <= ()".format(
                     composite_start_date, composite_end_date, cloud_cover))
                 composite_products = pyeo.queries_and_downloads.check_for_s2_data_by_date(aoi_path,
                                                                                           composite_start_date,
@@ -138,7 +140,7 @@ def rolling_detection(config_path,
                                                             source=download_source, user=sen_user, passwd=sen_pass,
                                                             try_scihub_on_fail=True)
             if do_preprocess or do_all and not download_l2_data:
-                log.info("Preprocessing composite products")
+                log.info("Atmospheric correction with sen2cor for L1C products")
                 pyeo.raster_manipulation.atmospheric_correction(composite_l1_image_dir, composite_l2_image_dir,
                                                                 sen2cor_path,
                                                                 delete_unprocessed_image=False)
@@ -147,8 +149,7 @@ def rolling_detection(config_path,
                 pyeo.raster_manipulation.preprocess_sen2_images(composite_l2_image_dir, composite_merged_dir,
                                                                 composite_l1_image_dir,
                                                                 cloud_certainty_threshold, epsg=epsg, buffer_size=10)
-            log.info("-------------------------------------")
-            log.info("Building initial cloud-free composite")
+            log.info("Building initial cloud-free composite from directory {}".format(composite_dir))
             pyeo.raster_manipulation.composite_directory(composite_merged_dir, composite_dir, generate_date_images=True)
 
         # Query and download all images since last composite
