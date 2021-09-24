@@ -127,8 +127,8 @@ def _rest_query(user, passwd, footprint_wkt, start_date, end_date, cloud=50):
 def _rest_out_to_json(result):
     root = ElementTree.fromstring(result.content.replace(b"\n", b""))
     total_results = int(root.find("{http://a9.com/-/spec/opensearch/1.1/}totalResults").text)
-    if total_results > 10:
-        log.warning("Local querying does not yet return more than 10 entries in search.")
+    if total_results > 20:
+        log.warning("Local querying does not yet return more than 20 entries in search.")
     if total_results == 0:
         log.warning("Query produced no results.")
     out = {}
@@ -156,7 +156,7 @@ def _parse_element(element):
 
 def _sentinelsat_query(user, passwd, footprint_wkt, start_date, end_date, cloud=50):
     """
-    Fetches a list of Sentienl-2 products
+    Fetches a list of Sentinel-2 products
     """
     # Originally by Ciaran Robb
     api = SentinelAPI(user, passwd)
@@ -177,9 +177,9 @@ def _is_4326(geom):
         return False
 
 
-def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=50, query_func=_rest_query):
+def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud=100, query_func=_rest_query):
     """
-    Fetches a list of Sentienl-2 products
+    Fetches a list of Sentinel-2 products
 
     Parameters
     -----------
@@ -458,7 +458,7 @@ def get_landsat_api_key(conf, session):
     return session_key
 
 
-def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=50):
+def check_for_s2_data_by_date(aoi_path, start_date, end_date, conf, cloud_cover=100):
     """
     Gets all the products between start_date and end_date. Wraps sent2_query to avoid having passwords and
     long-format timestamps in code.
