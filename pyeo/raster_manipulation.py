@@ -545,7 +545,7 @@ def trim_image(in_raster_path, out_raster_path, polygon, format="GTiff"):
         Image format of the output raster. Defaults to 'GTiff'.
     """
     with TemporaryDirectory(dir=os.getcwd()) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         in_raster = gdal.Open(in_raster_path)
         in_gt = in_raster.GetGeoTransform()
         x_res = in_gt[1]
@@ -924,7 +924,7 @@ def stack_and_trim_images(old_image_path, new_image_path, aoi_path, out_image):
         log.warning("{} exists, skipping.")
         return
     with TemporaryDirectory(dir=os.getcwd()) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         old_clipped_image_path = os.path.join(td, "old.tif")
         new_clipped_image_path = os.path.join(td, "new.tif")
         clip_raster(old_image_path, aoi_path, old_clipped_image_path)
@@ -958,7 +958,7 @@ def clip_raster(raster_path, aoi_path, out_path, srs_id=4326, flip_x_y = False, 
     # https://gis.stackexchange.com/questions/257257/how-to-use-gdal-warp-cutline-option
     with TemporaryDirectory(dir=os.getcwd()) as td:
         log.info("Clipping {} with {}".format(raster_path, aoi_path))
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         raster = gdal.Open(raster_path)
         in_gt = raster.GetGeoTransform()
         srs = osr.SpatialReference()
@@ -1011,7 +1011,7 @@ def clip_raster_to_intersection(raster_to_clip_path, extent_raster_path, out_ras
     """
 
     with TemporaryDirectory(dir=os.getcwd()) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         temp_aoi_path = os.path.join(td, "temp_clip.shp")
         get_extent_as_shp(extent_raster_path, temp_aoi_path)
         ext_ras = gdal.Open(extent_raster_path)
@@ -1092,7 +1092,7 @@ def resample_image_in_place(image_path, new_res):
     """
     # I don't like using a second object here, but hey.
     with TemporaryDirectory(dir=os.getcwd()) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         # Remember this is used for masks, so any averging resample strat will cock things up.
         args = gdal.WarpOptions(
             xRes=new_res,
@@ -1441,7 +1441,7 @@ def filter_by_class_map(image_path, class_map_path, out_map_path, classes_of_int
     log = logging.getLogger(__name__)
     log.info("Filtering {} using classes{} from map {}".format(class_map_path, classes_of_interest, image_path))
     with TemporaryDirectory(dir=os.getcwd(dir=os.getcwd())) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         binary_mask_path = os.path.join(td, "binary_mask.tif")
         create_mask_from_class_map(class_map_path, binary_mask_path, classes_of_interest, out_resolution=out_resolution)
 
@@ -1541,7 +1541,7 @@ def preprocess_sen2_images(l2_dir, out_dir, l1_dir, cloud_threshold=60, buffer_s
         with TemporaryDirectory(dir=os.getcwd()) as temp_dir:
             log.info("----------------------------------------------------")
             log.info("Merging the selected 10m band files in directory {}".format(l2_safe_file))
-            log.info("Making temp dir {}".format(temp_dir))
+            #log.info("Making temp dir {}".format(temp_dir))
             temp_file = os.path.join(temp_dir, get_sen_2_granule_id(l2_safe_file)) + ".tif"
             out_path = os.path.join(out_dir, os.path.basename(temp_file))
             log.info("Output file containing all bands: {}".format(out_path))
@@ -1630,7 +1630,7 @@ def preprocess_landsat_images(image_dir, out_image_path, new_projection = None, 
     out_image = None
     if new_projection:
         with TemporaryDirectory(dir=os.getcwd()) as td:
-            log.info("Making temp dir {}".format(td))
+            #log.info("Making temp dir {}".format(td))
             log.info("Reprojecting to {}")
             temp_path = os.path.join(td, "reproj_temp.tif")
             log.info("Temporary image path at {}".format(temp_path))
@@ -1667,7 +1667,7 @@ def stack_sentinel_2_bands(safe_dir, out_image_path, bands=("B02", "B03", "B04",
 
     # Move every image NOT in the requested resolution to resample_dir and resample
     with TemporaryDirectory(dir=os.getcwd()) as resample_dir:
-        log.info("Making temp dir {}".format(resample_dir))
+        #log.info("Making temp dir {}".format(resample_dir))
         new_band_paths = []
         for band_path in band_paths:
             if get_image_resolution(band_path) != out_resolution:
@@ -2026,7 +2026,7 @@ def create_mask_from_model(image_path, model_path, model_clear=0, num_chunks=10,
     """
     from pyeo.classification import classify_image  # Deferred import to deal with circular reference
     with TemporaryDirectory(dir=os.getcwd()) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         log = logging.getLogger(__name__)
         log.info("Building cloud mask for {} with model {}".format(image_path, model_path))
         temp_mask_path = os.path.join(td, "cat_mask.tif")
@@ -2383,7 +2383,7 @@ def create_mask_from_sen2cor_and_fmask(l1_safe_file, l2_safe_file, out_mask_path
 
     """
     with TemporaryDirectory(dir=os.getcwd()) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         s2c_mask_path = os.path.join(td, "s2_mask.tif")
         fmask_mask_path = os.path.join(td, "fmask.tif")
         create_mask_from_confidence_layer(l2_safe_file, s2c_mask_path, buffer_size=buffer_size)
@@ -2406,7 +2406,7 @@ def create_mask_from_fmask(in_l1_dir, out_path):
     log = logging.getLogger(__name__)
     log.info("Creating fmask for {}".format(in_l1_dir))
     with TemporaryDirectory(dir=os.getcwd()) as td:
-        log.info("Making temp dir {}".format(td))
+        #log.info("Making temp dir {}".format(td))
         temp_fmask_path = os.path.join(td, "fmask.tif")
         apply_fmask(in_l1_dir, temp_fmask_path)
         fmask_image = gdal.Open(temp_fmask_path)
