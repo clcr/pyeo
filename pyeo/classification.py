@@ -35,7 +35,6 @@ import numpy as np
 from osgeo import osr
 from scipy import sparse as sp
 from sklearn import ensemble as ens
-from sklearn.externals import joblib as sklearn_joblib
 from sklearn.model_selection import cross_val_score
 
 from pyeo.coordinate_manipulation import get_local_top_left
@@ -138,14 +137,8 @@ def classify_image(image_path, model_path, class_out_path, prob_out_path=None,
         log.info("No chunk size given, attempting autochunk.")
         num_chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(num_chunks))
-    try:
-        model = sklearn_joblib.load(model_path)
-    except KeyError:
-        log.warning("Sklearn joblib import failed,trying generic joblib")
-        model = joblib.load(model_path)
-    except TypeError:
-        log.warning("Sklearn joblib import failed,trying generic joblib")
-        model = joblib.load(model_path)
+
+    model = joblib.load(model_path)
     class_out_image = create_matching_dataset(image, class_out_path, format=out_type, datatype=gdal.GDT_Byte)
     log.info("Created classification image file: {}".format(class_out_path))
     if prob_out_path:
