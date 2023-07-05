@@ -1,231 +1,366 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Pyeo &mdash; Pyeo  documentation</title>
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
-  
-  
-  
-
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyeo &mdash; pyeo 0.9 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="pyeo.classification" href="classification.html" /> 
+    <link rel="next" title="Classification" href="classification.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="#" class="icon icon-home" alt="Documentation Home"> Pyeo
           
-
-          
+          <a href="#" class="icon icon-home">
+            pyeo
+              <img src="_static/pyeologo.png" class="logo" alt="Logo"/>
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
-<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
-<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">pyeo.filesystem_utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="classification.html">Classification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">Coordinate Manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">Filesystem Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">Queries and Downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">Raster Manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vectorisation.html">Vectorisation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Applications</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">Pyeo</a>
-        
+          <a href="#">pyeo</a>
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-        
-      <li>Pyeo</li>
-    
-    
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pyeo</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="pyeo">
-<h1>Pyeo<a class="headerlink" href="#pyeo" title="Permalink to this headline">¶</a></h1>
+             
+  <section id="pyeo-1">
+<h1>pyeo<a class="headerlink" href="#pyeo-1" title="Permalink to this heading"></a></h1>
 <div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="classification.html#key-functions">Key functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="classification.html#function-reference">Function reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="classification.html">Classification</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo-1-classification">pyeo.classification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="classification.html#key-functions">Key functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="classification.html#function-reference">Function reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#key-functions">Key functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#function-reference">Function reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.change_from_composite"><code class="docutils literal notranslate"><span class="pre">change_from_composite()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.classify_directory"><code class="docutils literal notranslate"><span class="pre">classify_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.classify_image"><code class="docutils literal notranslate"><span class="pre">classify_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.classify_rf"><code class="docutils literal notranslate"><span class="pre">classify_rf()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.create_model_for_region"><code class="docutils literal notranslate"><span class="pre">create_model_for_region()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.create_model_from_signatures"><code class="docutils literal notranslate"><span class="pre">create_model_from_signatures()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.create_rf_model_for_region"><code class="docutils literal notranslate"><span class="pre">create_rf_model_for_region()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.create_trained_model"><code class="docutils literal notranslate"><span class="pre">create_trained_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.extract_features_to_csv"><code class="docutils literal notranslate"><span class="pre">extract_features_to_csv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.get_shp_extent"><code class="docutils literal notranslate"><span class="pre">get_shp_extent()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.get_training_data"><code class="docutils literal notranslate"><span class="pre">get_training_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.load_signatures"><code class="docutils literal notranslate"><span class="pre">load_signatures()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.plot_signatures"><code class="docutils literal notranslate"><span class="pre">plot_signatures()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.raster_reclass_binary"><code class="docutils literal notranslate"><span class="pre">raster_reclass_binary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.reshape_ml_out_to_raster"><code class="docutils literal notranslate"><span class="pre">reshape_ml_out_to_raster()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.reshape_prob_out_to_raster"><code class="docutils literal notranslate"><span class="pre">reshape_prob_out_to_raster()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.reshape_raster_for_ml"><code class="docutils literal notranslate"><span class="pre">reshape_raster_for_ml()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.shapefile_to_raster"><code class="docutils literal notranslate"><span class="pre">shapefile_to_raster()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="classification.html#pyeo.classification.train_rf_model"><code class="docutils literal notranslate"><span class="pre">train_rf_model()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#key-functions">Key functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#safe-files">SAFE files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#query-data-structure">Query data structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#data-download-sources">Data download sources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#functions">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">Coordinate Manipulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo-1-coordinate-manipulation">pyeo.coordinate_manipulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="coordinate_manipulation.html#key-functions">Key functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coordinate_manipulation.html#function-reference">Function reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#key-functions">Key functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#rasters">Rasters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#timestamps">Timestamps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#supported-datatypes">Supported datatypes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#geotransforms">Geotransforms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#projections">Projections</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#masks">Masks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#function-reference">Function reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.align_bounds_to_whole_number"><code class="docutils literal notranslate"><span class="pre">align_bounds_to_whole_number()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.check_overlap"><code class="docutils literal notranslate"><span class="pre">check_overlap()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.floor_to_resolution"><code class="docutils literal notranslate"><span class="pre">floor_to_resolution()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_aoi_bounds"><code class="docutils literal notranslate"><span class="pre">get_aoi_bounds()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_aoi_intersection"><code class="docutils literal notranslate"><span class="pre">get_aoi_intersection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_aoi_size"><code class="docutils literal notranslate"><span class="pre">get_aoi_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_combined_polygon"><code class="docutils literal notranslate"><span class="pre">get_combined_polygon()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_local_top_left"><code class="docutils literal notranslate"><span class="pre">get_local_top_left()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_poly_bounding_rect"><code class="docutils literal notranslate"><span class="pre">get_poly_bounding_rect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_poly_intersection"><code class="docutils literal notranslate"><span class="pre">get_poly_intersection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_poly_size"><code class="docutils literal notranslate"><span class="pre">get_poly_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_raster_bounds"><code class="docutils literal notranslate"><span class="pre">get_raster_bounds()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_raster_intersection"><code class="docutils literal notranslate"><span class="pre">get_raster_intersection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.get_raster_size"><code class="docutils literal notranslate"><span class="pre">get_raster_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.multiple_intersection"><code class="docutils literal notranslate"><span class="pre">multiple_intersection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.multiple_union"><code class="docutils literal notranslate"><span class="pre">multiple_union()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.pixel_bounds_from_polygon"><code class="docutils literal notranslate"><span class="pre">pixel_bounds_from_polygon()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.pixel_to_point_coordinates"><code class="docutils literal notranslate"><span class="pre">pixel_to_point_coordinates()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.point_to_pixel_coordinates"><code class="docutils literal notranslate"><span class="pre">point_to_pixel_coordinates()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.reproject_geotransform"><code class="docutils literal notranslate"><span class="pre">reproject_geotransform()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.reproject_vector"><code class="docutils literal notranslate"><span class="pre">reproject_vector()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="coordinate_manipulation.html#pyeo.coordinate_manipulation.write_geometry"><code class="docutils literal notranslate"><span class="pre">write_geometry()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">pyeo.filesystem_utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#key-functions">Key functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#function-reference">Function reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">Filesystem Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo-1-filesystem-utilities">pyeo.filesystem_utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="filesystem_utilities.html#key-functions">Key functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="filesystem_utilities.html#function-reference">Function reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="validation.html">pyeo.validation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="validation.html#function-reference">Function reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.check_for_invalid_l1_data"><code class="docutils literal notranslate"><span class="pre">check_for_invalid_l1_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.check_for_invalid_l2_data"><code class="docutils literal notranslate"><span class="pre">check_for_invalid_l2_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.clean_aoi"><code class="docutils literal notranslate"><span class="pre">clean_aoi()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.clean_l2_data"><code class="docutils literal notranslate"><span class="pre">clean_l2_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.clean_l2_dir"><code class="docutils literal notranslate"><span class="pre">clean_l2_dir()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.conda_check"><code class="docutils literal notranslate"><span class="pre">conda_check()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.config_path_to_config_dict"><code class="docutils literal notranslate"><span class="pre">config_path_to_config_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.create_file_structure"><code class="docutils literal notranslate"><span class="pre">create_file_structure()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.create_folder_structure_for_tiles"><code class="docutils literal notranslate"><span class="pre">create_folder_structure_for_tiles()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_change_detection_date_strings"><code class="docutils literal notranslate"><span class="pre">get_change_detection_date_strings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_change_detection_dates"><code class="docutils literal notranslate"><span class="pre">get_change_detection_dates()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_filenames"><code class="docutils literal notranslate"><span class="pre">get_filenames()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_image_acquisition_time"><code class="docutils literal notranslate"><span class="pre">get_image_acquisition_time()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_l1_safe_file"><code class="docutils literal notranslate"><span class="pre">get_l1_safe_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_l2_safe_file"><code class="docutils literal notranslate"><span class="pre">get_l2_safe_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_mask_path"><code class="docutils literal notranslate"><span class="pre">get_mask_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_preceding_image_path"><code class="docutils literal notranslate"><span class="pre">get_preceding_image_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_pyeo_timestamp"><code class="docutils literal notranslate"><span class="pre">get_pyeo_timestamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_raster_paths"><code class="docutils literal notranslate"><span class="pre">get_raster_paths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_related_images"><code class="docutils literal notranslate"><span class="pre">get_related_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_safe_product_type"><code class="docutils literal notranslate"><span class="pre">get_safe_product_type()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_sen_2_baseline"><code class="docutils literal notranslate"><span class="pre">get_sen_2_baseline()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_sen_2_granule_id"><code class="docutils literal notranslate"><span class="pre">get_sen_2_granule_id()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_sen_2_image_orbit"><code class="docutils literal notranslate"><span class="pre">get_sen_2_image_orbit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_sen_2_image_tile"><code class="docutils literal notranslate"><span class="pre">get_sen_2_image_tile()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_sen_2_image_timestamp"><code class="docutils literal notranslate"><span class="pre">get_sen_2_image_timestamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.get_sen_2_tiles"><code class="docutils literal notranslate"><span class="pre">get_sen_2_tiles()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.init_log"><code class="docutils literal notranslate"><span class="pre">init_log()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.init_log_acd"><code class="docutils literal notranslate"><span class="pre">init_log_acd()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.serial_date_to_string"><code class="docutils literal notranslate"><span class="pre">serial_date_to_string()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.sort_by_timestamp"><code class="docutils literal notranslate"><span class="pre">sort_by_timestamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.unzip_contents"><code class="docutils literal notranslate"><span class="pre">unzip_contents()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filesystem_utilities.html#pyeo.filesystem_utilities.zip_contents"><code class="docutils literal notranslate"><span class="pre">zip_contents()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">Queries and Downloads</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo-1-queries-and-downloads">pyeo.queries_and_downloads</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="queries_and_downloads.html#key-functions">Key functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="queries_and_downloads.html#safe-files">SAFE files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="queries_and_downloads.html#query-data-structure">Query data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="queries_and_downloads.html#data-download-sources">Data download sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="queries_and_downloads.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.build_dataspace_request_string"><code class="docutils literal notranslate"><span class="pre">build_dataspace_request_string()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.check_for_s2_data_by_date"><code class="docutils literal notranslate"><span class="pre">check_for_s2_data_by_date()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_dataspace_product"><code class="docutils literal notranslate"><span class="pre">download_dataspace_product()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_from_aws_with_rollback"><code class="docutils literal notranslate"><span class="pre">download_from_aws_with_rollback()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_from_scihub"><code class="docutils literal notranslate"><span class="pre">download_from_scihub()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_landsat_data"><code class="docutils literal notranslate"><span class="pre">download_landsat_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_s2_data"><code class="docutils literal notranslate"><span class="pre">download_s2_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_s2_data_from_dataspace"><code class="docutils literal notranslate"><span class="pre">download_s2_data_from_dataspace()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_s2_data_from_df"><code class="docutils literal notranslate"><span class="pre">download_s2_data_from_df()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.download_s2_pairs"><code class="docutils literal notranslate"><span class="pre">download_s2_pairs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.filter_non_matching_s2_data"><code class="docutils literal notranslate"><span class="pre">filter_non_matching_s2_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.filter_to_l1_data"><code class="docutils literal notranslate"><span class="pre">filter_to_l1_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.filter_to_l2_data"><code class="docutils literal notranslate"><span class="pre">filter_to_l2_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.filter_unique_dataspace_products"><code class="docutils literal notranslate"><span class="pre">filter_unique_dataspace_products()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.filter_unique_l1c_and_l2a_data"><code class="docutils literal notranslate"><span class="pre">filter_unique_l1c_and_l2a_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.get_access_token"><code class="docutils literal notranslate"><span class="pre">get_access_token()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.get_granule_identifiers"><code class="docutils literal notranslate"><span class="pre">get_granule_identifiers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.get_query_datatake"><code class="docutils literal notranslate"><span class="pre">get_query_datatake()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.get_query_filename"><code class="docutils literal notranslate"><span class="pre">get_query_filename()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.get_query_granule"><code class="docutils literal notranslate"><span class="pre">get_query_granule()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.get_query_level"><code class="docutils literal notranslate"><span class="pre">get_query_level()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.get_query_processing_time"><code class="docutils literal notranslate"><span class="pre">get_query_processing_time()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.landsat_query"><code class="docutils literal notranslate"><span class="pre">landsat_query()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.load_api_key"><code class="docutils literal notranslate"><span class="pre">load_api_key()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.planet_query"><code class="docutils literal notranslate"><span class="pre">planet_query()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.query_dataspace_by_polygon"><code class="docutils literal notranslate"><span class="pre">query_dataspace_by_polygon()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.query_for_corresponding_image"><code class="docutils literal notranslate"><span class="pre">query_for_corresponding_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.read_aoi"><code class="docutils literal notranslate"><span class="pre">read_aoi()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.sent2_query"><code class="docutils literal notranslate"><span class="pre">sent2_query()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries_and_downloads.html#pyeo.queries_and_downloads.shapefile_to_wkt"><code class="docutils literal notranslate"><span class="pre">shapefile_to_wkt()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">Raster Manipulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo-1-raster-manipulation">pyeo.raster_manipulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#key-functions">Key functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#rasters">Rasters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#timestamps">Timestamps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#supported-datatypes">Supported datatypes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#geotransforms">Geotransforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#projections">Projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#masks">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="raster_manipulation.html#function-reference">Function reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.add_masks"><code class="docutils literal notranslate"><span class="pre">add_masks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.align_image_in_place"><code class="docutils literal notranslate"><span class="pre">align_image_in_place()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_array_image_mask"><code class="docutils literal notranslate"><span class="pre">apply_array_image_mask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_band_function"><code class="docutils literal notranslate"><span class="pre">apply_band_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_image_function"><code class="docutils literal notranslate"><span class="pre">apply_image_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_mask_to_dir"><code class="docutils literal notranslate"><span class="pre">apply_mask_to_dir()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_mask_to_image"><code class="docutils literal notranslate"><span class="pre">apply_mask_to_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_processing_baseline_0400_offset_correction_to_tiff_file_directory"><code class="docutils literal notranslate"><span class="pre">apply_processing_baseline_0400_offset_correction_to_tiff_file_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_processing_baseline_offset_correction_to_tiff_file_directory"><code class="docutils literal notranslate"><span class="pre">apply_processing_baseline_offset_correction_to_tiff_file_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_scl_cloud_mask"><code class="docutils literal notranslate"><span class="pre">apply_scl_cloud_mask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.apply_sen2cor"><code class="docutils literal notranslate"><span class="pre">apply_sen2cor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.array2raster"><code class="docutils literal notranslate"><span class="pre">array2raster()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.atmospheric_correction"><code class="docutils literal notranslate"><span class="pre">atmospheric_correction()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.average_images"><code class="docutils literal notranslate"><span class="pre">average_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.buffer_mask_in_place"><code class="docutils literal notranslate"><span class="pre">buffer_mask_in_place()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.build_sen2cor_output_path"><code class="docutils literal notranslate"><span class="pre">build_sen2cor_output_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.calc_ndvi"><code class="docutils literal notranslate"><span class="pre">calc_ndvi()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.change_from_class_maps"><code class="docutils literal notranslate"><span class="pre">change_from_class_maps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.clever_composite_directory"><code class="docutils literal notranslate"><span class="pre">clever_composite_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.clever_composite_directory_with_masks"><code class="docutils literal notranslate"><span class="pre">clever_composite_directory_with_masks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.clever_composite_images"><code class="docutils literal notranslate"><span class="pre">clever_composite_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.clever_composite_images_with_mask"><code class="docutils literal notranslate"><span class="pre">clever_composite_images_with_mask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.clip_raster"><code class="docutils literal notranslate"><span class="pre">clip_raster()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.clip_raster_to_intersection"><code class="docutils literal notranslate"><span class="pre">clip_raster_to_intersection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.combine_date_maps"><code class="docutils literal notranslate"><span class="pre">combine_date_maps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.combine_masks"><code class="docutils literal notranslate"><span class="pre">combine_masks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.composite_directory"><code class="docutils literal notranslate"><span class="pre">composite_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.composite_images_with_mask"><code class="docutils literal notranslate"><span class="pre">composite_images_with_mask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.compress_tiff"><code class="docutils literal notranslate"><span class="pre">compress_tiff()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_band"><code class="docutils literal notranslate"><span class="pre">create_mask_from_band()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_class_map"><code class="docutils literal notranslate"><span class="pre">create_mask_from_class_map()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_confidence_layer"><code class="docutils literal notranslate"><span class="pre">create_mask_from_confidence_layer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_fmask"><code class="docutils literal notranslate"><span class="pre">create_mask_from_fmask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_model"><code class="docutils literal notranslate"><span class="pre">create_mask_from_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_scl_layer"><code class="docutils literal notranslate"><span class="pre">create_mask_from_scl_layer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_mask_from_sen2cor_and_fmask"><code class="docutils literal notranslate"><span class="pre">create_mask_from_sen2cor_and_fmask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_matching_dataset"><code class="docutils literal notranslate"><span class="pre">create_matching_dataset()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_new_image_from_polygon"><code class="docutils literal notranslate"><span class="pre">create_new_image_from_polygon()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_new_stacks"><code class="docutils literal notranslate"><span class="pre">create_new_stacks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.create_quicklook"><code class="docutils literal notranslate"><span class="pre">create_quicklook()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.filter_by_class_map"><code class="docutils literal notranslate"><span class="pre">filter_by_class_map()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.find_small_safe_dirs"><code class="docutils literal notranslate"><span class="pre">find_small_safe_dirs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.flatten_probability_image"><code class="docutils literal notranslate"><span class="pre">flatten_probability_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_array"><code class="docutils literal notranslate"><span class="pre">get_array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_dir_size"><code class="docutils literal notranslate"><span class="pre">get_dir_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_extent_as_shp"><code class="docutils literal notranslate"><span class="pre">get_extent_as_shp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_file_sizes"><code class="docutils literal notranslate"><span class="pre">get_file_sizes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_image_resolution"><code class="docutils literal notranslate"><span class="pre">get_image_resolution()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_masked_array"><code class="docutils literal notranslate"><span class="pre">get_masked_array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_sen2cor_version"><code class="docutils literal notranslate"><span class="pre">get_sen2cor_version()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_sen_2_band_path"><code class="docutils literal notranslate"><span class="pre">get_sen_2_band_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.get_stats_from_raster_file"><code class="docutils literal notranslate"><span class="pre">get_stats_from_raster_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.mosaic_images"><code class="docutils literal notranslate"><span class="pre">mosaic_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.open_dataset_from_safe"><code class="docutils literal notranslate"><span class="pre">open_dataset_from_safe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.preprocess_landsat_images"><code class="docutils literal notranslate"><span class="pre">preprocess_landsat_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.preprocess_sen2_images"><code class="docutils literal notranslate"><span class="pre">preprocess_sen2_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.raster2array"><code class="docutils literal notranslate"><span class="pre">raster2array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.raster_sum"><code class="docutils literal notranslate"><span class="pre">raster_sum()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.raster_to_array"><code class="docutils literal notranslate"><span class="pre">raster_to_array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.reproject_directory"><code class="docutils literal notranslate"><span class="pre">reproject_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.reproject_image"><code class="docutils literal notranslate"><span class="pre">reproject_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.resample_image_in_place"><code class="docutils literal notranslate"><span class="pre">resample_image_in_place()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.save_array_as_image"><code class="docutils literal notranslate"><span class="pre">save_array_as_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.scale_to_uint8"><code class="docutils literal notranslate"><span class="pre">scale_to_uint8()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.sieve_directory"><code class="docutils literal notranslate"><span class="pre">sieve_directory()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.sieve_image"><code class="docutils literal notranslate"><span class="pre">sieve_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.stack_and_trim_images"><code class="docutils literal notranslate"><span class="pre">stack_and_trim_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.stack_image_with_composite"><code class="docutils literal notranslate"><span class="pre">stack_image_with_composite()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.stack_images"><code class="docutils literal notranslate"><span class="pre">stack_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.stack_old_and_new_images"><code class="docutils literal notranslate"><span class="pre">stack_old_and_new_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.stack_sentinel_2_bands"><code class="docutils literal notranslate"><span class="pre">stack_sentinel_2_bands()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.strip_bands"><code class="docutils literal notranslate"><span class="pre">strip_bands()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.trim_image"><code class="docutils literal notranslate"><span class="pre">trim_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.update_composite_with_images"><code class="docutils literal notranslate"><span class="pre">update_composite_with_images()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.verify_change_detections"><code class="docutils literal notranslate"><span class="pre">verify_change_detections()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="raster_manipulation.html#pyeo.raster_manipulation.write_n_band_tiff"><code class="docutils literal notranslate"><span class="pre">write_n_band_tiff()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="validation.html#pyeo-1-validation">pyeo.validation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="validation.html#function-reference">Function reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="validation.html#pyeo.validation.create_validation_scenario"><code class="docutils literal notranslate"><span class="pre">create_validation_scenario()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vectorisation.html">Vectorisation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo-1-vectorisation">pyeo.vectorisation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vectorisation.html#key-functions">Key functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.band_naming"><code class="docutils literal notranslate"><span class="pre">band_naming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.boundingBoxToOffsets"><code class="docutils literal notranslate"><span class="pre">boundingBoxToOffsets()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.clean_zero_nodata_vectorised_band"><code class="docutils literal notranslate"><span class="pre">clean_zero_nodata_vectorised_band()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.geotFromOffsets"><code class="docutils literal notranslate"><span class="pre">geotFromOffsets()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.merge_and_calculate_spatial"><code class="docutils literal notranslate"><span class="pre">merge_and_calculate_spatial()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.setFeatureStats"><code class="docutils literal notranslate"><span class="pre">setFeatureStats()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.vectorise_from_band"><code class="docutils literal notranslate"><span class="pre">vectorise_from_band()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vectorisation.html#pyeo.vectorisation.zonal_statistics"><code class="docutils literal notranslate"><span class="pre">zonal_statistics()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Applications</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="scripts.html#image-comparison">image_comparison</a></li>
 <li class="toctree-l2"><a class="reference internal" href="scripts.html#simple-s2-change-detection">simple_s2_change_detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="scripts.html#filter-by-class-map">filter_by_class_map</a></li>
-<li class="toctree-l2"><a class="reference internal" href="scripts.html#sample-allocation">sample_allocation</a></li>
 </ul>
 </li>
 </ul>
 </div>
-<div class="section" id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
-<p>Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying
-geospatial raster and vector data.</p>
-</div>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying geospatial raster and vector data.</p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
 <p>With Git and Miniconda or Anaconda installed, <code class="code docutils literal notranslate"><span class="pre">cd</span></code> to an install location then run the following lines</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/clcr/pyeo.git
-<span class="nb">cd</span> pyeo
-conda env create --file environment.yml --name pyeo_env
-conda activate pyeo_env
-python -m pip install . -vv
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/clcr/pyeo.git
+<span class="nb">cd</span><span class="w"> </span>pyeo
+conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>--file<span class="w"> </span>environment.yml<span class="w"> </span>--name<span class="w"> </span>pyeo_env
+conda<span class="w"> </span>activate<span class="w"> </span>pyeo_env
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>-vv
 </pre></div>
 </div>
 <p>In a Python prompt, try  <code class="code docutils literal notranslate"><span class="pre">import</span> <span class="pre">pyeo</span></code> - you should see no errors.</p>
-</div>
-<div class="section" id="quick-start">
-<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this heading"></a></h2>
 <p>Before you start, you will need:</p>
 <ul class="simple">
 <li><p>Git</p></li>
@@ -238,80 +373,56 @@ python -m pip install . -vv
 </ul>
 </li>
 </ul>
-<div class="section" id="use">
-<h3>Use<a class="headerlink" href="#use" title="Permalink to this headline">¶</a></h3>
-<p>You can use Pyeo’s command-line functions to create and apply a pixel classification model from a set of polygons
+<section id="use">
+<h3>Use<a class="headerlink" href="#use" title="Permalink to this heading"></a></h3>
+<p>You can use pyeo’s command-line functions to create and apply a pixel classification model from a set of polygons
 and a raster. The below example:</p>
 <ul class="simple">
 <li><p>saves the training data defined in <code class="code docutils literal notranslate"><span class="pre">your_raster.tif</span></code> and <code class="code docutils literal notranslate"><span class="pre">your_shapefile.tif</span></code> into <code class="code docutils literal notranslate"><span class="pre">signatures.csv</span></code></p></li>
 <li><p>creates a model from <code class="code docutils literal notranslate"><span class="pre">signatures.csv</span></code> named <code class="code docutils literal notranslate"><span class="pre">model.pkl</span></code></p></li>
 <li><p>Classifies the whole of <code class="code docutils literal notranslate"><span class="pre">your_raster.tif</span></code> using <code class="code docutils literal notranslate"><span class="pre">model.pkl</span></code>, and saves the result into <code class="code docutils literal notranslate"><span class="pre">output_image.tif</span></code></p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate pyeo_env
-extract_signatures your_raster.tif your_shapefile.shp signatures.csv
-create_model_from_signatures signatures.csv model.pkl
-classify_image your_raster model.pkl output_image.tif
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>pyeo_env
+extract_signatures<span class="w"> </span>your_raster.tif<span class="w"> </span>your_shapefile.shp<span class="w"> </span>signatures.csv
+create_model_from_signatures<span class="w"> </span>signatures.csv<span class="w"> </span>model.pkl
+classify_image<span class="w"> </span>your_raster<span class="w"> </span>model.pkl<span class="w"> </span>output_image.tif
 </pre></div>
 </div>
 <p>A small test suite is located in pyeo/tests/pyeo_tests.py; this is designed for use with py.test.
 Some example applications and demos are in pyeo/apps; for an illustration of the use of the library,
 pyeo/apps/change_detection/simple_s2_change_detection.py is recommended.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="classification.html" class="btn btn-neutral float-right" title="pyeo.classification" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="classification.html" class="btn btn-neutral float-right" title="Classification" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        
-        &copy; Copyright 2018, John Roberts
-
-    </p>
+    <p>&#169; Copyright 2023, Ivan Reading, Matthew Payne, John Roberts, Heiko Balzter.</p>
   </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

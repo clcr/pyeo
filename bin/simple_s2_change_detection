@@ -2,4 +2,4 @@
 set -o errexit
 set -o nounset
 
-python "$PYEO"/pyeo/apps/change_detection/simple_s2_change_detection.py "$@"
+python "$pyeo"/pyeo/apps/change_detection/simple_s2_change_detection.py "$@"

@@ -1,0 +1,17 @@
+title = "SEPAL PyEO Image Acquisition Configuration File"
+
+[authentication] # Copernicus DataSpace service authentication
+username = "ir81@le.ac.uk"
+password = "impressION2023!"
+refresh_token = ""
+
+[sentinel2_properties]
+start_date = "2023-05-01" # YYYY-MM-DD
+end_date = "2023-05-11" # YYYY-MM-DD
+max_cloud_cover = 25 # 0-100
+tiles_to_process = "/data/clcr/shared/IMPRESS/Ivan/pyeo/pyeo/pyeo/apps/image_acquisition/config/kenya_tile_geoms.geojson" # Path to tile centroid .geojson
+min_image_size = 500
+max_records = 100 # Maximum amount of records to return from a single query
+
+[directories]
+l2a_safes = "/data/clcr/shared/IMPRESS/Ivan/pyeo_new_image_aquisition_pipeline_test" # Root path to download the imagery to

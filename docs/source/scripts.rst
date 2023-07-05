@@ -1,5 +1,5 @@
 Applications
-############
+============
 
 The following scripts can all be run from the :code:`pyeo/bin` folder after installation, or from their subfolders in
 :code:`pyeo/apps`.
@@ -12,6 +12,6 @@ The following scripts can all be run from the :code:`pyeo/bin` folder after inst
 
 .. automodule:: pyeo.apps.model_creation.create_model_from_region
 
-.. automodule:: pyeo.apps.validation.sample_allocation
+.. .. automodule:: pyeo.apps.validation.sample_allocation
 
 .. .. automodule:: pyeo.apps.change_detection.rolling_composite_s2_change_detection

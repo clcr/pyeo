@@ -1,23 +1,23 @@
-****
-Pyeo
-****
+******
+pyeo
+******
 
 .. toctree::
    :caption: Contents:
 
    classification
    coordinate_manipulation
+   filesystem_utilities
    queries_and_downloads
    raster_manipulation
-   filesystem_utilities
    validation
+   vectorisation
    scripts
 
 Introduction
 ############
 
-Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying
-geospatial raster and vector data.
+Python For Earth Observation is a collection of functions for downloading, manipulating, combining and classifying geospatial raster and vector data.
 
 
 Installation
@@ -50,7 +50,7 @@ Before you start, you will need:
 
 Use
 ***
-You can use Pyeo's command-line functions to create and apply a pixel classification model from a set of polygons
+You can use pyeo's command-line functions to create and apply a pixel classification model from a set of polygons
 and a raster. The below example:
 
 * saves the training data defined in :code:`your_raster.tif` and :code:`your_shapefile.tif` into :code:`signatures.csv`

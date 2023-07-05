@@ -1,0 +1,14 @@
+tput: No value for $TERM and no -T specified
+/cm/local/apps/torque/var/spool/mom_priv/jobs/21404540.master.cm.cluster.SC: line 1: python_launch_string: command not found
+tput: No value for $TERM and no -T specified
+/cm/local/apps/torque/var/spool/mom_priv/jobs/21404610.master.cm.cluster.SC: line 1: python_launch_string: command not found
+tput: No value for $TERM and no -T specified
+-bash: /cm/local/apps/torque/var/spool/mom_priv/jobs/21404614.master.cm.cluster.SC: /bin/bash;: bad interpreter: No such file or directory
+tput: No value for $TERM and no -T specified
+tput: No value for $TERM and no -T specified
+python: can't open file '/data/clcr/shared/IMPRESS/Ivan/pyeo/pyeo/pyeo/apps/automation/apps/automation/_random_duration_test_program.py': [Errno 2] No such file or directory
+tput: No value for $TERM and no -T specified
+tput: No value for $TERM and no -T specified
+tput: No value for $TERM and no -T specified
+tput: No value for $TERM and no -T specified
+tput: No value for $TERM and no -T specified

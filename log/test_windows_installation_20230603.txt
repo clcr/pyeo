@@ -1,0 +1,556 @@
+2023-06-06 17:57:06,436: INFO: ---------------------------------------------------------------
+2023-06-06 17:57:06,436: INFO:                     ****PROCESSING START****
+2023-06-06 17:57:06,437: INFO: ---------------------------------------------------------------
+2023-06-06 17:57:06,437: INFO: C:\Users\ir81\.conda\envs\envs\pyeo_env_pcwe
+2023-06-06 17:57:06,438: INFO: False
+2023-06-06 17:57:06,439: ERROR: Conda Environment Directory does not exist
+2023-06-06 17:57:06,439: ERROR: Ensure this exists
+2023-06-06 17:57:06,439: ERROR: now exiting the pipeline
+2023-06-06 21:39:35,556: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,557: INFO:                     ****PROCESSING START****
+2023-06-06 21:39:35,558: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,559: INFO: C:\Users\ir81\.conda\envs\pyeo_env_pcwe
+2023-06-06 21:39:35,559: INFO: True
+2023-06-06 21:39:35,560: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,561: INFO: ---                  INTEGRATED PROCESSING START            ---
+2023-06-06 21:39:35,562: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,563: INFO: Reading in parameters defined in: pyeo_windows.ini
+2023-06-06 21:39:35,563: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,564: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,565: INFO: Starting acd_config_to_log()
+2023-06-06 21:39:35,565: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,565: INFO: Options:
+2023-06-06 21:39:35,566: INFO:   --dev Running in development mode, choosing development versions of functions where available
+2023-06-06 21:39:35,566: INFO:   -do_tile_intersection
+2023-06-06 21:39:35,567: INFO:       Sentinel-2 tile intersection with ROI enabled
+2023-06-06 21:39:35,567: INFO:   --do_raster
+2023-06-06 21:39:35,567: INFO:       raster pipeline enabled
+2023-06-06 21:39:35,568: INFO:   --build_composite for baseline composite
+2023-06-06 21:39:35,568: INFO:   --download_source = scihub
+2023-06-06 21:39:35,569: INFO:          composite start date  : 20230101
+2023-06-06 21:39:35,569: INFO:          composite end date  : 20230331
+2023-06-06 21:39:35,570: INFO:   --do_delete_existing_vector , when vectorising the change report rasters, 
+2023-06-06 21:39:35,570: INFO:             existing vectors files will be deleted and new vector files created.
+2023-06-06 21:39:35,571: INFO: EPSG used is: 21097
+2023-06-06 21:39:35,571: INFO: List of image bands: ['B02', 'B03', 'B04', 'B08']
+2023-06-06 21:39:35,571: INFO: Model used: .\models\model_36MYE_Unoptimised_20230505_no_haze.pkl
+2023-06-06 21:39:35,572: INFO: 
+2023-06-06 21:39:35,572: INFO: List of class labels:
+2023-06-06 21:39:35,573: INFO:   1 : primary forest
+2023-06-06 21:39:35,573: INFO:   2 : plantation forest
+2023-06-06 21:39:35,574: INFO:   3 : bare soil
+2023-06-06 21:39:35,574: INFO:   4 : crops
+2023-06-06 21:39:35,574: INFO:   5 : grassland
+2023-06-06 21:39:35,575: INFO:   6 : open water
+2023-06-06 21:39:35,575: INFO:   7 : burn scar
+2023-06-06 21:39:35,576: INFO:   8 : cloud
+2023-06-06 21:39:35,581: INFO:   9 : cloud shadow
+2023-06-06 21:39:35,582: INFO:   10 : haze
+2023-06-06 21:39:35,582: INFO:   11 : sparse woodland
+2023-06-06 21:39:35,582: INFO:   12 : dense woodland
+2023-06-06 21:39:35,583: INFO:   13 : artificial
+2023-06-06 21:39:35,583: INFO: Detecting changes from any of the classes: [1, 2]
+2023-06-06 21:39:35,583: INFO:                     to any of the classes: [3]
+2023-06-06 21:39:35,584: INFO: ------------------------------------------------------------
+2023-06-06 21:39:35,584: INFO: Reporting Directories and Filepaths
+2023-06-06 21:39:35,584: INFO: Tile Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\data_folder
+2023-06-06 21:39:35,585: INFO: Working Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\pyeo
+2023-06-06 21:39:35,585: INFO: The following directories are relative to the working directory, i.e. stored underneath:
+2023-06-06 21:39:35,585: INFO: Integrated Directory is   : .\integrated
+2023-06-06 21:39:35,586: INFO: ROI Directory is   : .\roi
+2023-06-06 21:39:35,586: INFO: Geometry Directory is   : .\geometry
+2023-06-06 21:39:35,586: INFO: Path to the Administrative Boundaries used in the Change Report Vectorisation   : .\geometry\gadm41_KEN_1.json
+2023-06-06 21:39:35,586: INFO: Path to Sen2Cor is   : C:\Users\ir81\Sen2Cor-02.11.00-win64\L2A_Process
+2023-06-06 21:39:35,587: INFO: The Conda Environment specified in .ini file is :  pyeo_env_pcwe
+2023-06-06 21:39:35,587: INFO: -------------------------------------------
+2023-06-06 21:39:35,587: INFO: -------------------------------------------
+2023-06-06 21:39:35,587: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:35,588: INFO: Starting acd_roi_tile_intersection()
+2023-06-06 21:39:35,588: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:40,759: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-06 21:39:40,760: INFO: These tiles are  :
+2023-06-06 21:39:40,765: INFO:   1 : 36NXG
+2023-06-06 21:39:40,765: INFO:   2 : 36NYG
+2023-06-06 21:39:40,766: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-06 21:39:40,796: INFO: Finished ROI tile intersection
+2023-06-06 21:39:40,978: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-06 21:39:40,979: INFO: These tiles are  :
+2023-06-06 21:39:40,980: INFO:   1 : 36NXG
+2023-06-06 21:39:40,981: INFO:   2 : 36NYG
+2023-06-06 21:39:40,981: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-06 21:39:41,002: INFO: Finished ROI tile intersection
+2023-06-06 21:39:41,003: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:41,004: INFO: Starting acd_integrated_raster():
+2023-06-06 21:39:41,005: INFO: ---------------------------------------------------------------
+2023-06-06 21:39:41,017: ERROR: .\credentials\credentials_ir.ini does not exist, did you write the correct filepath in pyeo.ini?
+2023-06-06 21:39:41,018: INFO: Starting ACD Raster Processes for Tile :  36NXG
+2023-06-06 21:40:44,396: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,397: INFO:                     ****PROCESSING START****
+2023-06-06 21:40:44,398: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,399: INFO: C:\Users\ir81\.conda\envs\pyeo_env_pcwe
+2023-06-06 21:40:44,400: INFO: True
+2023-06-06 21:40:44,401: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,401: INFO: ---                  INTEGRATED PROCESSING START            ---
+2023-06-06 21:40:44,402: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,402: INFO: Reading in parameters defined in: pyeo_windows.ini
+2023-06-06 21:40:44,403: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,403: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,404: INFO: Starting acd_config_to_log()
+2023-06-06 21:40:44,404: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,404: INFO: Options:
+2023-06-06 21:40:44,405: INFO:   --dev Running in development mode, choosing development versions of functions where available
+2023-06-06 21:40:44,406: INFO:   -do_tile_intersection
+2023-06-06 21:40:44,406: INFO:       Sentinel-2 tile intersection with ROI enabled
+2023-06-06 21:40:44,406: INFO:   --do_raster
+2023-06-06 21:40:44,406: INFO:       raster pipeline enabled
+2023-06-06 21:40:44,407: INFO:   --build_composite for baseline composite
+2023-06-06 21:40:44,407: INFO:   --download_source = scihub
+2023-06-06 21:40:44,408: INFO:          composite start date  : 20230101
+2023-06-06 21:40:44,408: INFO:          composite end date  : 20230331
+2023-06-06 21:40:44,409: INFO:   --do_delete_existing_vector , when vectorising the change report rasters, 
+2023-06-06 21:40:44,409: INFO:             existing vectors files will be deleted and new vector files created.
+2023-06-06 21:40:44,409: INFO: EPSG used is: 21097
+2023-06-06 21:40:44,410: INFO: List of image bands: ['B02', 'B03', 'B04', 'B08']
+2023-06-06 21:40:44,410: INFO: Model used: .\models\model_36MYE_Unoptimised_20230505_no_haze.pkl
+2023-06-06 21:40:44,410: INFO: 
+2023-06-06 21:40:44,411: INFO: List of class labels:
+2023-06-06 21:40:44,411: INFO:   1 : primary forest
+2023-06-06 21:40:44,411: INFO:   2 : plantation forest
+2023-06-06 21:40:44,412: INFO:   3 : bare soil
+2023-06-06 21:40:44,412: INFO:   4 : crops
+2023-06-06 21:40:44,412: INFO:   5 : grassland
+2023-06-06 21:40:44,413: INFO:   6 : open water
+2023-06-06 21:40:44,413: INFO:   7 : burn scar
+2023-06-06 21:40:44,414: INFO:   8 : cloud
+2023-06-06 21:40:44,420: INFO:   9 : cloud shadow
+2023-06-06 21:40:44,420: INFO:   10 : haze
+2023-06-06 21:40:44,420: INFO:   11 : sparse woodland
+2023-06-06 21:40:44,420: INFO:   12 : dense woodland
+2023-06-06 21:40:44,420: INFO:   13 : artificial
+2023-06-06 21:40:44,421: INFO: Detecting changes from any of the classes: [1, 2]
+2023-06-06 21:40:44,421: INFO:                     to any of the classes: [3]
+2023-06-06 21:40:44,421: INFO: ------------------------------------------------------------
+2023-06-06 21:40:44,422: INFO: Reporting Directories and Filepaths
+2023-06-06 21:40:44,423: INFO: Tile Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\data_folder
+2023-06-06 21:40:44,423: INFO: Working Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\pyeo
+2023-06-06 21:40:44,423: INFO: The following directories are relative to the working directory, i.e. stored underneath:
+2023-06-06 21:40:44,423: INFO: Integrated Directory is   : .\integrated
+2023-06-06 21:40:44,424: INFO: ROI Directory is   : .\roi
+2023-06-06 21:40:44,424: INFO: Geometry Directory is   : .\geometry
+2023-06-06 21:40:44,424: INFO: Path to the Administrative Boundaries used in the Change Report Vectorisation   : .\geometry\gadm41_KEN_1.json
+2023-06-06 21:40:44,424: INFO: Path to Sen2Cor is   : C:\Users\ir81\Sen2Cor-02.11.00-win64\L2A_Process
+2023-06-06 21:40:44,425: INFO: The Conda Environment specified in .ini file is :  pyeo_env_pcwe
+2023-06-06 21:40:44,425: INFO: -------------------------------------------
+2023-06-06 21:40:44,425: INFO: -------------------------------------------
+2023-06-06 21:40:44,426: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:44,426: INFO: Starting acd_roi_tile_intersection()
+2023-06-06 21:40:44,426: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:45,036: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-06 21:40:45,037: INFO: These tiles are  :
+2023-06-06 21:40:45,038: INFO:   1 : 36NXG
+2023-06-06 21:40:45,038: INFO:   2 : 36NYG
+2023-06-06 21:40:45,039: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-06 21:40:45,048: INFO: Finished ROI tile intersection
+2023-06-06 21:40:45,191: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-06 21:40:45,192: INFO: These tiles are  :
+2023-06-06 21:40:45,194: INFO:   1 : 36NXG
+2023-06-06 21:40:45,194: INFO:   2 : 36NYG
+2023-06-06 21:40:45,194: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-06 21:40:45,206: INFO: Finished ROI tile intersection
+2023-06-06 21:40:45,207: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:45,208: INFO: Starting acd_integrated_raster():
+2023-06-06 21:40:45,209: INFO: ---------------------------------------------------------------
+2023-06-06 21:40:45,242: INFO: Starting ACD Raster Processes for Tile :  36NXG
+2023-06-06 22:05:15,943: INFO: Finished ACD Raster Processes for Tile :  36NXG
+2023-06-06 22:05:15,981: INFO: Starting ACD Raster Processes for Tile :  36NYG
+2023-06-07 03:02:58,866: INFO: Finished ACD Raster Processes for Tile :  36NYG
+2023-06-07 03:02:58,878: INFO: ---------------------------------------------------------------
+2023-06-07 03:02:58,879: INFO: ---                  INTEGRATED PROCESSING END              ---
+2023-06-07 03:02:58,880: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,714: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,716: INFO:                     ****PROCESSING START****
+2023-06-07 11:02:32,716: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,717: INFO: C:\Users\ir81\.conda\envs\pyeo_env_pcwe
+2023-06-07 11:02:32,717: INFO: True
+2023-06-07 11:02:32,718: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,719: INFO: ---                  INTEGRATED PROCESSING START            ---
+2023-06-07 11:02:32,719: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,719: INFO: Reading in parameters defined in: pyeo_windows.ini
+2023-06-07 11:02:32,719: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,720: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,720: INFO: Starting acd_config_to_log()
+2023-06-07 11:02:32,720: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,721: INFO: Options:
+2023-06-07 11:02:32,721: INFO:   --dev Running in development mode, choosing development versions of functions where available
+2023-06-07 11:02:32,721: INFO:   -do_tile_intersection
+2023-06-07 11:02:32,722: INFO:       Sentinel-2 tile intersection with ROI enabled
+2023-06-07 11:02:32,722: INFO:   --do_raster
+2023-06-07 11:02:32,723: INFO:       raster pipeline enabled
+2023-06-07 11:02:32,723: INFO:   --download for change detection images
+2023-06-07 11:02:32,723: INFO:   --download_source = scihub
+2023-06-07 11:02:32,724: INFO:   Faulty Granule Threshold  : 350
+2023-06-07 11:02:32,728: INFO:   --do_delete_existing_vector , when vectorising the change report rasters, 
+2023-06-07 11:02:32,729: INFO:             existing vectors files will be deleted and new vector files created.
+2023-06-07 11:02:32,730: INFO: EPSG used is: 21097
+2023-06-07 11:02:32,732: INFO: List of image bands: ['B02', 'B03', 'B04', 'B08']
+2023-06-07 11:02:32,732: INFO: Model used: .\models\model_36MYE_Unoptimised_20230505_no_haze.pkl
+2023-06-07 11:02:32,732: INFO: 
+2023-06-07 11:02:32,733: INFO: List of class labels:
+2023-06-07 11:02:32,733: INFO:   1 : primary forest
+2023-06-07 11:02:32,734: INFO:   2 : plantation forest
+2023-06-07 11:02:32,734: INFO:   3 : bare soil
+2023-06-07 11:02:32,735: INFO:   4 : crops
+2023-06-07 11:02:32,735: INFO:   5 : grassland
+2023-06-07 11:02:32,735: INFO:   6 : open water
+2023-06-07 11:02:32,735: INFO:   7 : burn scar
+2023-06-07 11:02:32,736: INFO:   8 : cloud
+2023-06-07 11:02:32,736: INFO:   9 : cloud shadow
+2023-06-07 11:02:32,736: INFO:   10 : haze
+2023-06-07 11:02:32,737: INFO:   11 : sparse woodland
+2023-06-07 11:02:32,738: INFO:   12 : dense woodland
+2023-06-07 11:02:32,738: INFO:   13 : artificial
+2023-06-07 11:02:32,738: INFO: Detecting changes from any of the classes: [1, 2]
+2023-06-07 11:02:32,738: INFO:                     to any of the classes: [3]
+2023-06-07 11:02:32,739: INFO: ------------------------------------------------------------
+2023-06-07 11:02:32,739: INFO: Reporting Directories and Filepaths
+2023-06-07 11:02:32,739: INFO: Tile Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\data_folder
+2023-06-07 11:02:32,743: INFO: Working Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\pyeo
+2023-06-07 11:02:32,744: INFO: The following directories are relative to the working directory, i.e. stored underneath:
+2023-06-07 11:02:32,744: INFO: Integrated Directory is   : .\integrated
+2023-06-07 11:02:32,745: INFO: ROI Directory is   : .\roi
+2023-06-07 11:02:32,745: INFO: Geometry Directory is   : .\geometry
+2023-06-07 11:02:32,746: INFO: Path to the Administrative Boundaries used in the Change Report Vectorisation   : .\geometry\gadm41_KEN_1.json
+2023-06-07 11:02:32,746: INFO: Path to Sen2Cor is   : C:\Users\ir81\Sen2Cor-02.11.00-win64\L2A_Process
+2023-06-07 11:02:32,747: INFO: The Conda Environment specified in .ini file is :  pyeo_env_pcwe
+2023-06-07 11:02:32,748: INFO: -------------------------------------------
+2023-06-07 11:02:32,748: INFO: -------------------------------------------
+2023-06-07 11:02:32,749: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:32,749: INFO: Starting acd_roi_tile_intersection()
+2023-06-07 11:02:32,750: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:37,723: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 11:02:37,723: INFO: These tiles are  :
+2023-06-07 11:02:37,725: INFO:   1 : 36NXG
+2023-06-07 11:02:37,725: INFO:   2 : 36NYG
+2023-06-07 11:02:37,726: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 11:02:37,744: INFO: Finished ROI tile intersection
+2023-06-07 11:02:37,899: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 11:02:37,900: INFO: These tiles are  :
+2023-06-07 11:02:37,901: INFO:   1 : 36NXG
+2023-06-07 11:02:37,901: INFO:   2 : 36NYG
+2023-06-07 11:02:37,902: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 11:02:37,921: INFO: Finished ROI tile intersection
+2023-06-07 11:02:37,922: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:37,923: INFO: Starting acd_integrated_raster():
+2023-06-07 11:02:37,923: INFO: ---------------------------------------------------------------
+2023-06-07 11:02:37,954: INFO: Starting ACD Raster Processes for Tile :  36NXG
+2023-06-07 11:42:34,797: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,798: INFO:                     ****PROCESSING START****
+2023-06-07 11:42:34,803: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,804: INFO: C:\Users\ir81\.conda\envs\pyeo_env_pcwe
+2023-06-07 11:42:34,805: INFO: True
+2023-06-07 11:42:34,805: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,805: INFO: ---                  INTEGRATED PROCESSING START            ---
+2023-06-07 11:42:34,806: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,806: INFO: Reading in parameters defined in: pyeo_windows.ini
+2023-06-07 11:42:34,806: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,807: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,807: INFO: Starting acd_config_to_log()
+2023-06-07 11:42:34,807: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,807: INFO: Options:
+2023-06-07 11:42:34,808: INFO:   --dev Running in development mode, choosing development versions of functions where available
+2023-06-07 11:42:34,808: INFO:   -do_tile_intersection
+2023-06-07 11:42:34,808: INFO:       Sentinel-2 tile intersection with ROI enabled
+2023-06-07 11:42:34,809: INFO:   --do_raster
+2023-06-07 11:42:34,809: INFO:       raster pipeline enabled
+2023-06-07 11:42:34,809: INFO:   --download for change detection images
+2023-06-07 11:42:34,810: INFO:   --download_source = scihub
+2023-06-07 11:42:34,810: INFO:   Faulty Granule Threshold  : 350
+2023-06-07 11:42:34,810: INFO:   --do_delete_existing_vector , when vectorising the change report rasters, 
+2023-06-07 11:42:34,811: INFO:             existing vectors files will be deleted and new vector files created.
+2023-06-07 11:42:34,814: INFO: EPSG used is: 21097
+2023-06-07 11:42:34,815: INFO: List of image bands: ['B02', 'B03', 'B04', 'B08']
+2023-06-07 11:42:34,815: INFO: Model used: .\models\model_36MYE_Unoptimised_20230505_no_haze.pkl
+2023-06-07 11:42:34,816: INFO: 
+2023-06-07 11:42:34,816: INFO: List of class labels:
+2023-06-07 11:42:34,817: INFO:   1 : primary forest
+2023-06-07 11:42:34,817: INFO:   2 : plantation forest
+2023-06-07 11:42:34,818: INFO:   3 : bare soil
+2023-06-07 11:42:34,819: INFO:   4 : crops
+2023-06-07 11:42:34,820: INFO:   5 : grassland
+2023-06-07 11:42:34,820: INFO:   6 : open water
+2023-06-07 11:42:34,821: INFO:   7 : burn scar
+2023-06-07 11:42:34,821: INFO:   8 : cloud
+2023-06-07 11:42:34,822: INFO:   9 : cloud shadow
+2023-06-07 11:42:34,822: INFO:   10 : haze
+2023-06-07 11:42:34,823: INFO:   11 : sparse woodland
+2023-06-07 11:42:34,823: INFO:   12 : dense woodland
+2023-06-07 11:42:34,823: INFO:   13 : artificial
+2023-06-07 11:42:34,824: INFO: Detecting changes from any of the classes: [1, 2]
+2023-06-07 11:42:34,824: INFO:                     to any of the classes: [3]
+2023-06-07 11:42:34,825: INFO: ------------------------------------------------------------
+2023-06-07 11:42:34,825: INFO: Reporting Directories and Filepaths
+2023-06-07 11:42:34,825: INFO: Tile Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\data_folder
+2023-06-07 11:42:34,826: INFO: Working Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\pyeo
+2023-06-07 11:42:34,826: INFO: The following directories are relative to the working directory, i.e. stored underneath:
+2023-06-07 11:42:34,827: INFO: Integrated Directory is   : .\integrated
+2023-06-07 11:42:34,832: INFO: ROI Directory is   : .\roi
+2023-06-07 11:42:34,832: INFO: Geometry Directory is   : .\geometry
+2023-06-07 11:42:34,833: INFO: Path to the Administrative Boundaries used in the Change Report Vectorisation   : .\geometry\gadm41_KEN_1.json
+2023-06-07 11:42:34,833: INFO: Path to Sen2Cor is   : C:\Users\ir81\Sen2Cor-02.11.00-win64\L2A_Process
+2023-06-07 11:42:34,834: INFO: The Conda Environment specified in .ini file is :  pyeo_env_pcwe
+2023-06-07 11:42:34,835: INFO: -------------------------------------------
+2023-06-07 11:42:34,836: INFO: -------------------------------------------
+2023-06-07 11:42:34,837: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:34,837: INFO: Starting acd_roi_tile_intersection()
+2023-06-07 11:42:34,837: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:35,643: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 11:42:35,644: INFO: These tiles are  :
+2023-06-07 11:42:35,646: INFO:   1 : 36NXG
+2023-06-07 11:42:35,646: INFO:   2 : 36NYG
+2023-06-07 11:42:35,646: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 11:42:35,661: INFO: Finished ROI tile intersection
+2023-06-07 11:42:35,862: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 11:42:35,862: INFO: These tiles are  :
+2023-06-07 11:42:35,863: INFO:   1 : 36NXG
+2023-06-07 11:42:35,864: INFO:   2 : 36NYG
+2023-06-07 11:42:35,864: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 11:42:35,884: INFO: Finished ROI tile intersection
+2023-06-07 11:42:35,886: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:35,887: INFO: Starting acd_integrated_raster():
+2023-06-07 11:42:35,888: INFO: ---------------------------------------------------------------
+2023-06-07 11:42:35,901: INFO: Starting ACD Raster Processes for Tile :  36NXG
+2023-06-07 11:50:09,870: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,870: INFO:                     ****PROCESSING START****
+2023-06-07 11:50:09,873: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,874: INFO: C:\Users\ir81\.conda\envs\pyeo_env_pcwe
+2023-06-07 11:50:09,875: INFO: True
+2023-06-07 11:50:09,876: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,877: INFO: ---                  INTEGRATED PROCESSING START            ---
+2023-06-07 11:50:09,886: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,886: INFO: Reading in parameters defined in: pyeo_windows.ini
+2023-06-07 11:50:09,886: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,890: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,891: INFO: Starting acd_config_to_log()
+2023-06-07 11:50:09,891: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,892: INFO: Options:
+2023-06-07 11:50:09,892: INFO:   --dev Running in development mode, choosing development versions of functions where available
+2023-06-07 11:50:09,893: INFO:   -do_tile_intersection
+2023-06-07 11:50:09,893: INFO:       Sentinel-2 tile intersection with ROI enabled
+2023-06-07 11:50:09,894: INFO:   --do_raster
+2023-06-07 11:50:09,894: INFO:       raster pipeline enabled
+2023-06-07 11:50:09,894: INFO:   --download for change detection images
+2023-06-07 11:50:09,895: INFO:   --download_source = scihub
+2023-06-07 11:50:09,895: INFO:   Faulty Granule Threshold  : 350
+2023-06-07 11:50:09,895: INFO:   --do_delete_existing_vector , when vectorising the change report rasters, 
+2023-06-07 11:50:09,896: INFO:             existing vectors files will be deleted and new vector files created.
+2023-06-07 11:50:09,896: INFO: EPSG used is: 21097
+2023-06-07 11:50:09,896: INFO: List of image bands: ['B02', 'B03', 'B04', 'B08']
+2023-06-07 11:50:09,897: INFO: Model used: .\models\model_36MYE_Unoptimised_20230505_no_haze.pkl
+2023-06-07 11:50:09,897: INFO: 
+2023-06-07 11:50:09,897: INFO: List of class labels:
+2023-06-07 11:50:09,898: INFO:   1 : primary forest
+2023-06-07 11:50:09,898: INFO:   2 : plantation forest
+2023-06-07 11:50:09,899: INFO:   3 : bare soil
+2023-06-07 11:50:09,899: INFO:   4 : crops
+2023-06-07 11:50:09,899: INFO:   5 : grassland
+2023-06-07 11:50:09,900: INFO:   6 : open water
+2023-06-07 11:50:09,900: INFO:   7 : burn scar
+2023-06-07 11:50:09,900: INFO:   8 : cloud
+2023-06-07 11:50:09,901: INFO:   9 : cloud shadow
+2023-06-07 11:50:09,901: INFO:   10 : haze
+2023-06-07 11:50:09,902: INFO:   11 : sparse woodland
+2023-06-07 11:50:09,902: INFO:   12 : dense woodland
+2023-06-07 11:50:09,902: INFO:   13 : artificial
+2023-06-07 11:50:09,908: INFO: Detecting changes from any of the classes: [1, 2]
+2023-06-07 11:50:09,909: INFO:                     to any of the classes: [3]
+2023-06-07 11:50:09,909: INFO: ------------------------------------------------------------
+2023-06-07 11:50:09,910: INFO: Reporting Directories and Filepaths
+2023-06-07 11:50:09,910: INFO: Tile Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\data_folder
+2023-06-07 11:50:09,910: INFO: Working Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\pyeo
+2023-06-07 11:50:09,911: INFO: The following directories are relative to the working directory, i.e. stored underneath:
+2023-06-07 11:50:09,911: INFO: Integrated Directory is   : .\integrated
+2023-06-07 11:50:09,911: INFO: ROI Directory is   : .\roi
+2023-06-07 11:50:09,912: INFO: Geometry Directory is   : .\geometry
+2023-06-07 11:50:09,912: INFO: Path to the Administrative Boundaries used in the Change Report Vectorisation   : .\geometry\gadm41_KEN_1.json
+2023-06-07 11:50:09,912: INFO: Path to Sen2Cor is   : C:\Users\ir81\Sen2Cor-02.11.00-win64\L2A_Process
+2023-06-07 11:50:09,912: INFO: The Conda Environment specified in .ini file is :  pyeo_env_pcwe
+2023-06-07 11:50:09,913: INFO: -------------------------------------------
+2023-06-07 11:50:09,913: INFO: -------------------------------------------
+2023-06-07 11:50:09,913: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:09,914: INFO: Starting acd_roi_tile_intersection()
+2023-06-07 11:50:09,914: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:10,494: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 11:50:10,495: INFO: These tiles are  :
+2023-06-07 11:50:10,496: INFO:   1 : 36NXG
+2023-06-07 11:50:10,496: INFO:   2 : 36NYG
+2023-06-07 11:50:10,497: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 11:50:10,507: INFO: Finished ROI tile intersection
+2023-06-07 11:50:10,634: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 11:50:10,635: INFO: These tiles are  :
+2023-06-07 11:50:10,636: INFO:   1 : 36NXG
+2023-06-07 11:50:10,636: INFO:   2 : 36NYG
+2023-06-07 11:50:10,636: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 11:50:10,652: INFO: Finished ROI tile intersection
+2023-06-07 11:50:10,654: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:10,657: INFO: Starting acd_integrated_raster():
+2023-06-07 11:50:10,658: INFO: ---------------------------------------------------------------
+2023-06-07 11:50:10,668: INFO: Starting ACD Raster Processes for Tile :  36NXG
+2023-06-07 12:23:16,914: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,915: INFO:                     ****PROCESSING START****
+2023-06-07 12:23:16,916: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,917: INFO: C:\Users\ir81\.conda\envs\pyeo_env_pcwe
+2023-06-07 12:23:16,917: INFO: True
+2023-06-07 12:23:16,917: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,918: INFO: ---                  INTEGRATED PROCESSING START            ---
+2023-06-07 12:23:16,918: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,919: INFO: Reading in parameters defined in: pyeo_windows.ini
+2023-06-07 12:23:16,919: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,919: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,920: INFO: Starting acd_config_to_log()
+2023-06-07 12:23:16,920: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,920: INFO: Options:
+2023-06-07 12:23:16,921: INFO:   --dev Running in development mode, choosing development versions of functions where available
+2023-06-07 12:23:16,921: INFO:   -do_tile_intersection
+2023-06-07 12:23:16,921: INFO:       Sentinel-2 tile intersection with ROI enabled
+2023-06-07 12:23:16,922: INFO:   --do_raster
+2023-06-07 12:23:16,922: INFO:       raster pipeline enabled
+2023-06-07 12:23:16,923: INFO:   --download for change detection images
+2023-06-07 12:23:16,923: INFO:   --download_source = scihub
+2023-06-07 12:23:16,924: INFO:   Faulty Granule Threshold  : 350
+2023-06-07 12:23:16,924: INFO:   --do_delete_existing_vector , when vectorising the change report rasters, 
+2023-06-07 12:23:16,925: INFO:             existing vectors files will be deleted and new vector files created.
+2023-06-07 12:23:16,925: INFO: EPSG used is: 21097
+2023-06-07 12:23:16,926: INFO: List of image bands: ['B02', 'B03', 'B04', 'B08']
+2023-06-07 12:23:16,926: INFO: Model used: .\models\model_36MYE_Unoptimised_20230505_no_haze.pkl
+2023-06-07 12:23:16,926: INFO: 
+2023-06-07 12:23:16,926: INFO: List of class labels:
+2023-06-07 12:23:16,931: INFO:   1 : primary forest
+2023-06-07 12:23:16,932: INFO:   2 : plantation forest
+2023-06-07 12:23:16,933: INFO:   3 : bare soil
+2023-06-07 12:23:16,933: INFO:   4 : crops
+2023-06-07 12:23:16,934: INFO:   5 : grassland
+2023-06-07 12:23:16,934: INFO:   6 : open water
+2023-06-07 12:23:16,935: INFO:   7 : burn scar
+2023-06-07 12:23:16,935: INFO:   8 : cloud
+2023-06-07 12:23:16,935: INFO:   9 : cloud shadow
+2023-06-07 12:23:16,936: INFO:   10 : haze
+2023-06-07 12:23:16,936: INFO:   11 : sparse woodland
+2023-06-07 12:23:16,936: INFO:   12 : dense woodland
+2023-06-07 12:23:16,937: INFO:   13 : artificial
+2023-06-07 12:23:16,937: INFO: Detecting changes from any of the classes: [1, 2]
+2023-06-07 12:23:16,937: INFO:                     to any of the classes: [3]
+2023-06-07 12:23:16,938: INFO: ------------------------------------------------------------
+2023-06-07 12:23:16,938: INFO: Reporting Directories and Filepaths
+2023-06-07 12:23:16,939: INFO: Tile Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\data_folder
+2023-06-07 12:23:16,939: INFO: Working Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\pyeo
+2023-06-07 12:23:16,939: INFO: The following directories are relative to the working directory, i.e. stored underneath:
+2023-06-07 12:23:16,939: INFO: Integrated Directory is   : .\integrated
+2023-06-07 12:23:16,940: INFO: ROI Directory is   : .\roi
+2023-06-07 12:23:16,940: INFO: Geometry Directory is   : .\geometry
+2023-06-07 12:23:16,940: INFO: Path to the Administrative Boundaries used in the Change Report Vectorisation   : .\geometry\gadm41_KEN_1.json
+2023-06-07 12:23:16,941: INFO: Path to Sen2Cor is   : C:\Users\ir81\Sen2Cor-02.11.00-win64\L2A_Process.bat
+2023-06-07 12:23:16,941: INFO: The Conda Environment specified in .ini file is :  pyeo_env_pcwe
+2023-06-07 12:23:16,941: INFO: -------------------------------------------
+2023-06-07 12:23:16,941: INFO: -------------------------------------------
+2023-06-07 12:23:16,947: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:16,948: INFO: Starting acd_roi_tile_intersection()
+2023-06-07 12:23:16,948: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:17,790: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 12:23:17,790: INFO: These tiles are  :
+2023-06-07 12:23:17,791: INFO:   1 : 36NXG
+2023-06-07 12:23:17,792: INFO:   2 : 36NYG
+2023-06-07 12:23:17,792: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 12:23:17,805: INFO: Finished ROI tile intersection
+2023-06-07 12:23:17,959: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 12:23:17,960: INFO: These tiles are  :
+2023-06-07 12:23:17,961: INFO:   1 : 36NXG
+2023-06-07 12:23:17,962: INFO:   2 : 36NYG
+2023-06-07 12:23:17,962: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 12:23:17,975: INFO: Finished ROI tile intersection
+2023-06-07 12:23:17,975: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:17,977: INFO: Starting acd_integrated_raster():
+2023-06-07 12:23:17,977: INFO: ---------------------------------------------------------------
+2023-06-07 12:23:17,991: INFO: Starting ACD Raster Processes for Tile :  36NXG
+2023-06-07 14:05:58,018: INFO: Finished ACD Raster Processes for Tile :  36NXG
+2023-06-07 14:05:58,052: INFO: Starting ACD Raster Processes for Tile :  36NYG
+2023-06-07 15:55:30,497: INFO: Finished ACD Raster Processes for Tile :  36NYG
+2023-06-07 15:55:30,503: INFO: ---------------------------------------------------------------
+2023-06-07 15:55:30,504: INFO: ---                  INTEGRATED PROCESSING END              ---
+2023-06-07 15:55:30,504: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,308: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,309: INFO:                     ****PROCESSING START****
+2023-06-07 16:44:57,309: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,310: INFO: C:\Users\ir81\.conda\envs\pyeo_env_pcwe
+2023-06-07 16:44:57,311: INFO: True
+2023-06-07 16:44:57,311: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,311: INFO: ---                  INTEGRATED PROCESSING START            ---
+2023-06-07 16:44:57,311: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,311: INFO: Reading in parameters defined in: pyeo_windows.ini
+2023-06-07 16:44:57,311: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,312: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,313: INFO: Starting acd_config_to_log()
+2023-06-07 16:44:57,313: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,313: INFO: Options:
+2023-06-07 16:44:57,313: INFO:   --dev Running in development mode, choosing development versions of functions where available
+2023-06-07 16:44:57,314: INFO:   -do_tile_intersection
+2023-06-07 16:44:57,314: INFO:       Sentinel-2 tile intersection with ROI enabled
+2023-06-07 16:44:57,314: INFO:   --do_raster
+2023-06-07 16:44:57,314: INFO:       raster pipeline enabled
+2023-06-07 16:44:57,314: INFO:   --classify to apply the random forest model and create classification layers
+2023-06-07 16:44:57,315: INFO:   --change to produce change detection layers and report images
+2023-06-07 16:44:57,315: INFO:          change start date  : 20220101
+2023-06-07 16:44:57,315: INFO:          change end date  : 20221231
+2023-06-07 16:44:57,315: INFO:   --do_delete_existing_vector , when vectorising the change report rasters, 
+2023-06-07 16:44:57,315: INFO:             existing vectors files will be deleted and new vector files created.
+2023-06-07 16:44:57,316: INFO: EPSG used is: 21097
+2023-06-07 16:44:57,316: INFO: List of image bands: ['B02', 'B03', 'B04', 'B08']
+2023-06-07 16:44:57,316: INFO: Model used: .\models\model_36MYE_Unoptimised_20230505_no_haze.pkl
+2023-06-07 16:44:57,317: INFO: 
+2023-06-07 16:44:57,317: INFO: List of class labels:
+2023-06-07 16:44:57,318: INFO:   1 : primary forest
+2023-06-07 16:44:57,318: INFO:   2 : plantation forest
+2023-06-07 16:44:57,318: INFO:   3 : bare soil
+2023-06-07 16:44:57,318: INFO:   4 : crops
+2023-06-07 16:44:57,318: INFO:   5 : grassland
+2023-06-07 16:44:57,318: INFO:   6 : open water
+2023-06-07 16:44:57,319: INFO:   7 : burn scar
+2023-06-07 16:44:57,319: INFO:   8 : cloud
+2023-06-07 16:44:57,319: INFO:   9 : cloud shadow
+2023-06-07 16:44:57,319: INFO:   10 : haze
+2023-06-07 16:44:57,319: INFO:   11 : sparse woodland
+2023-06-07 16:44:57,320: INFO:   12 : dense woodland
+2023-06-07 16:44:57,320: INFO:   13 : artificial
+2023-06-07 16:44:57,321: INFO: Detecting changes from any of the classes: [1, 2]
+2023-06-07 16:44:57,321: INFO:                     to any of the classes: [3]
+2023-06-07 16:44:57,321: INFO: ------------------------------------------------------------
+2023-06-07 16:44:57,321: INFO: Reporting Directories and Filepaths
+2023-06-07 16:44:57,321: INFO: Tile Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\data_folder
+2023-06-07 16:44:57,322: INFO: Working Directory is   : C:\Users\ir81\20230602_pyeo_test_installation\pyeo
+2023-06-07 16:44:57,322: INFO: The following directories are relative to the working directory, i.e. stored underneath:
+2023-06-07 16:44:57,322: INFO: Integrated Directory is   : .\integrated
+2023-06-07 16:44:57,322: INFO: ROI Directory is   : .\roi
+2023-06-07 16:44:57,322: INFO: Geometry Directory is   : .\geometry
+2023-06-07 16:44:57,323: INFO: Path to the Administrative Boundaries used in the Change Report Vectorisation   : .\geometry\gadm41_KEN_1.json
+2023-06-07 16:44:57,323: INFO: Path to Sen2Cor is   : C:\Users\ir81\Sen2Cor-02.11.00-win64\L2A_Process.bat
+2023-06-07 16:44:57,323: INFO: The Conda Environment specified in .ini file is :  pyeo_env_pcwe
+2023-06-07 16:44:57,323: INFO: -------------------------------------------
+2023-06-07 16:44:57,324: INFO: -------------------------------------------
+2023-06-07 16:44:57,324: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:57,325: INFO: Starting acd_roi_tile_intersection()
+2023-06-07 16:44:57,325: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:58,210: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 16:44:58,210: INFO: These tiles are  :
+2023-06-07 16:44:58,211: INFO:   1 : 36NXG
+2023-06-07 16:44:58,211: INFO:   2 : 36NYG
+2023-06-07 16:44:58,212: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 16:44:58,222: INFO: Finished ROI tile intersection
+2023-06-07 16:44:58,305: INFO: The provided ROI intersects with 2 Sentinel-2 tiles
+2023-06-07 16:44:58,305: INFO: These tiles are  :
+2023-06-07 16:44:58,306: INFO:   1 : 36NXG
+2023-06-07 16:44:58,307: INFO:   2 : 36NYG
+2023-06-07 16:44:58,308: INFO: Writing Sentinel-2 tiles that intersect with the provided ROI to  : .\roi\tilelist.csv
+2023-06-07 16:44:58,323: INFO: Finished ROI tile intersection
+2023-06-07 16:44:58,324: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:58,325: INFO: Starting acd_integrated_raster():
+2023-06-07 16:44:58,326: INFO: ---------------------------------------------------------------
+2023-06-07 16:44:58,336: INFO: Starting ACD Raster Processes for Tile :  36NXG

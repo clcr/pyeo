@@ -3,14 +3,14 @@ import os
 import stat
 
 setup(
-    name='Pyeo',
-    version='0.2.0',
-    author='John Roberts',
-    author_email='jfr10@le.ac.uk',
-    packages=['pyeo', 'pyeo.tests'],
-    url='http://pypi.python.org/pypi/Pyeo/',
-    license='LICENSE',
-    description='Modular processing chain from download to ard',
+    name="pyeo",
+    version="0.9.0",
+    author="University of Leicester",
+    author_email="hb71@le.ac.uk",
+    packages=["pyeo", "pyeo.tests"],
+    url="http://pypi.python.org/pypi/Pyeo/",
+    license="LICENSE",
+    description="Modular processing chain from download to ard",
     install_requires=[
         "boto3",
         "botocore",
@@ -28,6 +28,7 @@ setup(
         "sentinelhub",
         "sentinelsat",
         "tenacity",
-        "tqdm", 'pysolar'
+        "tqdm",
+        "pysolar",
     ],
 )
