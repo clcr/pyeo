@@ -1,0 +1,18 @@
+Python Version: sys.version_info(major=3, minor=10, micro=4, releaselevel='final', serial=0)
+Sleeping for 71 seconds
+Sleep period completed - program ending
+Python Version: sys.version_info(major=3, minor=10, micro=4, releaselevel='final', serial=0)
+Sleeping for 86 seconds
+Sleep period completed - program ending
+Python Version: sys.version_info(major=3, minor=10, micro=4, releaselevel='final', serial=0)
+Sleeping for 60 seconds
+Sleep period completed - program ending
+Python Version: sys.version_info(major=3, minor=10, micro=4, releaselevel='final', serial=0)
+Sleeping for 64 seconds
+Sleep period completed - program ending
+Python Version: sys.version_info(major=3, minor=10, micro=4, releaselevel='final', serial=0)
+Sleeping for 66 seconds
+Sleep period completed - program ending
+Python Version: sys.version_info(major=3, minor=10, micro=4, releaselevel='final', serial=0)
+Sleeping for 80 seconds
+Sleep period completed - program ending

@@ -1,168 +1,97 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>pyeo.validation &mdash; Pyeo  documentation</title>
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
-  
-  
-  
-
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Validation &mdash; pyeo 0.9 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Applications" href="scripts.html" />
-    <link rel="prev" title="pyeo.filesystem_utilities" href="filesystem_utilities.html" /> 
+    <link rel="next" title="Vectorisation" href="vectorisation.html" />
+    <link rel="prev" title="Raster Manipulation" href="raster_manipulation.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Pyeo
           
-
-          
+          <a href="index.html" class="icon icon-home">
+            pyeo
+              <img src="_static/pyeologo.png" class="logo" alt="Logo"/>
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="classification.html">pyeo.classification</a></li>
-<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">pyeo.coordinate_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">pyeo.queries_and_downloads</a></li>
-<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">pyeo.raster_manipulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">pyeo.filesystem_utilities</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">pyeo.validation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#function-reference">Function reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="classification.html">Classification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">Coordinate Manipulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">Filesystem Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">Queries and Downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster_manipulation.html">Raster Manipulation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Validation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyeo-1-validation">pyeo.validation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#function-reference">Function reference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#pyeo.validation.create_validation_scenario"><code class="docutils literal notranslate"><span class="pre">create_validation_scenario()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vectorisation.html">Vectorisation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Applications</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Pyeo</a>
-        
+          <a href="index.html">pyeo</a>
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li>pyeo.validation</li>
-    
-    
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Validation</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="_sources/validation.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <span class="target" id="module-pyeo.validation"></span><div class="section" id="pyeo-validation">
-<h1>pyeo.validation<a class="headerlink" href="#pyeo-validation" title="Permalink to this headline">¶</a></h1>
+             
+  <section id="module-pyeo.validation">
+<span id="validation"></span><h1>Validation<a class="headerlink" href="#module-pyeo.validation" title="Permalink to this heading"></a></h1>
+<section id="pyeo-1-validation">
+<h2>pyeo.validation<a class="headerlink" href="#pyeo-1-validation" title="Permalink to this heading"></a></h2>
 <p>A function for producing sufficient sample points for validation to a specified confidence using
-the method detailed in Olafsson et al <a class="footnote-reference brackets" href="#id2" id="id1">1</a>. You provide a configuration file containing expected user accuracy for each
+the method detailed in Olafsson et al <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>. You provide a configuration file containing expected user accuracy for each
 class, a minimum number of samples for any class that is sparse and a target standard error value.</p>
 <p>An example validation file for an classification map with three classes [1,2 and 3] with a no-data value of 0.
 Class 1 is sparse, and needs at least 100 validation points.</p>
@@ -191,20 +120,23 @@ Class 1 is sparse, and needs at least 100 validation points.</p>
 <span class="mi">1</span><span class="o">=</span><span class="mi">100</span>
 </pre></div>
 </div>
-<dl class="footnote brackets">
-<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>Olofsson, P., Foody, G.M., Herold, M., Stehman, S.V., Woodcock, C.E. and Wulder, M.A., 2014. Good practices for
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Olofsson, P., Foody, G.M., Herold, M., Stehman, S.V., Woodcock, C.E. and Wulder, M.A., 2014. Good practices for
 estimating area and assessing accuracy of land change. Remote Sensing of Environment, 148, pp.42-57.</p>
-</dd>
-</dl>
-<div class="section" id="function-reference">
-<h2>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this headline">¶</a></h2>
+</aside>
+</aside>
+<section id="function-reference">
+<h3>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this heading"></a></h3>
+</section>
+</section>
 <dl class="py function">
-<dt id="pyeo.validation.create_validation_scenario">
-<code class="sig-prename descclassname">pyeo.validation.</code><code class="sig-name descname">create_validation_scenario</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_map_path</span></em>, <em class="sig-param"><span class="n">out_shapefile_path</span></em>, <em class="sig-param"><span class="n">target_standard_error</span></em>, <em class="sig-param"><span class="n">user_accuracies</span></em>, <em class="sig-param"><span class="n">no_data_class</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">pinned_samples</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">produce_csv</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.create_validation_scenario" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="pyeo.validation.create_validation_scenario">
+<span class="sig-prename descclassname"><span class="pre">pyeo.validation.</span></span><span class="sig-name descname"><span class="pre">create_validation_scenario</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_map_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_shapefile_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_standard_error</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_accuracies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_data_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pinned_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">produce_csv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.validation.create_validation_scenario" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a set of validation points based on</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>in_map_path</strong> – </p></li>
 <li><p><strong>out_shapefile_path</strong> – </p></li>
@@ -217,63 +149,37 @@ estimating area and assessing accuracy of land change. Remote Sensing of Environ
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="scripts.html" class="btn btn-neutral float-right" title="Applications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="filesystem_utilities.html" class="btn btn-neutral float-left" title="pyeo.filesystem_utilities" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="raster_manipulation.html" class="btn btn-neutral float-left" title="Raster Manipulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="vectorisation.html" class="btn btn-neutral float-right" title="Vectorisation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        
-        &copy; Copyright 2018, John Roberts
-
-    </p>
+    <p>&#169; Copyright 2023, Ivan Reading, Matthew Payne, John Roberts, Heiko Balzter.</p>
   </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

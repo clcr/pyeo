@@ -1,3 +1,6 @@
-.. title:: pyeo.validation
+Validation
+==========
+
+.. title:: Validation
 .. automodule:: pyeo.validation
    :members:

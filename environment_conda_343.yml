@@ -1,0 +1,24 @@
+name: pyeo_env_343
+channels:
+  - conda-forge
+  - defaults
+  - conda-forge/label/gdal
+dependencies:
+  - numpy
+  - gdal==3.4.3
+  - jupyterlab
+  - matplotlib
+  - pandas
+  - requests
+  - tenacity
+  - tqdm
+  - scikit-learn
+  - beautifulsoup4
+  - yaml
+  - geopandas
+  - sentinelsat
+  - geojson
+  - scikit-image
+  - lxml
+  - botocore
+  - sentinelhub

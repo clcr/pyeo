@@ -1,0 +1,9 @@
+                precision    recall  f1-score   support
+
+Primary Forest       1.00      1.00      1.00      6459
+     Bare Soil       1.00      1.00      1.00     21106
+
+      accuracy                           1.00     27565
+     macro avg       1.00      1.00      1.00     27565
+  weighted avg       1.00      1.00      1.00     27565
+

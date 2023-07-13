@@ -10,7 +10,7 @@ def show_satellite_image(image_path):
     img = gdal.Open(image_path)
     array = img.GetVirtualMemArray()
     if len(array.shape) >= 3:
-        img_view = array.transpose([1,2,0])
+        img_view = array.transpose([1, 2, 0])
     else:
         img_view = array
     plt.imshow(img_view)

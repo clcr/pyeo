@@ -2,4 +2,4 @@
 set -o errexit
 set -o nounset
 
-python "$PYEO"/pyeo/apps/validation/generate_stratified_sample_points.py "$@"
+python "$pyeo"/pyeo/apps/validation/generate_stratified_sample_points.py "$@"

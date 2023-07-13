@@ -20,15 +20,20 @@ import os
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='Filter all of class out of input_image')
+    parser = argparse.ArgumentParser(
+        description="Filter all of class out of input_image"
+    )
     parser.add_argument("input_image")
     parser.add_argument("class_image")
     parser.add_argument("output")
     parser.add_argument("filter_classes", nargs="*", type=int)
-    parser.add_argument("-l", "--log_path", default=os.path.join(os.getcwd(), "comparison.log"))
+    parser.add_argument(
+        "-l", "--log_path", default=os.path.join(os.getcwd(), "comparison.log")
+    )
     args = parser.parse_args()
 
     log = pyeo.filesystem_utilities.init_log(args.log_path)
 
-    pyeo.raster_manipulation.filter_by_class_map(args.input_image, args.class_image, args.output, args.filter_classes)
+    pyeo.raster_manipulation.filter_by_class_map(
+        args.input_image, args.class_image, args.output, args.filter_classes
+    )

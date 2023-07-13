@@ -1,0 +1,13 @@
+                   precision    recall  f1-score   support
+
+   Primary Forest   0.994631  0.977573  0.986028      1516
+Plantation Forest   0.908356  0.976812  0.941341       345
+        Bare Soil   1.000000  1.000000  1.000000       152
+            Crops   1.000000  0.997093  0.998544       344
+        Grassland   0.995652  1.000000  0.997821       458
+       Artificial   1.000000  0.994152  0.997067       171
+
+         accuracy                       0.985265      2986
+        macro avg   0.983106  0.990938  0.986800      2986
+     weighted avg   0.986019  0.985265  0.985459      2986
+

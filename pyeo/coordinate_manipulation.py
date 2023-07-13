@@ -1,6 +1,6 @@
 """
 pyeo.coordinate_manipulation
-============================
+==============================
 Contains a set of functions for transforming spatial coordinates between projections and pixel indicies.
 
 Unless otherwise stated, all functions assume that any geometry, rasters and shapefiles are using the same projection.
@@ -26,8 +26,10 @@ import subprocess
 import numpy as np
 from osgeo import osr, ogr
 import logging
+
 log = logging.getLogger("pyeo")
 import pyeo.windows_compatability
+
 
 def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     """
@@ -58,7 +60,7 @@ def reproject_geotransform(in_gt, old_proj_wkt, new_proj_wkt):
     return out_gt
 
 
-def get_combined_polygon(rasters, geometry_mode ="intersect"):
+def get_combined_polygon(rasters, geometry_mode="intersect"):
     """
     Returns a polygon containing the combined boundary of each raster in rasters.
 
@@ -155,8 +157,12 @@ def pixel_bounds_from_polygon(raster, polygon):
     intersection = get_poly_intersection(raster_bounds, polygon)
     bounds_geo = intersection.Boundary()
     x_min_geo, x_max_geo, y_min_geo, y_max_geo = bounds_geo.GetEnvelope()
-    (x_min_pixel, y_min_pixel) = point_to_pixel_coordinates(raster, (x_min_geo, y_min_geo))
-    (x_max_pixel, y_max_pixel) = point_to_pixel_coordinates(raster, (x_max_geo, y_max_geo))
+    (x_min_pixel, y_min_pixel) = point_to_pixel_coordinates(
+        raster, (x_min_geo, y_min_geo)
+    )
+    (x_max_pixel, y_max_pixel) = point_to_pixel_coordinates(
+        raster, (x_max_geo, y_max_geo)
+    )
     # Kludge time: swap the two values around if they are wrong
     if x_min_pixel >= x_max_pixel:
         x_min_pixel, x_max_pixel = x_max_pixel, x_min_pixel
@@ -192,15 +198,19 @@ def point_to_pixel_coordinates(raster, point, oob_fail=False):
         point = ogr.CreateGeometryFromWkt(point)
         x_geo = point.GetX()
         y_geo = point.GetY()
-    if isinstance(point, list) or isinstance(point, tuple):  # There is a more pythonic way to do this
+    if isinstance(point, list) or isinstance(
+        point, tuple
+    ):  # There is a more pythonic way to do this
         x_geo = point[0]
         y_geo = point[1]
     if isinstance(point, ogr.Geometry):
         x_geo = point.GetX()
         y_geo = point.GetY()
     gt = raster.GetGeoTransform()
-    x_pixel = int(np.floor((x_geo - floor_to_resolution(gt[0], gt[1]))/gt[1]))
-    y_pixel = int(np.floor((y_geo - floor_to_resolution(gt[3], gt[5]*-1))/gt[5]))  # y resolution is -ve
+    x_pixel = int(np.floor((x_geo - floor_to_resolution(gt[0], gt[1])) / gt[1]))
+    y_pixel = int(
+        np.floor((y_geo - floor_to_resolution(gt[3], gt[5] * -1)) / gt[5])
+    )  # y resolution is -ve
     return x_pixel, y_pixel
 
 
@@ -258,9 +268,8 @@ def write_geometry(geometry, out_path, srs_id=4326):
     if type(srs_id) is str:
         srs.ImportFromWkt(srs_id)
     layer = data_source.CreateLayer(
-        "geometry",
-        srs,
-        geom_type=geometry.GetGeometryType())
+        "geometry", srs, geom_type=geometry.GetGeometryType()
+    )
     feature_def = layer.GetLayerDefn()
     feature = ogr.Feature(feature_def)
     feature.SetGeometry(geometry)
@@ -298,7 +307,7 @@ def reproject_vector(in_path, out_path, dest_srs):
     if type(dest_srs) == osr.SpatialReference:
         dest_srs = dest_srs.ExportToWkt()
 
-    subprocess.run(["ogr2ogr", out_path, in_path, '-t_srs', dest_srs])
+    subprocess.run(["ogr2ogr", out_path, in_path, "-t_srs", dest_srs])
 
 
 def get_aoi_intersection(raster, aoi):
@@ -318,7 +327,9 @@ def get_aoi_intersection(raster, aoi):
 
     """
     raster_shape = get_raster_bounds(raster)
-    aoi.GetLayer(0).ResetReading()  # Just in case the aoi has been accessed by something else
+    aoi.GetLayer(
+        0
+    ).ResetReading()  # Just in case the aoi has been accessed by something else
     aoi_feature = aoi.GetLayer(0).GetFeature(0)
     aoi_geometry = aoi_feature.GetGeometryRef()
     return aoi_geometry.Intersection(raster_shape)
@@ -409,9 +420,11 @@ def get_raster_bounds(raster):
     # We can't rely on the top-left coord being whole numbers any more, since images may have been reprojected
     # So we floor to the resolution of the geotransform maybe?
     top_left_x = floor_to_resolution(geotrans[0], geotrans[1])
-    top_left_y = floor_to_resolution(geotrans[3], geotrans[5]*-1)
-    width = geotrans[1]*raster.RasterXSize
-    height = geotrans[5]*raster.RasterYSize * -1  # RasterYSize is +ve, but geotransform is -ve
+    top_left_y = floor_to_resolution(geotrans[3], geotrans[5] * -1)
+    width = geotrans[1] * raster.RasterXSize
+    height = (
+        geotrans[5] * raster.RasterYSize * -1
+    )  # RasterYSize is +ve, but geotransform is -ve
     raster_bounds.AddPoint(top_left_x, top_left_y)
     raster_bounds.AddPoint(top_left_x + width, top_left_y)
     raster_bounds.AddPoint(top_left_x + width, top_left_y - height)
@@ -446,14 +459,15 @@ def floor_to_resolution(input, resolution):
 
     """
     if resolution > 1:
-        return input - (input%resolution)
+        return input - (input % resolution)
     else:
-        log.warning("Low resolution detected, assuming in degrees. Rounding to 6 dp.\
-                Probably safer to reproject to meters projection.")
+        log.warning(
+            "Low resolution detected, assuming in degrees. Rounding to 6 dp.\
+                Probably safer to reproject to meters projection."
+        )
         resolution = resolution * 1000000
         input = input * 1000000
-        return (input-(input%resolution))/1000000
-
+        return (input - (input % resolution)) / 1000000
 
 
 def get_raster_size(raster):
@@ -471,8 +485,8 @@ def get_raster_size(raster):
         A tuple containing (width, height)
     """
     geotrans = raster.GetGeoTransform()
-    width = geotrans[1]*raster.RasterXSize
-    height = geotrans[5]*raster.RasterYSize
+    width = geotrans[1] * raster.RasterXSize
+    height = geotrans[5] * raster.RasterYSize
     return width, height
 
 
@@ -522,8 +536,8 @@ def align_bounds_to_whole_number(bounding_box):
     aoi_bounds = ogr.Geometry(ogr.wkbLinearRing)
     (x_min, x_max, y_min, y_max) = bounding_box.GetEnvelope()
     # This will create a box that has a whole number as its height and width
-    x_new = x_min + np.floor(x_max-x_min)
-    y_new = y_min + np.floor(y_max-y_min)
+    x_new = x_min + np.floor(x_max - x_min)
+    y_new = y_min + np.floor(y_max - y_min)
     aoi_bounds.AddPoint(x_min, y_min)
     aoi_bounds.AddPoint(x_new, y_min)
     aoi_bounds.AddPoint(x_new, y_new)
@@ -550,7 +564,7 @@ def get_aoi_size(aoi):
 
     """
     (x_min, x_max, y_min, y_max) = aoi.GetLayer(0).GetExtent()
-    out = (x_max - x_min, y_max-y_min)
+    out = (x_max - x_min, y_max - y_min)
     return out
 
 
@@ -572,7 +586,7 @@ def get_poly_size(poly):
     boundary = poly.Boundary()
     x_min, y_min, not_needed = boundary.GetPoint(0)
     x_max, y_max, not_needed = boundary.GetPoint(2)
-    out = (x_max - x_min, y_max-y_min)
+    out = (x_max - x_min, y_max - y_min)
     return out
 
 

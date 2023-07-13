@@ -1,6 +1,6 @@
 """
 pyeo.filesystem_utilities
-=========================
+===========================
 Contains functions for sorting, creating and comparing images as part of the filesystem. Includes any function
 that works on a generic pyeo timestamp and sentinel 2 functions.
 
@@ -14,31 +14,166 @@ Key functions
 :py:func:`sort_by_timestamp` Sorts a set of files by timestamp
 
 Function reference
--------------
+------------------
 """
 
+import configparser
 import datetime
 import datetime as dt
 import glob
+import json
 import logging
 import os
+import sys
 import re
 import shutil
+import zipfile
 
+import numpy as np
+import pandas as pd
 from pyeo.exceptions import CreateNewStacksException
-
-
-import pyeo.windows_compatability
 
 # Set up logging on import
 log = logging.getLogger("pyeo")
 formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
 
+# def gdal_switch(installation: str,
+#                 config_dict: dict) -> None:
+#     """
+#     This function performs a Platform (OS) Independent switch of the `GDAL_DATA` and `PROJ_LIB` installation paths to the required version. This is necessary because of using the same conda environment to perform functions that use different GDAL installations.
+
+#     Parameters
+#     ---------
+#     installation : str
+#         a string of either 'gdal_api' or 'geopandas', indicating which GDAL and PROJ_LIB to switch to
+#     config_dict : dict
+#         a config_dict containing `conda_directory` and `conda_env_name`
+    
+#     Returns
+#     ---------
+#     None
+
+#     """
+    
+
+#     conda_env_name = config_dict["conda_env_name"]
+#     conda_directory = config_dict["conda_directory"]
+#     # platform if branches
+#     if sys.platform.startswith("linux") or sys.platform.startswith("darwin"):
+#         # try:
+#         if installation == "geopandas":
+#             # geopandas installation of GDAL 
+#             gdal_path = f"{conda_directory}/envs/{conda_env_name}/lib/python3.10/site-packages/fiona/gdal_data"
+#             proj_path = f"{conda_directory}/envs/{conda_env_name}/lib/python3.10/site-packages/fiona/proj_data"
+
+#             if not os.path.exists(gdal_path):
+#                 log.info("gdal branch reached")
+#                 log.error(f"{gdal_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether geopandas was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)
+
+#             if not os.path.exists(proj_path):
+#                 log.error(f"{proj_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether geopandas was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)  
+#             else:
+#                 # set geopandas GDAL and PROJ_LIB installations
+#                 os.environ["GDAL_DATA"] = gdal_path
+#                 os.environ["PROJ_LIB"] = proj_path
+
+#         if installation == "gdal_api":
+#             # GDAL and PROJ_LIB standard installation
+#             gdal_path = f"{conda_directory}/envs/{conda_env_name}/share/gdal"
+#             proj_path = f"{conda_directory}/envs/{conda_env_name}/share/proj"
+
+#             if not os.path.exists(gdal_path):
+#                 log.error(f"{gdal_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether GDAL was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)
+
+#             if not os.path.exists(proj_path):
+#                 log.error(f"{proj_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether GDAL was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)   
+#             else:
+#                 os.environ["GDAL_DATA"] = gdal_path
+#                 os.environ["PROJ_LIB"] = proj_path
+#     # except Exception as error:
+#     #     log.error(f"received this error : {error}'")
+#     #     log.error(f"exiting...")
+#     #     sys.exit(1)
+
+#     elif sys.platform.startswith("win"):
+#         # try:
+#         if installation == "geopandas":
+#             # geopandas installation of GDAL
+#             gdal_path = f"{conda_directory}\\envs\\{conda_env_name}\\Lib\\site-packages\\fiona\\gdal_data"
+#             proj_path = f"{conda_directory}\\envs\\{conda_env_name}\\Lib\\site-packages\\fiona\\proj_data"
+
+#             if not os.path.exists(gdal_path):
+#                 log.error(f"{gdal_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether GDAL was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)
+
+#             if not os.path.exists(proj_path):
+#                 log.error(f"{proj_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether GDAL was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)
+#             else:
+#                 os.environ["GDAL_DATA"] = gdal_path
+#                 os.environ["PROJ_LIB"] = proj_path
+
+#         if installation == "gdal_api":
+#             # GDAL and PROJ_LIB standard installation
+#             gdal_path = f"{conda_directory}\\envs\\{conda_env_name}\\Library\\share\\gdal"
+#             proj_path = f"{conda_directory}\\envs\\{conda_env_name}\\Library\\share\\proj"
+
+#             if not os.path.exists(gdal_path):
+#                 log.error(f"{gdal_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether GDAL was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)
+
+#             if not os.path.exists(proj_path):
+#                 log.error(f"{proj_path} does not exist")
+#                 log.error(f"check conda directory and conda env name were typed correctly in the .ini")
+#                 log.error(f"check whether GDAL was installed")
+#                 log.error("now exiting the pipeline...")
+#                 sys.exit(1)
+#             else:
+#                 os.environ["GDAL_DATA"] = gdal_path
+#                 os.environ["PROJ_LIB"] = proj_path
+
+#         # except Exception as error:
+#         #     log.error(f"received this error : {error}'")
+#         #     log.error(f"exiting...")
+#         #     sys.exit(1)
+#     else:
+#         log.error(f"OS is not one of 'win', 'linux' or 'darwin'")
+#         log.error(f"OS this script is running on is : {sys.platform}")
+#         log.error(f"exiting pipeline")
+#         sys.exit(1)
+
+#     return
 
 def init_log(log_path):
     """
     Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
     Returns the log for the calling script.
+
     Parameters
     ----------
     log_path : str
@@ -50,6 +185,7 @@ def init_log(log_path):
         The logging object.
 
     """
+
     logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     log = logging.getLogger("pyeo")
@@ -59,10 +195,251 @@ def init_log(log_path):
     file_handler.setFormatter(formatter)
     log.addHandler(file_handler)
     log.info("****PROCESSING START****")
+
     return log
 
 
-def create_file_structure(root):
+def init_log_acd(log_path, logger_name):
+    """
+    This function differs slightly to `init_log` in that it accomodates a logger_name. This enables \n
+    unique logger objects to be created so multiple loggers can be run at a time.
+
+    Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
+    Returns the log for the calling script.
+
+    Parameters
+    ----------
+    log_path : str
+        The path to the file output of this log.
+
+    logger_name : str
+        A unique logger name.
+
+    Returns
+    -------
+    log : logging.Logger
+        The logging object.
+
+    """
+
+    logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
+    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(log_path)
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.info("---------------------------------------------------------------")
+    logger.info("                    ****PROCESSING START****")
+    logger.info("---------------------------------------------------------------")
+
+
+    return logger
+
+
+def conda_check(config_dict: dict, log):
+    """
+
+    This function takes the path to the config (pyeo.ini) and checks whether the conda environment exists.
+
+    Parameters
+    ----------
+
+    config_dict : dict
+        config_dict containing `conda_directory` and `conda_env_name`, which will be checked to see if they exist.
+
+    Returns
+    --------
+
+    True/False (bool)
+
+    """
+
+    conda_directory = config_dict["conda_directory"]
+    conda_env_name = config_dict["conda_env_name"]
+    conda_env_path = f"{conda_directory}{os.sep}envs{os.sep}{conda_env_name}"
+    log.info(conda_env_path)
+    if os.path.exists(conda_env_path):
+        return True
+    else:
+        return False
+
+
+def config_path_to_config_dict(config_path: str):
+    """
+
+    This function takes the path to the config (pyeo.ini) and simplifies the keys
+
+    Parameters
+    ----------
+
+    config_path : str
+        path to pyeo.ini
+
+    Returns
+    --------
+
+    config_dict : dict
+        a config dictionary
+
+    """
+
+    config = configparser.ConfigParser(allow_no_value=True)
+    config.read(config_path)
+
+    config_dict = {}
+
+    config_dict["qsub_processor_options"] = config["run_mode"]["qsub_processor_options"]
+
+    config_dict["do_parallel"] = config.getboolean("run_mode", "do_parallel")
+    config_dict["wall_time_hours"] = int(config["run_mode"]["wall_time_hours"])
+    config_dict["watch_time_hours"] = int(config["run_mode"]["watch_time_hours"])
+    config_dict["watch_period_seconds"] = int(
+        config["run_mode"]["watch_period_seconds"]
+    )
+    
+    config_dict["do_tile_intersection"] = config.getboolean("raster_processing_parameters", "do_tile_intersection")
+
+    config_dict["do_raster"] = config.getboolean(
+        "raster_processing_parameters", "do_raster"
+    )
+    config_dict["do_dev"] = config.getboolean("raster_processing_parameters", "do_dev")
+    config_dict["do_all"] = config.getboolean("raster_processing_parameters", "do_all")
+
+    # config_dict["do_download_from_scihub"] = config.getboolean("raster_processing_parameters", "do_download_from_scihub")
+
+    # config_dict["do_download_from_dataspace"] = config.getboolean("raster_processing_parameters", "do_download_from_dataspace")
+    
+    config_dict["do_classify"] = config.getboolean(
+        "raster_processing_parameters", "do_classify"
+    )
+    config_dict["do_change"] = config.getboolean(
+        "raster_processing_parameters", "do_change"
+    )
+    config_dict["do_download"] = config.getboolean(
+        "raster_processing_parameters", "do_download"
+    )
+    config_dict["do_update"] = config.getboolean(
+        "raster_processing_parameters", "do_update"
+    )
+    config_dict["do_quicklooks"] = config.getboolean(
+        "raster_processing_parameters", "do_quicklooks"
+    )
+    config_dict["do_delete"] = config.getboolean(
+        "raster_processing_parameters", "do_delete"
+    )
+
+    config_dict["do_zip"] = config.getboolean("raster_processing_parameters", "do_zip")
+    config_dict["build_composite"] = config.getboolean(
+        "raster_processing_parameters", "do_build_composite"
+    )
+    config_dict["build_prob_image"] = config.getboolean(
+        "raster_processing_parameters", "do_build_prob_image"
+    )
+    config_dict["do_skip_existing"] = config.getboolean(
+        "raster_processing_parameters", "do_skip_existing"
+    )
+
+    config_dict["start_date"] = config["forest_sentinel"]["start_date"]
+    config_dict["end_date"] = config["forest_sentinel"]["end_date"]
+    config_dict["composite_start"] = config["forest_sentinel"]["composite_start"]
+    config_dict["composite_end"] = config["forest_sentinel"]["composite_end"]
+    config_dict["epsg"] = int(config["forest_sentinel"]["epsg"])
+    config_dict["cloud_cover"] = int(config["forest_sentinel"]["cloud_cover"])
+    config_dict["cloud_certainty_threshold"] = int(
+        config["forest_sentinel"]["cloud_certainty_threshold"]
+    )
+    config_dict["model_path"] = config["forest_sentinel"]["model"]
+    config_dict["download_source"] = config["raster_processing_parameters"][
+        "download_source"
+    ]
+
+    # print(config["raster_processing_parameters"]["band_names"])
+    config_dict["bands"] = json.loads(
+        config["raster_processing_parameters"]["band_names"]
+    )
+
+    config_dict["resolution_string"] = config["raster_processing_parameters"][
+        "resolution_string"
+    ]
+    config_dict["output_resolution"] = int(
+        config["raster_processing_parameters"]["output_resolution"]
+    )
+    config_dict["buffer_size_cloud_masking"] = int(
+        config["raster_processing_parameters"]["buffer_size_cloud_masking"]
+    )
+    config_dict["buffer_size_cloud_masking_composite"] = int(
+        config["raster_processing_parameters"]["buffer_size_cloud_masking_composite"]
+    )
+    config_dict["download_limit"] = int(
+        config["raster_processing_parameters"]["download_limit"]
+    )
+    config_dict["faulty_granule_threshold"] = int(
+        config["raster_processing_parameters"]["faulty_granule_threshold"]
+    )
+    config_dict["sieve"] = int(config["raster_processing_parameters"]["sieve"])
+    config_dict["chunks"] = int(config["raster_processing_parameters"]["chunks"])
+    config_dict["class_labels"] = json.loads(
+        config["raster_processing_parameters"]["class_labels"]
+    )
+    config_dict["from_classes"] = json.loads(
+        config["raster_processing_parameters"]["change_from_classes"]
+    )
+    config_dict["to_classes"] = json.loads(
+        config["raster_processing_parameters"]["change_to_classes"]
+    )
+    config_dict["environment_manager"] = config["environment"]["environment_manager"]
+    if config_dict["environment_manager"] == "conda":
+        config_dict["conda_directory"] = config["environment"]["conda_directory"]
+        config_dict["conda_env_name"] = config["environment"]["conda_env_name"]
+    config_dict["pyeo_dir"] = config["environment"]["pyeo_dir"]
+    config_dict["tile_dir"] = config["environment"]["tile_dir"]
+    config_dict["integrated_dir"] = config["environment"]["integrated_dir"]
+    config_dict["roi_dir"] = config["environment"]["roi_dir"]
+    config_dict["roi_filename"] = config["environment"]["roi_filename"]
+    config_dict["geometry_dir"] = config["environment"]["geometry_dir"]
+    config_dict["s2_tiles_filename"] = config["environment"]["s2_tiles_filename"]
+    config_dict["log_dir"] = config["environment"]["log_dir"]
+    config_dict["log_filename"] = config["environment"]["log_filename"]
+    config_dict["sen2cor_path"] = config["environment"]["sen2cor_path"]
+
+    config_dict["level_1_filename"] = config["vector_processing_parameters"][
+        "level_1_filename"
+    ]
+    config_dict["level_1_boundaries_path"] = os.path.join(
+        config_dict["geometry_dir"], config_dict["level_1_filename"]
+    )
+    config_dict["do_delete_existing_vector"] = config.getboolean(
+        "vector_processing_parameters", "do_delete_existing_vector"
+    )
+
+    config_dict["do_vectorise"] = config.getboolean(
+        "vector_processing_parameters", "do_vectorise"
+    )
+    config_dict["do_integrate"] = config.getboolean(
+        "vector_processing_parameters", "do_integrate"
+    )
+    config_dict["do_filter"] = config.getboolean(
+        "vector_processing_parameters", "do_filter"
+    )
+
+    config_dict["counties_of_interest"] = json.loads(
+        config["vector_processing_parameters"]["counties_of_interest"]
+    )
+    config_dict["minimum_area_to_report_m2"] = int(
+        config["vector_processing_parameters"]["minimum_area_to_report_m2"]
+    )
+    config_dict["do_distribution"] = config.getboolean(
+        "vector_processing_parameters", "do_distribution"
+    )
+
+    config_dict["credentials_path"] = config["environment"]["credentials_path"]
+
+    return config_dict
+
+
+def create_file_structure(root: str):
     """
     Creates the folder structure used in rolling_s2_composite and some other functions: ::
         root
@@ -71,6 +448,8 @@ def create_file_structure(root):
         --L2A
         --bandmerged
         --stacked
+        --stacked_mosaic
+        --stacked_masked
         -composite
         --L1C
         --L2A
@@ -78,6 +457,7 @@ def create_file_structure(root):
         -output
         --classified
         --probabilities
+
 
     Parameters
     ----------
@@ -91,6 +471,8 @@ def create_file_structure(root):
         "images/L2A/",
         "images/bandmerged/",
         "images/stacked/",
+        "images/stacked_mosaic/",
+        "images/stacked_masked/",
         "images/planet/",
         "composite/",
         "composite/L1C",
@@ -101,7 +483,55 @@ def create_file_structure(root):
         "output/probabilities",
         "output/report_image",
         "output/display_images",
-        "log/"
+        "output/quicklooks/",
+        "log/",
+    ]
+    for dir in dirs:
+        try:
+            os.mkdir(dir)
+        except FileExistsError:
+            pass
+
+
+def create_folder_structure_for_tiles(root):
+    """
+    Creates the folder structure used in tile_based_change_detection.py: ::
+        root
+        -images
+        --L1C
+        --L2A
+        --cloud_masked
+        -composite
+        --L1C
+        --L2A
+        --cloud_masked
+        -output
+        --classified
+        --probabilities
+
+    Parameters
+    ----------
+    root : str
+        The root folder for the file strucutre
+    """
+
+    if not os.path.exists(root):
+        os.makedirs(root)
+    os.chdir(root)
+    dirs = [
+        "composite/",
+        "composite/L1C/",
+        "composite/L2A/",
+        "composite/cloud_masked/",
+        "images/",
+        "images/L1C/",
+        "images/L2A/",
+        "images/cloud_masked/",
+        "output/",
+        "output/classified/",
+        "output/probabilities/",
+        "output/quicklooks/",
+        "log/",
     ]
     for dir in dirs:
         try:
@@ -111,11 +541,100 @@ def create_file_structure(root):
 
 
 def validate_config_file(config_path):
-    #TODO: fill
+    # TODO: fill
     pass
 
 
-# What was I thinking with these two functions?
+def get_filenames(path, filepattern, dirpattern):
+    """
+    Finds all file names in a directory for which the file name matches a certain string pattern,
+    and the directory name matches a different string pattern.
+
+    Args:
+      path = string indicating the path to a directory in which the search will be done
+      filepattern = string of the file name pattern to search for
+      dirpattern = string of the directory name pattern to search for
+
+    Returns:
+      a list of all found files with the full path directory
+    """
+
+    log = logging.getLogger("pyeo")
+
+    filelist = []
+    for root, dirs, files in os.walk(path, topdown=True):
+        # log.info("root, dirs, files: {}".format(root,dirs,files))
+        dirs[:] = [d for d in dirs]
+        for f in files:
+            if filepattern in f and dirpattern in root:
+                thisfile = os.path.join(root, f)
+                # log.info("Found file: {}".format(thisfile))
+                filelist.append(thisfile)
+    return sorted(filelist)
+
+
+def get_raster_paths(paths, filepatterns, dirpattern):
+    """
+    Iterates over get_filenames for different paths and different file patterns and
+    returns a dataframe of all directory paths that match the conditions together with
+    the root path in which they were found.
+
+    Args:
+      paths = list of strings indicating the path to a root directory in which the search will be done
+      filepatterns = list of strings of the file name patterns to search for
+      dirpattern = string of the directory name pattern to search for
+    Returns:
+      a dataframe of all found file paths, one line per path
+    """
+    cols = ["safe_path"]
+    for filepattern in filepatterns:
+        cols.append(filepattern)
+    results = []
+    # iterate over all SAFE directories
+    for path in paths:
+        # log.info("  path = {}".format(path))
+        row = [path]
+        # iterate over all band file name patterns
+        for filepattern in filepatterns:
+            # log.info("  filepattern = {}".format(filepattern))
+            f = get_filenames(path, filepattern, dirpattern)
+            if len(f) == 1:
+                row.append(f)
+            if len(f) > 1:
+                log.warning("More than one file path returned in raster path search:")
+                log.warning("  root        = {}".format(path))
+                log.warning("  filepattern = {}".format(filepattern))
+                log.warning("  dirpattern  = {}".format(dirpattern))
+                log.info("The search returned:")
+                for i in f:
+                    log.info("  {}".format(i))
+                row.append("")
+            if len(f) == 0:
+                log.info(
+                    "File pattern {} and dir pattern {} not found in {}".format(
+                        filepattern, dirpattern, path
+                    )
+                )
+                row.append("")
+        # log.info("  results = {}".format(results))
+        # log.info("  paths   = {}".format(paths))
+        # log.info("  row     = {}".format(row))
+        results.extend(row)
+        # log.info("  results = {}".format(results))
+    # todo: the following line expects exactly one search result per path. Challenge that assumption
+    if len(results) == len(paths) * (len(filepatterns) + 1):
+        arr = np.array(results, dtype=object).reshape(len(paths), len(filepatterns) + 1)
+        results = pd.DataFrame(arr, columns=cols)
+    else:
+        log.warning("  Unexpected shape of file name pattern search results:")
+        log.warning("    Results      = {}".format(results))
+        log.warning("    Column names = {}".format(cols))
+        log.warning("    Returning an empty string.")
+        results = ""
+    # log.info("  DF = {}".format(results))
+    return results
+
+
 def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
     """
     Checks the existence of the specified resolution of imagery. Returns a True-value with a warning if passed
@@ -132,18 +651,82 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
     -------
     result : int
        1 if imagery is valid, 0 if not and 2 if an invalid .SAFE file
-
     """
+
+    log = logging.getLogger("pyeo")
+
+    if not os.path.exists(l2_SAFE_file):
+        log.info("{} does not exist.".format(l2_SAFE_file))
+        return 2
+
     if not l2_SAFE_file.endswith(".SAFE") or "L2A" not in l2_SAFE_file:
         log.info("{} does not exist.".format(l2_SAFE_file))
         return 2
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
+
+    bands = ["B08", "B04", "B03", "B02"]
+    nb = 0
+    for band in bands:
+        f = get_filenames(l2_SAFE_file, band, "")
+        f = [
+            filename
+            for filename in f
+            if (".jp2" in filename) and (resolution in filename)
+        ]
+        if len(f) > 0:
+            for i in range(len(f)):
+                log.info("   {}".format(f[i]))
+            nb = nb + 1
+        else:
+            log.warning("Band file not found for band: {}".format(band))
+    if nb == len(bands):
+        log.info("All necessary bands have been found")
+        return 1
+    else:
+        log.warning("Not all necessary bands have been found in the SAFE directory")
+        log.warning("n bands = {}".format(nb))
+        return 0
+
+    """
+    # NOT USED
+    
+    def find_file(name, path):
+        for root, dirs, files in os.walk(path):
+            if name in files:
+                return os.path.join(root, name)
+
+    def find_dir(name, path):
+        for root, dirs, files in os.walk(path):
+            if name in dirs:
+                return os.path.join(root, name)
+    """
+
+    """
+    # check whether the band rasters are in the IMG_DATA/R10 or similar subdirectory
     granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]*.jp2".format(resolution)
     image_glob = os.path.join(l2_SAFE_file, granule_path)
     if len(glob.glob(image_glob)) == 4:
+        log.info("All necessary bands are complete")
         return 1
     else:
-        return 0
+        #TODO: check whether the moving of band raster files into the "Rxx" subdirectory works OK
+        # check whether the band rasters are in the IMG_DATA subdirectory
+        granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]*.jp2"
+        image_glob = os.path.join(l2_SAFE_file, granule_path)
+        if len(glob.glob(image_glob)) == 4:
+            log.info("All necessary bands are complete")
+            d=find_dir(r"GRANULE/*/IMG_DATA/R{}".format(resolution), l2_SAFE_file)
+            os.mkdir(d)
+            bands=["B08","B04","B03","B02"]
+            for band in bands:
+                path=glob.glob(os.path.join(l2_SAFE_file, r"GRANULE/*/IMG_DATA"))
+                f=find_file(band, l2_SAFE_file)
+                os.rename(f, os.path.join(os.path.dirname(f),r"R{}".format(resolution),os.path.basename(f)))
+            return 1
+        else:
+            log.warning("Not all necessary bands have been found in the SAFE directory")
+            return 0
+    """
 
 
 def check_for_invalid_l1_data(l1_SAFE_file):
@@ -161,6 +744,9 @@ def check_for_invalid_l1_data(l1_SAFE_file):
     result : int
         1 if imagery is valid, 0 if not and 2 if not a safe-file
     """
+    if not os.path.exists(l1_SAFE_file):
+        log.info("{} does not exist.".format(l1_SAFE_file))
+        return 2
     if not l1_SAFE_file.endswith(".SAFE") or "L1C" not in l1_SAFE_file:
         log.info("{} does not exist.".format(l1_SAFE_file))
         return 2
@@ -168,8 +754,10 @@ def check_for_invalid_l1_data(l1_SAFE_file):
     granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]*.jp2"
     image_glob = os.path.join(l1_SAFE_file, granule_path)
     if len(glob.glob(image_glob)) == 4:
+        log.info("All necessary bands are complete")
         return 1
     else:
+        log.warning("Not all necessary bands have been found in the SAFE directory")
         return 0
 
 
@@ -187,7 +775,11 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     is_valid = check_for_invalid_l2_data(l2_SAFE_file, resolution)
     if not is_valid:
         if warning:
-            if not input("About to delete {}: Y/N?".format(l2_SAFE_file)).upper().startswith("Y"):
+            if (
+                not input("About to delete {}: Y/N?".format(l2_SAFE_file))
+                .upper()
+                .startswith("Y")
+            ):
                 return
         log.warning("Missing band data. Removing {}".format(l2_SAFE_file))
         shutil.rmtree(l2_SAFE_file)
@@ -212,7 +804,9 @@ def clean_l2_dir(l2_dir, resolution="10m", warning=True):
 
     """
     log.info("Scanning {} for missing band data in .SAFE files".format(l2_dir))
-    for safe_file_path in [os.path.join(l2_dir, safe_file_name) for safe_file_name in os.listdir(l2_dir)]:
+    for safe_file_path in [
+        os.path.join(l2_dir, safe_file_name) for safe_file_name in os.listdir(l2_dir)
+    ]:
         clean_l2_data(safe_file_path, resolution, warning)
 
 
@@ -229,26 +823,49 @@ def clean_aoi(aoi_dir, images_to_keep=4, warning=True):
         The number of images to keep
 
     """
-    l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L1C")), recent_first=True)
-    l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "images/L2A")), recent_first=True)
-    comp_l1_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2A")), recent_first=True)
-    comp_l2_list = sort_by_timestamp(os.listdir(os.path.join(aoi_dir, "composite/L2A")), recent_first=True)
+    l1_list = sort_by_timestamp(
+        os.listdir(os.path.join(aoi_dir, "images/L1C")), recent_first=True
+    )
+    l2_list = sort_by_timestamp(
+        os.listdir(os.path.join(aoi_dir, "images/L2A")), recent_first=True
+    )
+    comp_l1_list = sort_by_timestamp(
+        os.listdir(os.path.join(aoi_dir, "composite/L2A")), recent_first=True
+    )
+    comp_l2_list = sort_by_timestamp(
+        os.listdir(os.path.join(aoi_dir, "composite/L2A")), recent_first=True
+    )
     merged_list = sort_by_timestamp(
-        [image for image in os.listdir(os.path.join(aoi_dir, "images/bandmerged")) if image.endswith(".tif")],
-        recent_first=True)
+        [
+            image
+            for image in os.listdir(os.path.join(aoi_dir, "images/bandmerged"))
+            if image.endswith(".tif")
+        ],
+        recent_first=True,
+    )
     stacked_list = sort_by_timestamp(
-        [image for image in os.listdir(os.path.join(aoi_dir, "images/stacked")) if image.endswith(".tif")],
-        recent_first=True)
+        [
+            image
+            for image in os.listdir(os.path.join(aoi_dir, "images/stacked"))
+            if image.endswith(".tif")
+        ],
+        recent_first=True,
+    )
     comp_merged_list = sort_by_timestamp(
-        [image for image in os.listdir(os.path.join(aoi_dir, "composite/bandmerged")) if image.endswith(".tif")],
-        recent_first=True)
+        [
+            image
+            for image in os.listdir(os.path.join(aoi_dir, "composite/bandmerged"))
+            if image.endswith(".tif")
+        ],
+        recent_first=True,
+    )
     for image_list in (l1_list, l2_list, comp_l1_list, comp_l2_list):
         for safe_file in image_list[images_to_keep:]:
             os.rmdir(safe_file)
     for image_list in (merged_list, stacked_list, comp_merged_list):
         for image in image_list[images_to_keep:]:
             os.remove(image)
-            os.remove(image.rsplit('.')(0)+".msk")
+            os.remove(image.rsplit(".")(0) + ".msk")
 
 
 def sort_by_timestamp(strings, recent_first=True):
@@ -278,6 +895,26 @@ def sort_by_timestamp(strings, recent_first=True):
     return strings
 
 
+def get_change_detection_date_strings(image_name):
+    """
+    Extracts the before_date and after_date dates from a change detection image name.
+
+    Parameters
+    ----------
+    image_name : str
+        A pyeo-produced image name (example: `class_composite_T36MZE_20190509T073621_20190519T073621.tif`)
+
+    Returns
+    -------
+    before_date, after_date : str
+        The dates associated with the image in string format
+
+    """
+    date_regex = r"\d\d\d\d\d\d\d\dT\d\d\d\d\d\d"
+    timestamps = re.findall(date_regex, image_name)
+    return timestamps
+
+
 def get_change_detection_dates(image_name):
     """
     Extracts the before_date and after_date dates from a change detection image name.
@@ -285,7 +922,7 @@ def get_change_detection_dates(image_name):
     Parameters
     ----------
     image_name : str
-        A Pyeo-produced image name (example: `class_composite_T36MZE_20190509T073621_20190519T073621.tif`)
+        A pyeo-produced image name (example: `class_composite_T36MZE_20190509T073621_20190519T073621.tif`)
 
     Returns
     -------
@@ -295,7 +932,10 @@ def get_change_detection_dates(image_name):
     """
     date_regex = r"\d\d\d\d\d\d\d\dT\d\d\d\d\d\d"
     timestamps = re.findall(date_regex, image_name)
-    date_times = [datetime.datetime.strptime(timestamp, r"%Y%m%dT%H%M%S") for timestamp in timestamps]
+    date_times = [
+        datetime.datetime.strptime(timestamp, r"%Y%m%dT%H%M%S")
+        for timestamp in timestamps
+    ]
     date_times.sort()
     return date_times
 
@@ -307,7 +947,7 @@ def get_preceding_image_path(target_image_name, search_dir):
     Parameters
     ----------
     target_image_name : str
-        A Pyeo or Sentinel generated image name
+        A pyeo or Sentinel generated image name
     search_dir : str
         The directory to search for the preceding image.
 
@@ -323,11 +963,15 @@ def get_preceding_image_path(target_image_name, search_dir):
 
     """
     target_time = get_image_acquisition_time(target_image_name)
-    image_paths = sort_by_timestamp(os.listdir(search_dir), recent_first=True)  # Sort image list newest first
+    image_paths = sort_by_timestamp(
+        os.listdir(search_dir), recent_first=True
+    )  # Sort image list newest first
     image_paths = filter(is_tif, image_paths)
-    for image_path in image_paths:   # Walk through newest to oldest
-        accq_time = get_image_acquisition_time(image_path)   # Get this image time
-        if accq_time < target_time:   # If this image is older than the target image, return it.
+    for image_path in image_paths:  # Walk through newest to oldest
+        accq_time = get_image_acquisition_time(image_path)  # Get this image time
+        if (
+            accq_time < target_time
+        ):  # If this image is older than the target image, return it.
             return os.path.join(search_dir, image_path)
     raise FileNotFoundError("No image older than {}".format(target_image_name))
 
@@ -345,12 +989,12 @@ def is_tif(image_string):
 
 def get_pyeo_timestamp(image_name):
     """
-    Returns a list of all timestamps in a Pyeo image (yyyymmddhhmmss)
+    Returns a list of all timestamps in a pyeo image (yyyymmddhhmmss)
 
     Parameters
     ----------
     image_name : str
-        The Pyeo image name
+        The pyeo image name
 
     Returns
     -------
@@ -403,7 +1047,9 @@ def get_image_acquisition_time(image_name):
         A DateTime object providing the acquisition time
     """
     try:
-        return dt.datetime.strptime(get_sen_2_image_timestamp(image_name), '%Y%m%dT%H%M%S')
+        return dt.datetime.strptime(
+            get_sen_2_image_timestamp(image_name), "%Y%m%dT%H%M%S"
+        )
     except AttributeError:
         return None
 
@@ -445,8 +1091,8 @@ def get_safe_product_type(image_name):
 
     """
     tmp1 = image_name.split("/")[-1]  # remove path
-    tmp2 = tmp1.split(".")[0] # remove file extension
-    comps = tmp2.split("_") # decompose
+    tmp2 = tmp1.split(".")[0]  # remove file extension
+    comps = tmp2.split("_")  # decompose
     return comps[1]
 
 
@@ -540,8 +1186,8 @@ def get_sen_2_image_orbit(image_name):
 
     """
     tmp1 = image_name.split("/")[-1]  # remove path
-    tmp2 = tmp1.split(".")[0] # remove file extension
-    comps = tmp2.split("_") # decompose
+    tmp2 = tmp1.split(".")[0]  # remove file extension
+    comps = tmp2.split("_")  # decompose
     return comps[4]
 
 
@@ -560,8 +1206,8 @@ def get_sen_2_baseline(image_name):
 
     """
     tmp1 = image_name.split("/")[-1]  # remove path
-    tmp2 = tmp1.split(".")[0] # remove file extension
-    comps = tmp2.split("_") # decompose
+    tmp2 = tmp1.split(".")[0]  # remove file extension
+    comps = tmp2.split("_")  # decompose
     return comps[3]
 
 
@@ -598,8 +1244,8 @@ def get_sen_2_granule_id(safe_dir):
         The full ID of that S2 product (eg: 'S2B_MSIL2A_20180103T172709_N0206_R012_T13QFB_20180103T192359')
 
     """
-    tmp = os.path.basename(safe_dir) # removes path to SAFE directory
-    id = tmp.split(".")[0] # removes ".SAFE" from the ID name
+    tmp = os.path.basename(safe_dir)  # removes path to SAFE directory
+    id = tmp.split(".")[0]  # removes ".SAFE" from the ID name
     return id
 
 
@@ -619,6 +1265,127 @@ def get_mask_path(image_path):
     """
     image_name = os.path.basename(image_path)
     image_dir = os.path.dirname(image_path)
-    mask_name = image_name.rsplit('.')[0] + ".msk"
+    mask_name = image_name.rsplit(".")[0] + ".msk"
     mask_path = os.path.join(image_dir, mask_name)
     return mask_path
+
+
+def serial_date_to_string(srl_no: int) -> str:
+    """
+    Converts a serial date (days since X) to a date as a string.
+
+    Parameters
+    ----------
+    srl_no : int
+        Serial number representing days since X.
+
+    Returns
+    -------
+    str
+        Date in the format "YYYY-MM-DD".
+
+    Notes
+    -----
+    This function assumes the base date as January 1, 2000.
+
+    References
+    ----------
+    - Original implementation by AER:
+      https://stackoverflow.com/a/39988256/6809533
+    """
+
+    import datetime
+
+    new_date = datetime.datetime(2000, 1, 1, 0, 0) + datetime.timedelta(srl_no)
+    return new_date.strftime("%Y-%m-%d")
+
+
+
+def zip_contents(directory: str, notstartswith=None) -> None:
+    """
+    Zip the contents of the specified directory.
+
+    Parameters
+    ----------
+    directory : str
+        Path to the directory whose contents to zip.
+    notstartswith : list or None, optional
+        List of prefixes to exclude from zipping. Default is None.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    - This function skips files that have the ".zip" extension.
+    - If `notstartswith` is provided, files starting with any of the specified prefixes are skipped.
+
+    """
+    paths = [f for f in os.listdir(directory) if not f.endswith(".zip")]
+    for f in paths:
+        do_it = True
+        if notstartswith is not None:
+            for i in notstartswith:
+                if f.startswith(i):
+                    do_it = False
+                    log.info("Skipping file that starts with '{}':   {}".format(i, f))
+        if do_it:
+            file_to_zip = os.path.join(directory, f)
+            zipped_file = file_to_zip.split(".")[0]
+            log.info("Zipping   {}".format(file_to_zip))
+            if os.path.isdir(file_to_zip):
+                shutil.make_archive(zipped_file, "zip", file_to_zip)
+            else:
+                with zipfile.ZipFile(
+                    zipped_file + ".zip", "w", compression=zipfile.ZIP_DEFLATED
+                ) as zf:
+                    zf.write(file_to_zip, os.path.basename(file_to_zip))
+            if os.path.exists(zipped_file + ".zip"):
+                if os.path.isdir(file_to_zip):
+                    shutil.rmtree(file_to_zip)
+                else:
+                    os.remove(file_to_zip)
+            else:
+                log.error("Zipping failed: {}".format(zipped_file + ".zip"))
+    return
+
+
+def unzip_contents(zippath: str, ifstartswith=None, ending=None) -> None:
+    """
+    Unzip the contents of the specified zipped folder.
+
+    Parameters
+    ----------
+    zippath : str
+        Path to the zipped folder to unzip.
+    ifstartswith : str or None, optional
+        Prefix to check before extracting. Default is None.
+    ending : str or None, optional
+        Suffix to add to the extracted folder name. Default is None.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    - This function assumes the zip file extension to be ".zip".
+    - If `ifstartswith` is provided, extraction occurs only if the folder name starts with the specified prefix.
+    - If `ending` is provided, it is added to the extracted folder name.
+    """
+    
+    dirpath = zippath[:-4]  # cut away the  .zip ending
+    if ifstartswith is not None and ending is not None:
+        if dirpath.startswith(ifstartswith):
+            dirpath = dirpath + ending
+    log.info("Unzipping {}".format(zippath))
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+    if os.path.exists(dirpath):
+        if os.path.exists(zippath):
+            shutil.unpack_archive(filename=zippath, extract_dir=dirpath, format="zip")
+            os.remove(zippath)
+    else:
+        log.error("Unzipping failed")
+    return

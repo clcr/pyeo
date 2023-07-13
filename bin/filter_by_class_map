@@ -2,4 +2,4 @@
 set -o errexit
 set -o nounset
 
-python "$PYEO"/pyeo/apps/masking/filter_by_class_map.py "$@"
+python "$pyeo"/pyeo/apps/masking/filter_by_class_map.py "$@"
