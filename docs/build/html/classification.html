@@ -105,16 +105,20 @@
              
   <section id="module-pyeo.classification">
 <span id="classification"></span><h1>Classification<a class="headerlink" href="#module-pyeo.classification" title="Permalink to this heading"></a></h1>
-<p>Contains every function to do with map classification. This includes model creation, map classification and processes
-for array manipulation into scikit-learn compatible forms.</p>
-<p>For details on how to build a class shapefile, see :ref:CLASSIFICATION INSTRUCTIONS</p>
+<p>Contains every function to do with map classification. This includes model creation, map classification and processes for array manipulation into scikit-learn compatible forms.</p>
+<p>For details on how to build a class shapefile, see the notebook <code class="code docutils literal notranslate"><span class="pre">PyEO_sepal_model_training.ipynb</span></code> within the notebooks directory in the PyEO GitHub.</p>
 <p>All models are serialised and deserialised using <code class="code docutils literal notranslate"><span class="pre">joblib.dump</span></code> or <code class="code docutils literal notranslate"><span class="pre">joblib.load</span></code>, and saved with the .pkl
 extension.</p>
 <section id="key-functions">
 <h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h2>
-<p><a class="reference internal" href="#pyeo.classification.extract_features_to_csv" title="pyeo.classification.extract_features_to_csv"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_features_to_csv()</span></code></a> Extracts class signatures from a class shapefile and a .tif</p>
-<p><a class="reference internal" href="#pyeo.classification.create_model_from_signatures" title="pyeo.classification.create_model_from_signatures"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_model_from_signatures()</span></code></a> Creates a model from a .csv of classes and band signatures</p>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">classify_model_for_region()</span></code> Creates a model from a directory of class shapefile and .tif pairs. The benefit of this function is that a model can be produced from multiple regions, increasing the generalisation ability of the model.</p>
 <p><a class="reference internal" href="#pyeo.classification.create_trained_model" title="pyeo.classification.create_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_trained_model()</span></code></a> Creates a model from a class shapefile and a .tif</p>
+<p>Alternatively, these two functions are suitable for those wishing to create a simpler model:</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#pyeo.classification.extract_features_to_csv" title="pyeo.classification.extract_features_to_csv"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_features_to_csv()</span></code></a> Extracts class signatures from a class shapefile and a .tif</p></li>
+<li><p><a class="reference internal" href="#pyeo.classification.create_model_from_signatures" title="pyeo.classification.create_model_from_signatures"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_model_from_signatures()</span></code></a> Creates a model from a .csv of classes and band signatures</p></li>
+</ol>
+<p>Finally, a raster can be classified using:</p>
 <p><a class="reference internal" href="#pyeo.classification.classify_image" title="pyeo.classification.classify_image"><code class="xref py py-func docutils literal notranslate"><span class="pre">classify_image()</span></code></a> Produces a classification map from an image using a model.</p>
 </section>
 <section id="function-reference">

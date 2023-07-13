@@ -425,8 +425,7 @@ by multiplying each pixel value with the mask value.</p>
 <dt class="sig sig-object py" id="pyeo.raster_manipulation.apply_processing_baseline_0400_offset_correction_to_tiff_file_directory">
 <span class="sig-prename descclassname"><span class="pre">pyeo.raster_manipulation.</span></span><span class="sig-name descname"><span class="pre">apply_processing_baseline_0400_offset_correction_to_tiff_file_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_tif_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_tif_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('B02',</span> <span class="pre">'B03',</span> <span class="pre">'B04',</span> <span class="pre">'B08')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BOA_ADD_OFFSET</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_processing_baseline_0400_offset_correction_to_tiff_file_directory" title="Permalink to this definition"></a></dt>
 <dd><p>Offsets data within selected bands from a directory of stacked raster files
-Overwrites original file - option to save a backup copy.
-Added I.R. 20220607</p>
+Overwrites original file - option to save a backup copy.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -439,16 +438,10 @@ Added I.R. 20220607</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_tif_directory</strong> (<em>str</em>) – The path to the output directory</p></li>
-<li><p><em>.. todo ::</em> – Check out_tif_directory directory exists and report an error or create it
-Force generated dtype to uint16 to save time and storage? Compatible with classifier?
-Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
-Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
-Use ‘with TemporaryDirectory’ pattern - Overwrite existing files with offset files by ‘move’
-Work out why offset files are larger (2GB from ~1GB)</p></li>
-</ul>
-</p>
+<dd class="field-even"><p><strong>out_tif_directory</strong> – The path to the output directory</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -457,8 +450,7 @@ Work out why offset files are larger (2GB from ~1GB)</p></li>
 <dt class="sig sig-object py" id="pyeo.raster_manipulation.apply_processing_baseline_offset_correction_to_tiff_file_directory">
 <span class="sig-prename descclassname"><span class="pre">pyeo.raster_manipulation.</span></span><span class="sig-name descname"><span class="pre">apply_processing_baseline_offset_correction_to_tiff_file_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_tif_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_tif_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('B02',</span> <span class="pre">'B03',</span> <span class="pre">'B04',</span> <span class="pre">'B08')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BOA_ADD_OFFSET</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_processing_baseline_offset_correction_to_tiff_file_directory" title="Permalink to this definition"></a></dt>
 <dd><p>Offsets data within selected bands from a directory of stacked raster files
-Overwrites original file - option to save a backup copy.
-Added I.R. 20220607</p>
+Overwrites original file - option to save a backup copy.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -471,18 +463,10 @@ Added I.R. 20220607</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>out_tif_directory</strong> (<em>str</em>) – The path to the output directory</p></li>
-<li><p><em>ToDo</em></p></li>
-<li><p><em>——-</em></p></li>
-<li><p><em># Check out_tif_directory directory exists and report an error or create it</em></p></li>
-<li><p><em># Force generated dtype to uint16 to save time and storage? Compatible with classifier?</em></p></li>
-<li><p><em># Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description</em></p></li>
-<li><p><em># Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root</em></p></li>
-<li><p><em># Use ‘with TemporaryDirectory’ pattern - Overwrite existing files with offset files by ‘move’</em></p></li>
-<li><p><em># Work out why offset files are larger (2GB from ~1GB)</em></p></li>
-</ul>
-</p>
+<dd class="field-even"><p><strong>out_tif_directory</strong> – The path to the output directory</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -723,7 +707,7 @@ to avoid memory allocation errors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_raster_path_list</strong> (<em>list</em><em> of </em><em>str</em>) – A list of paths to rasters.</p></li>
+<li><p><strong>in_raster_path_list</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of paths to rasters.</p></li>
 <li><p><strong>composite_out_path</strong> (<em>str</em>) – The path of the output image</p></li>
 <li><p><strong>format</strong> (<em>str</em><em>, </em><em>optional</em>) – The gdal format of the image. Defaults to “GTiff”</p></li>
 <li><p><strong>generate_date_image</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, generates a single-layer raster containing the dates of each image detected - see below.</p></li>
@@ -737,7 +721,7 @@ to avoid memory allocation errors.</p>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
-<p>Notes:</p>
+<p class="rubric">Notes</p>
 <p>If generate_date_images is True, an raster ending with the suffix .date will be created; each pixel will contain the
 timestamp (yyyymmdd) of the date that pixel was last seen in the composite.</p>
 </dd></dl>
@@ -766,7 +750,7 @@ to avoid memory allocation errors.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>Masks are assumed to be a multiplicative .msk file with the same path as their corresponding image; see REFERENCE.
+<p>Masks are assumed to be a multiplicative .msk file with the same path as their corresponding image.
 All images must have the same number of layers and resolution, but do not have to be perfectly co-registered.
 If it does not exist, composite_out_path will be created. Takes projection, resolution, etc. from first band
 of first raster in list. Will reproject images and masks if they do not match initial raster.</p>
@@ -1408,14 +1392,13 @@ the mask is single-band, the mask will be applied to every raster.</p>
 <li><p><strong>missing_data_value</strong> (<em>int</em><em>, </em><em>optional</em>) – The encoding of missing values in the raster that will be omitted from the calculations</p></li>
 </ul>
 </dd>
-</dl>
-<section id="returns">
-<h2>Returns:<a class="headerlink" href="#returns" title="Permalink to this heading"></a></h2>
-<dl class="simple">
-<dt>result<span class="classifier">dictionary</span></dt><dd><p>Dictionary containing the results of the function</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>result</strong> – Dictionary containing the results of the function</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dictionary</p>
 </dd>
 </dl>
-</section>
 </dd></dl>
 
 <dl class="py function">
