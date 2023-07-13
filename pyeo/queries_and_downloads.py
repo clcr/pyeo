@@ -1,34 +1,43 @@
 """
-Functions for querying, filtering and downloading data.
+Functions for querying and downloading data from the Copernicus Dataspace Ecosystem (CDSE).
 
-Key functions
+Key Functions
 -------------
-:py:func:`check_for_s2_data_by_date` Queries the Sentinel 2 archive for products between two dates
-:py:func:`download_s2_data` Downloads Sentinel 2 data from Scihub by default
-:py:func:`query_dataspace_by_polygon` Queries the New Copernicus Dataspace API for products between two dates, that conform to the Area of Interest and maximum cloud cover supplied.
+To interact with the CDSE, two key functions are required.
 
-SAFE files
+1. :py:func:`query_dataspace_by_polygon` Queries the Copernicus Dataspace Ecosystem API for products between two dates that conform to the Area of Interest and maximum cloud cover supplied.
+
+Once the appropriate products are identified, then the query :code:pd.DataFrame can be downloaded using:
+
+2. :py:func:`download_s2_data_from_dataspace` Passes a DataFrame of L2A and L1C products to :py:func:`download_dataspace_product`, which handles for authentication errors, URL redirects and token refreshes.
+
+SAFE Files
 ----------
-Sentinel 2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
+Sentinel-2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
 This is a directory structure that contains the imagery, metadata and supplementary data of a Sentinel 2 image. The
 rasters themeselves are the in the GRANULE/[granule_id]/IMG_DATA/[resolution]/ folder; each band is contained in
 its own .jp2 file. For full details, see https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/data-formats
 
 There are two ways to refer to a given Sentinel-2 products: the UUID and the product ID.
-The UUID is a set of five five-character strings (EXMAPLE HERE)
-The product ID is a human-readable string (more or less) containing all the information needed for unique identification
-of an product, split by the underscore character. For more information on the structure of a product ID,
-see (EXAMPLE HERE)
+The UUID is an alphanumeric string (e.g. 22e7af63-07ad-4076-8541-f6655388dc5e), whereas the product ID is a human-readable string (more or less) containing all the information needed for unique identification of an product, split by the underscore character.
 
-Query data structure
+Query Data Structure
 --------------------
-All query functions return a dictionary. The key of the dictionary is the UUID of the product id; the product is
-a further set of nested dictionaries containing information about the product to be downloaded. (PUT STRUCTURE HERE)
+All query functions return a dictionary. The key of the dictionary is the UUID of the product id; the product is a further set of nested dictionaries containing information about the product to be downloaded.
 
-Data download sources
----------------------
-This library presently offers three options for download sources; Scihub and Amazon Web Services, for Sentinel, and
-USGS, for Landsat. If in doubt, use Scihub.
+Data Download Source
+--------------------
+The only download source currently provided is via the Copernicus Dataspace Ecosystem (CDSE): https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Catalog.html 
+
+- Copernicus DataSpace Ecosystem
+
+    Images are downloaded in .zip format, and `pyeo` handles the unzipping, conversion from .jp2 to .tif.
+    Users do not need to be registered with the CDSE to query images, but `pyeo` expects the user to have provided a valid username and password. 
+    The main change from SciHub to CDSE is that Sentinel-2 products are no longer archived beyond a certain time-frame, i.e. the products in the CDSE are always online.
+
+Legacy Download Sources
+-----------------------
+There are three other *legacy* download sources which this library no longer supports as they are deprecated in favour of the now active CDSE.
 
 - Scihub
 
@@ -54,6 +63,10 @@ USGS, for Landsat. If in doubt, use Scihub.
 Functions
 ---------
 """
+
+
+# :py:func:`check_for_s2_data_by_date` Queries the Sentinel 2 archive for products between two dates
+# :py:func:`download_s2_data` Downloads Sentinel 2 data from Scihub by default
 
 import datetime as dt
 import glob
@@ -212,72 +225,14 @@ def build_dataspace_request_string(
     request_string = f"{DATASPACE_API_ROOT}?{cloud_cover_props}&{start_date_props}&{end_date_props}&{geometry_props}&{max_records_props}"
     return request_string
 
-
-    
-# def get_access_token(dataspace_username: str,
-#                      dataspace_password: str,
-#                      refresh: bool = False) -> str:
-#     """
-
-#     This function creates an access token to use during download for verification purposes.
-
-#     Parameters
-#     ----------
-
-#     dataspace_username : str
-#         The username registered with the Copernicus Open Access Dataspace
-
-#     dataspace_password : str
-#         The password registered with the Copernicus Open Access Dataspace
-
-#     refresh : bool
-#         Refreshes an old access token, Default false - returns new access token
-
-
-#     Returns
-#     -------
-
-
-#     """
-#     REFRESH_TOKEN = ""
-
-#     if refresh:
-#         payload = {
-#             "grant_type": "refresh_token",
-#             "refresh_token": REFRESH_TOKEN,
-#             "client_id": "cdse-public",
-#         }
-
-#         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-#         response = requests.post(DATASPACE_REFRESH_TOKEN_URL, data=payload, headers=headers)
-        
-#     else:
-#         payload = {
-#             "grant_type": "password",
-#             "username": dataspace_username,
-#             "password": dataspace_password,
-#             "client_id": "cdse-public",
-#         }
-
-#         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-#         try:
-#             response = requests.post(
-#                 DATASPACE_REFRESH_TOKEN_URL, data=payload, headers=headers
-#             ).json()
-#         except Exception as e:
-#             raise Exception(
-#                 f"Keycloak token creation failed. Reponse from the server was: {response}"
-#                 )
-
-#     return response["access_token"]
-
 def get_access_token(dataspace_username: str = None,
                      dataspace_password: str = None,
                      refresh_token: str = None) -> str:
     """
 
-    This function creates an access token to use during download for verification purposes.
+    This function:
+    
+    Creates an access token to use during download for verification purposes.
 
     Parameters
     ----------
@@ -294,13 +249,12 @@ def get_access_token(dataspace_username: str = None,
 
     Returns
     -------
-
+    response : str
 
     """
 
     if refresh_token:
         print("refreshing access token...")
-        # print(f"refresh token : {refresh_token}")
         payload = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
@@ -328,106 +282,7 @@ def get_access_token(dataspace_username: str = None,
             raise Exception(
                 f"Keycloak token creation failed. Reponse from the server was: {response}"
                 )
-    # print(response)
     return response
-
-
-
-# def download_s2_data_from_dataspace(product_df: pd.DataFrame,
-#                                     l1c_directory: str,
-#                                     l2a_directory: str,
-#                                     dataspace_username: str,
-#                                     dataspace_password: str,
-#                                     log: logging.Logger
-#                                     ) -> None:
-#     """
-    
-#     This is a function wraps around `download_dataspace_product`, providing the necessary directories dependent on product type (L1C/L2A).
-
-#     Parameters
-#     ----------
-
-#     product_df : pd.DataFrame
-#         A Pandas DataFrame containing the products to download. 
-        
-#     l1c_directory : str
-#         The path to the L1C download directory.
-    
-#     l2a_directory : str
-#         The path to the L2A download directory.
-    
-#     dataspace_username : str
-#         The username registered with the Copernicus Open Access Dataspace.
-
-#     dataspace_password : str
-#         The password registered with the Copernicus Open Access Dataspace.
-
-#     log : logging.Logger
-#         Log object to write to.
-
-#     Returns
-#     ----------
-#     None
-
-#     """
-#     # get auth_token needed to authenticate with CDSE API
-#     auth_token = get_access_token(
-#         dataspace_username=dataspace_username,
-#         dataspace_password=dataspace_password,
-#         refresh=False,
-#         )
-        
-#     for counter, product in enumerate(product_df.itertuples(index=False)):
-
-#         # if L1C have been passed, download to the l1c_directory
-#         if product.processinglevel == "Level-1C":
-
-#             out_path = os.path.join(l1c_directory, product.title)
-#             if check_for_invalid_l1_data(out_path) == 1:
-#                 log.info(
-#                     f"{out_path} imagery already exists, skipping download"
-#                 )
-#                 # continue means to skip the current iteration and move to the next iteration of the for loop
-#                 continue
-#             try:
-#                 log.info(f"    Downloading {counter+1} of {len(product_df)} : {product.title}")
-#                 download_dataspace_product(
-#                     product_uuid=product.uuid,
-#                     auth_token=auth_token,
-#                     product_name=product.title,
-#                     safe_directory=l1c_directory
-#                 )
-
-#             except Exception as error:
-#                 log.error(f"Download dataspace for a L1C Product did not finish")
-#                 log.error(f"Received this error :  {error}")
-
-#         # if L2A have been passed, download to the l1c_directory
-#         elif product.processinglevel == "Level-2A":
-#             out_path = os.path.join(l2a_directory, product.title)
-#             if check_for_invalid_l2_data(out_path) == 1:
-#                 log.info(
-#                     f"{out_path} imagery already exists, skipping download"
-#                 )
-#                 # continue means to skip the current iteration and move to the next iteration of the for loop
-#                 continue
-#             try:
-#                 log.info(f"    Downloading {counter+1} of {len(product_df)} : {product.title}")
-#                 download_dataspace_product(
-#                     product_uuid=product.uuid,
-#                     auth_token=auth_token,
-#                     product_name=product.title,
-#                     safe_directory=l2a_directory
-#                 )
-#             except Exception as error:
-#                 log.error(f"Download dataspace for a L2A Product did not finish")
-#                 log.error(f"Received error   {error}")
-#         else:
-#             log.error(f"Neither 'Level-1C' or 'Level-2A' were in {product.processinglevel}")
-#             log.error("could be a bad data source, therefore skipping")
-
-#     return
-
 
 def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                                     l1c_directory: str,
@@ -438,7 +293,9 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                                     ) -> None:
     """
     
-    This is a function wraps around `download_dataspace_product`, providing the necessary directories dependent on product type (L1C/L2A).
+    This function:
+    
+    Wraps around `download_dataspace_product`, providing the necessary directories dependent on product type (L1C/L2A).
 
     Parameters
     ----------
@@ -627,8 +484,6 @@ def download_dataspace_product(product_uuid: str,
 
     return
 
-
-
 def filter_unique_dataspace_products(l1c_products: pd.DataFrame,
                                      l2a_products: pd.DataFrame,
                                      log: logging.Logger
@@ -679,16 +534,38 @@ def filter_unique_dataspace_products(l1c_products: pd.DataFrame,
 
 
 def _rest_query(
-    user,
-    passwd,
-    footprint_wkt,
-    start_date,
-    end_date,
-    cloud=100,
-    start_row=0,
-    producttype=None,
-    filename=None,
+    user: str,
+    passwd: str,
+    footprint_wkt: str,
+    start_date: str,
+    end_date: str,
+    cloud: int=100,
+    start_row: int=0,
+    producttype: str=None,
+    filename: str=None,
 ):
+    """
+
+    Parameters
+    ----------
+    user : str
+    passwd (str): [description]
+    footprint_wkt (str): [description]
+    start_date (str): [description]
+    end_date (str): [description]
+    cloud (int, optional): [description]. Defaults to 100.
+    start_row (int, optional): [description]. Defaults to 0.
+    producttype (str, optional): [description]. Defaults to None.
+    filename (str, optional): [description]. Defaults to None.
+
+    Raises
+    ------
+    requests.exceptions.RequestException
+
+    Returns
+    -------
+    rest_out_to_json
+    """
     # Allows for more than 10 search results by implementing pagination
     # https://scihub.copernicus.eu/twiki/do/view/SciHubUserGuide/OpenSearchAPI?redirectedfrom=SciHubUserGuide.6OpenSearchAPI
     # Results sets over the maximum can be obtained through paging of from different start values.
@@ -1453,8 +1330,11 @@ def filter_non_matching_s2_data(query_output):
     return out_set
 
 
-def filter_unique_l1c_and_l2a_data(df, log):
+def filter_unique_l1c_and_l2a_data(df: pd.DataFrame,
+                                   log: logging.Logger):
     """
+    This function:
+
     Filters a dataframe from a query result such that it contains only unique Sentinel-2
     datatakes, based on 'beginposition'.
     Retains L2A metadata and only retains L1C metadata if no L2A product for that datatake
@@ -1462,11 +1342,13 @@ def filter_unique_l1c_and_l2a_data(df, log):
 
     Parameters
     ----------
-    df : pandas dataframe with query results
+    df : pd.DataFrame
+        pandas dataframe with query results
 
     Returns
     -------
-    l1c, l2a : pandas dataframes containing only unique L1C and L2A datatakes
+    l1c, l2a : Tuple[pd.DataFrame, pd.DataFrame]
+        Pandas dataframes containing only unique L1C and L2A datatakes
 
     """
 
