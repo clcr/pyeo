@@ -1,3 +1,50 @@
+"""
+Functions for running the raster and vector services in the pipeline.
+
+Key functions
+-------------
+
+:py:func:`automatic_change_detection_national` works with the initialisation file that provides all the parameters PyEO needs to make raster and vector processing decisions. `See SEPAL pipeline training notebook within the notebooks folder on the GitHub Repository for an explanation of the initialisation file.` 
+
+:py:func:`automatic_change_detection_national` is composed of the following functions:
+
+- :py:func:`acd_initialisation` : 
+-   - Initialises the log file and creates the configuration dictionary which passes the configuration parameters to the downstream functions.
+
+- :py:func:`acd_config_to_log` :
+-   - Prints the configuration parameters to the main log, the name of which is customised in the `.ini` file.
+
+- :py:func:`acd_roi_tile_intersection` :
+-   - Takes a Region of Interest (ROI) and calculates which Sentinel-2 (S2) tiles overlap with the ROI.
+
+These next functions are executed on a *per-tile* basis, i.e. if the ROI of choice covers 2 tiles, then these functions run twice (once per tile).
+
+- :py:func:`acd_integrated_raster` :
+-   - This function calls all the raster processes, which:
+-   -   - Build a Baseline Composite to compare land cover changes against, by downloading S2 images and calculating the median of these images.
+-   -   - Downloads images over the Change Period
+-   -   - Classifies the Composite and the Change images using a classifier in ./models/
+-   -   - Calculates the change between the from classes and the to classes, for each classified image. This could be changes from forest to bare soil.
+-   -   - Creates a Change Report describing the consistency of the class changes, highlighting the changes that PyEO is confident.
+
+- :py:func:`acd_integrated_vectorisation` :
+-   - This function calls all the vectorisation processes, which:
+-   -   - Vectorises the Change Report, removing any changes observed outside of the ROI.
+-   -   - Performs Zonal Statistics on the change polygons.
+-   -   - Filters the change polygons based on Counties of Interest.
+
+These functions run on an *all-tile* basis, i.e. they run once for all tiles.
+
+- :py:func:`acd_national_integration` :
+-   - If the ROI covers more than one Sentinel-2 tile, then this function will merge the individual vectorised change polygons into one convenient shapefile or kml, :code:`national_geodataframe`.
+
+- :py:func:`acd_national_filtering` :
+-   - Applies County and Minimum Area filters to :code:`national_geodataframe`.
+
+Function reference
+------------------
+"""
+
 import configparser
 import glob
 import logging
@@ -16,12 +63,11 @@ from pyeo.apps.acd_national import (acd_by_tile_raster,
 
 
 # acd_national is the top-level function which controls the raster and vector processes for pyeo
-def automatic_change_detection_national(config_path):
+def automatic_change_detection_national(config_path) -> None:
     """
     This function:
-        - Acts as the singular call to run automatic change detection for all RoI intersecting tiles 
-        and then to vectorise and aggregate the results into a national scale shape file
-        of the change alerts suitable for use within QGIS.
+
+    - Acts as the singular call to run automatic change detection for all RoI intersecting tiles and then to vectorise and aggregate the results into a national scale shape file of the change alerts suitable for use within QGIS.
 
     Parameters
     ----------
@@ -29,7 +75,7 @@ def automatic_change_detection_national(config_path):
         The path to the config file, which is an `.ini`
 
     Returns
-    ----------
+    -------
     None
 
     """
@@ -128,7 +174,7 @@ def automatic_change_detection_national(config_path):
 def acd_initialisation(config_path):
     """
 
-    This function initialises the log.log, making the log object available
+    This function initialises the .log file, making the log object available.
 
     Parameters
     ----------
@@ -136,9 +182,9 @@ def acd_initialisation(config_path):
         The path to the config file, which is an .ini
 
     Returns
-    ----------
-    dict : config
-        A config dictionary
+    -------
+    config_dict : dict
+        A dictionary composed of configuration parameters read from the `.ini` file.
     log : logging.Logger
         A log object
 
@@ -176,7 +222,7 @@ def acd_initialisation(config_path):
     return config_dict, log
 
 
-def acd_config_to_log(config_dict: dict, log: logging.Logger):
+def acd_config_to_log(config_dict: dict, log: logging.Logger) -> None:
     """
     This function echoes the contents of config_dict to the log file. \n
     It does not return anything.
@@ -191,7 +237,7 @@ def acd_config_to_log(config_dict: dict, log: logging.Logger):
         log variable
 
     Returns
-    ----------
+    -------
 
     None
 
@@ -339,17 +385,18 @@ def acd_config_to_log(config_dict: dict, log: logging.Logger):
     return
 
 
-def acd_roi_tile_intersection(config_dict, log):
+def acd_roi_tile_intersection(config_dict: dict, log: logging.Logger) -> str:
     """
 
     This function:
-        - accepts a Region of Interest (RoI) (specified by config_dict) and writes a tilelist.txt of the Sentinel-2 tiles that the RoI covers.
 
-        - the tilelist.txt is then used to perform the tile-based processes, raster and vector.
+    - accepts a Region of Interest (RoI) (specified by config_dict) and writes a tilelist.txt of the Sentinel-2 tiles that the RoI covers.
+
+    - the tilelist.txt is then used to perform the tile-based processes, raster and vector.
 
     Parameters
     ----------
-    config_dict : (dict)
+    config_dict : dict
         Dictionary of the Configuration Parameters specified in the `.ini`
 
     log : logging.Logger
@@ -357,7 +404,7 @@ def acd_roi_tile_intersection(config_dict, log):
 
     Returns
     -------
-    tilelist_filepath : (str)
+    tilelist_filepath : str
         Filepath of a .txt containing the list of tiles on which to perform raster processes
 
     """
@@ -405,12 +452,11 @@ def acd_integrated_raster(
     config_path: str
     ) -> None:
     """
-
     This function:
 
-        - checks whether `tilelist.csv` exists before running acd_by_tile_raster for each tile
+    - checks whether `tilelist.csv` exists before running acd_by_tile_raster for each tile
 
-        - calls `acd_by_tile_raster` for all active tiles
+    - calls `acd_by_tile_raster` for all active tiles
 
     Parameters
     ----------
@@ -427,7 +473,7 @@ def acd_integrated_raster(
         filepath of the config (pyeo.ini) for `acd_by_tile_raster`, this is present to enable the parallel processing option.
 
     Returns
-    ----------
+    -------
     None
     """
 
@@ -611,9 +657,10 @@ def qstat_to_dataframe():
     """
 
     This function:
-        - Runs the pbs qstat command as a subprocess,
-        - Captures the stdout
-        - Parses the output into a dataframe summarising all active processes to allow monitoring of parallel processes launched when in do_parallel mode.
+
+    - Runs the pbs qstat command as a subprocess,
+    - Captures the stdout
+    - Parses the output into a dataframe summarising all active processes to allow monitoring of parallel processes launched when in do_parallel mode.
 
     Parameters
     ----------
@@ -646,11 +693,14 @@ def qstat_to_dataframe():
 
 
 def acd_integrated_vectorisation(
-    log: logging.Logger, tilelist_filepath: str, config_path: str
-):
+    log: logging.Logger,
+    tilelist_filepath: str,
+    config_path: str
+) -> None:
     """
 
     This function:
+
         - Vectorises the change report raster by calling acd_by_tile_vectorisation for all active tiles
 
     Parameters
@@ -782,31 +832,34 @@ def acd_national_integration(
     epsg: int,
     config_dict: dict,
     write_kml: bool
-):
+) -> None:
     """
 
     This function:
-        - glob to find 1 report_xxx.pkl file per tile in output/probabilities,
-        - from which to read in a Pandas DataFrame of the vectorised changes,
-        - then concatenate DataFrame for each tile to form a national change event DataFrame
-        - save to disc in /integrated/acd_national_integration.pkl
 
-    Parameters:
+    - globs to find 1 report_xxx.pkl file per tile in output/probabilities,
+    - from which to read in a Pandas DataFrame of the vectorised changes
+    - then concatenate DataFrame for each tile to form a national change event DataFrame
+    - save to disc in /integrated/acd_national_integration.pkl
+
+    Parameters
     ----------
     root_dir : str
-
+        string representing the path to the root directory.
     log : logging.Logger
         a Logger object
 
     epsg : int
+        integer code of the espg appropriate for the study area.
 
     config_dict : dict
+        dictionary of configuration parameters read from the initialisation file.
 
     write_kml : bool
         writes to `.kml` if True
 
-    Returns:
-    ----------
+    Returns
+    -------
     None
 
     """
@@ -906,16 +959,12 @@ def acd_national_integration(
 
 def acd_national_filtering(log: logging.Logger, config_dict: dict):
     """
-
     This function:
-        - Applies filters to the national vectorised change report, as specified in the pyeo.ini
-            - The planned filters are:
-                - Counties
-                - Minimum Area
-                - Date Period?
 
+    - Applies filters to the national vectorised change report, as specified in the pyeo.ini
+    - The current filters are Counties and Minimum Area.
 
-    Parameters:
+    Parameters
     ----------
 
     log : logging.Logger
@@ -923,8 +972,8 @@ def acd_national_filtering(log: logging.Logger, config_dict: dict):
     config_dict : dict
         config dictionary containing runtime parameters
 
-    Returns:
-    ----------
+    Returns
+    -------
     None
     """
 

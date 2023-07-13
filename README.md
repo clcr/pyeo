@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./pyeo/assets/pyeo_logo.png" alt="Image alt text">
+</p>
+
 [![DOI](https://zenodo.org/badge/126246599.svg)](https://zenodo.org/badge/latestdoi/126246599)
 
 # Python for Earth Observation (PyEO)

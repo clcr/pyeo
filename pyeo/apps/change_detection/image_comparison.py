@@ -1,5 +1,5 @@
 """
-image_comparison
+Image Comparison
 ----------------
 An application for applying a pickled scikit-learn model to two contiguous raster images.
 

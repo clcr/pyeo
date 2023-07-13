@@ -33,7 +33,7 @@
           
           <a href="index.html" class="icon icon-home">
             pyeo
-              <img src="_static/pyeologo.png" class="logo" alt="Logo"/>
+              <img src="_static/pyeo_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -45,22 +45,20 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="acd_national.html">ACD National</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">Classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">Coordinate Manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">Filesystem Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queries_and_downloads.html">Queries and Downloads</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Raster Manipulation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyeo-1-raster-manipulation">pyeo.raster_manipulation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#key-functions">Key functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#rasters">Rasters</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#timestamps">Timestamps</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#supported-datatypes">Supported datatypes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#geotransforms">Geotransforms</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#projections">Projections</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#masks">Masks</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#function-reference">Function reference</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rasters">Rasters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#timestamps">Timestamps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-datatypes">Supported datatypes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#geotransforms">Geotransforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#projections">Projections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#masks">Masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#function-reference">Function reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.raster_manipulation.add_masks"><code class="docutils literal notranslate"><span class="pre">add_masks()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.raster_manipulation.align_image_in_place"><code class="docutils literal notranslate"><span class="pre">align_image_in_place()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.raster_manipulation.apply_array_image_mask"><code class="docutils literal notranslate"><span class="pre">apply_array_image_mask()</span></code></a></li>
@@ -170,18 +168,16 @@
              
   <section id="module-pyeo.raster_manipulation">
 <span id="raster-manipulation"></span><h1>Raster Manipulation<a class="headerlink" href="#module-pyeo.raster_manipulation" title="Permalink to this heading"></a></h1>
-<section id="pyeo-1-raster-manipulation">
-<h2>pyeo.raster_manipulation<a class="headerlink" href="#pyeo-1-raster-manipulation" title="Permalink to this heading"></a></h2>
 <p>Functions for working with raster data, including masks and platform-specific processing functions.</p>
 <section id="key-functions">
-<h3>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h3>
-<p><a class="reference internal" href="#pyeo.raster_manipulation.create_matching_dataset" title="pyeo.raster_manipulation.create_matching_dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_matching_dataset()</span></code></a> Creates an empty raster of the same shape as a source, ready for writing.</p>
-<p><a class="reference internal" href="#pyeo.raster_manipulation.stack_images" title="pyeo.raster_manipulation.stack_images"><code class="xref py py-func docutils literal notranslate"><span class="pre">stack_images()</span></code></a> Stacks a list of rasters into a single raster.</p>
-<p><code class="xref py py-func docutils literal notranslate"><span class="pre">n2_images()</span></code> Preprocesses a set of of Sentinel-2 images into single raster files.</p>
-<p><a class="reference internal" href="#pyeo.raster_manipulation.clip_raster" title="pyeo.raster_manipulation.clip_raster"><code class="xref py py-func docutils literal notranslate"><span class="pre">clip_raster()</span></code></a> Clips a raster to a shapefile</p>
+<h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h2>
+<p><a class="reference internal" href="#pyeo.raster_manipulation.create_matching_dataset" title="pyeo.raster_manipulation.create_matching_dataset"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_matching_dataset()</span></code></a>  : Creates an empty raster of the same shape as a source, ready for writing.</p>
+<p><a class="reference internal" href="#pyeo.raster_manipulation.stack_images" title="pyeo.raster_manipulation.stack_images"><code class="xref py py-func docutils literal notranslate"><span class="pre">stack_images()</span></code></a>  : Stacks a list of rasters into a single raster.</p>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">n2_images()</span></code>  : Preprocesses a set of of Sentinel-2 images into single raster files.</p>
+<p><a class="reference internal" href="#pyeo.raster_manipulation.clip_raster" title="pyeo.raster_manipulation.clip_raster"><code class="xref py py-func docutils literal notranslate"><span class="pre">clip_raster()</span></code></a>  : Clips a raster to a shapefile</p>
 </section>
 <section id="rasters">
-<h3>Rasters<a class="headerlink" href="#rasters" title="Permalink to this heading"></a></h3>
+<h2>Rasters<a class="headerlink" href="#rasters" title="Permalink to this heading"></a></h2>
 <p>When working with raster data (geotiff, .jp2, ect) using this module, the following assumptions have been made:</p>
 <ul class="simple">
 <li><p>Any function that reads a raster can read from any gdal-readable format</p></li>
@@ -192,12 +188,12 @@ Functions may fail if passed a raster in lat-long projection</p></li>
 </ul>
 </section>
 <section id="timestamps">
-<h3>Timestamps<a class="headerlink" href="#timestamps" title="Permalink to this heading"></a></h3>
+<h2>Timestamps<a class="headerlink" href="#timestamps" title="Permalink to this heading"></a></h2>
 <p>pyeo uses the same timestamp convention as ESA: <cite>yyyymmddThhmmss</cite>; for example, 1PM on 27th December 2020 would be
 <cite>20201227T130000</cite>. All timestamps are in UTC</p>
 </section>
 <section id="supported-datatypes">
-<h3>Supported datatypes<a class="headerlink" href="#supported-datatypes" title="Permalink to this heading"></a></h3>
+<h2>Supported datatypes<a class="headerlink" href="#supported-datatypes" title="Permalink to this heading"></a></h2>
 <p>When a function in this library asks for a datatype, it can take one of the following</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Unknown</span>
 <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Byte</span>
@@ -215,7 +211,7 @@ Functions may fail if passed a raster in lat-long projection</p></li>
 </div>
 </section>
 <section id="geotransforms">
-<h3>Geotransforms<a class="headerlink" href="#geotransforms" title="Permalink to this heading"></a></h3>
+<h2>Geotransforms<a class="headerlink" href="#geotransforms" title="Permalink to this heading"></a></h2>
 <p>Every gdal raster has a geotransform associated with it; this defines it’s top-left hand corner in the projection
 and pixel size.
 In pyeo, it takes the form of a 6-element tuple; for north-up images, these are the following.</p>
@@ -235,7 +231,7 @@ In pyeo, it takes the form of a 6-element tuple; for north-up images, these are 
 <p>For more information, see the following: See the following: <a class="reference external" href="https://gdal.org/user/raster_data_model.html#affine-geotransform">https://gdal.org/user/raster_data_model.html#affine-geotransform</a></p>
 </section>
 <section id="projections">
-<h3>Projections<a class="headerlink" href="#projections" title="Permalink to this heading"></a></h3>
+<h2>Projections<a class="headerlink" href="#projections" title="Permalink to this heading"></a></h2>
 <p>Each Gdal raster also has a projection, defining (among other things) the unit of the geotransform.
 Projections in pyeo are referred to either by EPSG number or passed around as a wkt( well-known text) string.
 You can look up EPSG values at <a class="reference external" href="https://epsg.io">https://epsg.io</a>
@@ -245,7 +241,7 @@ You can use the following snippet to extract the well-known text of a raster</p>
 </div>
 </section>
 <section id="masks">
-<h3>Masks<a class="headerlink" href="#masks" title="Permalink to this heading"></a></h3>
+<h2>Masks<a class="headerlink" href="#masks" title="Permalink to this heading"></a></h2>
 <p>Some functions in this module include options for creating and applying masks.</p>
 <ul>
 <li><p>A raster may have an associated mask</p></li>
@@ -275,8 +271,7 @@ You can use the following snippet to extract the well-known text of a raster</p>
 </ul>
 </section>
 <section id="function-reference">
-<h3>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this heading"></a></h3>
-</section>
+<h2>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this heading"></a></h2>
 </section>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.raster_manipulation.add_masks">
@@ -428,7 +423,7 @@ by multiplying each pixel value with the mask value.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.raster_manipulation.apply_processing_baseline_0400_offset_correction_to_tiff_file_directory">
-<span class="sig-prename descclassname"><span class="pre">pyeo.raster_manipulation.</span></span><span class="sig-name descname"><span class="pre">apply_processing_baseline_0400_offset_correction_to_tiff_file_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_tif_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_tif_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('B02',</span> <span class="pre">'B03',</span> <span class="pre">'B04',</span> <span class="pre">'B08')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BOA_ADD_OFFSET</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_processing_baseline_0400_offset_correction_to_tiff_file_directory" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.raster_manipulation.</span></span><span class="sig-name descname"><span class="pre">apply_processing_baseline_0400_offset_correction_to_tiff_file_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_tif_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_tif_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('B02',</span> <span class="pre">'B03',</span> <span class="pre">'B04',</span> <span class="pre">'B08')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands_to_offset_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BOA_ADD_OFFSET</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.apply_processing_baseline_0400_offset_correction_to_tiff_file_directory" title="Permalink to this definition"></a></dt>
 <dd><p>Offsets data within selected bands from a directory of stacked raster files
 Overwrites original file - option to save a backup copy.
 Added I.R. 20220607</p>
@@ -437,23 +432,21 @@ Added I.R. 20220607</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>in_tif_directory</strong> (<em>str</em>) – Path to the input (and output) directory of tif raster files</p></li>
 <li><p><strong>out_tif_directory</strong> (<em>str</em>) – Path to the output directory of tif raster files</p></li>
-<li><p><strong>bands_to_offset_labels</strong> (<em>list</em><em> of </em><em>string</em>) – List of bands to offset</p></li>
-<li><p><strong>bands_to_offset_index</strong> (<em>list</em><em> of </em><em>int</em>) – List of indices of bands to offset within the tif image</p></li>
+<li><p><strong>bands_to_offset_labels</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of bands to offset</p></li>
+<li><p><strong>bands_to_offset_index</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – List of indices of bands to offset within the tif image</p></li>
 <li><p><strong>BOA_ADD_OFFSET</strong> (<em>int</em>) – Required offset per band (from xml information within L2A SAFE file directory)</p></li>
-<li><p><strong>backup_flag</strong> (<em>True/False</em>) – If True leaves unoffset images with .backup extension in tif_directory</p></li>
+<li><p><strong>backup_flag</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True leaves unoffset images with .backup extension in tif_directory</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>out_tif_directory</strong> (<em>str</em>) – The path to the output directory</p></li>
-<li><p><em>ToDo</em></p></li>
-<li><p><em>——-</em></p></li>
-<li><p><em># Check out_tif_directory directory exists and report an error or create it</em></p></li>
-<li><p><em># Force generated dtype to uint16 to save time and storage? Compatible with classifier?</em></p></li>
-<li><p><em># Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description</em></p></li>
-<li><p><em># Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root</em></p></li>
-<li><p><em># Use ‘with TemporaryDirectory’ pattern - Overwrite existing files with offset files by ‘move’</em></p></li>
-<li><p><em># Work out why offset files are larger (2GB from ~1GB)</em></p></li>
+<li><p><em>.. todo ::</em> – Check out_tif_directory directory exists and report an error or create it
+Force generated dtype to uint16 to save time and storage? Compatible with classifier?
+Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
+Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
+Use ‘with TemporaryDirectory’ pattern - Overwrite existing files with offset files by ‘move’
+Work out why offset files are larger (2GB from ~1GB)</p></li>
 </ul>
 </p>
 </dd>
@@ -1110,7 +1103,7 @@ level 1 and level 2 .SAFE files.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.raster_manipulation.create_matching_dataset">
-<span class="sig-prename descclassname"><span class="pre">pyeo.raster_manipulation.</span></span><span class="sig-name descname"><span class="pre">create_matching_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datatype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_matching_dataset" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.raster_manipulation.</span></span><span class="sig-name descname"><span class="pre">create_matching_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datatype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.raster_manipulation.create_matching_dataset" title="Permalink to this definition"></a></dt>
 <dd><p>Creates an empty gdal dataset with the same dimensions, projection and geotransform as in_dataset.
 Defaults to 1 band.
 Datatype is set from the first layer of in_dataset if unspecified.</p>

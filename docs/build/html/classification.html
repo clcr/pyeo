@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Coordinate Manipulation" href="coordinate_manipulation.html" />
-    <link rel="prev" title="pyeo" href="index.html" /> 
+    <link rel="prev" title="ACD National" href="acd_national.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -33,7 +33,7 @@
           
           <a href="index.html" class="icon icon-home">
             pyeo
-              <img src="_static/pyeologo.png" class="logo" alt="Logo"/>
+              <img src="_static/pyeo_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -45,12 +45,10 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="acd_national.html">ACD National</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Classification</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyeo-1-classification">pyeo.classification</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#key-functions">Key functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#function-reference">Function reference</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#function-reference">Function reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.classification.change_from_composite"><code class="docutils literal notranslate"><span class="pre">change_from_composite()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.classification.classify_directory"><code class="docutils literal notranslate"><span class="pre">classify_directory()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.classification.classify_image"><code class="docutils literal notranslate"><span class="pre">classify_image()</span></code></a></li>
@@ -107,38 +105,59 @@
              
   <section id="module-pyeo.classification">
 <span id="classification"></span><h1>Classification<a class="headerlink" href="#module-pyeo.classification" title="Permalink to this heading"></a></h1>
-<section id="pyeo-1-classification">
-<h2>pyeo.classification<a class="headerlink" href="#pyeo-1-classification" title="Permalink to this heading"></a></h2>
 <p>Contains every function to do with map classification. This includes model creation, map classification and processes
 for array manipulation into scikit-learn compatible forms.</p>
 <p>For details on how to build a class shapefile, see :ref:CLASSIFICATION INSTRUCTIONS</p>
 <p>All models are serialised and deserialised using <code class="code docutils literal notranslate"><span class="pre">joblib.dump</span></code> or <code class="code docutils literal notranslate"><span class="pre">joblib.load</span></code>, and saved with the .pkl
-extension</p>
+extension.</p>
 <section id="key-functions">
-<h3>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h3>
+<h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h2>
 <p><a class="reference internal" href="#pyeo.classification.extract_features_to_csv" title="pyeo.classification.extract_features_to_csv"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_features_to_csv()</span></code></a> Extracts class signatures from a class shapefile and a .tif</p>
 <p><a class="reference internal" href="#pyeo.classification.create_model_from_signatures" title="pyeo.classification.create_model_from_signatures"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_model_from_signatures()</span></code></a> Creates a model from a .csv of classes and band signatures</p>
 <p><a class="reference internal" href="#pyeo.classification.create_trained_model" title="pyeo.classification.create_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_trained_model()</span></code></a> Creates a model from a class shapefile and a .tif</p>
 <p><a class="reference internal" href="#pyeo.classification.classify_image" title="pyeo.classification.classify_image"><code class="xref py py-func docutils literal notranslate"><span class="pre">classify_image()</span></code></a> Produces a classification map from an image using a model.</p>
 </section>
 <section id="function-reference">
-<h3>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this heading"></a></h3>
-</section>
+<h2>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this heading"></a></h2>
 </section>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.change_from_composite">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">change_from_composite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">composite_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prob_out_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.change_from_composite" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">change_from_composite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">composite_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prob_out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pyeo.classification.change_from_composite" title="Permalink to this definition"></a></dt>
 <dd><p>Stacks an image with a composite and classifies each pixel change with a scikit-learn model.</p>
-<p>The image that is classified is has the following bands</p>
+<p>The image that is classified has the following bands:</p>
 <ol class="arabic simple">
+<li><ol class="arabic simple">
 <li><p>composite blue</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="2">
 <li><p>composite green</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="3">
 <li><p>composite red</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="4">
 <li><p>composite IR</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="5">
 <li><p>image blue</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="6">
 <li><p>image green</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="7">
 <li><p>image red</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="8">
 <li><p>image IR</p></li>
+</ol>
+</li>
 </ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -152,15 +171,18 @@ extension</p>
 <li><p><strong>apply_mask</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, uses the .msk file corresponding to the image at image_path to skip any invalid pixels. Default False.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.classify_directory">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">classify_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prob_out_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_directory" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">classify_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prob_out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pyeo.classification.classify_directory" title="Permalink to this definition"></a></dt>
 <dd><p>Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
 in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.</p>
-<p>See the documentation for classification.classify_image() for more details.</p>
+<p>See the documentation for <a class="reference internal" href="#pyeo.classification.classify_image" title="pyeo.classification.classify_image"><code class="xref py py-func docutils literal notranslate"><span class="pre">classify_image()</span></code></a> for more details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -174,12 +196,15 @@ in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectiv
 <li><p><strong>skip_existing</strong> (<em>boolean</em><em>, </em><em>optional</em>) – If True, skips the classification if the output file already exists.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.classify_image">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">classify_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prob_out_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_image" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">classify_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prob_out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pyeo.classification.classify_image" title="Permalink to this definition"></a></dt>
 <dd><p>Produces a class map from a raster and a model.</p>
 <p>This applies the model’s fit() function to each pixel in the input raster, and saves the result into an output
 raster. The model is presumed to be a scikit-learn fitted model created using one of the other functions in this
@@ -199,41 +224,58 @@ classification will run - but the more likely you are to get a outofmemory error
 <li><p><strong>skip_existing</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, do not run if class_out_path already exists. Defaults to False.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>class_out_path</strong> – The output path for the classified image.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
 <p>If you want to create a custom model, the object is presumed to have the following methods and attributes:</p>
-<blockquote>
-<div><ul class="simple">
+<ul class="simple">
+<li><ul>
 <li><p><a href="#id1"><span class="problematic" id="id2">model.n_classes_</span></a> : the number of classes the model will produce</p></li>
-<li><p>model.n_cores : The number of CPU cores used to run the model</p></li>
-<li><p>model.predict() : A function that will take a set of band inputs from a pixel and produce a class.</p></li>
-<li><p>model.predict_proba() : If called with prob_out_path, a function that takes a set of n band inputs from a pixel and produces <a href="#id3"><span class="problematic" id="id4">n_classes_</span></a> outputs corresponding to the probabilties of a given pixel being that class</p></li>
 </ul>
-</div></blockquote>
+</li>
+<li><ul>
+<li><p>model.n_cores : The number of CPU cores used to run the model</p></li>
+</ul>
+</li>
+<li><ul>
+<li><p>model.predict() : A function that will take a set of band inputs from a pixel and produce a class.</p></li>
+</ul>
+</li>
+<li><ul>
+<li><p>model.predict_proba() : If called with prob_out_path, a function that takes a set of n band inputs from a pixel and produces <code class="code docutils literal notranslate"><span class="pre">n_classes_</span></code> outputs corresponding to the probabilties of a given pixel being that class</p></li>
+</ul>
+</li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.classify_rf">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">classify_rf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raster_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_rf" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Reads in a pickle file of a random forest model and a raster file with feature layers,</dt><dd><p>and classifies the raster file using the model.</p>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">classify_rf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raster_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.classify_rf" title="Permalink to this definition"></a></dt>
+<dd><p>This function:</p>
+<p>Reads in a pickle file of a random forest model and a raster file with feature layers, and classifies the raster file using the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>classified</strong> (<em>raster_path = filename and path to the raster file to be</em>) – </p></li>
-<li><p><strong>format</strong> (<em>outfile = filename and path to the output file with the classified map in uint8</em>) – </p></li>
-<li><p><strong>format</strong> – </p></li>
-<li><p><strong>verbose</strong> (<em>optional</em>) – </p></li>
+<li><p><strong>raster_path</strong> (<em>str</em>) – filename and path to the raster file to be classified (in tiff uint16 format)</p></li>
+<li><p><strong>modelfile</strong> (<em>str</em>) – filename and path to the pickled file with the random forest model in uint8 format</p></li>
+<li><p><strong>outfile</strong> (<em>str</em>) – filename and path to the output file with the classified map in uint8 format</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defaults to False. If True, provides additional printed output.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.create_model_for_region">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_model_for_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scores_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_for_region" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_model_for_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scores_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pyeo.classification.create_model_for_region" title="Permalink to this definition"></a></dt>
 <dd><p>Takes all .tif files in a given folder and creates a pickled scikit-learn model for classifying them.
 Wraps <a class="reference internal" href="#pyeo.classification.create_trained_model" title="pyeo.classification.create_trained_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_trained_model()</span></code></a>; see docs for that for the details.</p>
 <dl class="field-list simple">
@@ -245,12 +287,15 @@ Wraps <a class="reference internal" href="#pyeo.classification.create_trained_mo
 <li><p><strong>attribute</strong> (<em>str</em><em>, </em><em>optional</em>) – The label of the field in the training shapefiles that contains the classification labels. Defaults to “CODE”.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.create_model_from_signatures">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_model_from_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_csv_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_datatype=&lt;class</span> <span class="pre">'numpy.int32'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_from_signatures" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_model_from_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_csv_path:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_out:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_datatype=&lt;class</span> <span class="pre">'numpy.int32'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_model_from_signatures" title="Permalink to this definition"></a></dt>
 <dd><p>Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
 and pickle a scikit-learn model.</p>
 <dl class="field-list simple">
@@ -260,6 +305,9 @@ and pickle a scikit-learn model.</p>
 <li><p><strong>model_out</strong> (<em>str</em>) – The location to save the pickled model to.</p></li>
 <li><p><strong>sig_datatype</strong> (<em>dtype</em><em>, </em><em>optional</em>) – The datatype to read the csv as. Defaults to int32.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -272,7 +320,7 @@ and pickle a scikit-learn model.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.create_rf_model_for_region">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_rf_model_for_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CODE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridsearch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_fold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_rf_model_for_region" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_rf_model_for_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'CODE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridsearch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_fold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pyeo.classification.create_rf_model_for_region" title="Permalink to this definition"></a></dt>
 <dd><p>Takes all .tif files in a given folder and creates a pickled scikit-learn random forest model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -281,51 +329,52 @@ and pickle a scikit-learn model.</p>
 <li><p><strong>model_out</strong> (<em>str</em>) – Path to location to save the .pkl file</p></li>
 <li><p><strong>scores_out</strong> (<em>str</em>) – Path to save the cross-validation scores</p></li>
 <li><p><strong>attribute</strong> (<em>str</em>) – The label of the field in the training shapefiles that contains the classification labels. Defaults to “CODE”.</p></li>
-<li><p><strong>band_names</strong> (<em>list</em><em> of </em><em>str</em>) – List of band names using in labelling the signatures in the signature file. Can be left as an empty list [].</p></li>
+<li><p><strong>band_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of band names using in labelling the signatures in the signature file. Can be left as an empty list [].</p></li>
 <li><p><strong>gridsearch</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of randomized random forests for gridsearch. Defaults to 1.</p></li>
 <li><p><strong>k_fold</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of groups for k-fold validation during gridsearch. Defaults to 5.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.create_trained_model">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_trained_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_image_file_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_val_repeats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_trained_model" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">create_trained_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_image_file_paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_val_repeats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.create_trained_model" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a trained model from a set of training images with associated shapefiles.</p>
 <p>This assumes that each image in training_image_file_paths has in the same directory a folder of the same
 name containing a shapefile of the same name. For example, in the folder training_data:</p>
-<p>training_data</p>
+<p><code class="code docutils literal notranslate"><span class="pre">training_data</span></code></p>
 <blockquote>
 <div><ul class="simple">
-<li><p>area1.tif</p></li>
-<li><p>area1</p>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area1.tif</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area1</span></code></p>
 <ul>
-<li><p>area1.shp</p></li>
-<li><p>area1.dbx</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area1.shp</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area1.dbf</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area1.cpg</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area1.shx</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area1.prj</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area2.tif</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area2</span></code></p>
+<ul>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area2.shp</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area2.dbf</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area2.cpg</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area2.shx</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">area2.prj</span></code></p></li>
 </ul>
 </li>
 </ul>
-<blockquote>
-<div><p>… rest of shapefile for area 1 …</p>
-</div></blockquote>
-<ul class="simple">
-<li><p>area2.tif</p></li>
-<li><p>area2</p>
-<ul>
-<li><p>area2.shp</p></li>
-<li><p>area2.dbx</p></li>
-</ul>
-</li>
-</ul>
-<blockquote>
-<div><p>… rest of shapefile for area 2 …</p>
-</div></blockquote>
 </div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>training_image_file_paths</strong> (<em>list</em><em> of </em><em>str</em>) – A list of filepaths to training images.</p></li>
+<li><p><strong>training_image_file_paths</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of filepaths to training images.</p></li>
 <li><p><strong>cross_val_repeats</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of cross-validation repeats to use. Defaults to 10.</p></li>
 <li><p><strong>attribute</strong> (<em>str</em><em>, </em><em>optional.</em>) – The label of the field in the training shapefiles that contains the classification labels. Defaults to CODE.</p></li>
 </ul>
@@ -333,13 +382,13 @@ name containing a shapefile of the same name. For example, in the folder trainin
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>model</strong> (<em>sklearn.classifier</em>) – A fitted scikit-learn model. See notes.</p></li>
-<li><p><strong>scores</strong> (<em>tuple of floats</em>) – The cross-validation scores for model</p></li>
+<li><p><strong>scores</strong> (<em>tuple(float, float, float, float)</em>) – The cross-validation scores for model</p></li>
 </ul>
 </p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>For full details of how to create an appropriate shapefile, see [here](../index.html#training_data).
+<p>For full details of how to create an appropriate shapefile, see [here](../docs/build/html/index.html#training_data).
 At present, the model is an ExtraTreesClassifier arrived at by tpot:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">ens</span><span class="o">.</span><span class="n">ExtraTreesClassifier</span><span class="p">(</span><span class="n">bootstrap</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="s2">&quot;gini&quot;</span><span class="p">,</span> <span class="n">max_features</span><span class="o">=</span><span class="mf">0.55</span><span class="p">,</span>
     <span class="n">min_samples_leaf</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">min_samples_split</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">class_weight</span><span class="o">=</span><span class="s1">&#39;balanced&#39;</span><span class="p">)</span>
@@ -349,14 +398,14 @@ At present, the model is an ExtraTreesClassifier arrived at by tpot:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.extract_features_to_csv">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">extract_features_to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_ras_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_shape_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.extract_features_to_csv" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">extract_features_to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_ras_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_shape_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.extract_features_to_csv" title="Permalink to this definition"></a></dt>
 <dd><p>Given a raster and a shapefile containing training polygons, extracts all pixels into a CSV file for further
 analysis.</p>
-<dl class="simple">
-<dt>This produces a CSV file where each row corresponds to a pixel. The columns are as follows:</dt><dd><p>Column 1: Class labels from the shapefile field labelled as ‘attribute’.
-Column 2+ : Band values from the raster at in_ras_path.</p>
-</dd>
-</dl>
+<p>This produces a CSV file where each row corresponds to a pixel. The columns are as follows:</p>
+<ul class="simple">
+<li><p>Column 1: Class labels from the shapefile field labelled as ‘attribute’.</p></li>
+<li><p>Column 2+ : Band values from the raster at in_ras_path.</p></li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -365,6 +414,9 @@ Column 2+ : Band values from the raster at in_ras_path.</p>
 <li><p><strong>out_path</strong> (<em>str</em>) – The path for the new .csv file</p></li>
 <li><p><strong>attribute</strong> (<em>str</em><em>, </em><em>optional.</em>) – The label of the field in the training shapefile that contains the classification labels. Defaults to “CODE”</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -379,19 +431,24 @@ Column 2+ : Band values from the raster at in_ras_path.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>tuple</em></p></li>
-<li><p><strong>extent</strong> (<em>Tuple[float, float, float, float]</em>) – Extent of the shapefile represented as (min_x, min_y, max_x, max_y).</p></li>
-<li><p><strong>SpatialRef</strong> (<em>osgeo.osr.SpatialReference</em>) – Coordinate referencing system of the shapefile.</p></li>
-<li><p><strong>EPSG</strong> (<em>int</em>) – EPSG code of the shapefile.</p></li>
+<li><p>extent : tuple(float, float, float, float) -
+Extent of the shapefile represented as (min_x, min_y, max_x, max_y).</p></li>
+<li><p>SpatialRef : osgeo.osr.SpatialReference -
+Coordinate referencing system of the shapefile.</p></li>
+<li><p>EPSG : int -
+EPSG code of the shapefile.</p></li>
 </ul>
 </p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.get_training_data">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">get_training_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.get_training_data" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">get_training_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.get_training_data" title="Permalink to this definition"></a></dt>
 <dd><p>Given an image and a shapefile with categories, returns training data and features suitable
 for fitting a scikit-learn classifier.Image and shapefile must be in the same map projection /
 coordinate referencing system.</p>
@@ -406,8 +463,8 @@ coordinate referencing system.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>training_data</strong> (<em>array_like</em>) – A numpy array of shape (n_pixels, bands), where n_pixels is the number of pixels covered by the training polygons</p></li>
-<li><p><strong>training_pixels</strong> (<em>array_like</em>) – A 1-d numpy array of length (n_pixels) containing the class labels for the corresponding pixel in training_data</p></li>
+<li><p><strong>training_data</strong> (<em>np.ndarray</em>) – A numpy array of shape (n_pixels, bands), where n_pixels is the number of pixels covered by the training polygons</p></li>
+<li><p><strong>training_pixels</strong> (<em>np.ndarray</em>) – A 1-d numpy array of length (n_pixels) containing the class labels for the corresponding pixel in training_data</p></li>
 </ul>
 </p>
 </dd>
@@ -419,7 +476,7 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.load_signatures">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">load_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_csv_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_datatype=&lt;class</span> <span class="pre">'numpy.int32'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.load_signatures" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">load_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig_csv_path:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sig_datatype=&lt;class</span> <span class="pre">'numpy.int32'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.load_signatures" title="Permalink to this definition"></a></dt>
 <dd><p>Extracts features and class labels from a signature CSV.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -430,8 +487,8 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>features</strong> (<em>array_like</em>) – a numpy array of the shape (feature_count, sample_count)</p></li>
-<li><p><strong>class_labels</strong> (<em>array_like of int</em>) – a 1d numpy array of class labels corresponding to the samples in features.</p></li>
+<li><p><strong>features</strong> (<em>np.ndarray</em>) – a numpy array of the shape (feature_count, sample_count)</p></li>
+<li><p><strong>class_labels</strong> (<em>np.ndarray</em>) – a 1d numpy array of class labels (int) corresponding to the samples in features.</p></li>
 </ul>
 </p>
 </dd>
@@ -440,42 +497,49 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.plot_signatures">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">plot_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'PNG'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.plot_signatures" title="Permalink to this definition"></a></dt>
-<dd><p>Creates a graphics image file of the signature scatterplots.</p>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">plot_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PNG'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.plot_signatures" title="Permalink to this definition"></a></dt>
+<dd><p>This function:</p>
+<p>Creates a graphics image file of the signature scatterplots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>learning_path</strong> (<em>string</em>) – The string containing the full directory path to the learning data input file from the model training stage saved by joblib.dump()</p></li>
-<li><p><strong>out_path</strong> (<em>string</em>) – The string containing the full directory path to the output file for graphical plots</p></li>
-<li><p><strong>format</strong> (<em>string</em><em>, </em><em>optional</em>) – GDAL format for the quicklook raster file, default PNG</p></li>
+<li><p><strong>learning_path</strong> (<em>str</em>) – The string containing the full directory path to the learning data input file from the model training stage saved by joblib.dump()</p></li>
+<li><p><strong>out_path</strong> (<em>str</em>) – The string containing the full directory path to the output file for graphical plots</p></li>
+<li><p><strong>format</strong> (<em>str</em><em>, </em><em>optional</em>) – GDAL format for the quicklook raster file, defaults to PNG</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.raster_reclass_binary">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">raster_reclass_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rcl_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outFn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outFmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.raster_reclass_binary" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">raster_reclass_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rcl_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outFn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outFmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pyeo.classification.raster_reclass_binary" title="Permalink to this definition"></a></dt>
 <dd><p>Takes a raster and reclassifies rcl_value to 1, with all others becoming 0. In-place operation if write_out is True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>img_path</strong> (<em>str</em>) – Path to 1 band input  raster.</p></li>
+<li><p><strong>img_path</strong> (<em>str</em>) – Path to 1 band input raster.</p></li>
 <li><p><strong>rcl_value</strong> (<em>int</em>) – Integer indication the value that should be reclassified to 1. All other values will be 0.</p></li>
 <li><p><strong>outFn</strong> (<em>str</em>) – Output file name.</p></li>
 <li><p><strong>outFmt</strong> (<em>str</em><em>, </em><em>optional</em>) – Output format. Set to GTiff by default. Other GDAL options available.</p></li>
 <li><p><strong>write_out</strong> (<em>bool</em><em>, </em><em>optional.</em>) – Set to True by default. Will write raster to disk. If False, only an array is returned</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>Reclassifies numpy array</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>in_array</strong> – Reclassifies numpy array</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.reshape_ml_out_to_raster">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">reshape_ml_out_to_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_ml_out_to_raster" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">reshape_ml_out_to_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pyeo.classification.reshape_ml_out_to_raster" title="Permalink to this definition"></a></dt>
 <dd><p>Takes the output of a pixel classifier and reshapes to a single band image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -485,60 +549,63 @@ This means that this will ignore any classes with a label of ‘0’.</p>
 <li><p><strong>height</strong> (<em>int</em>) – The height in pixels of the image that produced the classification</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>A 2-dimensional Numpy array of shape(width, height)</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>image_array</strong> – A 2-dimensional Numpy array of shape(width, height)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.reshape_prob_out_to_raster">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">reshape_prob_out_to_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_prob_out_to_raster" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">reshape_prob_out_to_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_prob_out_to_raster" title="Permalink to this definition"></a></dt>
 <dd><p>Takes the probability output of a pixel classifier and reshapes it to a raster.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>probs</strong> (<em>array_like</em>) – A numpy array of shape(n_pixels, n_classes)</p></li>
+<li><p><strong>probs</strong> (<em>np.ndarray</em>) – A numpy array of shape(n_pixels, n_classes)</p></li>
 <li><p><strong>width</strong> (<em>int</em>) – The width in pixels of the image that produced the probability classification</p></li>
 <li><p><strong>height</strong> (<em>int</em>) – The height in pixels of the image that produced the probability classification</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The reshaped image array</p>
+<dd class="field-even"><p><strong>image_array</strong> – The reshaped image array</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array_like</p>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.reshape_raster_for_ml">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">reshape_raster_for_ml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_array</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.reshape_raster_for_ml" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">reshape_raster_for_ml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pyeo.classification.reshape_raster_for_ml" title="Permalink to this definition"></a></dt>
 <dd><p>A low-level function that reshapes an array from gdal order <cite>[band, y, x]</cite> to scikit features order <cite>[x*y, band]</cite></p>
 <p>For classification, scikit-learn functions take a 2-dimensional array of features of the shape (samples, features).
 For pixel classification, features correspond to bands and samples correspond to specific pixels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>image_array</strong> (<em>array_like</em>) – A 3-dimensional Numpy array of shape (bands, y, x) containing raster data.</p>
+<dd class="field-odd"><p><strong>image_array</strong> (<em>np.ndarray</em>) – A 3-dimensional Numpy array of shape (bands, y, x) containing raster data.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A 2-dimensional Numpy array of shape (samples, features)</p>
+<dd class="field-even"><p><strong>image_array</strong> – A 2-dimensional Numpy array of shape (samples, features)</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array_like</p>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.shapefile_to_raster">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">shapefile_to_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapefilename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inraster_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outraster_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.shapefile_to_raster" title="Permalink to this definition"></a></dt>
-<dd><p>Reads in a shapefile with polygons and produces a raster file that
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">shapefile_to_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapefilename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inraster_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outraster_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'CODE'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.shapefile_to_raster" title="Permalink to this definition"></a></dt>
+<dd><p>This function:</p>
+<p>Reads in a shapefile with polygons and produces a raster file that
 aligns with an input rasterfile (same corner coordinates, resolution, coordinate
 reference system and geotransform). Each pixel value in the output raster will
-indicate the number from the shapefile based on the selected attribute column.
-Based on <a class="reference external" href="https://gis.stackexchange.com/questions/151339/rasterize-a-shapefile-with-geopandas-or-fiona-python">https://gis.stackexchange.com/questions/151339/rasterize-a-shapefile-with-geopandas-or-fiona-python</a></p>
+indicate the number from the shapefile based on the selected attribute column.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -547,44 +614,45 @@ Based on <a class="reference external" href="https://gis.stackexchange.com/quest
 <li><p><strong>outraster_filename</strong> (<em>str</em>) – String pointing to the output raster file.</p></li>
 <li><p><strong>verbose</strong> (<em>boolean</em>) – True or False. If True, additional text output will be printed to the log file.</p></li>
 <li><p><strong>nodata</strong> (<em>int</em>) – No data value.</p></li>
-<li><p><strong>attribute</strong> (<em>str</em>) – Name of the column of the attribute table of the shapefile that will be burned into the raster.
-If None, use the first attribute.</p></li>
-<li><p><strong>Returns</strong> – </p></li>
-<li><p><strong>----------</strong> – </p></li>
-<li><p><strong>outraster_filename</strong> – </p></li>
+<li><p><strong>attribute</strong> (<em>str</em>) – Name of the column of the attribute table of the shapefile that will be burned into the raster. If None, use the first attribute.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>outraster_filename</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>Based on <a class="reference external" href="https://gis.stackexchange.com/questions/151339/rasterize-a-shapefile-with-geopandas-or-fiona-python">https://gis.stackexchange.com/questions/151339/rasterize-a-shapefile-with-geopandas-or-fiona-python</a></p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.classification.train_rf_model">
-<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">train_rf_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raster_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntrees</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CODE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balanced</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridsearch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_fold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.train_rf_model" title="Permalink to this definition"></a></dt>
-<dd><p>Adapted from pygge.py</p>
-<dl class="simple">
-<dt>Trains a random forest classifier model based on a raster file with bands</dt><dd><p>as features and a second raster file with training data, in which pixel
-values indicate the class.</p>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">pyeo.classification.</span></span><span class="sig-name descname"><span class="pre">train_rf_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raster_paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntrees</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'CODE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balanced</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridsearch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_fold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.classification.train_rf_model" title="Permalink to this definition"></a></dt>
+<dd><p>This function:</p>
+<p>Trains a random forest classifier model based on a raster file with bands as features and a second raster file with training data, in which pixel values indicate the class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>format.</strong> (<em>raster_paths = list</em><em> of </em><em>filenames and paths to the raster files to be classified in tiff</em>) – It is a condition that shapefiles of matching name exist in the same directory.</p></li>
-<li><p><strong>to</strong> (<em>modelfile = filename and path to a pickle file to save the trained model</em>) – </p></li>
-<li><p><strong>forest</strong> (<em>ntrees = number</em><em> of </em><em>trees in the random</em>) – </p></li>
-<li><p><strong>101</strong> (<em>default =</em>) – </p></li>
-<li><p><strong>shapefile</strong> (<em>attribute = string naming the attribute column to be rasterised in the</em>) – </p></li>
-<li><p><strong>labelling</strong> (<em>band_names = list</em><em> of </em><em>strings indicating the names</em><em> of </em><em>the bands</em><em> (</em><em>used for text output and</em>) – the learning data output file). If [], a sequence of numbers is assigned.</p></li>
-<li><p><strong>weights</strong> (<em>optional</em>) – If not specified, all weights will be equal.</p></li>
-<li><p><strong>balanced</strong> (<em>optional</em>) – </p></li>
-<li><p><strong>gridsearch</strong> – int, optional = Number of randomized random forests for gridsearch. Defaults to 1.</p></li>
-<li><p><strong>k_fold</strong> – int, optional = Number of groups for k-fold validation during gridsearch. Defaults to 5.</p></li>
+<li><p><strong>raster_paths</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – list of filenames and paths to the raster files to be classified in tiff format. It is a condition that shapefiles of matching name exist in the same directory.</p></li>
+<li><p><strong>modelfile</strong> (<em>str</em>) – filename and path to a pickle file to save the trained model to</p></li>
+<li><p><strong>ntrees</strong> (<em>int</em>) – number of trees in the random forest, default = 101</p></li>
+<li><p><strong>attribute</strong> (<em>str</em>) – string naming the attribute column to be rasterised in the shapefile</p></li>
+<li><p><strong>band_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – list of strings indicating the names of the bands (used for text output and labelling the learning data output file). If [], a sequence of numbers is assigned.</p></li>
+<li><p><strong>weights</strong> (<em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – a list of integers giving weights for all classes. If not specified, all weights will be equal.</p></li>
+<li><p><strong>balanced</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, use a balanced number of training pixels per class</p></li>
+<li><p><strong>gridsearch</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of randomized random forests for gridsearch. Defaults to 1.</p></li>
+<li><p><strong>k_fold</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of groups for k-fold validation during gridsearch. Defaults to 5.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>random forest model object</p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>Adapted from pygge.py</p>
 </dd></dl>
 
 </section>
@@ -593,7 +661,7 @@ values indicate the class.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="pyeo" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="acd_national.html" class="btn btn-neutral float-left" title="ACD National" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="coordinate_manipulation.html" class="btn btn-neutral float-right" title="Coordinate Manipulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
