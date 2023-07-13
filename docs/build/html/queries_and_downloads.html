@@ -50,10 +50,11 @@
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">Coordinate Manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">Filesystem Utilities</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Queries and Downloads</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#safe-files">SAFE files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#query-data-structure">Query data structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#data-download-sources">Data download sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#safe-files">SAFE Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#query-data-structure">Query Data Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-download-source">Data Download Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#legacy-download-sources">Legacy Download Sources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.queries_and_downloads.build_dataspace_request_string"><code class="docutils literal notranslate"><span class="pre">build_dataspace_request_string()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date"><code class="docutils literal notranslate"><span class="pre">check_for_s2_data_by_date()</span></code></a></li>
@@ -119,34 +120,47 @@
              
   <section id="module-pyeo.queries_and_downloads">
 <span id="queries-and-downloads"></span><h1>Queries and Downloads<a class="headerlink" href="#module-pyeo.queries_and_downloads" title="Permalink to this heading"></a></h1>
-<p>Functions for querying, filtering and downloading data.</p>
+<p>Functions for querying and downloading data from the Copernicus Dataspace Ecosystem (CDSE).</p>
 <section id="key-functions">
-<h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h2>
-<p><a class="reference internal" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date" title="pyeo.queries_and_downloads.check_for_s2_data_by_date"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_for_s2_data_by_date()</span></code></a> Queries the Sentinel 2 archive for products between two dates
-<a class="reference internal" href="#pyeo.queries_and_downloads.download_s2_data" title="pyeo.queries_and_downloads.download_s2_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_s2_data()</span></code></a> Downloads Sentinel 2 data from Scihub by default
-<a class="reference internal" href="#pyeo.queries_and_downloads.query_dataspace_by_polygon" title="pyeo.queries_and_downloads.query_dataspace_by_polygon"><code class="xref py py-func docutils literal notranslate"><span class="pre">query_dataspace_by_polygon()</span></code></a> Queries the New Copernicus Dataspace API for products between two dates, that conform to the Area of Interest and maximum cloud cover supplied.</p>
+<h2>Key Functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h2>
+<p>To interact with the CDSE, two key functions are required.</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#pyeo.queries_and_downloads.query_dataspace_by_polygon" title="pyeo.queries_and_downloads.query_dataspace_by_polygon"><code class="xref py py-func docutils literal notranslate"><span class="pre">query_dataspace_by_polygon()</span></code></a> Queries the Copernicus Dataspace Ecosystem API for products between two dates that conform to the Area of Interest and maximum cloud cover supplied.</p></li>
+</ol>
+<p>Once the appropriate products are identified, then the query :code:pd.DataFrame can be downloaded using:</p>
+<ol class="arabic simple" start="2">
+<li><p><a class="reference internal" href="#pyeo.queries_and_downloads.download_s2_data_from_dataspace" title="pyeo.queries_and_downloads.download_s2_data_from_dataspace"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_s2_data_from_dataspace()</span></code></a> Passes a DataFrame of L2A and L1C products to <a class="reference internal" href="#pyeo.queries_and_downloads.download_dataspace_product" title="pyeo.queries_and_downloads.download_dataspace_product"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_dataspace_product()</span></code></a>, which handles for authentication errors, URL redirects and token refreshes.</p></li>
+</ol>
 </section>
 <section id="safe-files">
-<h2>SAFE files<a class="headerlink" href="#safe-files" title="Permalink to this heading"></a></h2>
-<p>Sentinel 2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
+<h2>SAFE Files<a class="headerlink" href="#safe-files" title="Permalink to this heading"></a></h2>
+<p>Sentinel-2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
 This is a directory structure that contains the imagery, metadata and supplementary data of a Sentinel 2 image. The
 rasters themeselves are the in the GRANULE/[granule_id]/IMG_DATA/[resolution]/ folder; each band is contained in
 its own .jp2 file. For full details, see <a class="reference external" href="https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/data-formats">https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/data-formats</a></p>
 <p>There are two ways to refer to a given Sentinel-2 products: the UUID and the product ID.
-The UUID is a set of five five-character strings (EXMAPLE HERE)
-The product ID is a human-readable string (more or less) containing all the information needed for unique identification
-of an product, split by the underscore character. For more information on the structure of a product ID,
-see (EXAMPLE HERE)</p>
+The UUID is an alphanumeric string (e.g. 22e7af63-07ad-4076-8541-f6655388dc5e), whereas the product ID is a human-readable string (more or less) containing all the information needed for unique identification of an product, split by the underscore character.</p>
 </section>
 <section id="query-data-structure">
-<h2>Query data structure<a class="headerlink" href="#query-data-structure" title="Permalink to this heading"></a></h2>
-<p>All query functions return a dictionary. The key of the dictionary is the UUID of the product id; the product is
-a further set of nested dictionaries containing information about the product to be downloaded. (PUT STRUCTURE HERE)</p>
+<h2>Query Data Structure<a class="headerlink" href="#query-data-structure" title="Permalink to this heading"></a></h2>
+<p>All query functions return a dictionary. The key of the dictionary is the UUID of the product id; the product is a further set of nested dictionaries containing information about the product to be downloaded.</p>
 </section>
-<section id="data-download-sources">
-<h2>Data download sources<a class="headerlink" href="#data-download-sources" title="Permalink to this heading"></a></h2>
-<p>This library presently offers three options for download sources; Scihub and Amazon Web Services, for Sentinel, and
-USGS, for Landsat. If in doubt, use Scihub.</p>
+<section id="data-download-source">
+<h2>Data Download Source<a class="headerlink" href="#data-download-source" title="Permalink to this heading"></a></h2>
+<p>The only download source currently provided is via the Copernicus Dataspace Ecosystem (CDSE): <a class="reference external" href="https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Catalog.html">https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Catalog.html</a></p>
+<ul>
+<li><p>Copernicus DataSpace Ecosystem</p>
+<blockquote>
+<div><p>Images are downloaded in .zip format, and <cite>pyeo</cite> handles the unzipping, conversion from .jp2 to .tif.
+Users do not need to be registered with the CDSE to query images, but <cite>pyeo</cite> expects the user to have provided a valid username and password.
+The main change from SciHub to CDSE is that Sentinel-2 products are no longer archived beyond a certain time-frame, i.e. the products in the CDSE are always online.</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="legacy-download-sources">
+<h2>Legacy Download Sources<a class="headerlink" href="#legacy-download-sources" title="Permalink to this heading"></a></h2>
+<p>There are three other <em>legacy</em> download sources which this library no longer supports as they are deprecated in favour of the now active CDSE.</p>
 <ul>
 <li><p>Scihub</p>
 <blockquote>
@@ -179,7 +193,8 @@ downloads for the AWS bucket.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.build_dataspace_request_string">
 <span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">build_dataspace_request_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_cloud_cover</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area_of_interest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_records</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pyeo.queries_and_downloads.build_dataspace_request_string" title="Permalink to this definition"></a></dt>
-<dd><p>This function builds the API product request string based on given properties and constraints.</p>
+<dd><p>This function:</p>
+<p>Builds the API product request string based on given properties and constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -238,13 +253,15 @@ is selected. Default: ‘None’ - no tile-based search but aoi-based search</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.download_dataspace_product">
-<span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">download_dataspace_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_uuid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataspace_username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataspace_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pyeo.queries_and_downloads.download_dataspace_product" title="Permalink to this definition"></a></dt>
-<dd><p>This function downloads a given Sentinel product, with a given product UUID from the ESA servers.</p>
+<span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">download_dataspace_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_uuid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataspace_username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataspace_password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pyeo.queries_and_downloads.download_dataspace_product" title="Permalink to this definition"></a></dt>
+<dd><p>This function:</p>
+<p>Downloads a Sentinel-2 product using the given product UUID from the ESA servers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>product_uuid</strong> (<em>str</em>) – UUID of the product to download</p></li>
-<li><p><strong>auth_response</strong> (<em>dict</em>) – Authentication Response</p></li>
+<li><p><strong>dataspace_username</strong> (<em>str</em>) – username used to access the CDSE.</p></li>
+<li><p><strong>dataspace_password</strong> (<em>str</em>) – password associated with username.</p></li>
 <li><p><strong>product_name</strong> (<em>str</em>) – Name of the product</p></li>
 <li><p><strong>safe_directory</strong> (<em>str</em>) – The directory (path) to write the SAFE files to</p></li>
 </ul>
@@ -253,6 +270,8 @@ is selected. Default: ‘None’ - no tile-based search but aoi-based search</p>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>Registration to the Copernicus Dataspace Ecosystem (CDSE) is free. Register here: <a class="reference external" href="https://dataspace.copernicus.eu">https://dataspace.copernicus.eu</a></p>
 </dd></dl>
 
 <dl class="py function">
@@ -357,7 +376,8 @@ to <cite>False</cite>.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.download_s2_data_from_dataspace">
 <span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">download_s2_data_from_dataspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l1c_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2a_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataspace_username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataspace_password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pyeo.queries_and_downloads.download_s2_data_from_dataspace" title="Permalink to this definition"></a></dt>
-<dd><p>This is a function wraps around <cite>download_dataspace_product</cite>, providing the necessary directories dependent on product type (L1C/L2A).</p>
+<dd><p>This function:</p>
+<p>Wraps around <cite>download_dataspace_product</cite>, providing the necessary directories dependent on product type (L1C/L2A).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -468,13 +488,13 @@ missing data. At the end of the run, you will have two folders with a set of pai
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>l1c_products</strong> (<em>pd.DataFrame</em>) – _description_</p></li>
-<li><p><strong>l2a_products</strong> (<em>pd.DataFrame</em>) – _description_</p></li>
-<li><p><strong>log</strong> (<em>logging.Logger</em>) – _description_</p></li>
+<li><p><strong>l1c_products</strong> (<em>pd.DataFrame</em>) – Pandas DataFrame containing a list of L1C products.</p></li>
+<li><p><strong>l2a_products</strong> (<em>pd.DataFrame</em>) – Pandas DataFrame containing a list of L2A products.</p></li>
+<li><p><strong>log</strong> (<em>logging.Logger</em>) – logging object.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>_description_</p>
+<dd class="field-even"><p><strong>unique_l1c_products</strong> – A Pandas DataFrame of L1C products that do not have counterpart L2A products.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pd.DataFrame</p>
@@ -484,20 +504,21 @@ missing data. At the end of the run, you will have two folders with a set of pai
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.filter_unique_l1c_and_l2a_data">
-<span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">filter_unique_l1c_and_l2a_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_unique_l1c_and_l2a_data" title="Permalink to this definition"></a></dt>
-<dd><p>Filters a dataframe from a query result such that it contains only unique Sentinel-2
+<span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">filter_unique_l1c_and_l2a_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.filter_unique_l1c_and_l2a_data" title="Permalink to this definition"></a></dt>
+<dd><p>This function:</p>
+<p>Filters a dataframe from a query result such that it contains only unique Sentinel-2
 datatakes, based on ‘beginposition’.
 Retains L2A metadata and only retains L1C metadata if no L2A product for that datatake
 has been found.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas dataframe with query results</em>) – </p>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – pandas dataframe with query results</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>l1c, l2a</strong></p>
+<dd class="field-even"><p><strong>l1c, l2a</strong> – Pandas dataframes containing only unique L1C and L2A datatakes</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pandas dataframes containing only unique L1C and L2A datatakes</p>
+<dd class="field-odd"><p>Tuple[pd.DataFrame, pd.DataFrame]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -505,7 +526,8 @@ has been found.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.get_access_token">
 <span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">get_access_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataspace_username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataspace_password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh_token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pyeo.queries_and_downloads.get_access_token" title="Permalink to this definition"></a></dt>
-<dd><p>This function creates an access token to use during download for verification purposes.</p>
+<dd><p>This function:</p>
+<p>Creates an access token to use during download for verification purposes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -513,6 +535,12 @@ has been found.</p>
 <li><p><strong>dataspace_password</strong> (<em>str</em>) – The password registered with the Copernicus Open Access Dataspace</p></li>
 <li><p><strong>refresh</strong> (<em>bool</em>) – Refreshes an old access token, Default false - returns new access token</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>response</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -689,7 +717,8 @@ Any identically-named imagery will be overwritten</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.query_dataspace_by_polygon">
 <span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">query_dataspace_by_polygon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_cloud_cover</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area_of_interest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_records</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#pyeo.queries_and_downloads.query_dataspace_by_polygon" title="Permalink to this definition"></a></dt>
-<dd><p>This function returns a DataFrame of available Sentinel-2 imagery from the Copernicus Dataspace API.</p>
+<dd><p>This function:</p>
+<p>Returns a DataFrame of available Sentinel-2 imagery from the Copernicus Dataspace API.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -746,18 +775,19 @@ Any identically-named imagery will be overwritten</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.sent2_query">
 <span class="sig-prename descclassname"><span class="pre">pyeo.queries_and_downloads.</span></span><span class="sig-name descname"><span class="pre">sent2_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passwd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geojsonfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cloud</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tile_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'None'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_row</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">producttype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyeo.queries_and_downloads.sent2_query" title="Permalink to this definition"></a></dt>
-<dd><p>Fetches a list of Sentinel-2 products</p>
+<dd><p>This function:</p>
+<p>Fetches a list of Sentinel-2 products</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>user</strong> (<em>string</em>) – Username for ESA hub. Register at <a class="reference external" href="https://scihub.copernicus.eu/dhus/#/home">https://scihub.copernicus.eu/dhus/#/home</a></p></li>
-<li><p><strong>passwd</strong> (<em>string</em>) – password for the ESA Open Access hub</p></li>
-<li><p><strong>geojsonfile</strong> (<em>string</em>) – Path to a geojson file containing a polygon of the outline of the area you wish to download.
+<li><p><strong>user</strong> (<em>str</em>) – Username for ESA hub. Register at <a class="reference external" href="https://scihub.copernicus.eu/dhus/#/home">https://scihub.copernicus.eu/dhus/#/home</a></p></li>
+<li><p><strong>passwd</strong> (<em>str</em>) – password for the ESA Open Access hub</p></li>
+<li><p><strong>geojsonfile</strong> (<em>str</em>) – Path to a geojson file containing a polygon of the outline of the area you wish to download.
 See www.geojson.io for a tool to build these.
 If no geojson file is provided, a tile_id is required. In that case, aoi_path should point
 to the root directory for the processing run in which all subdirectories will be created.</p></li>
-<li><p><strong>start_date</strong> (<em>string</em>) – Date of beginning of search in the format YYYY-MM-DDThh:mm:ssZ (ISO standard)</p></li>
-<li><p><strong>end_date</strong> (<em>string</em>) – Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
+<li><p><strong>start_date</strong> (<em>str</em>) – Date of beginning of search in the format YYYY-MM-DDThh:mm:ssZ (ISO standard)</p></li>
+<li><p><strong>end_date</strong> (<em>str</em>) – Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
 See https://www.w3.org/TR/NOTE-datetime, or use check_for_s2_data_by_date</p></li>
 <li><p><strong>cloud</strong> (<em>int</em><em>, </em><em>optional</em>) – The maximum cloud clover percentage (as calculated by Copernicus) to download. Defaults to 100%</p></li>
 <li><p><strong>tile_id</strong> (<em>str</em>) – Sentinel-2 granule ID - only required in no geojson file is given and tile-based processing
@@ -776,8 +806,7 @@ Returns both level 1 and level 2 data.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>If you get a ‘request too long’ error, it is likely that your polygon is too complex. The following functions
-download by granule; there is no need to have a precise polygon at this stage.</p>
+<p>If you get a ‘request too long’ error, it is likely that your polygon is too complex. The following functions download by granule; there is no need to have a precise polygon at this stage.</p>
 </dd></dl>
 
 <dl class="py function">
