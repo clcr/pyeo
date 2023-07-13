@@ -4,13 +4,14 @@ Functions for converting raster data to vectors, notably .shp but also .kml and 
 Key functions
 -------------
 
-:py:func:`vectorise_from_band` 
+:py:func:`vectorise_from_band` This function uses GDAL to vectorise specific layers of the change report .geotiff.
 """
 
 import logging
 import pandas as pd
 
-def band_naming(band: int, log):
+def band_naming(band: int,
+                log: logging.Logger):
     """
     This function provides a variable name (string) based on the input integer.
 
@@ -82,8 +83,8 @@ def vectorise_from_band(
     This function takes the path of a change report raster and using a band integer, vectorises a band layer.
 
 
-    Parameters:
-    ----------------
+    Parameters
+    ----------
 
     change_report_path : str
         path to a change report raster
@@ -95,7 +96,7 @@ def vectorise_from_band(
         log variable
 
     Returns
-    ----------------
+    -------
     out_filename : str
         the output path of the vectorised band
 
@@ -354,7 +355,7 @@ def zonal_statistics(
 
     Returns
     -------
-    zstats_df : pd.DataFrame()
+    zstats_df : pd.DataFrame
 
     Notes
     -----
@@ -362,7 +363,7 @@ def zonal_statistics(
 
     The original implementation of this function was written by Konrad Hafen and can be found at: https://opensourceoptions.com/blog/zonal-statistics-algorithm-with-python-in-4-steps/
 
-    Matt Payne amended aspects of the function to accommodate library updates from GDAL, OGR and numpy.ma.MaskedArray() on 30/03/2023.
+    Aspects of this function were amended to accommodate library updates from GDAL, OGR and numpy.ma.MaskedArray().
 
     """
 

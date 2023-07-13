@@ -1100,8 +1100,7 @@ def get_stats_from_raster_file(in_raster_path, format="GTiff", missing_data_valu
     missing_data_value : int, optional
         The encoding of missing values in the raster that will be omitted from the calculations
 
-
-    Returns:
+    Returns
     --------
     result : dictionary
         Dictionary containing the results of the function
@@ -1230,7 +1229,7 @@ def clever_composite_images(
 
     Parameters
     ----------
-    in_raster_path_list : list of str
+    in_raster_path_list : list[str]
         A list of paths to rasters.
     composite_out_path : str
         The path of the output image
@@ -1247,7 +1246,8 @@ def clever_composite_images(
         The path to the composite.
 
 
-    Notes:
+    Notes
+    -----
 
     If generate_date_images is True, an raster ending with the suffix .date will be created; each pixel will contain the
     timestamp (yyyymmdd) of the date that pixel was last seen in the composite.
@@ -1269,7 +1269,7 @@ def clever_composite_images(
 
         Parameters
         ----------
-        in_raster_path_list : list of str
+        in_raster_path_list : list[str]
             A list of paths to rasters
         out_raster_path : str
             The path of the output raster
@@ -1480,7 +1480,7 @@ def clever_composite_images_with_mask(
 
     Notes
     -----
-    Masks are assumed to be a multiplicative .msk file with the same path as their corresponding image; see REFERENCE.
+    Masks are assumed to be a multiplicative .msk file with the same path as their corresponding image.
     All images must have the same number of layers and resolution, but do not have to be perfectly co-registered.
     If it does not exist, composite_out_path will be created. Takes projection, resolution, etc. from first band
     of first raster in list. Will reproject images and masks if they do not match initial raster.
@@ -2904,12 +2904,6 @@ def apply_scl_cloud_mask(
                                 epsg
                             )
                         )
-                        # log.info(f"GDAL_DATA: {os.environ['GDAL_DATA']}")
-                        # log.info(f"PROJ_LIB: {os.environ['PROJ_LIB']}")
-                        # os.environ['GDAL_DATA'] = r'C:\Users\ir81\.conda\envs\pyeo_env_pcwe\Library\share\gdal'
-                        # os.environ['PROJ_LIB'] = r'C:\Users\ir81\.conda\envs\pyeo_env_pcwe\Library\share\proj'
-                        # log.info(f"GDAL_DATA: {os.environ['GDAL_DATA']}")
-                        # log.info(f"PROJ_LIB: {os.environ['PROJ_LIB']}")
                         
                         proj = osr.SpatialReference()
                         proj.ImportFromEPSG(epsg)
@@ -2934,7 +2928,6 @@ def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
     """
     Offsets data within selected bands from a directory of stacked raster files
     Overwrites original file - option to save a backup copy.
-    Added I.R. 20220607
 
     Parameters
     ----------
@@ -2956,18 +2949,16 @@ def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
     out_tif_directory : str
         The path to the output directory
 
-    .. todo ::
-        Check out_tif_directory directory exists and report an error or create it
-        Force generated dtype to uint16 to save time and storage? Compatible with classifier?
-        Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
-        Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
-        Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
-        Work out why offset files are larger (2GB from ~1GB)
-
     """
-    print(
-        f"apply_processing_baseline_0400_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}"
-    )
+
+    # TODO
+    # Check out_tif_directory directory exists and report an error or create it
+    # Force generated dtype to uint16 to save time and storage? Compatible with classifier?
+    # Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
+    # Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
+    # Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
+    # Work out why offset files are larger (2GB from ~1GB)
+    print(f"apply_processing_baseline_0400_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}")
 
     def get_processing_baseline(safe_path):
         return safe_path[28:32]
@@ -3014,7 +3005,6 @@ def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
             out_temporary_raster_array = out_temporary_raster_ds.GetVirtualMemArray(
                 eAccess=gdal.GA_Update
             )
-            # out_temporary_raster_array[...] = in_raster_array[bands_to_offset_index, :,:] + BOA_ADD_OFFSET
 
             print(f"in_raster_array dtype: {in_raster_array.dtype}")
             log.info(f"in_raster_array dtype: {in_raster_array.dtype}")
@@ -3080,7 +3070,6 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
     """
     Offsets data within selected bands from a directory of stacked raster files
     Overwrites original file - option to save a backup copy.
-    Added I.R. 20220607
 
     Parameters
     ----------
@@ -3102,16 +3091,15 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
     out_tif_directory : str
         The path to the output directory
 
-    ToDo:
-    -------
+    """
+
+    # TODO
     # Check out_tif_directory directory exists and report an error or create it
     # Force generated dtype to uint16 to save time and storage? Compatible with classifier?
     # Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
     # Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
     # Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
     # Work out why offset files are larger (2GB from ~1GB)
-
-    """
     print(
         f"apply_processing_baseline_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}"
     )

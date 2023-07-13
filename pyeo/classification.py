@@ -1,8 +1,7 @@
 """
-Contains every function to do with map classification. This includes model creation, map classification and processes
-for array manipulation into scikit-learn compatible forms.
+Contains every function to do with map classification. This includes model creation, map classification and processes for array manipulation into scikit-learn compatible forms.
 
-For details on how to build a class shapefile, see :ref:CLASSIFICATION INSTRUCTIONS
+For details on how to build a class shapefile, see the notebook :code:`PyEO_sepal_model_training.ipynb` within the notebooks directory in the PyEO GitHub.
 
 All models are serialised and deserialised using :code:`joblib.dump` or :code:`joblib.load`, and saved with the .pkl
 extension.
@@ -10,11 +9,17 @@ extension.
 Key functions
 -------------
 
-:py:func:`extract_features_to_csv` Extracts class signatures from a class shapefile and a .tif
-
-:py:func:`create_model_from_signatures` Creates a model from a .csv of classes and band signatures
+:py:func:`classify_model_for_region` Creates a model from a directory of class shapefile and .tif pairs. The benefit of this function is that a model can be produced from multiple regions, increasing the generalisation ability of the model.
 
 :py:func:`create_trained_model` Creates a model from a class shapefile and a .tif
+
+Alternatively, these two functions are suitable for those wishing to create a simpler model:
+
+1. :py:func:`extract_features_to_csv` Extracts class signatures from a class shapefile and a .tif
+
+2. :py:func:`create_model_from_signatures` Creates a model from a .csv of classes and band signatures
+
+Finally, a raster can be classified using:
 
 :py:func:`classify_image` Produces a classification map from an image using a model.
 
