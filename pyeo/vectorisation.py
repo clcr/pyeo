@@ -1,6 +1,4 @@
 """
-pyeo.vectorisation
-====================
 Functions for converting raster data to vectors, notably .shp but also .kml and non-geographic formats, .csv and .pkl.
 
 Key functions

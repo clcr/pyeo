@@ -1,6 +1,4 @@
 """
-pyeo.coordinate_manipulation
-==============================
 Contains a set of functions for transforming spatial coordinates between projections and pixel indicies.
 
 Unless otherwise stated, all functions assume that any geometry, rasters and shapefiles are using the same projection.

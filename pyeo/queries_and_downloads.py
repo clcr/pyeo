@@ -1,6 +1,4 @@
 """
-pyeo.queries_and_downloads
-============================
 Functions for querying, filtering and downloading data.
 
 Key functions
@@ -125,7 +123,9 @@ def query_dataspace_by_polygon(
     log: logging.Logger
 ) -> pd.DataFrame:
     """
-    This function returns a DataFrame of available Sentinel-2 imagery from the Copernicus Dataspace API.
+    This function:
+    
+    Returns a DataFrame of available Sentinel-2 imagery from the Copernicus Dataspace API.
 
     Parameters
     ----------
@@ -139,7 +139,6 @@ def query_dataspace_by_polygon(
         Region of interest centroid in WKT format
     max_records : int
         Maximum records to return
-
 
     Returns
     -------
@@ -181,7 +180,9 @@ def build_dataspace_request_string(
     max_records: int,
 ) -> str:
     """
-    This function builds the API product request string based on given properties and constraints.
+    This function:
+    
+    Builds the API product request string based on given properties and constraints.
 
     Parameters
     ----------
@@ -461,21 +462,10 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
         Log object to write to.
 
     Returns
-    ----------
+    -------
     None
 
     """
-    # get auth_token needed to authenticate with CDSE API
-    # auth_response = get_access_token(
-    #     dataspace_username=dataspace_username,
-    #     dataspace_password=dataspace_password,
-    #     )
-    # print(f"auth response  :  {auth_response}")
-
-    # # wait for 60 seconds
-    # print("sleep for 60 seconds")
-    # time.sleep(60)
-    # print("awake after sleep")
         
     for counter, product in enumerate(product_df.itertuples(index=False)):
         log.info(f"    Checking {counter+1} of {len(product_df)} : {product.title}")        # if L1C have been passed, download to the l1c_directory
@@ -490,7 +480,6 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                 log.info(f"        Downloading : {product.title}")
                 download_dataspace_product(
                     product_uuid=product.uuid,
-                    # auth_response=auth_response,
                     dataspace_username=dataspace_username,
                     dataspace_password=dataspace_password,
                     product_name=product.title,
@@ -501,21 +490,6 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
             except Exception as error:
                 log.error(f"Download from dataspace of L1C Product did not finish")
                 log.error(f"Received this error :  {error}")
-
-            # refresh
-            # auth_response = get_access_token(
-            # dataspace_username=dataspace_username,
-            # dataspace_password=dataspace_password,
-            # refresh_token=auth_response["refresh_token"],
-            # )
-            # # wait for 60 seconds
-            # print("sleep for 60")
-            # time.sleep(60)
-            # print("awake from sleep")
-
-            # print(f"original auth response: {auth_response}")
-            # print("---"*30)
-            # print(f"new auth response : {new_auth_response}")
             
         # if L2A have been passed, download to the l1c_directory
         elif product.processinglevel == "Level-2A":
@@ -528,7 +502,6 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                 log.info(f"        Downloading  : {product.title}")
                 download_dataspace_product(
                     product_uuid=product.uuid,
-                    # auth_response=auth_response,
                     dataspace_username=dataspace_username,
                     dataspace_password=dataspace_password,
                     product_name=product.title,
@@ -539,108 +512,32 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                 log.error(f"Download from dataspace of L2A Product did not finish")
                 log.error(f"Received error   {error}")
 
-            # # refresh
-            # auth_response = get_access_token(
-            # dataspace_username=dataspace_username,
-            # dataspace_password=dataspace_password,
-            # refresh_token=auth_response["refresh_token"],
-            # )
-            # print("sleep for 60")
-            # time.sleep(60)
-            # print("awake from sleep")
-            # print(f"original auth response: {auth_response}")
-            # print("---"*30)
-            # print(f"new auth response : {new_auth_response}")
-
         else:
             log.error(f"Neither 'Level-1C' or 'Level-2A' were in {product.processinglevel}")
             log.error("could be a bad data source, therefore skipping")
 
     return
 
-
-# def download_dataspace_product(product_uuid: str,
-#                                auth_token: str,
-#                                product_name: str,
-#                                safe_directory: str
-#                                ) -> None:
-#     """
-#     This function downloads a given Sentinel product, with a given product UUID from the ESA servers.
-
-#     Parameters
-#     ----------
-#     product_uuid : str
-#         UUID of the product to download
-#     auth_token : str
-#         Authentication bearer token
-#     product_name : str
-#         Name of the product
-#     safe_directory : str
-#         The directory (path) to write the SAFE files to
-
-#     Returns
-#     -------
-#     None
-    
-#     """
-
-#     session = requests.Session()
-#     session.headers.update({'Authorization': f"Bearer {auth_token}"})
-#     url=f"{DATASPACE_DOWNLOAD_URL}({product_uuid})/$value"
-        
-#     response = session.get(url, allow_redirects=False)
-
-#     while response.status_code in (301, 302, 303, 307):
-#         url = response.headers['Location']
-#         response = session.get(url, allow_redirects=False)
-
-#     file = session.get(url, verify=False, allow_redirects=True)
-
-#     total_size_in_bytes = int(response.headers.get("Content-Length", 0))
-#     block_size = 1024
-#     progress_bar = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
-
-#     with TemporaryDirectory(dir=os.getcwd()) as temp_dir:
-#         temporary_path = f"{temp_dir}/{product_name}.zip"
-
-#         with open(temporary_path, 'wb') as download:
-#             for data in file.iter_content(block_size):
-#                 download.write(data)
-#                 progress_bar.update(len(data))
-        
-#         progress_bar.close()
-
-#         unzipped_path = os.path.splitext(temporary_path)[0]
-
-#         zip_ref = zipfile.ZipFile(temporary_path, "r")
-#         zip_ref.extractall(unzipped_path)
-#         zip_ref.close()
-#         # no need to remove unzipped path because it is within temp_dir
-
-#         # # restructure paths
-#         within_folder_path = glob.glob(os.path.join(unzipped_path, "*"))
-#         destination_path = f"{safe_directory}/{product_name}"
-#         shutil.move(src=within_folder_path[0], dst=destination_path)
-
-#     return
-
 def download_dataspace_product(product_uuid: str,
-                            #    auth_response: dict,
-                               dataspace_username,
-                               dataspace_password,
+                               dataspace_username: str,
+                               dataspace_password: str,
                                product_name: str,
                                safe_directory: str,
                                log: logging.Logger
                                ) -> None:
     """
-    This function downloads a given Sentinel product, with a given product UUID from the ESA servers.
+    This function:
+    
+    Downloads a Sentinel-2 product using the given product UUID from the ESA servers.
 
     Parameters
     ----------
     product_uuid : str
         UUID of the product to download
-    auth_response : dict
-        Authentication Response
+    dataspace_username: str
+        username used to access the CDSE.
+    dataspace_password: str
+        password associated with username.
     product_name : str
         Name of the product
     safe_directory : str
@@ -650,37 +547,21 @@ def download_dataspace_product(product_uuid: str,
     -------
     None
     
+    Notes
+    -----
+
+    Registration to the Copernicus Dataspace Ecosystem (CDSE) is free. Register here: https://dataspace.copernicus.eu
     """
-
-    # import requests
-    # session = requests.Session()
-    # session.headers.update({'Authorization': 'Bearer KEYCLOAK_TOKEN'})
-    # url = f"http://catalogue.dataspace.copernicus.eu/odata/v1/Products(db0c8ef3-8ec0-5185-a537-812dad3c58f8)/$value"
-    # response = session.get(url, allow_redirects=False)
-    # while response.status_code in (301, 302, 303, 307):
-    #     url = response.headers['Location']
-    #     response = session.get(url, allow_redirects=False)
-
-    # file = session.get(url, verify=False, allow_redirects=True)
-
-    # with open(f"product.zip", 'wb') as p:
-    #     p.write(file.content)
 
     auth_response = get_access_token(
         dataspace_username=dataspace_username,
         dataspace_password=dataspace_password,
         )
-    # log.info(f"auth response  :  {auth_response}")
-    # # wait for 60 seconds
-    # print("sleep for 60 seconds")
-    # time.sleep(60)
-    # print("awake after sleep")
 
     ############################
     # auth limited to 10 minutes
     auth_access_token = auth_response["access_token"]
     # # refresh limited to 1 hour
-    # refresh_token = auth_response.refresh_token
 
     session = requests.Session()
     session.headers.update({'Authorization': f"Bearer {auth_access_token}"})
@@ -708,41 +589,21 @@ def download_dataspace_product(product_uuid: str,
 
     log.info('Download the zipped image file')
     file = session.get(url, verify=False, allow_redirects=True)
-    # log.info(f"file object: {dir(file)}")
 
     min_file_size = 2000  # in bytes
     if (len(file.content) <= min_file_size):
         log.info(f'  Downloaded file too small, length: {len(file.content)} bytes, contents: {file.content}')
-        # TODO Check if == {"detail":"Expired signature!"}
-        #   If so re-authorise (using refresh token) and loop to try again
 
-    # total_size_in_bytes = int(response.headers.get("Content-Length", 0))
-    # block_size = 1024
-    # progress_bar = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
-
-    # my_temp_dir = os.path.join(os.path.expanduser('~'), '20230602_pyeo_temp_folder')
-    # log.info(f"my_temp_dir: {my_temp_dir}")
-    # with my_temp_dir as temp_dir:
     with TemporaryDirectory(dir=os.path.expanduser('~')) as temp_dir:
         temporary_path = f"{temp_dir}{os.sep}{product_name}.zip"
         log.info(f"Downloaded file temporary_path: {temporary_path}")
 
         with open(temporary_path, 'wb') as download:
-            # for data in file.iter_content(block_size):
-            #     download.write(data)
-            #     progress_bar.update(len(data))
+
             download.write(file.content)
-        # progress_bar.close()
         unzipped_path = os.path.splitext(temporary_path)[0]
-        # is the 'not a .zip' error here?
-        # zip_ref = zipfile.ZipFile(temporary_path, "r")
-        # zip_ref.extractall(unzipped_path)
-        # zip_ref.close()
         destination_path = f"{safe_directory}{os.sep}{product_name}"
         log.info(f"Downloaded file destination path: {destination_path}")
-        # if not os.path.exists(destination_path):
-        #     os.mkdir(destination_path)
-        # shutil.copyfile(src=temporary_path, dst=destination_path)
 
         downloaded_file_size = os.path.getsize(temporary_path)
         log.info(f"Downloaded file size: {downloaded_file_size} bytes")
@@ -757,28 +618,12 @@ def download_dataspace_product(product_uuid: str,
 
         log.info(f"Unpacked Archive Path: {unzipped_path}")
 
-        # downloaded_file_size = os.path.getsize(unzipped_path)
-        # log.info(f"Downloaded unzipped file size: {downloaded_file_size} bytes")
-        # min_file_size = 2000  # in bytes
-        # if (downloaded_file_size < min_file_size):
-        #     log.info(f'  Downloaded unzipped file too small, contents are:')
-        #     file_dnld = open(unzipped_path, 'r')
-        #     log.info(file_dnld.readline())
-        #     file_dnld.close()
-
-        # no need to remove unzipped path because it is within temp_dir
-
         # # restructure paths
         within_folder_path = glob.glob(os.path.join(unzipped_path, "*"))
         log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
 
-        # destination_path = f"{safe_directory}/{product_name}"
         log.info("    moving directory...")
         shutil.move(src=within_folder_path[0], dst=destination_path)
-
-        # Debug code
-        # print("Exiting program to preserve temp_dir for checking contents...")
-        # sys.exit(1)
 
     return
 
@@ -793,20 +638,18 @@ def filter_unique_dataspace_products(l1c_products: pd.DataFrame,
     Parameters
     ----------
     l1c_products : pd.DataFrame
-        _description_
+        Pandas DataFrame containing a list of L1C products.
     l2a_products : pd.DataFrame
-        _description_
+        Pandas DataFrame containing a list of L2A products.
     log : logging.Logger
-        _description_
+        logging object.
 
     Returns
     -------
-    pd.DataFrame
-        _description_
-
+    unique_l1c_products: pd.DataFrame
+        A Pandas DataFrame of L1C products that do not have counterpart L2A products.
     """
-    # log.info(f"Before filtering, L1C products  : {l1c_products['title']}")
-    # log.info(f"Before filtering, L2A products  : {l2a_products['title']}")
+
     log.info(f"Before filtering, {len(l1c_products)} L1C and {len(l2a_products)} L2A")
     for rows in l1c_products.itertuples():
         log.info(f"L1C : {rows.title}")
@@ -823,12 +666,9 @@ def filter_unique_dataspace_products(l1c_products: pd.DataFrame,
     # Remove the indicator column
     unique_l1c_products = unique_l1c_products.drop('_merge', axis=1)
     # remove the suffix _x
-    #unique_l1c_products = unique_l1c_products.rename(columns={"title_x": "title"})
     unique_l1c_products.columns = [col.replace('_x', '') for col in unique_l1c_products.columns]
 
     # Output the missing l1c_products
-    # log.info(f"After filtering, L1C products  : {unique_l1c_products}")
-    # log.info(f"After filtering, L2A products  : {l2a_products['title']}")
     log.info(f"After filtering, {len(unique_l1c_products)} L1C and {len(l2a_products)} L2A")
     for rows in unique_l1c_products.itertuples():
         log.info(f"Unique L1C : {rows.title}")
@@ -838,8 +678,6 @@ def filter_unique_dataspace_products(l1c_products: pd.DataFrame,
     return unique_l1c_products
 
 
-# I.R.
-# def _rest_query(user, passwd, footprint_wkt, start_date, end_date, cloud=100, start_row=0, filename=None):
 def _rest_query(
     user,
     passwd,
@@ -1052,27 +890,29 @@ def sent2_query(
     filename=None,
 ):
     """
+    This function:
+    
     Fetches a list of Sentinel-2 products
 
     Parameters
     -----------
 
-    user : string
+    user : str
         Username for ESA hub. Register at https://scihub.copernicus.eu/dhus/#/home
 
-    passwd : string
+    passwd : str
         password for the ESA Open Access hub
 
-    geojsonfile : string
+    geojsonfile : str
         Path to a geojson file containing a polygon of the outline of the area you wish to download.
         See www.geojson.io for a tool to build these.
         If no geojson file is provided, a tile_id is required. In that case, aoi_path should point
         to the root directory for the processing run in which all subdirectories will be created.
 
-    start_date : string
+    start_date : str
         Date of beginning of search in the format YYYY-MM-DDThh:mm:ssZ (ISO standard)
 
-    end_date : string
+    end_date : str
         Date of end of search in the format yyyy-mm-ddThh:mm:ssZ
         See https://www.w3.org/TR/NOTE-datetime, or use check_for_s2_data_by_date
 
@@ -1092,7 +932,6 @@ def sent2_query(
     filename : str
         file name pattern to be used in the query
 
-
     Returns
     -------
     products : dict
@@ -1101,8 +940,7 @@ def sent2_query(
 
     Notes
     -----
-    If you get a 'request too long' error, it is likely that your polygon is too complex. The following functions
-    download by granule; there is no need to have a precise polygon at this stage.
+    If you get a 'request too long' error, it is likely that your polygon is too complex. The following functions download by granule; there is no need to have a precise polygon at this stage.
 
     """
     with TemporaryDirectory(dir=os.path.expanduser('~')) as td:

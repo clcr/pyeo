@@ -33,7 +33,7 @@
           
           <a href="index.html" class="icon icon-home">
             pyeo
-              <img src="_static/pyeologo.png" class="logo" alt="Logo"/>
+              <img src="_static/pyeo_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -45,13 +45,11 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="acd_national.html">ACD National</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">Classification</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Coordinate Manipulation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyeo-1-coordinate-manipulation">pyeo.coordinate_manipulation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#key-functions">Key functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#function-reference">Function reference</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#function-reference">Function reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.coordinate_manipulation.align_bounds_to_whole_number"><code class="docutils literal notranslate"><span class="pre">align_bounds_to_whole_number()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.coordinate_manipulation.check_overlap"><code class="docutils literal notranslate"><span class="pre">check_overlap()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.coordinate_manipulation.floor_to_resolution"><code class="docutils literal notranslate"><span class="pre">floor_to_resolution()</span></code></a></li>
@@ -110,8 +108,6 @@
              
   <section id="module-pyeo.coordinate_manipulation">
 <span id="coordinate-manipulation"></span><h1>Coordinate Manipulation<a class="headerlink" href="#module-pyeo.coordinate_manipulation" title="Permalink to this heading"></a></h1>
-<section id="pyeo-1-coordinate-manipulation">
-<h2>pyeo.coordinate_manipulation<a class="headerlink" href="#pyeo-1-coordinate-manipulation" title="Permalink to this heading"></a></h2>
 <p>Contains a set of functions for transforming spatial coordinates between projections and pixel indicies.</p>
 <p>Unless otherwise stated, all functions assume that any geometry, rasters and shapefiles are using the same projection.
 If they are not, there may be unexpected errors.</p>
@@ -122,12 +118,11 @@ processing, a <code class="docutils literal notranslate"><span class="pre">gdal.
 a well-known text (wkt) string using the  snippet <code class="docutils literal notranslate"><span class="pre">object=ogr.ImportFromWkt(&quot;mywkt&quot;)</span></code>. For more information on wkt, see
 <a class="reference external" href="https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry">https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry</a> and the “QuickWKT” QGIS plugin.</p>
 <section id="key-functions">
-<h3>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h3>
+<h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h2>
 <p><a class="reference internal" href="#pyeo.coordinate_manipulation.pixel_bounds_from_polygon" title="pyeo.coordinate_manipulation.pixel_bounds_from_polygon"><code class="xref py py-func docutils literal notranslate"><span class="pre">pixel_bounds_from_polygon()</span></code></a> Gets the indicies of the bounding box of a polygon within a raster</p>
 </section>
 <section id="function-reference">
-<h3>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this heading"></a></h3>
-</section>
+<h2>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this heading"></a></h2>
 </section>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.coordinate_manipulation.align_bounds_to_whole_number">

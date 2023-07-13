@@ -1,5 +1,5 @@
 """
-simple_s2_change_detection
+Simple S2 Change Detection
 --------------------------
 A change detection script that downloads, stacks and classifies a set of 10m sentinel 2 images.
 

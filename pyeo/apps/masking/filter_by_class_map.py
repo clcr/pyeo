@@ -1,5 +1,5 @@
 """
-filter_by_class_map
+Filter By Class Map
 -------------------
 Filters every pixel in input_image that is not one of filter_classes.
 

@@ -1,18 +1,16 @@
 """
-pyeo.raster_manipulation
-==========================
 Functions for working with raster data, including masks and platform-specific processing functions.
 
 Key functions
 -------------
 
-:py:func:`create_matching_dataset` Creates an empty raster of the same shape as a source, ready for writing.
+:py:func:`create_matching_dataset`  : Creates an empty raster of the same shape as a source, ready for writing.
 
-:py:func:`stack_images` Stacks a list of rasters into a single raster.
+:py:func:`stack_images`  : Stacks a list of rasters into a single raster.
 
-:py:func:`n2_images` Preprocesses a set of of Sentinel-2 images into single raster files.
+:py:func:`n2_images`  : Preprocesses a set of of Sentinel-2 images into single raster files.
 
-:py:func:`clip_raster` Clips a raster to a shapefile
+:py:func:`clip_raster`  : Clips a raster to a shapefile
 
 Rasters
 -------
@@ -186,7 +184,11 @@ faulthandler.enable()
 
 
 def create_matching_dataset(
-    in_dataset, out_path, format="GTiff", bands=1, datatype=None
+    in_dataset: gdal.Dataset,
+    out_path: str,
+    format: str = "GTiff",
+    bands: int =1,
+    datatype=None
 ):
     """
     Creates an empty gdal dataset with the same dimensions, projection and geotransform as in_dataset.
@@ -2922,8 +2924,8 @@ def apply_scl_cloud_mask(
 
 # Added I.R. 20220607 START
 def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
-    in_tif_directory,
-    out_tif_directory,
+    in_tif_directory: str,
+    out_tif_directory: str,
     bands_to_offset_labels=("B02", "B03", "B04", "B08"),
     bands_to_offset_index=[0, 1, 2, 3],
     BOA_ADD_OFFSET=-1000,
@@ -2940,13 +2942,13 @@ def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
         Path to the input (and output) directory of tif raster files
     out_tif_directory : str
         Path to the output directory of tif raster files
-    bands_to_offset_labels : list of string
+    bands_to_offset_labels : list[str]
         List of bands to offset
-    bands_to_offset_index : list of int
+    bands_to_offset_index : list[int]
         List of indices of bands to offset within the tif image
     BOA_ADD_OFFSET : int
         Required offset per band (from xml information within L2A SAFE file directory)
-    backup_flag : True/False
+    backup_flag : bool, optional
         If True leaves unoffset images with .backup extension in tif_directory
 
     Returns
@@ -2954,20 +2956,16 @@ def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
     out_tif_directory : str
         The path to the output directory
 
-    ToDo:
-    -------
-    # Check out_tif_directory directory exists and report an error or create it
-    # Force generated dtype to uint16 to save time and storage? Compatible with classifier?
-    # Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
-    # Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
-    # Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
-    # Work out why offset files are larger (2GB from ~1GB)
+    .. todo ::
+        Check out_tif_directory directory exists and report an error or create it
+        Force generated dtype to uint16 to save time and storage? Compatible with classifier?
+        Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
+        Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
+        Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
+        Work out why offset files are larger (2GB from ~1GB)
 
     """
     print(
-        f"apply_processing_baseline_0400_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}"
-    )
-    log.info(
         f"apply_processing_baseline_0400_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}"
     )
 

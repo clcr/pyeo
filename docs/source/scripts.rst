@@ -1,8 +1,12 @@
 Applications
 ============
 
+This section lists some example applications of PyEO using the ready made scripts below.
+
 The following scripts can all be run from the :code:`pyeo/bin` folder after installation, or from their subfolders in
 :code:`pyeo/apps`.
+
+.. automodule:: pyeo.run_acd_national
 
 .. automodule:: pyeo.apps.change_detection.image_comparison
 

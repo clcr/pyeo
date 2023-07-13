@@ -33,7 +33,7 @@
           
           <a href="index.html" class="icon icon-home">
             pyeo
-              <img src="_static/pyeologo.png" class="logo" alt="Logo"/>
+              <img src="_static/pyeo_logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -45,18 +45,16 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="acd_national.html">ACD National</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classification.html">Classification</a></li>
 <li class="toctree-l1"><a class="reference internal" href="coordinate_manipulation.html">Coordinate Manipulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="filesystem_utilities.html">Filesystem Utilities</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Queries and Downloads</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyeo-1-queries-and-downloads">pyeo.queries_and_downloads</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#key-functions">Key functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#safe-files">SAFE files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#query-data-structure">Query data structure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#data-download-sources">Data download sources</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#key-functions">Key functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#safe-files">SAFE files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#query-data-structure">Query data structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-download-sources">Data download sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.queries_and_downloads.build_dataspace_request_string"><code class="docutils literal notranslate"><span class="pre">build_dataspace_request_string()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date"><code class="docutils literal notranslate"><span class="pre">check_for_s2_data_by_date()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyeo.queries_and_downloads.download_dataspace_product"><code class="docutils literal notranslate"><span class="pre">download_dataspace_product()</span></code></a></li>
@@ -121,17 +119,15 @@
              
   <section id="module-pyeo.queries_and_downloads">
 <span id="queries-and-downloads"></span><h1>Queries and Downloads<a class="headerlink" href="#module-pyeo.queries_and_downloads" title="Permalink to this heading"></a></h1>
-<section id="pyeo-1-queries-and-downloads">
-<h2>pyeo.queries_and_downloads<a class="headerlink" href="#pyeo-1-queries-and-downloads" title="Permalink to this heading"></a></h2>
 <p>Functions for querying, filtering and downloading data.</p>
 <section id="key-functions">
-<h3>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h3>
+<h2>Key functions<a class="headerlink" href="#key-functions" title="Permalink to this heading"></a></h2>
 <p><a class="reference internal" href="#pyeo.queries_and_downloads.check_for_s2_data_by_date" title="pyeo.queries_and_downloads.check_for_s2_data_by_date"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_for_s2_data_by_date()</span></code></a> Queries the Sentinel 2 archive for products between two dates
 <a class="reference internal" href="#pyeo.queries_and_downloads.download_s2_data" title="pyeo.queries_and_downloads.download_s2_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_s2_data()</span></code></a> Downloads Sentinel 2 data from Scihub by default
 <a class="reference internal" href="#pyeo.queries_and_downloads.query_dataspace_by_polygon" title="pyeo.queries_and_downloads.query_dataspace_by_polygon"><code class="xref py py-func docutils literal notranslate"><span class="pre">query_dataspace_by_polygon()</span></code></a> Queries the New Copernicus Dataspace API for products between two dates, that conform to the Area of Interest and maximum cloud cover supplied.</p>
 </section>
 <section id="safe-files">
-<h3>SAFE files<a class="headerlink" href="#safe-files" title="Permalink to this heading"></a></h3>
+<h2>SAFE files<a class="headerlink" href="#safe-files" title="Permalink to this heading"></a></h2>
 <p>Sentinel 2 data is downloaded in the form of a .SAFE file; all download functions will end with data in this structure.
 This is a directory structure that contains the imagery, metadata and supplementary data of a Sentinel 2 image. The
 rasters themeselves are the in the GRANULE/[granule_id]/IMG_DATA/[resolution]/ folder; each band is contained in
@@ -143,12 +139,12 @@ of an product, split by the underscore character. For more information on the st
 see (EXAMPLE HERE)</p>
 </section>
 <section id="query-data-structure">
-<h3>Query data structure<a class="headerlink" href="#query-data-structure" title="Permalink to this heading"></a></h3>
+<h2>Query data structure<a class="headerlink" href="#query-data-structure" title="Permalink to this heading"></a></h2>
 <p>All query functions return a dictionary. The key of the dictionary is the UUID of the product id; the product is
 a further set of nested dictionaries containing information about the product to be downloaded. (PUT STRUCTURE HERE)</p>
 </section>
 <section id="data-download-sources">
-<h3>Data download sources<a class="headerlink" href="#data-download-sources" title="Permalink to this heading"></a></h3>
+<h2>Data download sources<a class="headerlink" href="#data-download-sources" title="Permalink to this heading"></a></h2>
 <p>This library presently offers three options for download sources; Scihub and Amazon Web Services, for Sentinel, and
 USGS, for Landsat. If in doubt, use Scihub.</p>
 <ul>
@@ -178,8 +174,7 @@ downloads for the AWS bucket.</p>
 </ul>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
-</section>
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
 </section>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyeo.queries_and_downloads.build_dataspace_request_string">

@@ -1,6 +1,4 @@
 """
-pyeo.validation
-=================
 A function for producing sufficient sample points for validation to a specified confidence using
 the method detailed in Olafsson et al [1]_. You provide a configuration file containing expected user accuracy for each
 class, a minimum number of samples for any class that is sparse and a target standard error value.

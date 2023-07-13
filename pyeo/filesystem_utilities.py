@@ -1,6 +1,4 @@
 """
-pyeo.filesystem_utilities
-===========================
 Contains functions for sorting, creating and comparing images as part of the filesystem. Includes any function
 that works on a generic pyeo timestamp and sentinel 2 functions.
 

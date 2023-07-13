@@ -45,7 +45,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
-    'sphinx.ext.githubpages',
+    'sphinx.ext.githubpages'
 ]
 source_parsers = {
     '.md': CommonMarkParser
@@ -107,7 +107,7 @@ html_theme = 'sphinx_rtd_theme'
 # html_sidebars = {}
 
 # The logo
-html_logo = r"../../pyeo/assets/pyeologo.png"
+html_logo = r"../../pyeo/assets/pyeo_logo.png"
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
