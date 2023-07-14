@@ -11,7 +11,7 @@ including downloading, preprocessing, creation of baseline composites, classific
 
 Full documentation of the functions provided are available at https://clcr.github.io/pyeo/build/html/index.html
 
-Additionally, users on the cloud-processing platform, [SEPAL](https://sepal.io), can follow the [PyEO sepal user guide](./sepal_guide/SEPAL_User_Guide_Pyeo_Forest_Alert_System.pdf): 
+Additionally, users on the cloud-processing platform, [SEPAL](https://sepal.io), can follow the [PyEO sepal user guide](./sepal_guide/SEPAL_User_Guide_PyEO_Forest_Alert_System.pdf): 
 
 Example notebooks are available at:
 - SEPAL specific notebooks
