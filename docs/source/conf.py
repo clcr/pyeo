@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..','..','..')))
 
 # -- Project information -----------------------------------------------------
 
-project = 'pyeo'
+project = 'Pyeo'
 copyright = '2023, John Roberts, Ivan Reading, Matthew Payne, Heiko Balzter'
 author = 'John Roberts, Ivan Reading, Matthew Payne, Heiko Balzter'
 
@@ -114,7 +114,7 @@ html_logo = r"../../pyeo/assets/pyeo_logo.png"
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pyeodoc'
+htmlhelp_basename = 'Pyeodoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
