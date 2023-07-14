@@ -21,14 +21,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..','..','..')))
 
 # -- Project information -----------------------------------------------------
 
-project = 'pyeo'
-copyright = '2023, Ivan Reading, Matthew Payne, John Roberts, Heiko Balzter'
-author = 'Ivan Reading, Matthew Payne, John Roberts, Heiko Balzter'
+project = 'Pyeo'
+copyright = '2023, John Roberts, Ivan Reading, Matthew Payne, Heiko Balzter'
+author = 'John Roberts, Ivan Reading, Matthew Payne, Heiko Balzter'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.9'
+release = '1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -94,7 +94,9 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['static']
+# html_static_path = ['../build/html/_static']
+html_static_path = []
+# html_baseurl = 'https://clcr.github.io/pyeo/'
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -112,7 +114,7 @@ html_logo = r"../../pyeo/assets/pyeo_logo.png"
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pyeodoc'
+htmlhelp_basename = 'Pyeodoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
