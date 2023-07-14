@@ -23,7 +23,7 @@ Example notebooks are available at:
 
 ## Requirements
 Python library requirements are categorised by Platform (Operating System - OS). For use in the Cloud Processing platform SEPAL - pyeo is already installed in a virtual environment. <!-- This is in anticipation of pyeo SEPAL-wide venv being created -->
-SEPAL is a cloud computing platform for geospatial data which offers remote Linux Instances that are customised for performing geospatial analysis in R or Python. More information can be found here: https://github.com/openforis/sepal <br>. 
+SEPAL is a cloud computing platform for geospatial data which offers remote Linux Instances that are customised for performing geospatial analysis in R or Python. More information can be found here: https://github.com/openforis/sepal <br> 
 
 Package management is performed by Conda, for instructions on how to install Conda, please refer to: https://docs.conda.io/en/latest/.  
 *Note: Conda can be installed as part of Anaconda https://www.anaconda.com/*  
