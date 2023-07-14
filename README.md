@@ -9,11 +9,17 @@
 PyEO is designed to provide a set of portable, extensible and modular Python scripts for machine learning in earth observation and GIS,
 including downloading, preprocessing, creation of baseline composites, classification and validation.
 
-Full documentation is available at https://clcr.github.io/pyeo/build/html/index.html
+Full documentation of the functions provided are available at https://clcr.github.io/pyeo/build/html/index.html
+
+Additionally, users on the cloud-processing platform, [SEPAL](https://sepal.io), can follow the [PyEO sepal user guide](./sepal_guide/SEPAL_User_Guide_PyEO_Forest_Alert_System.pdf): 
 
 Example notebooks are available at:
-- https://github.com/clcr/pyeo/tree/main/notebooks
-- https://github.com/clcr/pyeo_training_materials
+- SEPAL specific notebooks
+  - [Orientation to SEPAL](./notebooks/PyEO_sepal_orientation.ipynb)
+  - [Training a PyEO ML Model on SEPAL](./notebooks/PyEO_sepal_model_training.ipynb)
+  - [Running PyEO deforestation monitoring on SEPAL](./notebooks/PyEO_sepal_pipeline_training.ipynb)
+- PyEO Local Materials
+  - https://github.com/clcr/pyeo_training_materials
 
 ## Requirements
 Python library requirements are categorised by Platform (Operating System - OS). For use in the Cloud Processing platform SEPAL - pyeo is already installed in a virtual environment. <!-- This is in anticipation of pyeo SEPAL-wide venv being created -->

@@ -1,4 +1,4 @@
-name: pyeo_env_pcwe
+name: pyeo_env
 channels:
   - defaults
 dependencies:
