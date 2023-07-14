@@ -15,11 +15,9 @@ Additionally, users on the cloud-processing platform, [SEPAL](https://sepal.io),
 
 Example notebooks are available at:
 - SEPAL specific notebooks
-  - [Orientation to SEPAL](./notebooks/PyEO_sepal_orientation.ipynb)
+  - [SEPAL Orientation](./notebooks/PyEO_sepal_orientation.ipynb)
   - [Training a PyEO ML Model on SEPAL](./notebooks/PyEO_sepal_model_training.ipynb)
   - [Running PyEO deforestation monitoring on SEPAL](./notebooks/PyEO_sepal_pipeline_training.ipynb)
-- PyEO Local Materials
-  - https://github.com/clcr/pyeo_training_materials
 
 ## Requirements
 Python library requirements are categorised by Platform (Operating System - OS). For use in the Cloud Processing platform SEPAL - pyeo is already installed in a virtual environment. <!-- This is in anticipation of pyeo SEPAL-wide venv being created -->
@@ -87,8 +85,7 @@ pass=replace_this_with_your_password
 
 Where `user` and `pass` under `[sent_2]` correspond to your `scihub` account details, and `user` and `pass` under `[dataspace]` correspond to your `dataspace` account details. <br>
 
-To process Sentinel-2 L1Cs, you will also need Sen2Cor installed: http://step.esa.int/main/third-party-plugins-2/sen2cor/. This installation process is covered in the PyEO_I_Setup.ipynb notebook, available from the notebooks folder.  
-<br>
+To process Sentinel-2 L1Cs, you will also need Sen2Cor installed: http://step.esa.int/main/third-party-plugins-2/sen2cor/.
 
 <!-- ## Installation on SEPAL
 
@@ -163,7 +160,9 @@ export PATH=$PATH:$pyeo/bin
 
 ## Installation Test Steps
 
-You can test your installation with by typing the following in Bash/Terminal/Anaconda Prompt:
+To learn about how to install PyEO, the easiest way is to apply for a free account on [SEPAL](https://sepal.io), and to follow the SEPAL tutorial notebooks indicated at the top of this file.
+
+You can test your installation by typing the following in Bash/Terminal/Anaconda Prompt:
 ```bash
 python
 ```
@@ -181,81 +180,18 @@ jupyter notebook
 <br>  
 
 ## How PyEO works
-PyEO operates across two stages:  
-1. Across Sentinel-2 (S2) tiles
-2. Within individual S2 tiles
-<br>  
+As a broad overview, PyEO implements the following steps:
 
-
-1. Takes a Region of Interest (ROI) and calculates which Sentinel-2 (S2) tiles overlap with the ROI
+1. Takes a Region of Interest (ROI) and calculates which Sentinel-2 (S2) tiles overlap with the ROI.
 2. Builds a Baseline Composite to compare land cover changes against, by downloading S2 images and calculating the median of these images.
-3. Downloads images over the Change Period
-4. Classifies the Composite and the Change images using a classifier in `./models/`
-5. Calculates the change between the **from classes** and the **to classes**, for each classified image. This could be changes from forest to bare soil.
-6. Creates a Change Report describing the consistency of the class changes, highlighting the changes that `PyEO` is confident.
-7. Vectorises the Change Report and removes any changes outside of the ROI
+3. Downloads Change Images over the Change Period to be monitored.
+4. Classifies the Composite and the Change Images using a Random Forest Classifier.
+5. Calculates the Class Changes between sets of **from classes** and **to classes**, for each classified image. For example, this could be changes **from** forest **to** bare soil.
+6. Creates a Change Report describing the consistency of the Class Changes.
+7. Vectorises the Change Report and filters out any Class Changes outside of the ROI.
 
-## How to Run PyEO
-PyEO can be run interactively in the Jupyter Notebooks provided in the Tutorials, but the pipeline method can be run via the **Terminal**.  This process is automated and is suited to the advanced python user. <br> 
-Both the terminal and notebook methods rely on an a configuration file (e.g. `pyeo_linux.ini`, `pyeo_windows.ini`, `pyeo_sepal.ini`) to make processing decisions.  <br>
-The below example references `pyeo_sepal.ini`, but this can be switched for the Linux or Windows equivalent. <br>
-<!-- add ini file examples here -->
-
-1. First, move to where PyEO is installed:
-```bash
-cd pyeo
-```
-2. Now, the pipeline method runs like this. Here we are telling the terminal that we want to invoke `python` to run the script `run_acd_national.py` within the folder `pyeo`, then we pass the absolute path to the initialisation file for your OS. The script `run_acd_national.py` requires this path as all the processing parameters are stored in the initialisation file. See below:
-```bash
-python pyeo/run_acd_national.py <insert_your_absolute_path_to>/pyeo_sepal.ini
-
-```
-
-The pipeline uses arguments specified in the `.ini` file (short for initialisation), to decide what processes to run.
-Here, we will go through the sections of the `ini` file and what arguments do what.
-
-```
-[forest_sentinel]
-# Acquisition dates for Images in the Change Period, in the form yyyymmdd
-start_date=20230101
-end_date=20230611
-
-# Acquisition dates for Images for the Baseline Composite, in the form yyyymmdd
-composite_start=20220101
-composite_end=20221231
-
-# EPSG code, for example - Kenya. This epsg is for areas North of equator and East of 36°E is EPSG:21097
-# See https://epsg.io/21097 and https://spatialreference.org/ref/epsg/21097/
-epsg=21097
-
-# Cloud cover threshold for imagery to download
-cloud_cover=25
-
-# Certainty value above which a pixel is considered a cloud from sen2cor
-cloud_certainty_threshold=0
-
-# path to the trained machine learning model for land cover in Kenya
-model= ./models/model_36MYE_Unoptimised_20230505_no_haze.pkl
-```
-
-## Automated Pipeline Execution
-To enable parallel processing of the raster and vector processing pipelines with the `do_parallel = True` option enabled in `pyeo_sepal.ini`, make the following file an executable by issuing this command:
-```bash
-cd pyeo/apps/automation/
-chmod u+x automate_launch.sh
-```
-<br>  
-
-<!-- ## Further Setup Information
-A slightly more verbose setup tutorial for `pyeo` can be found in the notebooks directory, at PyEO_I_Setup_on_SEPAL.ipynb
-<br>  -->
-
-## Tutorials
-Once installation of `pyeo` is complete, you can follow the tutorial notebooks, which demonstrate the utility of `pyeo`.
-
-How to Train Your Classifier: https://github.com/clcr/pyeo/blob/main/notebooks/PyEO_I_Model_Training.ipynb
-
-Downloading Sentinel-2 Imagery, Creating a Baseline Composite, Performing Automatic Change Detection: https://github.com/clcr/pyeo/blob/main/notebooks/PyEO_I_Master_Tutorials.ipynb
+## How to Run PyEO as an Automated Pipeline
+More information on how to run PyEO as a pipeline from the command line can be found in the [SEPAL User Guide](./sepal_guide/SEPAL_User_Guide_PyEO_Forest_Alert_System.pdf).
 
 ## How to cite this software
 
