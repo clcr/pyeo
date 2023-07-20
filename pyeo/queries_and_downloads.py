@@ -108,7 +108,7 @@ from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
                                          check_for_invalid_l2_data,
                                          get_sen_2_image_tile)
 from requests import Request
-from sentinelhub.aws import download_safe_format
+from sentinelhub.data_request import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 log = logging.getLogger("pyeo")
@@ -325,7 +325,8 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
     """
         
     for counter, product in enumerate(product_df.itertuples(index=False)):
-        log.info(f"    Checking {counter+1} of {len(product_df)} : {product.title}")        # if L1C have been passed, download to the l1c_directory
+        log.info(f"    Checking {counter+1} of {len(product_df)} : {product.title}")
+        # if L1C have been passed, download to the l1c_directory
         if product.processinglevel == "Level-1C":
 
             out_path = os.path.join(l1c_directory, product.title)

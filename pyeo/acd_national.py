@@ -196,6 +196,10 @@ def acd_initialisation(config_path):
     # changes directory to pyeo_dir, enabling the use of relative paths from the config file
     os.chdir(config_dict["pyeo_dir"])
 
+    # check that log directory exists and create if not
+    if not os.path.exists(config_dict["log_dir"]):
+        os.makedirs(config_dict["log_dir"])
+
     # initialise log file
     log = filesystem_utilities.init_log_acd(
         log_path=os.path.join(config_dict["log_dir"], config_dict["log_filename"]),
