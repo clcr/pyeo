@@ -55,7 +55,7 @@ dependencies:
   - freetype=2.11.0=h70c0345_0
   - freexl=1.0.6=h27cfd23_0
   - fsspec=2022.2.0=pyhd3eb1b0_0
-  - gdal=3.4.1=py310h8f0303e_0
+  - gdal=3.4.3=py310h8f0303e_0
   - geos=3.8.0=he6710b0_0
   - geotiff=1.7.0=hd69d5b1_0
   - giflib=5.2.1=h7b6447c_0
