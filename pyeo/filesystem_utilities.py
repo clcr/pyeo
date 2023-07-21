@@ -633,7 +633,7 @@ def get_raster_paths(paths, filepatterns, dirpattern):
     return results
 
 
-def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
+def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m", bands = ["B08", "B04", "B03", "B02"]):
     """
     Checks the existence of the specified resolution of imagery. Returns a True-value with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
@@ -644,6 +644,8 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
         Path to the L2A file to check
     resolution : {"10m", "20m", "60m"}
         The resolution of imagery to check. Defaults to 10m.
+    bands : list of strings
+        Indicating the band file name components to include in the check, e.g. ["B08", "B04"].
 
     Returns
     -------
@@ -662,7 +664,6 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
         return 2
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
 
-    bands = ["B08", "B04", "B03", "B02"]
     nb = 0
     for band in bands:
         f = get_filenames(l2_SAFE_file, band, "")
@@ -682,7 +683,7 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
         return 1
     else:
         log.warning("Not all necessary bands have been found in the SAFE directory")
-        log.warning("n bands = {}".format(nb))
+        log.warning("Found {} bands when expecting to find {}".format(nb, len(bands)))
         return 0
 
     """

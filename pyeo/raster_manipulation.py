@@ -3607,6 +3607,8 @@ def apply_sen2cor(
         Path to the l2a_process script (Linux) or l2a_process.exe (Windows)
     delete_unprocessed_image : bool, optional
         If True, delete the unprocessed image after processing is done. Defaults to False.
+	log : logger object
+		Will be used for output logging
 
     Returns
     -------
@@ -3627,7 +3629,8 @@ def apply_sen2cor(
     timestamp = now_time.strftime(r"%Y%m%dT%H%M%S")
     version = get_sen2cor_version(sen2cor_path)
     out_path = build_sen2cor_output_path(image_path, timestamp, version)
-    # The application of sen2cor below with the option --GIP_L2A caused an unspecified metadata error in the xml file.
+
+    # The application of sen2cor with the option --GIP_L2A caused an unspecified metadata error in the xml file.
     # Removing it resolves this problem.
 
     # I.R. 20220509
@@ -3639,18 +3642,6 @@ def apply_sen2cor(
         stderr=subprocess.PIPE,
         universal_newlines=True,
     )
-
-    # log.info("#I.R. 20220509 Removed explicit setting of --output_dir: calling sen2cor:")
-    # log.info(sen2cor_path + " " + image_path)
-    # sen2cor_proc = subprocess.Popen([sen2cor_path, image_path],
-    # stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    # universal_newlines=True)
-
-    # log.info(sen2cor_path + " " + image_path + " --output_dir " + os.path.dirname(image_path) + " --GIP_L2A " + gipp_path)
-    # sen2cor_proc = subprocess.Popen([sen2cor_path, image_path, '--output_dir', os.path.dirname(image_path),
-    #                                 '--GIP_L2A', gipp_path],
-    #                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    #                                universal_newlines=True)
 
     while True:
         nextline = sen2cor_proc.stdout.readline()
@@ -3700,12 +3691,15 @@ def build_sen2cor_output_path(image_path, timestamp, version):
         out_path = out_path.rpartition("_")[0] + "_" + timestamp + ".SAFE"
     else:
         out_path = image_path.replace("MSIL1C", "MSIL2A")
-    
-    # I.R. Modification to use home directory to store temporary sen2cor output 
-    # - required to avoid errors due to path length exceeding maximum allowed under Windows
-    # - note sen2cor fails if given a relative path
-    user_home_path = os.path.expanduser('~')
-    out_path = os.path.join(user_home_path, os.path.basename(out_path))
+
+    if sys.platform.startswith("win"):
+		# I.R. Modification to use home directory to store temporary sen2cor output 
+		# - required to avoid errors due to path length exceeding maximum allowed under Windows
+		# - note sen2cor fails if given a relative path
+		# H.B. Modification to not use home directory to store temporary sen2cor output 
+		# - required to avoid errors due to invalid cross-device link in path on the HPC
+        user_home_path = os.path.expanduser('~')
+        out_path = os.path.join(user_home_path, os.path.basename(out_path))
 
     return out_path
 
@@ -3768,7 +3762,8 @@ def atmospheric_correction(
     delete_unprocessed_image : bool, optional
         If True, delete the unprocessed image after processing is done. Defaults to False.
     log : optional
-        if a logger object is provided, `atmospheric_correction` will pass statements to that logger, otherwise the default namespace logger is used.
+        if a logger object is provided, `atmospheric_correction` will pass statements to 
+			that logger, otherwise the default namespace logger is used.
     """
 
     # log = logging.getLogger(__name__)
@@ -3785,13 +3780,13 @@ def atmospheric_correction(
         # see https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/naming-convention
         image_timestamp = datetime.datetime.now().strftime(r"%Y%m%dT%H%M%S")
         # log.info("   sen2cor processing time stamp = " + image_timestamp)
-        log.info("   out_directory = " + out_directory)
+        # log.info("   out_directory = " + out_directory)
         out_name = build_sen2cor_output_path(image, image_timestamp, get_sen2cor_version(sen2cor_path))
-        log.info("   out name = " + out_name)
+        # log.info("   out name = " + out_name)
         out_path = os.path.join(out_directory, os.path.basename(out_name))
-        log.info("   out path = " + out_path)
+        # log.info("   out path = " + out_path)
         out_glob = out_path.rpartition("_")[0] + "*"
-        log.info("   out glob = " + out_glob)
+        # log.info("   out glob = " + out_glob)
         if glob.glob(out_glob):
             log.info("Skipping atmospheric correction of {}. Already done.".format(image))
             continue

@@ -452,7 +452,14 @@ def download_dataspace_product(product_uuid: str,
     if (len(file.content) <= min_file_size):
         log.info(f'  Downloaded file too small, length: {len(file.content)} bytes, contents: {file.content}')
 
-    with TemporaryDirectory(dir=os.path.expanduser('~')) as temp_dir:
+    # The following fix is needed on Windows to avoid errors because of long file names.
+    # But it causes a directory error on the Linux HPC because it resolves the user home directory wrongly.
+    if sys.platform.startswith("win"):
+        temp_dir_platform_specific = os.path.expanduser('~')
+    else:
+        temp_dir_platform_specific = os.path.split(safe_directory)[0]
+
+    with TemporaryDirectory(dir=temp_dir_platform_specific) as temp_dir:
         temporary_path = f"{temp_dir}{os.sep}{product_name}.zip"
         log.info(f"Downloaded file temporary_path: {temporary_path}")
 
@@ -821,7 +828,14 @@ def sent2_query(
     If you get a 'request too long' error, it is likely that your polygon is too complex. The following functions download by granule; there is no need to have a precise polygon at this stage.
 
     """
-    with TemporaryDirectory(dir=os.path.expanduser('~')) as td:
+	# The following fix is needed on Windows to avoid errors because of long file names.
+	# But it causes a directory error on the Linux HPC because it resolves the user home directory wrongly.
+    if sys.platform.startswith("win"):
+        temp_dir_platform_specific = os.path.expanduser('~')
+    else:
+        temp_dir_platform_specific = os.path.split(geojson_file)[0]
+
+    with TemporaryDirectory(dir=temp_dir_platform_specific) as td:
         # Preprocessing dates
         start_date = _date_to_timestamp(start_date)
         end_date = _date_to_timestamp(end_date)

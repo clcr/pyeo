@@ -898,7 +898,7 @@ def create_composite(config_path, tile_id):
 		'''
 		if config_dict["do_quicklooks"] or config_dict["do_all"]:
 			tile_log.info("---------------------------------------------------------------")
-			tile_log.info("Producing quicklooks.")
+			tile_log.info("Producing quicklook.")
 			tile_log.info("---------------------------------------------------------------")
 			dirs_for_quicklooks = [composite_dir]
 			for main_dir in dirs_for_quicklooks:
@@ -927,11 +927,12 @@ def create_composite(config_path, tile_id):
 							bands=[3, 2, 1],
 							scale_factors=[[0, 2000, 0, 255]],
 						)
-			tile_log.info("Quicklooks complete.")
+			tile_log.info("Quicklook complete.")
 
 		'''
 		Final Housekeeping
-		Now that we have created our composite and produced any quicklooks, we tell pyeo to delete or compress the cloud-masked L2A images that the composite was derived from.
+		Now that we have created our composite and produced any quicklooks, we tell pyeo 
+            to delete or compress the cloud-masked L2A images that the composite was derived from.
 		'''
 
 		if config_dict["do_quicklooks"] or config_dict["do_all"]:
