@@ -437,6 +437,49 @@ def config_path_to_config_dict(config_path: str):
     return config_dict
 
 
+def input_to_config_path(config_dict: str, config_path_out: str):
+    """
+
+    This function reads existing parameters from the path (pyeo.ini) and 
+    asks the user to confirm by pressing <ENTER> or changing the value.
+    The new config file will be saved as a new file.
+
+    Parameters
+    ----------
+
+    config_dict : dictionary
+        created from pyeo.ini and used as a template. Can be created with
+            config_path_to_config_dict(config_path)
+
+    config_path_out : str
+        path to the new .ini file that will be created
+
+    Returns
+    --------
+
+    config_path_out : str
+        path to the new .ini file
+
+    """
+
+    print("Editing a new config file.")
+
+    for item in config.dict:
+        user_input = input("{} = {}  --> <ENTER> to confirm / new value to change".format(\
+                            config.dict.keys(item), config.dict.values(item)))
+        if user_input == "":
+            pass
+        else:
+            config.dict[config.dict.keys(item)] = user_input
+
+    out_file = open(config_path_out,"w")
+    for item in config.dict:
+        out_file.write(config.dict.keys(item) + "=" + config.dict.values(item))
+    out_file.close
+
+    return config_path_out
+
+
 def create_file_structure(root: str):
     """
     Creates the folder structure used in rolling_s2_composite and some other functions: ::

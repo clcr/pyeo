@@ -117,6 +117,14 @@ def create_composite(config_path, tile_id):
 
 	# read the ini file contents into a dictionary
 	configparser.ConfigParser(allow_no_value=True)
+
+    # Allow the user to edit the config file
+	config_dict = config_path_to_config_dict(config_path)
+    config_path = filesystem_utilities.input_to_config_path(
+        config_dict,
+        config_path_out = "/data/clcr/shared/heiko/elgon/elgon_scratch_user_edited.ini"
+    )
+
 	config_dict, log = acd_initialisation(config_path)
 	acd_config_to_log(config_dict, log)
 
@@ -1023,6 +1031,7 @@ def create_composite(config_path, tile_id):
 
 
 if __name__ == "__main__":
+
 	# Reading in config file
 	parser = argparse.ArgumentParser(
 		description="Downloads and preprocesses Sentinel 2 images into median composites."
