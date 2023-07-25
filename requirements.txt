@@ -9,7 +9,7 @@ beautifulsoup4==4.12.2
 bleach==6.0.0
 boto3==1.26.151
 botocore==1.29.151
-certifi==2023.5.7
+certifi==2023.7.22
 cffi==1.15.1
 charset-normalizer==3.1.0
 click==8.1.3
