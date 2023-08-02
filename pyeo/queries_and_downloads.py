@@ -168,11 +168,14 @@ def query_dataspace_by_polygon(
     response = requests.get(request_string)
     if response.status_code == 200:
         response = response.json()["features"]
-        # log.info(json.dumps(response, indent=4))
-        # sys.exit(1)
         response_dataframe = pd.DataFrame.from_dict(response)
+        if response_dataframe.empty == True:
+            log.error("There were no products returned in the search query and the CDSE API is responding correctly. Expand the query start and end dates and/or increase cloud cover tolerance in the `ini`")
+            sys.exit(1)
+
         response_dataframe = pd.DataFrame.from_records(response_dataframe["properties"])
         return response_dataframe
+    
     elif response.status_code == 401:
         log.error("Dataspace returned a 401 HTTP Status Code")
         log.error("Which means that user credentials for the Copernicus Dataspace Ecosystem are incorrect.")
