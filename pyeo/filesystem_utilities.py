@@ -436,46 +436,100 @@ def config_path_to_config_dict(config_path: str):
 
     return config_dict
 
-
-def input_to_config_path(config_dict: str, config_path_out: str):
+def lines_that_contain(substr, fp):
     """
+    This function returns a list of all lines in file pointer fp 
+    that contain the string.
 
+    Args:
+
+        substr : sub-string to search for in the lines of the file
+        
+        fp : file pointer object to the opened file for reading
+        
+    Returns:
+        
+        List of strings containing the lines in which the sub-string was found
+
+    """
+    
+    return [line for line in fp if substr in line]
+
+def line_numbers_that_contain(substr, fp):
+    """
+    This function returns a list of all line numbers in file pointer fp 
+    that contain the string.
+
+    Args:
+
+        substr : sub-string to search for in the lines of the file
+        
+        fp : file pointer object to the opened file for reading
+        
+    Returns:
+        
+        List of integers containing the line numbers in which the sub-string was found
+
+    """
+    
+    return [numb for numb, line in enumerate(fp) if substr in line]
+
+def input_to_config_path(config_path_in: str, config_path_out: str):
+    """
     This function reads existing parameters from the path (pyeo.ini) and 
     asks the user to confirm by pressing <ENTER> or changing the value.
     The new config file will be saved as a new file.
 
-    Parameters
-    ----------
+    Args:
 
-    config_dict : dictionary
-        created from pyeo.ini and used as a template. Can be created with
-            config_path_to_config_dict(config_path)
+    config_path_in : str
+        path to the old .ini file that will be used for the default values
 
     config_path_out : str
-        path to the new .ini file that will be created
+        path to the new .ini file that will be created with user inputs
 
-    Returns
-    --------
+    Returns:
 
     config_path_out : str
         path to the new .ini file
 
     """
 
-    print("Editing a new config file.")
+    # copy old config file to new file location
+    shutil.copyfile(config_path_in, config_path_out)
+    print("Editing new config file: " + config_path_out)
 
-    for item in config.dict:
-        user_input = input("{} = {}  --> <ENTER> to confirm / new value to change".format(\
-                            config.dict.keys(item), config.dict.values(item)))
-        if user_input == "":
+    # read in config file contents into a dictionary
+    config_dict = config_path_to_config_dict(config_path_out)
+
+    # open the new output config file for read access    
+    out_file = open(config_path_out,"r")
+    #read the contents of the config file as a list of strings
+    config_lines = out_file.readlines()
+    out_file.close()
+
+    # open the new output config file for write access    
+    out_file = open(config_path_out,"wt")
+
+    for key in config_dict:
+        user_input = input("{} = {}  --> <ENTER> to confirm / new value to change:".format(key, config_dict[key]))
+        if user_input == "" or user_input == ":q"  or user_input == "\n":
             pass
         else:
-            config.dict[config.dict.keys(item)] = user_input
+            line_number = line_numbers_that_contain(key, out_file)
+            if len(line_number) == 1:
+                line_number = line_number[0]
+            else:
+                log.warning("More than one line number matching the string found in config file.")
+                log.warning("Using the last one for key: " + key)
+                line_number = line_number[-1]
+            config_lines[line_number] = config_lines[line_number].replace(config_dict[key],
+                key+ " = " + user_input)
+            config_dict[key] = user_input
 
-    out_file = open(config_path_out,"w")
-    for item in config.dict:
-        out_file.write(config.dict.keys(item) + "=" + config.dict.values(item))
-    out_file.close
+    # write the new content to the output file
+    out_file.writelines(config_lines)
+    out_file.close()
 
     return config_path_out
 
