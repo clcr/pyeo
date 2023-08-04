@@ -108,7 +108,7 @@ from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
                                          check_for_invalid_l2_data,
                                          get_sen_2_image_tile)
 from requests import Request
-from sentinelhub.aws import download_safe_format
+from sentinelhub.data_request import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 log = logging.getLogger("pyeo")
@@ -325,7 +325,8 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
     """
         
     for counter, product in enumerate(product_df.itertuples(index=False)):
-        log.info(f"    Checking {counter+1} of {len(product_df)} : {product.title}")        # if L1C have been passed, download to the l1c_directory
+        log.info(f"    Checking {counter+1} of {len(product_df)} : {product.title}")
+        # if L1C have been passed, download to the l1c_directory
         if product.processinglevel == "Level-1C":
 
             out_path = os.path.join(l1c_directory, product.title)
@@ -451,7 +452,14 @@ def download_dataspace_product(product_uuid: str,
     if (len(file.content) <= min_file_size):
         log.info(f'  Downloaded file too small, length: {len(file.content)} bytes, contents: {file.content}')
 
-    with TemporaryDirectory(dir=os.path.expanduser('~')) as temp_dir:
+    # The following fix is needed on Windows to avoid errors because of long file names.
+    # But it causes a directory error on the Linux HPC because it resolves the user home directory wrongly.
+    if sys.platform.startswith("win"):
+        temp_dir_platform_specific = os.path.expanduser('~')
+    else:
+        temp_dir_platform_specific = os.path.split(safe_directory)[0]
+
+    with TemporaryDirectory(dir=temp_dir_platform_specific) as temp_dir:
         temporary_path = f"{temp_dir}{os.sep}{product_name}.zip"
         log.info(f"Downloaded file temporary_path: {temporary_path}")
 
@@ -460,26 +468,26 @@ def download_dataspace_product(product_uuid: str,
             download.write(file.content)
         unzipped_path = os.path.splitext(temporary_path)[0]
         destination_path = f"{safe_directory}{os.sep}{product_name}"
-        log.info(f"Downloaded file destination path: {destination_path}")
+        #log.info(f"Downloaded file destination path: {destination_path}")
 
         downloaded_file_size = os.path.getsize(temporary_path)
-        log.info(f"Downloaded file size: {downloaded_file_size} bytes")
+        #log.info(f"Downloaded file size: {downloaded_file_size} bytes")
         if (downloaded_file_size < min_file_size):
-            log.info(f'  Downloaded file too small, contents are:')
+            log.info('  Downloaded file too small, contents are:')
             file_dnld = open(temporary_path, 'r')
             log.info(file_dnld.readline())
             file_dnld.close()
 
-        log.info("    unpacking archive...")
+        #log.info("    unpacking archive...")
         shutil.unpack_archive(temporary_path, unzipped_path)
 
-        log.info(f"Unpacked Archive Path: {unzipped_path}")
+        #log.info(f"Unpacked Archive Path: {unzipped_path}")
 
         # # restructure paths
         within_folder_path = glob.glob(os.path.join(unzipped_path, "*"))
-        log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
+        #log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
 
-        log.info("    moving directory...")
+        log.info(f"    moving directory from {within_folder_path[0]} to {destination_path}")
         shutil.move(src=within_folder_path[0], dst=destination_path)
 
     return
@@ -820,7 +828,14 @@ def sent2_query(
     If you get a 'request too long' error, it is likely that your polygon is too complex. The following functions download by granule; there is no need to have a precise polygon at this stage.
 
     """
-    with TemporaryDirectory(dir=os.path.expanduser('~')) as td:
+	# The following fix is needed on Windows to avoid errors because of long file names.
+	# But it causes a directory error on the Linux HPC because it resolves the user home directory wrongly.
+    if sys.platform.startswith("win"):
+        temp_dir_platform_specific = os.path.expanduser('~')
+    else:
+        temp_dir_platform_specific = os.path.split(geojson_file)[0]
+
+    with TemporaryDirectory(dir=temp_dir_platform_specific) as td:
         # Preprocessing dates
         start_date = _date_to_timestamp(start_date)
         end_date = _date_to_timestamp(end_date)

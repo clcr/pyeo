@@ -436,6 +436,103 @@ def config_path_to_config_dict(config_path: str):
 
     return config_dict
 
+def lines_that_contain(substr, fp):
+    """
+    This function returns a list of all lines in file pointer fp 
+    that contain the string.
+
+    Args:
+
+        substr : sub-string to search for in the lines of the file
+        
+        fp : file pointer object to the opened file for reading
+        
+    Returns:
+        
+        List of strings containing the lines in which the sub-string was found
+
+    """
+    
+    return [line for line in fp if substr in line]
+
+def line_numbers_that_contain(substr, fp):
+    """
+    This function returns a list of all line numbers in file pointer fp 
+    that contain the string.
+
+    Args:
+
+        substr : sub-string to search for in the lines of the file
+        
+        fp : file pointer object to the opened file for reading
+        
+    Returns:
+        
+        List of integers containing the line numbers in which the sub-string was found
+
+    """
+    
+    return [numb for numb, line in enumerate(fp) if substr in line]
+
+def input_to_config_path(config_path_in: str, config_path_out: str):
+    """
+    This function reads existing parameters from the path (pyeo.ini) and 
+    asks the user to confirm by pressing <ENTER> or changing the value.
+    The new config file will be saved as a new file.
+
+    Args:
+
+    config_path_in : str
+        path to the old .ini file that will be used for the default values
+
+    config_path_out : str
+        path to the new .ini file that will be created with user inputs
+
+    Returns:
+
+    config_path_out : str
+        path to the new .ini file
+
+    """
+
+    # copy old config file to new file location
+    shutil.copyfile(config_path_in, config_path_out)
+    print("Editing new config file: " + config_path_out)
+
+    # read in config file contents into a dictionary
+    config_dict = config_path_to_config_dict(config_path_out)
+
+    # open the new output config file for read access    
+    out_file = open(config_path_out,"r")
+    #read the contents of the config file as a list of strings
+    config_lines = out_file.readlines()
+    out_file.close()
+
+    # open the new output config file for write access    
+    out_file = open(config_path_out,"wt")
+
+    for key in config_dict:
+        user_input = input("{} = {}  --> <ENTER> to confirm / new value to change:".format(key, config_dict[key]))
+        if user_input == "" or user_input == ":q"  or user_input == "\n":
+            pass
+        else:
+            line_number = line_numbers_that_contain(key, out_file)
+            if len(line_number) == 1:
+                line_number = line_number[0]
+            else:
+                log.warning("More than one line number matching the string found in config file.")
+                log.warning("Using the last one for key: " + key)
+                line_number = line_number[-1]
+            config_lines[line_number] = config_lines[line_number].replace(config_dict[key],
+                key+ " = " + user_input)
+            config_dict[key] = user_input
+
+    # write the new content to the output file
+    out_file.writelines(config_lines)
+    out_file.close()
+
+    return config_path_out
+
 
 def create_file_structure(root: str):
     """
@@ -633,7 +730,7 @@ def get_raster_paths(paths, filepatterns, dirpattern):
     return results
 
 
-def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
+def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m", bands = ["B08", "B04", "B03", "B02"]):
     """
     Checks the existence of the specified resolution of imagery. Returns a True-value with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
@@ -644,6 +741,8 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
         Path to the L2A file to check
     resolution : {"10m", "20m", "60m"}
         The resolution of imagery to check. Defaults to 10m.
+    bands : list of strings
+        Indicating the band file name components to include in the check, e.g. ["B08", "B04"].
 
     Returns
     -------
@@ -662,7 +761,6 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
         return 2
     log.info("Checking {} for incomplete {} imagery".format(l2_SAFE_file, resolution))
 
-    bands = ["B08", "B04", "B03", "B02"]
     nb = 0
     for band in bands:
         f = get_filenames(l2_SAFE_file, band, "")
@@ -682,7 +780,7 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m"):
         return 1
     else:
         log.warning("Not all necessary bands have been found in the SAFE directory")
-        log.warning("n bands = {}".format(nb))
+        log.warning("Found {} bands when expecting to find {}".format(nb, len(bands)))
         return 0
 
     """

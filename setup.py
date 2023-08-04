@@ -4,13 +4,13 @@ import stat
 
 setup(
     name="pyeo",
-    version="0.9.0",
+    version="1.0.0",
     author="University of Leicester",
-    author_email="hb71@le.ac.uk",
+    author_email="hb91@le.ac.uk",
     packages=["pyeo", "pyeo.tests"],
     url="http://pypi.python.org/pypi/Pyeo/",
     license="LICENSE",
-    description="Modular processing chain from download to ard",
+    description="Forest alerts from Sentinel-2 images",
     install_requires=[
         "boto3",
         "botocore",
