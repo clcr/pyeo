@@ -3684,32 +3684,10 @@ def build_sen2cor_output_path(image_path, timestamp, version):
     Returns
     -------
     new_path : str
-        The path of the finished sen2cor file
+        The path of the finished sen2cor L2A SAFE file directory
 
     """
 
-    # Accounting for sen2cors ever-shifting filename format
-    if version >= "2.08.00":
-        out_path = image_path.replace("MSIL1C", "MSIL2A")
-        out_path = out_path.rpartition("_")[0] + "_" + timestamp + ".SAFE"
-    else:
-        out_path = image_path.replace("MSIL1C", "MSIL2A")
-
-    if sys.platform.startswith("win"):
-		# I.R. Modification to use home directory to store temporary sen2cor output 
-		# - required to avoid errors due to path length exceeding maximum allowed under Windows
-		# - note sen2cor fails if given a relative path
-		# H.B. Modification to not use home directory to store temporary sen2cor output 
-		# - required to avoid errors due to invalid cross-device link in path on the HPC
-        out_path = os.path.expanduser('~')
-    else:
-        out_path = os.path.dirname(os.path.abspath(out_path))
-
-    return out_path
-
-    '''
-    OLD
-    
     # Accounting for sen2cors ever-shifting filename format
     if version >= "2.08.00":
         out_path = image_path.replace("MSIL1C", "MSIL2A")
@@ -3731,7 +3709,6 @@ def build_sen2cor_output_path(image_path, timestamp, version):
         out_path = os.path.dirname(out_path)
 
     return out_path
-    '''
 
 
 def get_sen2cor_version(sen2cor_path):
@@ -3804,25 +3781,43 @@ def atmospheric_correction(
     ]
     # Opportunity for multithreading here
     for image in images:
-        # log.info("Atmospheric correction of {}".format(image))
+        log.info("Atmospheric correction of {}".format(image))
         # log.info("   sen2cor path = " + sen2cor_path)
         image_path = os.path.join(in_directory, image)
-        # log.info("   image path = " + image_path)
+        log.info("   image path = " + image_path)
         # update the product discriminator part of the output file name
         # see https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/naming-convention
         image_timestamp = datetime.datetime.now().strftime(r"%Y%m%dT%H%M%S")
-        # log.info("   sen2cor processing time stamp = " + image_timestamp)
-        # log.info("   out_directory = " + out_directory)
-        out_path = build_sen2cor_output_path(image, 
+        log.info("   sen2cor processing time stamp = " + image_timestamp)
+        log.info("   out_directory = " + out_directory)
+        out_name = build_sen2cor_output_path(image, 
                                              image_timestamp, 
                                              get_sen2cor_version(sen2cor_path)
                                              )
-        # OLD: out_path = os.path.join(out_directory, os.path.basename(out_name))
-        # log.info("   out path = " + out_path)
+        log.info("   out name = " + out_name)
+        out_path = os.path.join(out_directory, os.path.basename(out_name))
+        log.info("   out path = " + out_path)
+
+        # create a search string to check whether a file with that name pattern 
+        # already exists. This will extract the following file name pattern:
+        # e.g. full path: "/data/36NXG/composite/
+        #                   S2B_MSIL2A_20220312T074719_N0400_R135_T36NXG_202203
+        #                   12T103427.SAFE/S2B_MSIL2A_20220312T074719_N0400_
+        #                   R135_T36NXG_20220312T103427.SAFE"
+        # out_glob will be: "S2B_MSIL2A_20220312T074719_N0400_R135_T36NXG*"
+
+        out_glob = "_".join(out_path.split("/")[-1].split("_")[0:6])+"*"
+        log.info("   out glob created by .split = " + out_glob)
+
+        '''
+        OLD - did not work
         out_glob = out_path.rpartition("_")[0] + "*"
-        # log.info("   out glob = " + out_glob)
+        .split("_")[-5]
+        log.info("   out glob created by .rpartition(\"_\")[0] = " + out_glob)
+        '''
+        
         if glob.glob(out_glob):
-            log.info("Skipping atmospheric correction of {}. Already done.".format(image))
+            log.info(f"Skipping atmospheric correction of {image}. Already done.")
             continue
         else:
             log.info("Atmospheric correction of {}".format(image))
@@ -3835,13 +3830,16 @@ def atmospheric_correction(
                 )
                 l2_name = os.path.basename(l2_path)
                 log.info("Changing L2A path: {}".format(l2_path))
-                log.info("  to new L2A path: {}".format(os.path.join(out_directory, l2_name)))
+                log.info("  to new L2A path: {}".format(os.path.join(
+                    out_directory, 
+                    l2_name))
+                    )
                 if os.path.exists(l2_path):
                     os.rename(l2_path, os.path.join(out_directory, l2_name))
                 else:
-                    log.error("L2A path not found after atmospheric correction with Sen2Cor: {}".format(l2_path))
+                    log.error(f"L2A path not found after atmospheric correction with Sen2Cor: {l2_path}")
             except (subprocess.CalledProcessError, BadS2Exception):
-                log.error("Atmospheric correction failed for {}. Moving on to next image.".format(image))
+                log.error(f"Atmospheric correction failed for {image}. Skipping.")
     return
 
 
