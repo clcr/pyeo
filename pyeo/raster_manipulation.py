@@ -3628,7 +3628,11 @@ def apply_sen2cor(
     )  # I can't think of a better way of getting the new outpath from sen2cor
     timestamp = now_time.strftime(r"%Y%m%dT%H%M%S")
     version = get_sen2cor_version(sen2cor_path)
-    out_path = build_sen2cor_output_path(image_path, timestamp, version)
+    out_path = build_sen2cor_output_path(
+        image_path, 
+        timestamp, 
+        version
+        )
 
     # The application of sen2cor with the option --GIP_L2A caused an unspecified metadata error in the xml file.
     # Removing it resolves this problem.
@@ -3683,10 +3687,33 @@ def build_sen2cor_output_path(image_path, timestamp, version):
         The path of the finished sen2cor file
 
     """
+
     # Accounting for sen2cors ever-shifting filename format
     if version >= "2.08.00":
         out_path = image_path.replace("MSIL1C", "MSIL2A")
-        baseline = get_sen_2_baseline(image_path)
+        out_path = out_path.rpartition("_")[0] + "_" + timestamp + ".SAFE"
+    else:
+        out_path = image_path.replace("MSIL1C", "MSIL2A")
+
+    if sys.platform.startswith("win"):
+		# I.R. Modification to use home directory to store temporary sen2cor output 
+		# - required to avoid errors due to path length exceeding maximum allowed under Windows
+		# - note sen2cor fails if given a relative path
+		# H.B. Modification to not use home directory to store temporary sen2cor output 
+		# - required to avoid errors due to invalid cross-device link in path on the HPC
+        out_path = os.path.expanduser('~')
+    else:
+        out_path = os.path.dirname(os.path.abspath(out_path))
+
+    return out_path
+
+    '''
+    OLD
+    
+    # Accounting for sen2cors ever-shifting filename format
+    if version >= "2.08.00":
+        out_path = image_path.replace("MSIL1C", "MSIL2A")
+        # baseline = get_sen_2_baseline(image_path)
         # out_path = out_path.replace(baseline, "N9999")
         out_path = out_path.rpartition("_")[0] + "_" + timestamp + ".SAFE"
     else:
@@ -3700,8 +3727,11 @@ def build_sen2cor_output_path(image_path, timestamp, version):
 		# - required to avoid errors due to invalid cross-device link in path on the HPC
         user_home_path = os.path.expanduser('~')
         out_path = os.path.join(user_home_path, os.path.basename(out_path))
+    else:
+        out_path = os.path.dirname(out_path)
 
     return out_path
+    '''
 
 
 def get_sen2cor_version(sen2cor_path):
@@ -3754,16 +3784,18 @@ def atmospheric_correction(
     Parameters
     ----------
     in_directory : str
-        Path to the directory containing the L1C images
+        Path to the directory containing the L1C SAFE image directory
     out_directory : str
-        Path to the directory that will containg the new L2A images
+        Path to the directory that will contain the new L2A SAFE image directory
     sen2cor_path : str
         Path to the l2a_process script (Linux) or l2a_process.exe (Windows)
     delete_unprocessed_image : bool, optional
-        If True, delete the unprocessed image after processing is done. Defaults to False.
+        If True, delete the unprocessed image after processing is done. 
+        Defaults to False.
     log : optional
-        if a logger object is provided, `atmospheric_correction` will pass statements to 
-			that logger, otherwise the default namespace logger is used.
+        if a logger object is provided, `atmospheric_correction` will pass 
+            statements to that logger, otherwise the default namespace logger 
+            is used.
     """
 
     # log = logging.getLogger(__name__)
@@ -3775,15 +3807,17 @@ def atmospheric_correction(
         # log.info("Atmospheric correction of {}".format(image))
         # log.info("   sen2cor path = " + sen2cor_path)
         image_path = os.path.join(in_directory, image)
-        log.info("   image path = " + image_path)
+        # log.info("   image path = " + image_path)
         # update the product discriminator part of the output file name
         # see https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/naming-convention
         image_timestamp = datetime.datetime.now().strftime(r"%Y%m%dT%H%M%S")
         # log.info("   sen2cor processing time stamp = " + image_timestamp)
         # log.info("   out_directory = " + out_directory)
-        out_name = build_sen2cor_output_path(image, image_timestamp, get_sen2cor_version(sen2cor_path))
-        # log.info("   out name = " + out_name)
-        out_path = os.path.join(out_directory, os.path.basename(out_name))
+        out_path = build_sen2cor_output_path(image, 
+                                             image_timestamp, 
+                                             get_sen2cor_version(sen2cor_path)
+                                             )
+        # OLD: out_path = os.path.join(out_directory, os.path.basename(out_name))
         # log.info("   out path = " + out_path)
         out_glob = out_path.rpartition("_")[0] + "*"
         # log.info("   out glob = " + out_glob)

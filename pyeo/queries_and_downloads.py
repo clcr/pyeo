@@ -468,26 +468,26 @@ def download_dataspace_product(product_uuid: str,
             download.write(file.content)
         unzipped_path = os.path.splitext(temporary_path)[0]
         destination_path = f"{safe_directory}{os.sep}{product_name}"
-        log.info(f"Downloaded file destination path: {destination_path}")
+        #log.info(f"Downloaded file destination path: {destination_path}")
 
         downloaded_file_size = os.path.getsize(temporary_path)
-        log.info(f"Downloaded file size: {downloaded_file_size} bytes")
+        #log.info(f"Downloaded file size: {downloaded_file_size} bytes")
         if (downloaded_file_size < min_file_size):
-            log.info(f'  Downloaded file too small, contents are:')
+            log.info('  Downloaded file too small, contents are:')
             file_dnld = open(temporary_path, 'r')
             log.info(file_dnld.readline())
             file_dnld.close()
 
-        log.info("    unpacking archive...")
+        #log.info("    unpacking archive...")
         shutil.unpack_archive(temporary_path, unzipped_path)
 
-        log.info(f"Unpacked Archive Path: {unzipped_path}")
+        #log.info(f"Unpacked Archive Path: {unzipped_path}")
 
         # # restructure paths
         within_folder_path = glob.glob(os.path.join(unzipped_path, "*"))
-        log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
+        #log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
 
-        log.info("    moving directory...")
+        log.info(f"    moving directory from {within_folder_path[0]} to {destination_path}")
         shutil.move(src=within_folder_path[0], dst=destination_path)
 
     return

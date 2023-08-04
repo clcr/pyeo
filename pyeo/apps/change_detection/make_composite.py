@@ -437,12 +437,17 @@ def create_composite(config_path, tile_id="None"):
                 )
                 for product in l2a_products["title"]:
                     tile_log.info("       {}".format(product))
-                tile_log.info("Number of L2A products for dataspace is {}".format(len(l2a_products['title'])))
+                tile_log.info("Number of L2A products for dataspace is {}".format(
+                    len(l2a_products['title'])
+                    )
+                )
 
         if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
             tile_log.info(
-                "Filtering out L1C products that have the same 'beginposition' time stamp as an existing L2A product."
+                "Filtering out L1C products that have the same 'beginposition'"+
+                " time stamp as an existing L2A product."
             )
+           
             if download_source == "scihub":
                 (l1c_products,l2a_products,) = queries_and_downloads.filter_unique_l1c_and_l2a_data(
                                                     df,
@@ -457,18 +462,25 @@ def create_composite(config_path, tile_id="None"):
                                 )
 
         df = None
-        tile_log.info(" {} L1C products for the Composite".format(len(l1c_products['title'])))
-        tile_log.info(" {} L2A products for the Composite".format(len(l2a_products['title'])))
-        tile_log.info("Successfully queried the L1C and L2A products for the Composite")
+        tile_log.info(" {} L1C products for the Composite".format(
+            len(l1c_products['title']))
+            )
+        tile_log.info(" {} L2A products for the Composite".format(
+            len(l2a_products['title']))
+            )
+        tile_log.info("Successfully queried the L1C and L2A products for "+
+                      "the Composite")
 
-        # Search the local directories, composite/L2A and L1C, checking if scenes have already 
-        #    been downloaded and/or processed whilst checking their dir sizes
+        # Search the local directories, composite/L2A and L1C, checking if 
+        #    scenes have already been downloaded and/or processed whilst 
+        #    checking their dir sizes
         if download_source == "scihub":
             if l1c_products.shape[0] > 0:
                 tile_log.info(
-                    "Checking for already downloaded and zipped L1C or L2A products and"
-                )
-                tile_log.info("  availability of matching L2A products for download.")
+                    "Checking for already downloaded and zipped L1C or L2A "+
+                    "products and availability of matching L2A products for "+
+                    "download."
+                    )
                 n = len(l1c_products)
                 drop = []
                 add = []
