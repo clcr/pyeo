@@ -238,9 +238,17 @@ def create_composite(config_path, tile_id="None"):
             log.error("ERROR: Tile subdirectory paths could not be created")
             sys.exit(1)
 
-        # initialise tile log file    
+        # initialise tile log file
+        tile_log_file = os.path.join(
+            individual_tile_directory_path, 
+            "log", 
+            tile_to_process + ".log"
+            )
+        log.info("---------------------------------------------------------------")
+        log.info(f"--- Redirecting log output to tile log: {tile_log_file}")
+        log.info("---------------------------------------------------------------")
         tile_log = filesystem_utilities.init_log_acd(
-            log_path=os.path.join(individual_tile_directory_path, "log", tile_to_process + ".log"),
+            log_path=tile_log_file,
             logger_name="pyeo_"+tile_to_process
         )
         tile_log.info("Folder structure build successfully finished for tile "+tile_to_process)
