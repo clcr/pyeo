@@ -108,7 +108,8 @@ from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
                                          check_for_invalid_l2_data,
                                          get_sen_2_image_tile)
 from requests import Request
-from sentinelhub.data_request import download_safe_format
+from sentinelhub.aws.request import download_safe_format
+#OLD pre-v9.3.1: from sentinelhub.data_request import download_safe_format
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 log = logging.getLogger("pyeo")
