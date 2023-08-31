@@ -788,7 +788,7 @@ def extract_features_to_csv(
 
 
 def create_trained_model(
-    training_image_file_paths: list, cross_val_repeats: int = 10, attribute: str = "CODE"
+    training_image_file_paths: list[str], cross_val_repeats: int = 10, attribute: str = "CODE"
 ):
     """
     Creates a trained model from a set of training images with associated shapefiles.
@@ -950,7 +950,7 @@ def create_model_for_region(path_to_region: str, model_out: str, scores_out: str
 
 
 def create_rf_model_for_region(
-    path_to_region: str, model_out: str, attribute: str = "CODE", band_names: list = [], gridsearch: int = 1, k_fold: int = 5
+    path_to_region: str, model_out: str, attribute: str = "CODE", band_names: list[str] = [], gridsearch: int = 1, k_fold: int = 5
 ) -> None:
     """
     Takes all .tif files in a given folder and creates a pickled scikit-learn random forest model.
@@ -1333,12 +1333,12 @@ def shapefile_to_raster(
 
 
 def train_rf_model(
-    raster_paths: list,
+    raster_paths: list[str],
     modelfile: str,
     ntrees: int=101,
     attribute: str="CODE",
-    band_names: list=[],
-    weights: list=None,
+    band_names: list[str]=[],
+    weights: list[int]=None,
     balanced: bool=True,
     gridsearch: int=1,
     k_fold: int=5,
