@@ -3693,7 +3693,9 @@ def build_sen2cor_output_path(image_path, timestamp, version):
         out_path = image_path.replace("MSIL1C", "MSIL2A")
         # baseline = get_sen_2_baseline(image_path)
         # out_path = out_path.replace(baseline, "N9999")
-        out_path = out_path.rpartition("_")[0] + "_" + timestamp + ".SAFE"
+
+        # get the first components of the SAFE file name up to the tile ID part
+        out_path = "_".join(out_path.split("_"))[:-1] + "_" + timestamp + ".SAFE"
     else:
         out_path = image_path.replace("MSIL1C", "MSIL2A")
 
@@ -3790,7 +3792,7 @@ def atmospheric_correction(
         image_timestamp = datetime.datetime.now().strftime(r"%Y%m%dT%H%M%S")
         log.info("   sen2cor processing time stamp = " + image_timestamp)
         log.info("   out_directory = " + out_directory)
-        out_name = build_sen2cor_output_path(image, 
+        out_name = build_sen2cor_output_path(image_path, 
                                              image_timestamp, 
                                              get_sen2cor_version(sen2cor_path)
                                              )
