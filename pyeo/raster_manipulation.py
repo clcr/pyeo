@@ -3707,8 +3707,8 @@ def build_sen2cor_output_path(image_path, timestamp, version):
 		# - required to avoid errors due to invalid cross-device link in path on the HPC
         user_home_path = os.path.expanduser('~')
         out_path = os.path.join(user_home_path, os.path.basename(out_path))
-    else:
-        out_path = os.path.dirname(out_path)
+    #else:
+    #    out_path = os.path.dirname(out_path)
 
     return out_path
 
@@ -3817,7 +3817,7 @@ def atmospheric_correction(
         .split("_")[-5]
         log.info("   out glob created by .rpartition(\"_\")[0] = " + out_glob)
         '''
-        
+                
         if glob.glob(out_glob):
             log.info(f"Skipping atmospheric correction of {image}. Already done.")
             continue
