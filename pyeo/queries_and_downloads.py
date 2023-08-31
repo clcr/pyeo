@@ -467,11 +467,11 @@ def download_dataspace_product(product_uuid: str,
         log.info(f"Downloaded file temporary_path: {temporary_path}")
 
         with open(temporary_path, 'wb') as download:
-
             download.write(file.content)
         unzipped_path = os.path.splitext(temporary_path)[0]
-        destination_path = f"{safe_directory}{os.sep}{product_name}"
-        #log.info(f"Downloaded file destination path: {destination_path}")
+        #OLD: destination_path = f"{safe_directory}{os.sep}{product_name}"
+        destination_path = safe_directory
+        log.info(f"Downloaded file destination path: {destination_path}")
 
         downloaded_file_size = os.path.getsize(temporary_path)
         #log.info(f"Downloaded file size: {downloaded_file_size} bytes")
