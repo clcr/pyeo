@@ -452,7 +452,7 @@ def stack_images(
         The datatype of the gdal array - see introduction. Defaults to gdal.GDT_Int32.
 
     """
-    # TODO: Confirm the union works, and confirm that nondata defaults to 0.
+
     log.info("Merging band rasters into a single file:")
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
@@ -581,7 +581,7 @@ def average_images(
         The datatype of the gdal array - see note. Defaults to gdal.GDT_Int32
 
     """
-    # TODO: Confirm the union works, and confirm that nondata defaults to 0.
+
     log.info("Stacking images {}".format(raster_paths))
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images requires at least two input images")
@@ -907,7 +907,6 @@ def update_composite_with_images(
         output_array = np.expand_dims(output_array, 0)
 
     in_composite_array = get_array(in_composite)
-    # TODO: check this works
     np.copyto(output_array, in_composite_array)
 
     for i, in_raster in enumerate(in_raster_list):
@@ -1361,7 +1360,6 @@ def clever_composite_images(
             #    log.info("raster {} is {} and is of type {}".format(i, this_res, type(this_res)))
             #    log.info("raster {} has dimensions {}".format(i, this_res.shape))
             stacked = np.dstack(res)
-            # TODO: make sure this catches all pixels with missing values
             if missing_data_value is not None:
                 ma = np.ma.masked_equal(stacked, missing_data_value)
                 stacked[ma.mask] = np.nan
@@ -1763,7 +1761,6 @@ def reproject_image(
         format=driver,
     )
     # After warping, image has irregular gt; resample back to previous pixel size
-    # TODO: Make this an option
     if do_post_resample:
         resample_image_in_place(out_raster_path, res)
     return out_raster_path
@@ -2085,7 +2082,7 @@ def clip_raster(
         The fill value for outside of the clipped area. Defaults to 0.
     """
 
-    # TODO: Set values outside clip to 0 or to NaN - in irregular polygons
+    #TODO: Set values outside clip to 0 or to NaN - in irregular polygons
     # https://gis.stackexchange.com/questions/257257/how-to-use-gdal-warp-cutline-option
     with TemporaryDirectory(dir=os.path.expanduser('~')) as td:
         log.info("Clipping {} with {} to {}".format(raster_path, aoi_path, out_path))
@@ -2541,7 +2538,8 @@ def raster_sum(inRstList, outFn, outFmt="GTiff"):
     empty_arr = np.empty(rst_dim, dtype=np.uint8)
 
     for i, rst in enumerate(inRstList):
-        # Todo: Check that dimensions and shape of both arrays are the same in the first loop.
+        #TODO: Check that dimensions and shape of both arrays are the same in 
+        #      the first loop.
         ds = gdal.Open(rst)
         bnd = ds.GetRasterBand(1)
         arr = bnd.ReadAsArray()
@@ -2602,6 +2600,7 @@ def filter_by_class_map(
         The path to the new map
 
     """
+    
     # TODO: Include nodata value
     log = logging.getLogger(__name__)
     log.info(
@@ -2951,21 +2950,23 @@ def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
 
     """
 
-    # TODO
-    # Check out_tif_directory directory exists and report an error or create it
-    # Force generated dtype to uint16 to save time and storage? Compatible with classifier?
-    # Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
-    # Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
-    # Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
-    # Work out why offset files are larger (2GB from ~1GB)
-    print(f"apply_processing_baseline_0400_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}")
-
     def get_processing_baseline(safe_path):
         return safe_path[28:32]
 
     def set_processing_baseline(safe_path, new_baseline):
         new_safe_path = safe_path[:28] + new_baseline + safe_path[32:]
         return new_safe_path
+
+    # Check out_tif_directory exists and create it if not
+    if not os.path.exists(out_tif_directory):
+        os.mkdir(out_tif_directory)
+
+    #TODO: Force generated dtype to uint16 to save time and storage? Compatible with classifier?
+    # Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
+    # Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
+    # Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
+    # Work out why offset files are larger (2GB from ~1GB)
+    print(f"apply_processing_baseline_0400_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}")
 
     image_files = [
         f
@@ -3093,20 +3094,6 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
 
     """
 
-    # TODO
-    # Check out_tif_directory directory exists and report an error or create it
-    # Force generated dtype to uint16 to save time and storage? Compatible with classifier?
-    # Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
-    # Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
-    # Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
-    # Work out why offset files are larger (2GB from ~1GB)
-    print(
-        f"apply_processing_baseline_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}"
-    )
-    log.info(
-        f"apply_processing_baseline_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}"
-    )
-
     def get_processing_baseline(safe_path):
         return safe_path[28:32]
 
@@ -3114,11 +3101,26 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
         new_safe_path = safe_path[:28] + new_baseline + safe_path[32:]
         return new_safe_path
 
+    # Check out_tif_directory exists and create it if not
+    if not os.path.exists(out_tif_directory):
+        os.mkdir(out_tif_directory)
+
+    log.info(
+        f"apply_processing_baseline_offset_correction_to_tiff_file_directory() running on: {in_tif_directory}"
+    )
+
     image_files = [
         f
         for f in os.listdir(in_tif_directory)
         if f.endswith(".tif") or f.endswith(".tiff")
     ]
+
+    # TODO: Force generated dtype to uint16 to save time and storage? Compatible with classifier?
+    # Generate bands_to_offset_index from comparison of bands_to_offset labels in band.description
+    # Read individual BOA_ADD_OFFSET value for each band from xml information in SAFE file root
+    # Use 'with TemporaryDirectory' pattern - Overwrite existing files with offset files by 'move'
+    # Work out why offset files are larger (2GB from ~1GB)
+
     for f in image_files:
         # print(f"File: {f}, Baseline: {get_processing_baseline(f)}")
         log.info(f"File: {f}, Baseline: {get_processing_baseline(f)}")
@@ -3870,6 +3872,7 @@ def create_mask_from_model(
         The path to the new mask
 
     """
+    
     # TODO: Fix this properly. Deferred import to deal with circular reference
     from pyeo.classification import classify_image
 
@@ -4165,7 +4168,7 @@ def add_masks(mask_paths, out_path, geometry_func="union"):
         The path to the new raster file.
 
     """
-    # TODO: test this function
+    
     log = logging.getLogger(__name__)
     log.info("Adding masks:")
     for mask in mask_paths:
@@ -5642,7 +5645,8 @@ def create_quicklook(
                 "Error opening raster file: {}    /   {}".format(in_raster_path, e)
             )
             return
-        # TODO: check data type of the in_raster - currently crashes when looking at images from the probabilities folder (wrong data type)
+        #TODO: check data type of the in_raster - currently crashes when looking 
+        #       at images from the probabilities folder (wrong data type)
         if image.RasterCount < 3:
             # log.info("Raster count is {}. Using band 1.".format(image.RasterCount))
             bands = [image.RasterCount]
@@ -5680,7 +5684,8 @@ def create_quicklook(
                 # log.info("           {}".format(histo[np.where(histo > 0)]))
                 # log.info("Band data min, max: {}, {}".format(data.min(), data.max()))
                 colors = gdal.ColorTable()
-                # TODO: load a colour table (QGIS style file) from file if specified as an option by the function call
+                #TODO: load a colour table (QGIS style file) from file if 
+                #      specified as an option by the function call
                 """
                 Comment: A *.qml file contains:
                 <colorPalette>
@@ -5750,13 +5755,15 @@ def create_quicklook(
 def __combine_date_maps(date_image_paths, output_product):
     """
     UNTESTED DEVELOPMENT VERSION:
-                #TODO: In combine_date_maps, also extract the length of consecutive detections over time.
-                #TODO: Add a third layer with the length of confirmation sequence over time.
-                       -1 in the change layers indicates cloudy pixels
+                #TODO: In combine_date_maps, also extract the length of 
+                #      consecutive detections over time.
+                #TODO: Add a third layer with the length of confirmation sequence
+                #      over time.
+                #TODO: -1 in the change layers indicates cloudy pixels (Done?)
     Combines all change date layers into one output raster with three layers:
       (1) pixels show the earliest change detection date (expressed as the number of days since 1/1/2000)
       (2) pixels show the number of change detection dates (summed up over all change images in the folder)
-      (3)
+      (3) ???
 
     Parameters
     ----------
@@ -5834,7 +5841,8 @@ def __combine_date_maps(date_image_paths, output_product):
     reference_projection = date_images[0].GetProjection()
     time_steps = len(date_images)
     for index, date_image in enumerate(date_images):
-        # TODO: *** within this processing loop, update the report layers indicating the length of temporal sequences of confirmed values
+        #TODO: within this processing loop, update the report layers 
+        #      indicating the length of temporal sequences of confirmed values
         projection = date_image.GetProjection()
         if projection != reference_projection:
             log.warning(

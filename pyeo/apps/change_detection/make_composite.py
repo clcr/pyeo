@@ -10,7 +10,7 @@ import configparser
 import datetime
 import geopandas as gpd
 import pandas as pd
-import json
+#import json
 import numpy as np
 import os
 from osgeo import gdal
@@ -18,8 +18,7 @@ import shutil
 import sys
 import warnings
 import zipfile
-from pyeo import (classification, filesystem_utilities,
-                    queries_and_downloads, raster_manipulation)
+from pyeo import (filesystem_utilities, queries_and_downloads, raster_manipulation)
 from pyeo.acd_national import (acd_initialisation,
                                  acd_config_to_log,
                                  acd_roi_tile_intersection)
