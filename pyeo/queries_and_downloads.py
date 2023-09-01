@@ -329,49 +329,82 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
         
     for counter, product in enumerate(product_df.itertuples(index=False)):
         log.info(f"    Checking {counter+1} of {len(product_df)} : {product.title}")
+
         # if L1C have been passed, download to the l1c_directory
         if product.processinglevel == "Level-1C":
-
-            out_path = os.path.join(l1c_directory, product.title)
-            if check_for_invalid_l1_data(out_path) == 1:
-                log.info(f"        {out_path} imagery already exists, skipping download")
-                # continue means skip the current iteration and move to the next iteration of the for loop
+            # check whether a zip, tiff or SAFE file with that image name pattern 
+            #   already exists and skip download if it is found
+            out_glob = os.path.join(l1c_directory, 
+                                    "_".join(product.title.split("_")[0:6])+"*")
+            log.info("   Looking for file pattern: " + out_glob)
+            matching_l1c = glob.glob(out_glob)
+            if matching_l1c:
+                log.info(f"Skipping download of L1C product : {product.title}")
+                if len(matching_l1c) == 1:
+                    log.info(f"  because an L1C product already exists: {matching_l1c[0]}")
+                else:
+                    log.info("  because matching L1C product files already exist:")
+                    for item in matching_l1c:
+                        log.info(f"  {item}")
                 continue
-            try:
-                log.info(f"        Downloading : {product.title}")
-                download_dataspace_product(
-                    product_uuid=product.uuid,
-                    dataspace_username=dataspace_username,
-                    dataspace_password=dataspace_password,
-                    product_name=product.title,
-                    safe_directory=l1c_directory,
-                    log=log
-                )
-            
-            except Exception as error:
-                log.error(f"Download from dataspace of L1C Product did not finish")
-                log.error(f"Received this error :  {error}")
-            
-        # if L2A have been passed, download to the l1c_directory
+            else:
+                out_path = os.path.join(l1c_directory, product.title)
+                if check_for_invalid_l1_data(out_path) == 1:
+                    log.info(f"        {out_path} imagery already exists, skipping download")
+                    # continue means skip the current iteration and move to the 
+                    #   next iteration of the for loop
+                    continue
+                try:
+                    log.info(f"        Downloading : {product.title}")
+                    download_dataspace_product(
+                        product_uuid=product.uuid,
+                        dataspace_username=dataspace_username,
+                        dataspace_password=dataspace_password,
+                        product_name=product.title,
+                        safe_directory=l1c_directory,
+                        log=log
+                    )
+                
+                except Exception as error:
+                    log.error("Download from dataspace of L1C Product did not finish")
+                    log.error(f"Received this error :  {error}")
+                
+        # if L2A have been passed, download to the l2a_directory
         elif product.processinglevel == "Level-2A":
-            out_path = os.path.join(l2a_directory, product.title)
-            if check_for_invalid_l2_data(out_path) == 1:
-                log.info(f"        {out_path} imagery already exists, skipping download")
-                # continue means to skip the current iteration and move to the next iteration of the for loop
+            # check whether a zip, tiff or SAFE file with that image name pattern 
+            #   already exists and skip download if it is found
+            out_glob = os.path.join(l2a_directory, 
+                                    "_".join(product.title.split("_")[0:6])+"*")
+            log.info("   Looking for file pattern: " + out_glob)
+            matching_l2a = glob.glob(out_glob)
+            if matching_l2a:
+                log.info(f"Skipping download of L2A product : {product.title}")
+                if len(matching_l2a) == 1:
+                    log.info(f"  because an L2A product already exists: {matching_l2a[0]}")
+                else:
+                    log.info("  because matching L2A product files already exist:")
+                    for item in matching_l2a:
+                        log.info(f"  {item}")
                 continue
-            try:
-                log.info(f"        Downloading  : {product.title}")
-                download_dataspace_product(
-                    product_uuid=product.uuid,
-                    dataspace_username=dataspace_username,
-                    dataspace_password=dataspace_password,
-                    product_name=product.title,
-                    safe_directory=l2a_directory,
-                    log=log
-                )
-            except Exception as error:
-                log.error(f"Download from dataspace of L2A Product did not finish")
-                log.error(f"Received error   {error}")
+            else:
+                out_path = os.path.join(l2a_directory, product.title)
+                if check_for_invalid_l2_data(out_path) == 1:
+                    log.info(f"        {out_path} imagery already exists, skipping download")
+                    # continue means to skip the current iteration and move to the next iteration of the for loop
+                    continue
+                try:
+                    log.info(f"        Downloading  : {product.title}")
+                    download_dataspace_product(
+                        product_uuid=product.uuid,
+                        dataspace_username=dataspace_username,
+                        dataspace_password=dataspace_password,
+                        product_name=product.title,
+                        safe_directory=l2a_directory,
+                        log=log
+                    )
+                except Exception as error:
+                    log.error(f"Download from dataspace of L2A Product did not finish")
+                    log.error(f"Received error   {error}")
 
         else:
             log.error(f"Neither 'Level-1C' or 'Level-2A' were in {product.processinglevel}")
