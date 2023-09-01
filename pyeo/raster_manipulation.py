@@ -3813,10 +3813,16 @@ def atmospheric_correction(
         out_glob = "_".join(out_path.split("/")[-1].split("_")[0:6])+"*"
         out_glob = os.path.join(out_directory, out_glob)
         log.info("   out glob created by .split = " + out_glob)
+        matching_l2a = glob.glob(out_glob)
 
-        if glob.glob(out_glob):
+        if matching_l2a:
             log.info(f"Skipping atmospheric correction of     : {image_path}")
-            log.info(f"  because an L2A product already exists: {out_glob}")
+            if len(matching_l2a) == 1:
+                log.info(f"  because an L2A product already exists: {matching_l2a[0]}")
+            else:
+                log.info("  because matching L2A product files already exist:")
+                for item in matching_l2a:
+                    log.info(f"  {item}")
             continue
         else:
             log.info("Atmospheric correction of {}".format(image))
