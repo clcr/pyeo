@@ -15,23 +15,12 @@ in a new config file.
 """
 
 import argparse
-import configparser
 import datetime
-import geopandas as gpd
-import pandas as pd
-import json
-import numpy as np
 import os
 from osgeo import gdal
-import shutil
 import sys
-import warnings
-import zipfile
-from pyeo import (classification, filesystem_utilities,
-                    queries_and_downloads, raster_manipulation)
-from pyeo.acd_national import (acd_initialisation,
-                                 acd_config_to_log,
-                                 acd_roi_tile_intersection)
+from pyeo import filesystem_utilities
+from pyeo.acd_national import acd_initialisation
 
 gdal.UseExceptions()
 
@@ -57,23 +46,31 @@ def edit_config(config_path_in, config_path_out):
 
     """
 
+    config_dict, log = acd_initialisation(config_path_in)
+
+    log.info("------------------------------------------------")
+    log.info("Interactive editing of the config file for pyeo.")
+    log.info("------------------------------------------------")
+    log.info("NOTE: This function does not check the validity of user inputs.")
+
     # check whether input file exists
     if not os.path.exists(config_path_in):
-        print("ERROR: Input config file path does not exist: " + config_path_in)
+        log.error("ERROR: Input config file path does not exist: " + config_path_in)
         sys.exit(1)
-
-    config_dict, log = acd_initialisation(config_path_in)
 
     # check whether output file already exists
     if os.path.exists(config_path_out):
-        # append today's date to the output file name to create a new file name
-        config_path_out = config_path_out + "_" + datetime.date.today().strftime("%Y%m%d")
+        # if the output file already exists, append today's date and time to the 
+        #    output file name to create a new file name
+        config_path_out = config_path_out + "_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         log.warning("Output config file path already exists. Using new file name:" + \
                     config_path_out)
 
     config_path = filesystem_utilities.input_to_config_path(config_path_in, 
                                                             config_path_out)
 
+    log.info(f"Finished saving edited config file: {config_path_out}")
+        
     return config_path
 
 
@@ -97,7 +94,7 @@ if __name__ == "__main__":
     parser.add_argument(
         dest="config_path_out",
         action="store",
-        default=r"pyeo_linux.ini",
+        default=r"pyeo_linux_test.ini",
         help="A path where the new .ini file with the user inputs will be created.",
     )
 
