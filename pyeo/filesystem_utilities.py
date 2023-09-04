@@ -405,6 +405,12 @@ def config_path_to_config_dict(config_path: str):
     config_dict["level_1_filename"] = config["vector_processing_parameters"][
         "level_1_filename"
     ]
+    config_dict["level_2_filename"] = config["vector_processing_parameters"][
+        "level_2_filename"
+    ]
+    config_dict["level_3_filename"] = config["vector_processing_parameters"][
+        "level_3_filename"
+    ]
     config_dict["level_1_boundaries_path"] = os.path.join(
         config_dict["geometry_dir"], config_dict["level_1_filename"]
     )
@@ -479,7 +485,13 @@ def input_to_config_path(config_path_in: str, config_path_out: str):
     This function reads existing parameters from the path (pyeo.ini) and 
     asks the user to confirm by pressing <ENTER> or changing the value.
     The new config file will be saved as a new file.
-
+    
+    Lines in the config file can start with either a:
+      '#': these are comment lines
+      '[': these contain headings
+      '\n': line break indicating an empty line
+      a string of a config key: these should be modifiable by the user
+    
     Args:
 
     config_path_in : str
@@ -497,7 +509,8 @@ def input_to_config_path(config_path_in: str, config_path_out: str):
 
     # copy old config file to new file location
     shutil.copyfile(config_path_in, config_path_out)
-    print("Editing new config file: " + config_path_out)
+    log.info("Editing new config file: " + config_path_out)
+    print("Type 'q' to quit editing at any point and keep all remaining options.")
 
     # read in config file contents into a dictionary
     config_dict = config_path_to_config_dict(config_path_out)
@@ -511,24 +524,42 @@ def input_to_config_path(config_path_in: str, config_path_out: str):
     # open the new output config file for write access    
     out_file = open(config_path_out,"wt")
 
-    for key in config_dict:
-        user_input = input("{} = {}  --> <ENTER> to confirm / new value to change:".format(key, config_dict[key]))
-        if user_input == "" or user_input == ":q"  or user_input == "\n":
-            pass
+    # go through each line and edit the relevant lines
+    for count, line in enumerate(config_lines):
+        print(f"Line {count+1} of {len(config_lines)}: {line.strip()}" )
+        if line[0] in ['#', '[', '\n']:
+            out_file.write(line)
         else:
-            line_number = line_numbers_that_contain(key, out_file)
-            if len(line_number) == 1:
-                line_number = line_number[0]
+            if " =" in line:
+                this_key = line.split(" =")[0]
             else:
-                log.warning("More than one line number matching the string found in config file.")
-                log.warning("Using the last one for key: " + key)
-                line_number = line_number[-1]
-            config_lines[line_number] = config_lines[line_number].replace(config_dict[key],
-                key+ " = " + user_input)
-            config_dict[key] = user_input
+                this_key = line.split("=")[0]
+                
+            # adjust for some anomalies in the key naming conventions
+            if this_key == "model":
+                this_key = "model_path"
+            if this_key == "do_build_composite":
+                this_key = "build_composite"
+            if this_key == "do_build_prob_image":
+                this_key = "build_prob_image"
+            if this_key == "band_names":
+                this_key = "bands"
+            if this_key == "change_from_classes":
+                this_key = "from_classes"
+            if this_key == "change_to_classes":
+                this_key = "to_classes"
 
-    # write the new content to the output file
-    out_file.writelines(config_lines)
+            user_input = input(f"{this_key} = {config_dict[this_key]} --> <ENTER> to confirm / new value to change:")
+            if user_input == "" or user_input == ":q" or user_input == "q" or user_input == "\n":
+                out_file.write(line)
+                if user_input == ":q" or user_input == "q":
+                    # write all remaining lines to file unchanged
+                    for remaining_line in config_lines[count:len(config_lines)+1]:
+                        out_file.write(remaining_line)
+                    break
+            else:
+                out_file.write(str(this_key)+" = " + str(user_input) + "\n")
+
     out_file.close()
 
     return config_path_out
@@ -1418,6 +1449,7 @@ def zip_contents(directory: str, notstartswith=None) -> None:
     - If `notstartswith` is provided, files starting with any of the specified prefixes are skipped.
 
     """
+    
     paths = [f for f in os.listdir(directory) if not f.endswith(".zip")]
     for f in paths:
         do_it = True
