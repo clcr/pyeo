@@ -1,5 +1,6 @@
 name: pyeo_env
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -170,7 +171,7 @@ dependencies:
   - pluggy=1.0.0=py310h06a4308_1
   - poppler=0.81.0=h01f5e8b_2
   - poppler-data=0.4.11=h06a4308_0
-  - proj=6.2.1=h05a3930_0
+  - proj=9.1.0=h93bde94_0
   - prometheus_client=0.14.1=py310h06a4308_0
   - prompt-toolkit=3.0.36=py310h06a4308_0
   - prompt_toolkit=3.0.36=hd3eb1b0_0
@@ -182,6 +183,7 @@ dependencies:
   - pygments=2.11.2=pyhd3eb1b0_0
   - pyopenssl=22.0.0=pyhd3eb1b0_0
   - pyparsing=3.0.4=pyhd3eb1b0_0
+  - pyproj=3.4.1=py310hfc24d34_0
   - pyqt=5.9.2=py310h295c915_6
   - pyrsistent=0.18.0=py310h7f8727e_0
   - pysocks=1.7.1=py310h06a4308_0
@@ -253,7 +255,6 @@ dependencies:
     - mypy-extensions==0.4.3
     - oauthlib==3.2.0
     - pillow==8.4.0
-    - pyproj==3.3.0
     - pysolar==0.10
     - pyyaml==6.0
     - requests-oauthlib==1.3.1

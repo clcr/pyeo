@@ -25,8 +25,6 @@ from pyeo.acd_national import (acd_initialisation,
 
 gdal.UseExceptions()
 
-
-
 def create_composite(config_path, tile_id="None"):
     """
     The main function that creates the image composite with the parameters specified 
@@ -124,30 +122,30 @@ def create_composite(config_path, tile_id="None"):
 
     try:
         os.chdir(config_dict["pyeo_dir"]) # ensures pyeo is looking in the correct directory
-        start_date = config_dict["start_date"]
+        #start_date = config_dict["start_date"]
         end_date = config_dict["end_date"]
         if end_date == "TODAY":
             end_date = datetime.date.today().strftime("%Y%m%d")
         composite_start_date = config_dict["composite_start"]
         composite_end_date = config_dict["composite_end"]
         cloud_cover = config_dict["cloud_cover"]
-        cloud_certainty_threshold = config_dict["cloud_certainty_threshold"]
-        model_path = config_dict["model_path"]
+        #cloud_certainty_threshold = config_dict["cloud_certainty_threshold"]
+        #model_path = config_dict["model_path"]
         tile_dir = config_dict["tile_dir"]
         sen2cor_path = config_dict["sen2cor_path"]
         epsg = config_dict["epsg"]
         bands = config_dict["bands"]
-        resolution = config_dict["resolution_string"]
+        #resolution = config_dict["resolution_string"]
         out_resolution = config_dict["output_resolution"]
-        buffer_size = config_dict["buffer_size_cloud_masking"]
+        #buffer_size = config_dict["buffer_size_cloud_masking"]
         buffer_size_composite = config_dict["buffer_size_cloud_masking_composite"]
         max_image_number = config_dict["download_limit"]
         faulty_granule_threshold = config_dict["faulty_granule_threshold"]
-        download_limit = config_dict["download_limit"]
+        #download_limit = config_dict["download_limit"]
         skip_existing = config_dict["do_skip_existing"]
-        sieve = config_dict["sieve"]
-        from_classes = config_dict["from_classes"]
-        to_classes = config_dict["to_classes"]
+        #sieve = config_dict["sieve"]
+        #from_classes = config_dict["from_classes"]
+        #to_classes = config_dict["to_classes"]
         download_source = config_dict["download_source"]
         if download_source == "scihub":
             log.info("scihub API is the download source")
@@ -176,7 +174,7 @@ def create_composite(config_path, tile_id="None"):
                 credentials_dict["sent_2"]["pass"] = credentials_conf["dataspace"]["pass"]
                 sen_user = credentials_dict["sent_2"]["user"]
                 sen_pass = credentials_dict["sent_2"]["pass"]
-                log.info(credentials_dict["sent_2"]["user"])
+                #log.info(credentials_dict["sent_2"]["user"])
             else:
                 if download_source == "scihub":
                     log.info("Running download handler for " + download_source)
@@ -203,12 +201,21 @@ def create_composite(config_path, tile_id="None"):
 
     os.chdir(config_dict["pyeo_dir"]) # ensures pyeo is looking in the correct directory
     if tile_id == "None":
+        # if no tile ID is given by the call to the function, use the geometry file
+        #   to get the tile ID list
+        tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
         log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
-        # create initial folder structure if it does not exist
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
     else:
+        # if a tile ID is specified, use that and do not use the tile intersection
+        #   method to get the tile ID list
+        tile_based_processing_override = True
         tiles_to_process = [tile_id]
+
+    if tile_based_processing_override:
+        log.info("Tile based processing selected. Overriding the geometry file intersection method")
+        log.info("  to get the list of tile IDs.")
 
     log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
@@ -225,12 +232,12 @@ def create_composite(config_path, tile_id="None"):
             composite_l1_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"L1C")
             composite_l2_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"L2A")
             composite_l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"cloud_masked")
-            change_image_dir = os.path.join(individual_tile_directory_path, r"images")
-            l1_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L1C")
-            l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
-            l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
-            categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
-            probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
+            #change_image_dir = os.path.join(individual_tile_directory_path, r"images")
+            #l1_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L1C")
+            #l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
+            #l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
+            #categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
+            #probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
             quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
             log.info("Successfully created the subdirectory paths for this tile")
         except:
@@ -267,39 +274,57 @@ def create_composite(config_path, tile_id="None"):
 
         if download_source == "dataspace":
 
-            try:
-                tiles_geom_path = os.path.join(config_dict["pyeo_dir"], \
-                                    os.path.join(config_dict["geometry_dir"], \
-                                    config_dict["s2_tiles_filename"]))
-                tile_log.info("Path to the S2 tile geometry information absolute path: {}".format( \
-                            os.path.abspath(tiles_geom_path)))
-                tiles_geom = gpd.read_file(os.path.abspath(tiles_geom_path))
-            except FileNotFoundError:
-                tile_log.error("Path to the S2 tile geometry does not exist: {}".format( \
-                            os.path.abspath(tiles_geom_path)))
-
-            tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
-            tile_geom = tile_geom.to_crs(epsg=4326)
-            geometry = tile_geom["geometry"].iloc[0]
-            geometry = geometry.representative_point()
-
             # convert date string to YYYY-MM-DD
             date_object = datetime.datetime.strptime(composite_start_date, "%Y%m%d")
             dataspace_composite_start = date_object.strftime("%Y-%m-%d")
             date_object = datetime.datetime.strptime(composite_end_date, "%Y%m%d")
             dataspace_composite_end = date_object.strftime("%Y-%m-%d")
 
-            try:
-                dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_polygon(
-                    max_cloud_cover=cloud_cover,
-                    start_date=dataspace_composite_start,
-                    end_date=dataspace_composite_end,
-                    area_of_interest=geometry,
-                    max_records=100,
-                    log=tile_log
-                )
-            except Exception as error:
-                tile_log.error("Query_dataspace_by_polygon received this error: {}".format(error))
+            if not tile_based_processing_override:
+                tiles_geom_path = os.path.join(config_dict["pyeo_dir"], \
+                                    os.path.join(config_dict["geometry_dir"], \
+                                    config_dict["s2_tiles_filename"]))
+                tile_log.info("Path to the S2 tile information file: {}".format( \
+                            os.path.abspath(tiles_geom_path)))
+    
+                #try opening the Sentinel-2 tile file as a geometry file (e.g. shape file)
+                try:
+                    tiles_geom = gpd.read_file(os.path.abspath(tiles_geom_path))
+                except FileNotFoundError:
+                    tile_log.error("Path to the S2 tile geometry does not exist: {}".format( \
+                                os.path.abspath(tiles_geom_path)))
+    
+    
+                tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
+                tile_geom = tile_geom.to_crs(epsg=4326)
+                geometry = tile_geom["geometry"].iloc[0]
+                geometry = geometry.representative_point()
+
+                # attempt a geometry based query
+                try:
+                    dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_polygon(
+                        max_cloud_cover=cloud_cover,
+                        start_date=dataspace_composite_start,
+                        end_date=dataspace_composite_end,
+                        area_of_interest=geometry,
+                        max_records=100,
+                        log=tile_log
+                    )
+                except Exception as error:
+                    tile_log.error("Query_dataspace_by_polygon received this error: {}".format(error))
+            else:
+                # attempt a tile ID based query
+                try:
+                    dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_tile_id(
+                        max_cloud_cover=cloud_cover,
+                        start_date=dataspace_composite_start,
+                        end_date=dataspace_composite_end,
+                        tile_id=tile_id,
+                        max_records=100,
+                        log=tile_log
+                    )
+                except Exception as error:
+                    tile_log.error("Query_dataspace_by_polygon received this error: {}".format(error))
 
             titles = dataspace_composite_products_all["title"].tolist()
             sizes = list()
@@ -1045,6 +1070,10 @@ def create_composite(config_path, tile_id="None"):
 
 
 if __name__ == "__main__":
+
+    # Geopandas can throw an error with the proj installation if multiple subdirectories called proj are within the environment directory:
+    #    PROJ: internal_proj_identify: /home/h/hb91/miniconda3/envs/pyeo_env/share/proj/proj.db lacks DATABASE.LAYOUT.VERSION.MAJOR / DATABASE.LAYOUT.VERSION.MINOR metadata. It comes from another PROJ installation.
+    print(os.environ["PROJ_LIB"])
 
     # Reading in config file
     parser = argparse.ArgumentParser(
