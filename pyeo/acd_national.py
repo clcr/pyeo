@@ -413,11 +413,13 @@ def acd_roi_tile_intersection(config_dict: dict, log: logging.Logger) -> str:
 
     """
 
+    log.info("Checking which Sentinel-2 tiles overlap with the ROI (region of interest)")
+
     ####### read in roi
     # roi_filepath is relative to pyeo_dir supplied in pyeo.ini
     roi_filepath = os.path.join(config_dict["roi_dir"], config_dict["roi_filename"])
     roi = gpd.read_file(roi_filepath)
-
+    
     # check if s2_tiles exists (it should, as is provided with git clone pyeo)
     s2_tiles_filepath = os.path.join(config_dict["geometry_dir"], config_dict["s2_tiles_filename"])
     s2_tile_geometry = gpd.read_file(s2_tiles_filepath)
