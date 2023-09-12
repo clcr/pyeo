@@ -324,7 +324,7 @@ def create_composite(config_path, tile_id="None"):
                         log=tile_log
                     )
                 except Exception as error:
-                    tile_log.error("Query_dataspace_by_polygon received this error: {}".format(error))
+                    tile_log.error("Query_dataspace_by_tile received this error: {}".format(error))
 
             titles = dataspace_composite_products_all["title"].tolist()
             sizes = list()
