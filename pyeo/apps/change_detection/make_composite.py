@@ -298,8 +298,8 @@ def create_composite(config_path, tile_id="None"):
                 tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
                 tile_geom = tile_geom.to_crs(epsg=4326)
                 geometry = tile_geom["geometry"].iloc[0]
-                geometry = geometry.representative_point()
-
+                geometry = geometry.representative_point().wkt
+                
                 # attempt a geometry based query
                 try:
                     dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_polygon(
@@ -311,7 +311,13 @@ def create_composite(config_path, tile_id="None"):
                         log=tile_log
                     )
                 except Exception as error:
-                    tile_log.error("Query_dataspace_by_polygon received this error: {}".format(error))
+                    tile_log.error(f"Query_dataspace_by_polygon received this error: {error}")
+                    tile_log.error(f"  max_cloud_cover={cloud_cover}")
+                    tile_log.error(f"  start_date={dataspace_composite_start}")
+                    tile_log.error(f"  end_date={dataspace_composite_end}")
+                    tile_log.error(f"  area_of_interest={geometry}")
+                    tile_log.error(f"  max_records={100}")
+                    sys.exit(1)
             else:
                 # attempt a tile ID based query
                 try:
