@@ -941,7 +941,9 @@ def create_composite(config_path, tile_id="None"):
                     chunks=config_dict["chunks"],
                     generate_date_images=True,
                     missing_data_value=0,
+                    log=tile_log
                 )
+                
                 tile_log.info("---------------------------------------------------------------")
                 tile_log.info("Baseline composite complete.")
                 tile_log.info("---------------------------------------------------------------")
