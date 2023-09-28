@@ -40,6 +40,9 @@ def create_composite(config_path, tile_id="None"):
 
     """
 
+    def get_processing_baseline(safe_path):
+        return safe_path[28:32]
+
     def zip_contents(directory, notstartswith=None):
         '''
         A function that compresses all files in a directory in zip file format.
@@ -272,6 +275,7 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Searching for images for initial composite.")
 
+
         if download_source == "dataspace":
 
             # convert date string to YYYY-MM-DD
@@ -395,23 +399,26 @@ def create_composite(config_path, tile_id="None"):
         if download_source == "scihub":
             min_granule_size = faulty_granule_threshold
         else:
-            min_granule_size = 0  # Required for dataspace API which doesn't report size correctly (often reported as zero)
+            # Required for dataspace API which doesn't report size correctly 
+            #   (often reported as zero)
+            min_granule_size = 0  
 
         df = df_all.query("size >= " + str(min_granule_size))
 
-        tile_log.info(
-            "Removed {} faulty scenes <{}MB in size from the list".format(
-                len(df_all) - len(df), min_granule_size
-            )
-        )
-        # find < threshold sizes, report to log
-        df_faulty = df_all.query("size < " + str(min_granule_size))
-        for r in range(len(df_faulty)):
+        if download_source == "scihub":
             tile_log.info(
-                "   {} MB: {}".format(
-                    df_faulty.iloc[r, :]["size"], df_faulty.iloc[r, :]["title"]
+                "Removed {} faulty scenes <{}MB in size from the list".format(
+                    len(df_all) - len(df), min_granule_size
                 )
             )
+            # find < threshold sizes, report to log
+            df_faulty = df_all.query("size < " + str(min_granule_size))
+            for r in range(len(df_faulty)):
+                tile_log.info(
+                    "   {} MB: {}".format(
+                        df_faulty.iloc[r, :]["size"], df_faulty.iloc[r, :]["title"]
+                    )
+                )
 
         l1c_products = df[df.processinglevel == "Level-1C"]
         l2a_products = df[df.processinglevel == "Level-2A"]
@@ -479,6 +486,51 @@ def create_composite(config_path, tile_id="None"):
                     len(l2a_products['title'])
                     )
                 )
+
+        # Processing baseline 9999 for some L2A products originates from 
+        #   ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem.
+        # See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html
+        # Where two processing baselines of the same L2A granule are available,
+        #   choose only the original baseline version, and discard the 9999 version.
+        #TODO
+        # Attributes of the pandas dataframe returned from the query:
+        #    ['collection', 'status', 'license', 'productIdentifier',
+        #   'parentIdentifier', 'title', 'description', 'organisationName',
+        #   'startDate', 'completionDate', 'productType', 'processingLevel',
+        #   'platform', 'instrument', 'resolution', 'sensorMode', 'orbitNumber',
+        #   'quicklook', 'thumbnail', 'updated', 'published', 'snowCover',
+        #   'cloudCover', 'gmlgeometry', 'centroid', 'orbitDirection', 'timeliness',
+        #   'relativeOrbitNumber', 'processingBaseline', 'missionTakeId',
+        #   'services', 'links'],
+
+        # if there are some duplicate acquisition time stamps, remove N9999 baselines
+        acq_dates = np.unique(l2a_products["startDate"])
+        duplicate_begin_times = len(acq_dates) < len(l2a_products["startDate"]
+        if duplicate_begin_times > 0:
+            tile_log.info(
+                f"Removing {duplicate_begin_times} L2A products with duplicate "+\
+                "acquisition dates.")
+            )
+            uuids = []
+            for acq_date in acq_dates:
+                uuids = uuids + list(
+                    l2a_products.loc[
+                        l2a_products["startDate"] == acq_date
+                    ].sort_values(by=["processingBaseline"], ascending=True)[
+                        "uuid"
+                    ][0]
+                )
+            l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
+            tile_log.info(
+                "    {} L2A products remain:".format(l2a_products.shape[0])
+            )
+            for product in l2a_products["title"]:
+                tile_log.info("       {}".format(product))
+            tile_log.info("Number of L2A products for download is {}".format(
+                len(l2a_products['title'])
+                )
+            )
+                        
 
         if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
             tile_log.info(
@@ -640,7 +692,6 @@ def create_composite(config_path, tile_id="None"):
                 if len(drop) > 0:
                     l1c_products = l1c_products.drop(index=drop)
                 if len(add) > 0:
-                    # l2a_products = l2a_products.append(add)
                     add = pd.DataFrame(add)
                     l2a_products = pd.concat([l2a_products, add])
 

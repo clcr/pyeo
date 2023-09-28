@@ -3136,8 +3136,12 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
 
     log.info(f"Radiometric offset correction if processing_baseline > 0400 in" + \
              " directory: {in_tif_directory}")
-    log.info("NOTE: Processing baseline in the file names will be set to \"A0400\"" + \
+    log.info("NOTE: Processing baseline in the file names will be set to e.g. \"A400\"" + \
              " if correction has been applied.")
+    log.info("NOTE: Processing baseline 9999 for some L2A products originates from "+\
+             " ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem."+\
+             " These will be skipped.\n"+\
+             " See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html")
 
     image_files = [
         f
@@ -3154,7 +3158,9 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
         log.info(f"File: {f}, Baseline: {get_processing_baseline(f)}")
         if get_processing_baseline(f)[0] == "A":
             log.info(f"Offset already applied - file marked as: {get_processing_baseline(f)}")
-        if get_processing_baseline(f)[0] != "A" and (int(get_processing_baseline(f)[1:]) >= 400): # in ["0400", "0509"]:
+        if get_processing_baseline(f)[0] != "A" and \
+            (int(get_processing_baseline(f)[1:]) != 9999 and \            
+            (int(get_processing_baseline(f)[1:]) >= 400): # in ["0400", "0509"]:
             in_raster_path = os.path.join(in_tif_directory, f)
             log.info(f"Offsetting file: {f}")
             log.info(f'Full file path: {in_raster_path}')
