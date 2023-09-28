@@ -1220,6 +1220,7 @@ def clever_composite_images(
     chunks=10,
     generate_date_image=True,
     missing_data_value=0,
+    log=logging.getLogger(__name__),
 ):
     """
     Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Will also create
@@ -1238,6 +1239,7 @@ def clever_composite_images(
         If true, generates a single-layer raster containing the dates of each image detected - see below.
     missing_data_value : int, optional
         Value for no data encoding, will be ignored in calculating the median
+    log : logger object
 
     Returns
     -------
@@ -1260,6 +1262,8 @@ def clever_composite_images(
         chunks=10,
         missing_data_value=0,
         format="GTiff",
+        log=logging.getLogger(__name__),
+
     ):
         """
         Calculates the median of each pixel in a list of rasters with one band of the same dimensions and map projection.
@@ -1278,15 +1282,15 @@ def clever_composite_images(
             Value for no data encoding, will be ignored in calculating the median
         format : str, optional
             Raster format for GDAL
+        log : logger object
         """
 
-        log = logging.getLogger(__name__)
         in_raster = gdal.Open(in_raster_path_list[0])
         driver = gdal.GetDriverByName(str(format))
         projection = in_raster.GetProjection()
         in_gt = in_raster.GetGeoTransform()
         log.info(
-            f"I.R. 20230430 clever_composite_images() in_raster_path_list[0].geotransform = {in_raster.GetGeoTransform()}"
+            f"Clever_composite_images() in_raster_path_list[0].geotransform = {in_raster.GetGeoTransform()}"
         )
         n_bands = in_raster.RasterCount
         temp_band = in_raster.GetRasterBand(1)
@@ -1300,7 +1304,7 @@ def clever_composite_images(
         for f in in_raster_path_list:
             in_raster = gdal.Open(f)
             log.info(
-                f"I.R. 20230430 clever_composite_images() in_raster_path_list.geotransform = {in_raster.GetGeoTransform()}"
+                f"Clever_composite_images() in_raster_path_list.geotransform = {in_raster.GetGeoTransform()}"
             )
             f_n_bands = in_raster.RasterCount
             f_xsize = in_raster.RasterXSize
@@ -1420,6 +1424,7 @@ def clever_composite_images(
                 band=band + 1,
                 chunks=chunks,
                 missing_data_value=missing_data_value,
+                log=log
             )
             # log some image stats
             get_stats_from_raster_file(tmpfile)
@@ -1430,7 +1435,7 @@ def clever_composite_images(
         get_stats_from_raster_file(composite_out_path)
 
     log.info(
-        f"I.R. 20230430 clever_composite_images() Fixing composite geotransform to ensure it matches first of contributing images"
+        "Clever_composite_images() Fixing composite geotransform to ensure it matches first of contributing images"
     )
     in_raster = gdal.Open(in_raster_path_list[0])
     in_gt = in_raster.GetGeoTransform()
@@ -1452,6 +1457,7 @@ def clever_composite_images_with_mask(
     chunks=10,
     generate_date_image=True,
     missing_data_value=0,
+    log=logging.getLogger(__name__),
 ):
     """
     Works down in_raster_path_list, updating pixels in composite_out_path if not masked. Will also create a mask and
@@ -1470,6 +1476,7 @@ def clever_composite_images_with_mask(
         If true, generates a single-layer raster containing the dates of each image detected - see below.
     missing_data_value : int, optional
         Value for no data encoding, will be ignored in calculating the median
+    log : logger object
 
     Returns
     -------
@@ -1497,6 +1504,7 @@ def clever_composite_images_with_mask(
         chunks=10,
         missing_data_value=0,
         format="GTiff",
+        log=logging.getLogger(__name__),
     ):
         """
         Calculates the median of each pixel in a list of rasters with one band of the same dimensions and map projection.
@@ -1515,6 +1523,7 @@ def clever_composite_images_with_mask(
             Value for no data encoding, will be ignored in calculating the median
         format : str, optional
             Raster format for GDAL
+        log : logger object
         """
 
         in_raster = gdal.Open(in_raster_path_list[0])
@@ -1648,6 +1657,7 @@ def clever_composite_images_with_mask(
             band=band + 1,
             chunks=chunks,
             missing_data_value=missing_data_value,
+            log=log
         )
         # log some image stats
         get_stats_from_raster_file(tmpfile)
@@ -1822,6 +1832,7 @@ def clever_composite_directory(
     chunks=10,
     generate_date_images=False,
     missing_data_value=0,
+    log=logging.getLogger(__name__),
 ):
     """
     Using clever_composite_images, creates a composite containing every image in image_dir. This will
@@ -1840,6 +1851,7 @@ def clever_composite_directory(
         Defaults to False.
     missing_data_value : int, optional
         Value for no data encoding, will be ignored in calculating the median
+    log : logger object
 
     Returns
     -------
@@ -1847,7 +1859,6 @@ def clever_composite_directory(
         The path to the new composite
 
     """
-    log = logging.getLogger(__name__)
     log.info(
         "Cleverly compositing all images in directory into a median composite: {}".format(
             image_dir
@@ -1881,6 +1892,7 @@ def clever_composite_directory(
         chunks=chunks,
         generate_date_image=generate_date_images,
         missing_data_value=missing_data_value,
+        log = log
     )
     return composite_out_path
 
@@ -1892,6 +1904,7 @@ def clever_composite_directory_with_masks(
     chunks=10,
     generate_date_images=False,
     missing_data_value=0,
+    log=logging.getLogger(__name__),
 ):
     """
     Using clever_composite_images_with_mask, creates a composite containing every image in image_dir. This will
@@ -1910,14 +1923,15 @@ def clever_composite_directory_with_masks(
         Defaults to False.
     missing_data_value : int, optional
         Value for no data encoding, will be ignored in calculating the median
-
+    log : logger object
+    
     Returns
     -------
     composite_out_path : str
         The path to the new composite
 
     """
-    log = logging.getLogger(__name__)
+
     log.info(
         "Cleverly compositing all images in directory into a median composite: {}".format(
             image_dir
@@ -1950,6 +1964,7 @@ def clever_composite_directory_with_masks(
         chunks=chunks,
         generate_date_image=generate_date_images,
         missing_data_value=missing_data_value,
+        log=log
     )
     return composite_out_path
 
