@@ -108,12 +108,15 @@ from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
                                          check_for_invalid_l2_data,
                                          get_sen_2_image_tile)
 from requests import Request
-# fix an issue with backwards incompatibility of the sentinelhub library
+# fix an issue with backwards incompatibility of the sentinelhub library from v3.9.1 onwards
 import sentinelhub
-if sentinelhub.__version__ > 9.3.0:
+hubversion = sentinelhub.__version__.split(".")
+if (int(hubversion[0]) > 3) or \
+    (int(hubversion[0]) == 3 and int(hubversion[1]) > 9) or \
+    (int(hubversion[0]) == 3 and int(hubversion[1]) == 9 and int(hubversion[2]) > 0):
     from sentinelhub.aws.request import download_safe_format
 else:
-    from sentinelhub.data_request import download_safe_format #OLD pre-v9.3.1
+    from sentinelhub.data_request import download_safe_format
 
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 

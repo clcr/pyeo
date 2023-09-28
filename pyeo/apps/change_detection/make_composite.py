@@ -1079,10 +1079,6 @@ def create_composite(config_path, tile_id="None"):
 
 if __name__ == "__main__":
 
-    # Geopandas can throw an error with the proj installation if multiple subdirectories called proj are within the environment directory:
-    #    PROJ: internal_proj_identify: /home/h/hb91/miniconda3/envs/pyeo_env/share/proj/proj.db lacks DATABASE.LAYOUT.VERSION.MAJOR / DATABASE.LAYOUT.VERSION.MINOR metadata. It comes from another PROJ installation.
-    print(os.environ["PROJ_LIB"])
-
     # Reading in config file
     parser = argparse.ArgumentParser(
         description="Downloads and preprocesses Sentinel 2 images into median composites."
