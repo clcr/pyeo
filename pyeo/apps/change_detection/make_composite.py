@@ -432,6 +432,94 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("    {} L2A products".format(l2a_products.shape[0]))
 
 
+
+        # Processing baseline 9999 for some L2A products originates from 
+        #   ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem.
+        # See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html
+        # Where two processing baselines of the same L2A granule are available,
+        #   choose only the original baseline version, and discard the 9999 version.
+        #TODO
+
+        # if there are some duplicate acquisition time stamps, remove N9999 baselines
+        tile_log.info("--------------------------------------------------")
+        tile_log.info(
+            "Filtering out L2A products that have the same 'start_date'"+
+            "  as another L2A product with a different processing baseline."+
+            "  Dropping baseline N9999 where it is duplicating another baseline."
+        )
+        
+        l2a_products["start_date"] = "n/a"
+        l2a_products["processing_baseline"] = "n/a"
+        for product in l2a_products["title"]:
+            l2a_products.loc[l2a_products["title"] == product, "start_date"] = \
+                get_start_date(product)
+            l2a_products.loc[l2a_products["title"] == product, "processing_baseline"] = \
+                "N" + get_processing_baseline(product)
+        #log.info(l2a_products.sort_values(by=["start_date"])["start_date"])
+
+        #To print out the column names of the dataframe, use:
+        #log.info("Column names of the L2A Pandas Dataframe:")
+        #for col in l2a_products.columns:
+        #    log.info(col)
+        
+        acq_dates = np.unique(l2a_products["start_date"])
+        
+        tile_log.info(f"Unique acq dates: {len(acq_dates)}")
+        tile_log.info(f"All acq dates: {len(l2a_products['start_date'])}")
+        
+        duplicate_start_dates = len(l2a_products["start_date"]) - len(acq_dates)
+        if duplicate_start_dates == 1:
+            tile_log.info(
+                "Removing 1 L2A product with duplicate acquisition date."
+            )
+        if duplicate_start_dates > 1:
+            tile_log.info(
+                f"Removing {duplicate_start_dates} L2A products with duplicate "+\
+                "acquisition dates."
+            )
+        if duplicate_start_dates > 0:
+            uuids = []
+            for acq_date in acq_dates:
+                tempdf = l2a_products.loc[l2a_products["start_date"] == acq_date].sort_values(by=['processing_baseline'])
+                if len(tempdf["start_date"]) > 1:
+                    uuids = uuids + [list(tempdf['uuid'])[0]]
+                    tile_log.info("Dropping L2A products with the same start date:")
+                    for product in tempdf["title"][1:]:
+                        tile_log.info(f"       {product}")
+                    tile_log.info("Keeping only this one:")
+                    tile_log.info(f"       {list(tempdf['title'])[0]}")
+                else:
+                    uuids = uuids + [list(tempdf['uuid'])[0]]
+            tile_log.info("Found unique L2A products without duplicate acquisiton dates:")
+            l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
+            for product in l2a_products["title"]:
+                tile_log.info(f"       {product}")
+        tile_log.info(
+            f"  {l2a_products.shape[0]} L2A products remain after removing "+\
+                "duplicate acquisition dates:"
+        )
+        tile_log.info("--------------------------------------------------")
+                        
+
+        if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
+            tile_log.info(
+                "Filtering out L1C products that have the same 'beginposition'"+
+                " time stamp as an existing L2A product."
+            )
+           
+            if download_source == "scihub":
+                (l1c_products,l2a_products,) = queries_and_downloads.filter_unique_l1c_and_l2a_data(
+                                                    df,
+                                                    log=tile_log
+                                                    )
+
+            if download_source == "dataspace":
+                l1c_products = queries_and_downloads.filter_unique_dataspace_products(
+                                l1c_products=l1c_products,
+                                l2a_products=l2a_products, 
+                                log=tile_log
+                                )
+
         rel_orbits = np.unique(l1c_products["relativeorbitnumber"])
         if len(rel_orbits) > 0:
             if l1c_products.shape[0] > max_image_number / len(rel_orbits):
@@ -441,7 +529,6 @@ def create_composite(config_path, tile_id="None"):
                 tile_log.info(
                     "Relative orbits found covering tile: {}".format(rel_orbits)
                 )
-                tile_log.info("dataspace branch reaches here")
                 uuids = []
                 for orb in rel_orbits:
                     uuids = uuids + list(
@@ -493,90 +580,8 @@ def create_composite(config_path, tile_id="None"):
                     )
                 )
 
-        # Processing baseline 9999 for some L2A products originates from 
-        #   ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem.
-        # See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html
-        # Where two processing baselines of the same L2A granule are available,
-        #   choose only the original baseline version, and discard the 9999 version.
-        #TODO
-
-        # if there are some duplicate acquisition time stamps, remove N9999 baselines
-        
-        tile_log.info(
-            "Filtering out L2A products that have the same 'start_date'"+
-            "  as another L2A product with a different processing baseline."+
-            "  Dropping baseline N9999 where it is duplicating another baseline."
-        )
-        
-        l2a_products["start_date"] = "n/a"
-        l2a_products["processing_baseline"] = "n/a"
-        for product in l2a_products["title"]:
-            l2a_products.loc[l2a_products["title"] == product, "start_date"] = \
-                get_start_date(product)
-            l2a_products.loc[l2a_products["title"] == product, "processing_baseline"] = \
-                "N" + get_processing_baseline(product)
-        #log.info(l2a_products.sort_values(by=["start_date"])["start_date"])
-
-        #To print out the column names of the dataframe, use:
-        log.info("Column names of the L2A Pandas Dataframe:")
-        for col in l2a_products.columns:
-            log.info(col)
-        
-        acq_dates = np.unique(l2a_products["start_date"])
-        
-        tile_log.info(f"Unique acq dates: {len(acq_dates)}")
-        tile_log.info(f"All acq dates: {len(l2a_products['start_date'])}")
-        
-        duplicate_start_dates = len(l2a_products["start_date"]) - len(acq_dates)
-        if duplicate_start_dates == 1:
-            tile_log.info(
-                "Removing 1 L2A product with duplicate acquisition date."
-            )
-        if duplicate_start_dates > 1:
-            tile_log.info(
-                f"Removing {duplicate_start_dates} L2A products with duplicate "+\
-                "acquisition dates."
-            )
-        if duplicate_start_dates > 0:
-            uuids = []
-            for acq_date in acq_dates:
-                tempdf = l2a_products.loc[l2a_products["start_date"] == acq_date]
-                if len(tempdf["start_date"]) > 1:
-                    #log.info(list(tempdf.sort_values(by=['processing_baseline'])['uuid'])[-1])
-                    uuids = uuids + [
-                        list(
-                            tempdf.sort_values(by=['processing_baseline'])['uuid']
-                            )[-1]
-                        ]
-            l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
-            for product in l2a_products["title"]:
-                tile_log.info(f"       {product}")
-        tile_log.info(
-            f"  {l2a_products.shape[0]} L2A products remain after removing "+\
-                "duplicate acquisition dates:"
-        )
-                        
-
-        if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
-            tile_log.info(
-                "Filtering out L1C products that have the same 'beginposition'"+
-                " time stamp as an existing L2A product."
-            )
-           
-            if download_source == "scihub":
-                (l1c_products,l2a_products,) = queries_and_downloads.filter_unique_l1c_and_l2a_data(
-                                                    df,
-                                                    log=tile_log
-                                                    )
-
-            if download_source == "dataspace":
-                l1c_products = queries_and_downloads.filter_unique_dataspace_products(
-                                l1c_products=l1c_products,
-                                l2a_products=l2a_products, 
-                                log=tile_log
-                                )
-
         df = None
+
         tile_log.info(" {} L1C products for the Composite".format(
             len(l1c_products['title']))
             )
