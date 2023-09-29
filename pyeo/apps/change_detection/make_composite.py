@@ -502,10 +502,6 @@ def create_composite(config_path, tile_id="None"):
 
         # if there are some duplicate acquisition time stamps, remove N9999 baselines
         
-        #To print out the column names of the dataframe, use:
-        #log.info("Column names of the L2A Pandas Dataframe:")
-        #for col in l2a_products.columns:
-        #    log.info(col)
         tile_log.info(
             "Filtering out L2A products that have the same 'start_date'"+
             "  as another L2A product with a different processing baseline."+
@@ -520,38 +516,45 @@ def create_composite(config_path, tile_id="None"):
             l2a_products.loc[l2a_products["title"] == product, "processing_baseline"] = \
                 "N" + get_processing_baseline(product)
         #log.info(l2a_products.sort_values(by=["start_date"])["start_date"])
+
+        #To print out the column names of the dataframe, use:
+        log.info("Column names of the L2A Pandas Dataframe:")
+        for col in l2a_products.columns:
+            log.info(col)
         
         acq_dates = np.unique(l2a_products["start_date"])
         
         tile_log.info(f"Unique acq dates: {len(acq_dates)}")
         tile_log.info(f"All acq dates: {len(l2a_products['start_date'])}")
         
-        duplicate_start_dates = len(acq_dates) - len(l2a_products["start_date"])
-        if duplicate_start_dates > 0:
+        duplicate_start_dates = len(l2a_products["start_date"]) - len(acq_dates)
+        if duplicate_start_dates == 1:
+            tile_log.info(
+                "Removing 1 L2A product with duplicate acquisition date."
+            )
+        if duplicate_start_dates > 1:
             tile_log.info(
                 f"Removing {duplicate_start_dates} L2A products with duplicate "+\
                 "acquisition dates."
             )
+        if duplicate_start_dates > 0:
             uuids = []
             for acq_date in acq_dates:
-                uuids = uuids + list(
-                    l2a_products.loc[
-                        l2a_products["start_date"] == acq_date
-                        ].sort_values(by=["processing_baseline"], ascending=True)[
-                        "uuid"
-                    ][0]
-                )
+                tempdf = l2a_products.loc[l2a_products["start_date"] == acq_date]
+                if len(tempdf["start_date"]) > 1:
+                    #log.info(list(tempdf.sort_values(by=['processing_baseline'])['uuid'])[-1])
+                    uuids = uuids + [
+                        list(
+                            tempdf.sort_values(by=['processing_baseline'])['uuid']
+                            )[-1]
+                        ]
             l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
-            tile_log.info(
-                f"  {l2a_products.shape[0]} L2A products remain after removing "+\
-                    "duplicate acquisition dates:"
-            )
             for product in l2a_products["title"]:
-                tile_log.info("       {}".format(product))
-            tile_log.info("Number of L2A products for download is {}".format(
-                len(l2a_products['title'])
-                )
-            )
+                tile_log.info(f"       {product}")
+        tile_log.info(
+            f"  {l2a_products.shape[0]} L2A products remain after removing "+\
+                "duplicate acquisition dates:"
+        )
                         
 
         if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
