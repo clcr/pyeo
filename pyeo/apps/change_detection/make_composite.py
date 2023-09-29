@@ -40,6 +40,15 @@ def create_composite(config_path, tile_id="None"):
 
     """
 
+    # safe_path is of the form: 
+    #   'S2A_MSIL2A_20220811T105631_N0400_R094_T31UCU_20220811T172058.SAFE'
+
+    def get_processing_baseline(safe_path):
+        return safe_path[28:32]
+
+    def get_start_date(safe_path):
+        return safe_path.split("_")[-5]
+    
     def zip_contents(directory, notstartswith=None):
         '''
         A function that compresses all files in a directory in zip file format.
@@ -272,6 +281,7 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Searching for images for initial composite.")
 
+
         if download_source == "dataspace":
 
             # convert date string to YYYY-MM-DD
@@ -395,29 +405,120 @@ def create_composite(config_path, tile_id="None"):
         if download_source == "scihub":
             min_granule_size = faulty_granule_threshold
         else:
-            min_granule_size = 0  # Required for dataspace API which doesn't report size correctly (often reported as zero)
+            # Required for dataspace API which doesn't report size correctly 
+            #   (often reported as zero)
+            min_granule_size = 0  
 
         df = df_all.query("size >= " + str(min_granule_size))
 
-        tile_log.info(
-            "Removed {} faulty scenes <{}MB in size from the list".format(
-                len(df_all) - len(df), min_granule_size
-            )
-        )
-        # find < threshold sizes, report to log
-        df_faulty = df_all.query("size < " + str(min_granule_size))
-        for r in range(len(df_faulty)):
+        if download_source == "scihub":
             tile_log.info(
-                "   {} MB: {}".format(
-                    df_faulty.iloc[r, :]["size"], df_faulty.iloc[r, :]["title"]
+                "Removed {} faulty scenes <{}MB in size from the list".format(
+                    len(df_all) - len(df), min_granule_size
                 )
             )
+            # find < threshold sizes, report to log
+            df_faulty = df_all.query("size < " + str(min_granule_size))
+            for r in range(len(df_faulty)):
+                tile_log.info(
+                    "   {} MB: {}".format(
+                        df_faulty.iloc[r, :]["size"], df_faulty.iloc[r, :]["title"]
+                    )
+                )
 
         l1c_products = df[df.processinglevel == "Level-1C"]
         l2a_products = df[df.processinglevel == "Level-2A"]
         tile_log.info("    {} L1C products".format(l1c_products.shape[0]))
         tile_log.info("    {} L2A products".format(l2a_products.shape[0]))
 
+
+
+        # Processing baseline 9999 for some L2A products originates from 
+        #   ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem.
+        # See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html
+        # Where two processing baselines of the same L2A granule are available,
+        #   choose only the original baseline version, and discard the 9999 version.
+        #TODO
+
+        # if there are some duplicate acquisition time stamps, remove N9999 baselines
+        tile_log.info("--------------------------------------------------")
+        tile_log.info(
+            "Filtering out L2A products that have the same 'start_date'"+
+            "  as another L2A product with a different processing baseline."+
+            "  Dropping baseline N9999 where it is duplicating another baseline."
+        )
+        
+        l2a_products["start_date"] = "n/a"
+        l2a_products["processing_baseline"] = "n/a"
+        for product in l2a_products["title"]:
+            l2a_products.loc[l2a_products["title"] == product, "start_date"] = \
+                get_start_date(product)
+            l2a_products.loc[l2a_products["title"] == product, "processing_baseline"] = \
+                "N" + get_processing_baseline(product)
+        #log.info(l2a_products.sort_values(by=["start_date"])["start_date"])
+
+        #To print out the column names of the dataframe, use:
+        #log.info("Column names of the L2A Pandas Dataframe:")
+        #for col in l2a_products.columns:
+        #    log.info(col)
+        
+        acq_dates = np.unique(l2a_products["start_date"])
+        
+        tile_log.info(f"Unique acq dates: {len(acq_dates)}")
+        tile_log.info(f"All acq dates: {len(l2a_products['start_date'])}")
+        
+        duplicate_start_dates = len(l2a_products["start_date"]) - len(acq_dates)
+        if duplicate_start_dates == 1:
+            tile_log.info(
+                "Removing 1 L2A product with duplicate acquisition date."
+            )
+        if duplicate_start_dates > 1:
+            tile_log.info(
+                f"Removing {duplicate_start_dates} L2A products with duplicate "+\
+                "acquisition dates."
+            )
+        if duplicate_start_dates > 0:
+            uuids = []
+            for acq_date in acq_dates:
+                tempdf = l2a_products.loc[l2a_products["start_date"] == acq_date].sort_values(by=['processing_baseline'])
+                if len(tempdf["start_date"]) > 1:
+                    uuids = uuids + [list(tempdf['uuid'])[0]]
+                    tile_log.info("Dropping L2A products with the same start date:")
+                    for product in tempdf["title"][1:]:
+                        tile_log.info(f"       {product}")
+                    tile_log.info("Keeping only this one:")
+                    tile_log.info(f"       {list(tempdf['title'])[0]}")
+                else:
+                    uuids = uuids + [list(tempdf['uuid'])[0]]
+            tile_log.info("Found unique L2A products without duplicate acquisiton dates:")
+            l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
+            for product in l2a_products["title"]:
+                tile_log.info(f"       {product}")
+        tile_log.info(
+            f"  {l2a_products.shape[0]} L2A products remain after removing "+\
+                "duplicate acquisition dates:"
+        )
+        tile_log.info("--------------------------------------------------")
+                        
+
+        if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
+            tile_log.info(
+                "Filtering out L1C products that have the same 'beginposition'"+
+                " time stamp as an existing L2A product."
+            )
+           
+            if download_source == "scihub":
+                (l1c_products,l2a_products,) = queries_and_downloads.filter_unique_l1c_and_l2a_data(
+                                                    df,
+                                                    log=tile_log
+                                                    )
+
+            if download_source == "dataspace":
+                l1c_products = queries_and_downloads.filter_unique_dataspace_products(
+                                l1c_products=l1c_products,
+                                l2a_products=l2a_products, 
+                                log=tile_log
+                                )
 
         rel_orbits = np.unique(l1c_products["relativeorbitnumber"])
         if len(rel_orbits) > 0:
@@ -428,7 +529,6 @@ def create_composite(config_path, tile_id="None"):
                 tile_log.info(
                     "Relative orbits found covering tile: {}".format(rel_orbits)
                 )
-                tile_log.info("dataspace branch reaches here")
                 uuids = []
                 for orb in rel_orbits:
                     uuids = uuids + list(
@@ -447,7 +547,7 @@ def create_composite(config_path, tile_id="None"):
                 )
                 for product in l1c_products["title"]:
                     tile_log.info("       {}".format(product))
-                tile_log.info("Number of L1C products for dataspace is {}".format(len(l1c_products['title'])))
+                tile_log.info("Number of L1C products for download is {}".format(len(l1c_products['title'])))
 
         rel_orbits = np.unique(l2a_products["relativeorbitnumber"])
         if len(rel_orbits) > 0:
@@ -475,31 +575,13 @@ def create_composite(config_path, tile_id="None"):
                 )
                 for product in l2a_products["title"]:
                     tile_log.info("       {}".format(product))
-                tile_log.info("Number of L2A products for dataspace is {}".format(
+                tile_log.info("Number of L2A products for download is {}".format(
                     len(l2a_products['title'])
                     )
                 )
 
-        if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
-            tile_log.info(
-                "Filtering out L1C products that have the same 'beginposition'"+
-                " time stamp as an existing L2A product."
-            )
-           
-            if download_source == "scihub":
-                (l1c_products,l2a_products,) = queries_and_downloads.filter_unique_l1c_and_l2a_data(
-                                                    df,
-                                                    log=tile_log
-                                                    )
-
-            if download_source == "dataspace":
-                l1c_products = queries_and_downloads.filter_unique_dataspace_products(
-                                l1c_products=l1c_products,
-                                l2a_products=l2a_products, 
-                                log=tile_log
-                                )
-
         df = None
+
         tile_log.info(" {} L1C products for the Composite".format(
             len(l1c_products['title']))
             )
@@ -640,7 +722,6 @@ def create_composite(config_path, tile_id="None"):
                 if len(drop) > 0:
                     l1c_products = l1c_products.drop(index=drop)
                 if len(add) > 0:
-                    # l2a_products = l2a_products.append(add)
                     add = pd.DataFrame(add)
                     l2a_products = pd.concat([l2a_products, add])
 
@@ -1078,10 +1159,6 @@ def create_composite(config_path, tile_id="None"):
 
 
 if __name__ == "__main__":
-
-    # Geopandas can throw an error with the proj installation if multiple subdirectories called proj are within the environment directory:
-    #    PROJ: internal_proj_identify: /home/h/hb91/miniconda3/envs/pyeo_env/share/proj/proj.db lacks DATABASE.LAYOUT.VERSION.MAJOR / DATABASE.LAYOUT.VERSION.MINOR metadata. It comes from another PROJ installation.
-    print(os.environ["PROJ_LIB"])
 
     # Reading in config file
     parser = argparse.ArgumentParser(
