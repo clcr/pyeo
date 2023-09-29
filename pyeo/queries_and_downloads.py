@@ -35,6 +35,16 @@ The only download source currently provided is via the Copernicus Dataspace Ecos
     Users do not need to be registered with the CDSE to query images, but `pyeo` expects the user to have provided a valid username and password. 
     The main change from SciHub to CDSE is that Sentinel-2 products are no longer archived beyond a certain time-frame, i.e. the products in the CDSE are always online.
 
+    Attributes for a query:
+      ['collection', 'status', 'license', 'productIdentifier',
+      'parentIdentifier', 'title', 'description', 'organisationName',
+      'startDate', 'completionDate', 'productType', 'processingLevel',
+      'platform', 'instrument', 'resolution', 'sensorMode', 'orbitNumber',
+      'quicklook', 'thumbnail', 'updated', 'published', 'snowCover',
+      'cloudCover', 'gmlgeometry', 'centroid', 'orbitDirection', 'timeliness',
+      'relativeOrbitNumber', 'processingBaseline', 'missionTakeId',
+      'services', 'links'],
+
 Legacy Download Sources
 -----------------------
 There are three other *legacy* download sources which this library no longer supports as they are deprecated in favour of the now active CDSE.

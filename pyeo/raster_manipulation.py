@@ -3159,8 +3159,8 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
         if get_processing_baseline(f)[0] == "A":
             log.info(f"Offset already applied - file marked as: {get_processing_baseline(f)}")
         if get_processing_baseline(f)[0] != "A" and \
-            (int(get_processing_baseline(f)[1:]) != 9999 and \            
-            (int(get_processing_baseline(f)[1:]) >= 400): # in ["0400", "0509"]:
+            (int(get_processing_baseline(f)) != 9999 and \
+            int(get_processing_baseline(f)) >= 400): # in ["0400", "0509"]:
             in_raster_path = os.path.join(in_tif_directory, f)
             log.info(f"Offsetting file: {f}")
             log.info(f'Full file path: {in_raster_path}')

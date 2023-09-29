@@ -40,9 +40,15 @@ def create_composite(config_path, tile_id="None"):
 
     """
 
+    # safe_path is of the form: 
+    #   'S2A_MSIL2A_20220811T105631_N0400_R094_T31UCU_20220811T172058.SAFE'
+
     def get_processing_baseline(safe_path):
         return safe_path[28:32]
 
+    def get_start_date(safe_path):
+        return safe_path.split("_")[-5]
+    
     def zip_contents(directory, notstartswith=None):
         '''
         A function that compresses all files in a directory in zip file format.
@@ -454,7 +460,7 @@ def create_composite(config_path, tile_id="None"):
                 )
                 for product in l1c_products["title"]:
                     tile_log.info("       {}".format(product))
-                tile_log.info("Number of L1C products for dataspace is {}".format(len(l1c_products['title'])))
+                tile_log.info("Number of L1C products for download is {}".format(len(l1c_products['title'])))
 
         rel_orbits = np.unique(l2a_products["relativeorbitnumber"])
         if len(rel_orbits) > 0:
@@ -482,7 +488,7 @@ def create_composite(config_path, tile_id="None"):
                 )
                 for product in l2a_products["title"]:
                     tile_log.info("       {}".format(product))
-                tile_log.info("Number of L2A products for dataspace is {}".format(
+                tile_log.info("Number of L2A products for download is {}".format(
                     len(l2a_products['title'])
                     )
                 )
@@ -493,36 +499,52 @@ def create_composite(config_path, tile_id="None"):
         # Where two processing baselines of the same L2A granule are available,
         #   choose only the original baseline version, and discard the 9999 version.
         #TODO
-        # Attributes of the pandas dataframe returned from the query:
-        #    ['collection', 'status', 'license', 'productIdentifier',
-        #   'parentIdentifier', 'title', 'description', 'organisationName',
-        #   'startDate', 'completionDate', 'productType', 'processingLevel',
-        #   'platform', 'instrument', 'resolution', 'sensorMode', 'orbitNumber',
-        #   'quicklook', 'thumbnail', 'updated', 'published', 'snowCover',
-        #   'cloudCover', 'gmlgeometry', 'centroid', 'orbitDirection', 'timeliness',
-        #   'relativeOrbitNumber', 'processingBaseline', 'missionTakeId',
-        #   'services', 'links'],
 
         # if there are some duplicate acquisition time stamps, remove N9999 baselines
-        acq_dates = np.unique(l2a_products["startDate"])
-        duplicate_begin_times = len(acq_dates) < len(l2a_products["startDate"]
-        if duplicate_begin_times > 0:
+        
+        #To print out the column names of the dataframe, use:
+        #log.info("Column names of the L2A Pandas Dataframe:")
+        #for col in l2a_products.columns:
+        #    log.info(col)
+        tile_log.info(
+            "Filtering out L2A products that have the same 'start_date'"+
+            "  as another L2A product with a different processing baseline."+
+            "  Dropping baseline N9999 where it is duplicating another baseline."
+        )
+        
+        l2a_products["start_date"] = "n/a"
+        l2a_products["processing_baseline"] = "n/a"
+        for product in l2a_products["title"]:
+            l2a_products.loc[l2a_products["title"] == product, "start_date"] = \
+                get_start_date(product)
+            l2a_products.loc[l2a_products["title"] == product, "processing_baseline"] = \
+                "N" + get_processing_baseline(product)
+        #log.info(l2a_products.sort_values(by=["start_date"])["start_date"])
+        
+        acq_dates = np.unique(l2a_products["start_date"])
+        
+        tile_log.info(f"Unique acq dates: {len(acq_dates)}")
+        tile_log.info(f"All acq dates: {len(l2a_products['start_date'])}")
+        
+        duplicate_start_dates = len(acq_dates) - len(l2a_products["start_date"])
+        if duplicate_start_dates > 0:
             tile_log.info(
-                f"Removing {duplicate_begin_times} L2A products with duplicate "+\
-                "acquisition dates.")
+                f"Removing {duplicate_start_dates} L2A products with duplicate "+\
+                "acquisition dates."
             )
             uuids = []
             for acq_date in acq_dates:
                 uuids = uuids + list(
                     l2a_products.loc[
-                        l2a_products["startDate"] == acq_date
-                    ].sort_values(by=["processingBaseline"], ascending=True)[
+                        l2a_products["start_date"] == acq_date
+                        ].sort_values(by=["processing_baseline"], ascending=True)[
                         "uuid"
                     ][0]
                 )
             l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
             tile_log.info(
-                "    {} L2A products remain:".format(l2a_products.shape[0])
+                f"  {l2a_products.shape[0]} L2A products remain after removing "+\
+                    "duplicate acquisition dates:"
             )
             for product in l2a_products["title"]:
                 tile_log.info("       {}".format(product))
