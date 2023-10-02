@@ -107,7 +107,7 @@ def vector_report_generation(config_path: str, tile: str):
                                         path_to_vectorised_binary_filtered=path_vectorised_binary_filtered,
                                         write_csv=False,
                                         write_shapefile=True,
-                                        write_kmlfile=False,
+                                        write_kml=False,
                                         write_pkl=False,
                                         change_report_path=change_report_path,
                                         log=tile_log,

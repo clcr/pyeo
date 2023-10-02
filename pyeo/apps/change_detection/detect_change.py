@@ -1425,7 +1425,10 @@ def detect_change(config_path, tile_id="None"):
             
         if config_dict["do_all"] or config_dict["do_vectorise"]:
             from pyeo.apps.acd_national.acd_by_tile_vectorisation import vector_report_generation
-            output_vector_products = vector_report_generation(config_path, tile_to_process)
+            output_vector_products = vector_report_generation(
+                                        config_path, 
+                                        tile_to_process
+                                        )
         
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Report image vectorised. Output file(s) created:")
