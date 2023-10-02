@@ -19,7 +19,11 @@ import shutil
 import sys
 import warnings
 import zipfile
-from pyeo import (filesystem_utilities, queries_and_downloads, raster_manipulation)
+from pyeo import (
+    filesystem_utilities, 
+    classification,
+    queries_and_downloads, 
+    raster_manipulation)
 from pyeo.acd_national import (acd_initialisation,
                                  acd_config_to_log,
                                  acd_roi_tile_intersection)
@@ -121,33 +125,85 @@ def detect_change(config_path, tile_id="None"):
 
     config_dict, log = acd_initialisation(config_path)
     acd_config_to_log(config_dict, log)
+    log.info(config_dict)
 
     try:
         os.chdir(config_dict["pyeo_dir"]) # ensures pyeo is looking in the correct directory
-        #start_date = config_dict["start_date"]
+        #'qsub_processor_options': 'nodes=1:ppn=16,vmem=64Gb', 
+        #'do_parallel': False, 
+        #'wall_time_hours': 3, 
+        #'watch_time_hours': 3, 
+        #'watch_period_seconds': 60, 
+        #'do_tile_intersection': True, 
+        #'do_raster': True, 
+        #'do_dev': True, 
+        #'do_all': False, 'do_classify': True, 'do_change': True, 'do_download': True, 
+        #'do_update': False, 'do_quicklooks': True, 'do_delete': False, 'do_zip': True,
+        #'build_composite': True, 'build_prob_image': False, 'do_skip_existing': True,
+        #'start_date': '20230601', 
+        #'end_date': 'TODAY', 
+        #'composite_start': '20220101', 
+        #'composite_end': '20221231', 
+        #'epsg': 27700, 
+        #'cloud_cover': 25, 
+        #'cloud_certainty_threshold': 0, #
+        #'model_path': './models/model_36MYE_Unoptimised_20230505_no_haze.pkl', 
+        #'download_source': 'dataspace', 
+        #'bands': ['B02', 'B03', 'B04', 'B08'], 
+        #'resolution_string': '"10m"', 
+        #'output_resolution': 10, 
+        #'buffer_size_cloud_masking': 20, 
+        #'buffer_size_cloud_masking_composite': 10, 
+        #'download_limit': 20, 
+        #'faulty_granule_threshold': 200, #
+        #'sieve': 0, #
+        #'chunks': 10, 
+        #'class_labels': ['primary forest', 'plantation forest', 'bare soil', 
+        #   'crops', 'grassland', 'open water', 'burn scar', 'cloud', 'cloud shadow', 
+        #   'haze', 'sparse woodland', 'dense woodland', 'artificial'], 
+        # 'from_classes': [1, 2, 12], 'to_classes': [3, 4, 5, 7, 11, 13], 
+        # 'environment_manager': 'conda', 'conda_directory': '/home/h/hb91/miniconda3', 
+        # 'conda_env_name': 'pyeo_env', 'pyeo_dir': '/home/h/hb91/pyeo', 
+        #  tile_dir': '/data/clcr/shared/heiko/england', 
+        # 'integrated_dir': './integrated', 'roi_dir': './roi', 
+        # 'roi_filename': '', 'geometry_dir': '', 
+        # 's2_tiles_filename': '', 'log_dir': './log', 
+        # 'log_filename': 'england.log', 
+        # 'sen2cor_path': '/home/h/hb91/Sen2Cor-02.10.01-Linux64/bin/L2A_Process', 
+        # 'level_1_filename': '', 'level_2_filename': '', 'level_3_filename': '', 
+        # 'level_1_boundaries_path': '', 'do_delete_existing_vector': True,
+        # 'do_vectorise': True, 'do_integrate': True, 'do_filter': False, 
+        # 'counties_of_interest': [], 'minimum_area_to_report_m2': 120, 
+        # 'do_distribution': False, 
+        # 'credentials_path': '/home/h/hb91/pyeo_credentials.ini'
+        # }
+
+
+        start_date = config_dict["start_date"]
         end_date = config_dict["end_date"]
         if end_date == "TODAY":
             end_date = datetime.date.today().strftime("%Y%m%d")
-        composite_start_date = config_dict["composite_start"]
-        composite_end_date = config_dict["composite_end"]
+        #composite_start_date = config_dict["composite_start"]
+        #composite_end_date = config_dict["composite_end"]
         cloud_cover = config_dict["cloud_cover"]
         #cloud_certainty_threshold = config_dict["cloud_certainty_threshold"]
-        #model_path = config_dict["model_path"]
+        model_path = config_dict["model_path"]
         tile_dir = config_dict["tile_dir"]
         sen2cor_path = config_dict["sen2cor_path"]
         epsg = config_dict["epsg"]
         bands = config_dict["bands"]
         #resolution = config_dict["resolution_string"]
         out_resolution = config_dict["output_resolution"]
-        #buffer_size = config_dict["buffer_size_cloud_masking"]
-        buffer_size_composite = config_dict["buffer_size_cloud_masking_composite"]
+        buffer_size = config_dict["buffer_size_cloud_masking"]
+        #buffer_size_composite = config_dict["buffer_size_cloud_masking_composite"]
         max_image_number = config_dict["download_limit"]
         faulty_granule_threshold = config_dict["faulty_granule_threshold"]
         #download_limit = config_dict["download_limit"]
         skip_existing = config_dict["do_skip_existing"]
-        #sieve = config_dict["sieve"]
-        #from_classes = config_dict["from_classes"]
-        #to_classes = config_dict["to_classes"]
+        sieve = config_dict["sieve"]
+        from_classes = config_dict["from_classes"]
+        to_classes = config_dict["to_classes"]
+        class_labels = config_dict["class_labels"]
         download_source = config_dict["download_source"]
         if download_source == "scihub":
             log.info("scihub API is the download source")
@@ -231,20 +287,40 @@ def detect_change(config_path, tile_id="None"):
         try:
             filesystem_utilities.create_folder_structure_for_tiles(individual_tile_directory_path)
             composite_dir = os.path.join(individual_tile_directory_path, r"composite")
-            composite_l1_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"L1C")
-            composite_l2_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"L2A")
-            composite_l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"cloud_masked")
+            #composite_l1_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"L1C")
+            #composite_l2_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"L2A")
+            #composite_l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"composite", r"cloud_masked")
             #change_image_dir = os.path.join(individual_tile_directory_path, r"images")
-            #l1_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L1C")
-            #l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
-            #l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
-            #categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
-            #probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
+            l1_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L1C")
+            l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
+            l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
+            sieved_image_dir = os.path.join(individual_tile_directory_path, r"images", r"sieved")
+            categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
+            probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
             quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
+            if start_date == "LATEST":
+                report_file_name = [
+                    f
+                    for f in os.listdir(probability_image_dir)
+                    if os.path.isfile(f) and f.startswith("report_") and f.endswith(".tif")
+                ][0]
+                report_file_path = os.path.join(probability_image_dir, report_file_name)
+                after_timestamp = filesystem_utilities.get_change_detection_dates(
+                    os.path.basename(report_file_path)
+                )[-1]
+                after_timestamp.strftime(
+                    "%Y%m%d"
+                )  
+                # Returns the yyyymmdd string of the acquisition date from 
+                #   which the latest classified image was derived
+    
+            if end_date == "TODAY":
+                end_date = datetime.date.today().strftime("%Y%m%d")
+
             log.info("Successfully created the subdirectory paths for this tile")
         except:
             log.error("ERROR: Tile subdirectory paths could not be created")
-            sys.exit(1)
+            sys.exit(-1)
 
         # initialise tile log file
         tile_log_file = os.path.join(
@@ -265,22 +341,19 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("---   PROCESSING START: {}   ---".format(tile_dir))
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Making an image composite as a baseline map for the change detection.")
+        tile_log.info("Detecting change between classified change detection images")
+        tile_log.info("and the baseline median image composite.")
         tile_log.info("List of image bands: {}".format(bands))
+        tile_log.info("List of class labels: {}".format(class_labels))
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info(
-            "Creating an initial cloud-free median composite from Sentinel-2 as a baseline map"
-        )
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Searching for images for initial composite.")
+        tile_log.info("Searching for change detection images.")
 
         if download_source == "dataspace":
-
             # convert date string to YYYY-MM-DD
-            date_object = datetime.datetime.strptime(composite_start_date, "%Y%m%d")
-            dataspace_composite_start = date_object.strftime("%Y-%m-%d")
-            date_object = datetime.datetime.strptime(composite_end_date, "%Y%m%d")
-            dataspace_composite_end = date_object.strftime("%Y-%m-%d")
+            date_object = datetime.datetime.strptime(start_date, "%Y%m%d")
+            dataspace_change_start = date_object.strftime("%Y-%m-%d")
+            date_object = datetime.datetime.strptime(end_date, "%Y%m%d")
+            dataspace_change_end = date_object.strftime("%Y-%m-%d")
 
             if not tile_based_processing_override:
                 tiles_geom_path = os.path.join(config_dict["pyeo_dir"], \
@@ -295,8 +368,7 @@ def detect_change(config_path, tile_id="None"):
                 except FileNotFoundError:
                     tile_log.error("Path to the S2 tile geometry does not exist: {}".format( \
                                 os.path.abspath(tiles_geom_path)))
-    
-    
+   
                 tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
                 tile_geom = tile_geom.to_crs(epsg=4326)
                 geometry = tile_geom["geometry"].iloc[0]
@@ -304,10 +376,10 @@ def detect_change(config_path, tile_id="None"):
 
                 # attempt a geometry based query
                 try:
-                    dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_polygon(
+                    dataspace_products_all = queries_and_downloads.query_dataspace_by_polygon(
                         max_cloud_cover=cloud_cover,
-                        start_date=dataspace_composite_start,
-                        end_date=dataspace_composite_end,
+                        start_date=dataspace_change_start,
+                        end_date=dataspace_change_end,
                         area_of_interest=geometry,
                         max_records=100,
                         log=tile_log
@@ -317,10 +389,10 @@ def detect_change(config_path, tile_id="None"):
             else:
                 # attempt a tile ID based query
                 try:
-                    dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_tile_id(
+                    dataspace_products_all = queries_and_downloads.query_dataspace_by_tile_id(
                         max_cloud_cover=cloud_cover,
-                        start_date=dataspace_composite_start,
-                        end_date=dataspace_composite_end,
+                        start_date=dataspace_change_start,
+                        end_date=dataspace_change_end,
                         tile_id=tile_id,
                         max_records=100,
                         log=tile_log
@@ -328,19 +400,19 @@ def detect_change(config_path, tile_id="None"):
                 except Exception as error:
                     tile_log.error("Query_dataspace_by_tile received this error: {}".format(error))
 
-            titles = dataspace_composite_products_all["title"].tolist()
+            titles = dataspace_products_all["title"].tolist()
             sizes = list()
             uuids = list()
-            for elem in dataspace_composite_products_all.itertuples(index=False):
+            for elem in dataspace_products_all.itertuples(index=False):
                 sizes.append(elem[-2]["download"]["size"])
                 uuids.append(elem[-2]["download"]["url"].split("/")[-1])
 
-            relative_orbit_numbers = dataspace_composite_products_all["relativeOrbitNumber"].tolist()
-            processing_levels = dataspace_composite_products_all["processingLevel"].tolist()
+            relative_orbit_numbers = dataspace_products_all["relativeOrbitNumber"].tolist()
+            processing_levels = dataspace_products_all["processingLevel"].tolist()
             transformed_levels = ['Level-1C' if level == 'S2MSI1C' else 'Level-2A' for level in processing_levels]
-            cloud_covers = dataspace_composite_products_all["cloudCover"].tolist()
-            begin_positions = dataspace_composite_products_all["startDate"].tolist()
-            statuses = dataspace_composite_products_all["status"].tolist()
+            cloud_covers = dataspace_products_all["cloudCover"].tolist()
+            begin_positions = dataspace_products_all["startDate"].tolist()
+            statuses = dataspace_products_all["status"].tolist()
 
             scihub_compatible_df = pd.DataFrame({"title": titles,
                                                 "size": sizes,
@@ -360,10 +432,10 @@ def detect_change(config_path, tile_id="None"):
         if download_source == "scihub":
 
             try:
-                composite_products_all = queries_and_downloads.check_for_s2_data_by_date(
+                products_all = queries_and_downloads.check_for_s2_data_by_date(
                     config_dict["tile_dir"],
-                    composite_start_date,
-                    composite_end_date,
+                    start_date,
+                    end_date,
                     conf=credentials_dict,
                     cloud_cover=cloud_cover,
                     tile_id=tile_to_process,
@@ -374,12 +446,12 @@ def detect_change(config_path, tile_id="None"):
                 tile_log.error("check_for_s2_data_by_date failed:  {}".format(error))
 
             tile_log.info(
-                "--> Found {} L1C and L2A products for the composite:".format(
-                    len(composite_products_all)
+                "--> Found {} L1C and L2A products for the change detection:".format(
+                    len(products_all)
                 )
             )
 
-            df_all = pd.DataFrame.from_dict(composite_products_all, orient="index")
+            df_all = pd.DataFrame.from_dict(products_all, orient="index")
 
             # check granule sizes on the server
             df_all["size"] = (
@@ -496,16 +568,16 @@ def detect_change(config_path, tile_id="None"):
                                 )
 
         df = None
-        tile_log.info(" {} L1C products for the Composite".format(
+        tile_log.info(" {} L1C products for the change detection".format(
             len(l1c_products['title']))
             )
-        tile_log.info(" {} L2A products for the Composite".format(
+        tile_log.info(" {} L2A products for the change detection".format(
             len(l2a_products['title']))
             )
         tile_log.info("Successfully queried the L1C and L2A products for "+
-                      "the Composite")
+                      "the change detection.")
 
-        # Search the local directories, composite/L2A and L1C, checking if 
+        # Search the local directories, images/L2A and L1C, checking if 
         #    scenes have already been downloaded and/or processed whilst 
         #    checking their dir sizes
         if download_source == "scihub":
@@ -536,16 +608,16 @@ def detect_change(config_path, tile_id="None"):
                     )
                     file_list = (
                         [
-                            os.path.join(composite_l1_image_dir, f)
-                            for f in os.listdir(composite_l1_image_dir)
+                            os.path.join(l1_image_dir, f)
+                            for f in os.listdir(l1_image_dir)
                         ]
                         + [
-                            os.path.join(composite_l2_image_dir, f)
-                            for f in os.listdir(composite_l2_image_dir)
+                            os.path.join(l2_image_dir, f)
+                            for f in os.listdir(l2_image_dir)
                         ]
                         + [
-                            os.path.join(composite_l2_masked_image_dir, f)
-                            for f in os.listdir(composite_l2_masked_image_dir)
+                            os.path.join(l2_masked_image_dir, f)
+                            for f in os.listdir(l2_masked_image_dir)
                         ]
                     )
                     for f in file_list:
@@ -573,8 +645,8 @@ def detect_change(config_path, tile_id="None"):
                     matching_l2a_products = queries_and_downloads._file_api_query(
                         user=sen_user,
                         passwd=sen_pass,
-                        start_date=composite_start_date,
-                        end_date=composite_end_date,
+                        start_date=start_date,
+                        end_date=end_date,
                         filename=search_term,
                         cloud=cloud_cover,
                         producttype="S2MSI2A",
@@ -583,7 +655,8 @@ def detect_change(config_path, tile_id="None"):
                     matching_l2a_products_df = pd.DataFrame.from_dict(
                         matching_l2a_products, orient="index"
                     )
-                    # 07/03/2023: Matt - Applied Ali's fix for converting product size to MB to compare against faulty_grandule_threshold
+                    # 07/03/2023: Matt - Applied Ali's fix for converting 
+                    # product size to MB to compare against faulty_grandule_threshold
                     if (
                         len(matching_l2a_products_df) == 1
                         and [
@@ -640,7 +713,8 @@ def detect_change(config_path, tile_id="None"):
                     add = pd.DataFrame(add)
                     l2a_products = pd.concat([l2a_products, add])
 
-                tile_log.info("\n Successfully searched for the L2A counterparts for the L1C products for the Composite")
+                tile_log.info("\n Successfully searched for the L2A counterparts for\
+                              the L1C products for the change detection.")
                 
             # here, dataspace and scihub derived l1c_products and l2a_products lists are the "same"
             l2a_products = l2a_products.drop_duplicates(subset="title")
@@ -665,8 +739,8 @@ def detect_change(config_path, tile_id="None"):
 
                 queries_and_downloads.download_s2_data_from_df(
                     l1c_products,
-                    composite_l1_image_dir,
-                    composite_l2_image_dir,
+                    l1_image_dir,
+                    l2_image_dir,
                     source="scihub",
                     user=sen_user,
                     passwd=sen_pass,
@@ -677,8 +751,8 @@ def detect_change(config_path, tile_id="None"):
 
                 queries_and_downloads.download_s2_data_from_dataspace(
                     product_df=l1c_products,
-                    l1c_directory=composite_l1_image_dir,
-                    l2a_directory=composite_l2_image_dir,
+                    l1c_directory=l1_image_dir,
+                    l2a_directory=l2_image_dir,
                     dataspace_username=sen_user,
                     dataspace_password=sen_pass,
                     log=tile_log
@@ -688,8 +762,8 @@ def detect_change(config_path, tile_id="None"):
 
             tile_log.info("Atmospheric correction of L1C image products with sen2cor.")
             raster_manipulation.atmospheric_correction(
-                composite_l1_image_dir,
-                composite_l2_image_dir,
+                l1_image_dir,
+                l2_image_dir,
                 sen2cor_path,
                 delete_unprocessed_image=False,
                 log=tile_log
@@ -705,8 +779,8 @@ def detect_change(config_path, tile_id="None"):
 
                 queries_and_downloads.download_s2_data(
                     l2a_products.to_dict("index"),
-                    composite_l1_image_dir,
-                    composite_l2_image_dir,
+                    l1_image_dir,
+                    l2_image_dir,
                     source="scihub",
                     user=sen_user,
                     passwd=sen_pass,
@@ -716,8 +790,8 @@ def detect_change(config_path, tile_id="None"):
 
                 queries_and_downloads.download_s2_data_from_dataspace(
                     product_df=l2a_products,
-                    l1c_directory=composite_l1_image_dir,
-                    l2a_directory=composite_l2_image_dir,
+                    l1c_directory=l1_image_dir,
+                    l2a_directory=l2_image_dir,
                     dataspace_username=sen_user,
                     dataspace_password=sen_pass,
                     log=tile_log
@@ -725,7 +799,7 @@ def detect_change(config_path, tile_id="None"):
 
         # check for incomplete L2A downloads
         incomplete_downloads, sizes = raster_manipulation.find_small_safe_dirs(
-            composite_l2_image_dir, threshold=faulty_granule_threshold * 1024 * 1024
+            l2_image_dir, threshold=faulty_granule_threshold * 1024 * 1024
         )
         if len(incomplete_downloads) > 0:
             for index, safe_dir in enumerate(incomplete_downloads):
@@ -736,32 +810,33 @@ def detect_change(config_path, tile_id="None"):
                             str(round(sizes[index] / 1024 / 1024)), safe_dir))
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Image download and atmospheric correction for composite is complete.")
+        tile_log.info("Image download and atmospheric correction for change detection is complete.")
         tile_log.info("---------------------------------------------------------------")
 
         # Housekeeping
         if config_dict["do_delete"]:
             tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Deleting downloaded L1C images for composite, keeping only derived L2A products")
+            tile_log.info("Deleting downloaded L1C images for change detection.")
+            tile_log.info("Keeping only derived L2A products.")
             tile_log.info(
                 "---------------------------------------------------------------"
             )
-            directory = composite_l1_image_dir
+            directory = l1_image_dir
             tile_log.info("Deleting {}".format(directory))
             shutil.rmtree(directory)
             tile_log.info(
                 "---------------------------------------------------------------"
             )
-            tile_log.info("Deletion of L1C images complete. Keeping only L2A images.")
+            tile_log.info("Deletion of L1C images complete.")
             tile_log.info(
                 "---------------------------------------------------------------"
             )
         else:
             if config_dict["do_zip"]:
                 tile_log.info("---------------------------------------------------------------")
-                tile_log.info("Zipping downloaded L1C images for composite after atmospheric correction")
+                tile_log.info("Zipping downloaded L1C images for change detection after atmospheric correction")
                 tile_log.info("---------------------------------------------------------------")
-                filesystem_utilities.zip_contents(composite_l1_image_dir)
+                filesystem_utilities.zip_contents(l1_image_dir)
                 tile_log.info("---------------------------------------------------------------")
                 tile_log.info("Zipping complete")
                 tile_log.info("---------------------------------------------------------------")
@@ -769,17 +844,18 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info("Housekeeping after download successfully finished")
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Applying simple cloud, cloud shadow and haze mask based on SCL files and stacking the masked band raster files.")
+        tile_log.info("Applying simple cloud, cloud shadow and haze mask based on")
+        tile_log.info("SCL files and stacking the masked band raster files.")
         tile_log.info("---------------------------------------------------------------")
 
-        directory = composite_l2_masked_image_dir
+        directory = l2_masked_image_dir
         masked_file_paths = [
             f
             for f in os.listdir(directory)
             if f.endswith(".tif") and os.path.isfile(os.path.join(directory, f))
         ]
 
-        directory = composite_l2_image_dir
+        directory = l2_image_dir
         l2a_zip_file_paths = [f for f in os.listdir(directory) if f.endswith(".zip")]
 
         if len(l2a_zip_file_paths) > 0:
@@ -793,12 +869,12 @@ def detect_change(config_path, tile_id="None"):
                 else:
                     # extract it if not
                     filesystem_utilities.unzip_contents(
-                        os.path.join(composite_l2_image_dir, f),
+                        os.path.join(l2_image_dir, f),
                         ifstartswith="S2",
                         ending=".SAFE",
                     )
 
-        directory = composite_l2_image_dir
+        directory = l2_image_dir
         l2a_safe_file_paths = [
             f
             for f in os.listdir(directory)
@@ -822,10 +898,10 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("No L2A images found for cloud masking. They may already have been done.")
         else:
             raster_manipulation.apply_scl_cloud_mask(
-                composite_l2_image_dir,
-                composite_l2_masked_image_dir,
+                l2_image_dir,
+                l2_masked_image_dir,
                 scl_classes=[0, 1, 2, 3, 8, 9, 10, 11],
-                buffer_size=buffer_size_composite,
+                buffer_size=buffer_size,
                 bands=bands,
                 out_resolution=out_resolution,
                 haze=None,
@@ -845,14 +921,14 @@ def detect_change(config_path, tile_id="None"):
         '''
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Offsetting cloud masked L2A images for composite.")
+        tile_log.info("Offsetting cloud masked L2A images for change detection.")
         tile_log.info("---------------------------------------------------------------")
 
         raster_manipulation.apply_processing_baseline_offset_correction_to_tiff_file_directory(
-            composite_l2_masked_image_dir, composite_l2_masked_image_dir)
+            l2_masked_image_dir, l2_masked_image_dir)
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Offsetting of cloud masked L2A images for composite complete.")
+        tile_log.info("Offsetting of cloud masked L2A images for change detection complete.")
         tile_log.info("---------------------------------------------------------------")
 
 
@@ -860,7 +936,7 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Producing quicklooks.")
             tile_log.info("---------------------------------------------------------------")
-            dirs_for_quicklooks = [composite_l2_masked_image_dir]
+            dirs_for_quicklooks = [l2_masked_image_dir]
             for main_dir in dirs_for_quicklooks:
                 files = [
                     f.path
@@ -896,12 +972,12 @@ def detect_change(config_path, tile_id="None"):
                 "---------------------------------------------------------------"
             )
             tile_log.info(
-                "Zipping downloaded L2A images for composite after cloud masking and band stacking"
+                "Zipping downloaded L2A images for change detection after cloud masking and band stacking"
             )
             tile_log.info(
                 "---------------------------------------------------------------"
             )
-            filesystem_utilities.zip_contents(composite_l2_image_dir)
+            filesystem_utilities.zip_contents(l2_image_dir)
             tile_log.info(
                 "---------------------------------------------------------------"
             )
@@ -910,134 +986,50 @@ def detect_change(config_path, tile_id="None"):
                 "---------------------------------------------------------------"
             )
 
-        '''
-        Create Composite from the Baseline Imagery
-        '''
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
+            
+        # Classify each L2A image and the baseline composite
 
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
             tile_log.info("---------------------------------------------------------------")
             tile_log.info(
-                "Building initial cloud-free median composite from directory {}".format(
-                    composite_l2_masked_image_dir
-                )
+                "Classify a land cover map for each L2A image and composite image using a saved model"
             )
             tile_log.info("---------------------------------------------------------------")
-            directory = composite_l2_masked_image_dir
-            masked_file_paths = [
-                f
-                for f in os.listdir(directory)
-                if f.endswith(".tif") and os.path.isfile(os.path.join(directory, f))
-            ]
-
-            if len(masked_file_paths) > 0:
-                raster_manipulation.clever_composite_directory(
-                    composite_l2_masked_image_dir,
-                    composite_dir,
-                    chunks=config_dict["chunks"],
-                    generate_date_images=True,
-                    missing_data_value=0,
-                )
-                tile_log.info("---------------------------------------------------------------")
-                tile_log.info("Baseline composite complete.")
-                tile_log.info("---------------------------------------------------------------")
-
-        '''
-        Create Quicklook of the Composite
-        '''
-        if config_dict["do_quicklooks"] or config_dict["do_all"]:
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Producing quicklook.")
-            tile_log.info("---------------------------------------------------------------")
-            dirs_for_quicklooks = [composite_dir]
-            for main_dir in dirs_for_quicklooks:
-                files = [
-                    f.path
-                    for f in os.scandir(main_dir)
-                    if f.is_file() and os.path.basename(f).endswith(".tif")
-                ]
-                if len(files) == 0:
-                    tile_log.warning("No images found in {}.".format(main_dir))
-                else:
-                    for f in files:
-                        quicklook_path = os.path.join(
-                            quicklook_dir,
-                            os.path.basename(f).split(".")[0] + ".png",
-                        )
-                        tile_log.info(
-                            "Creating quicklook: {}".format(quicklook_path)
-                        )
-                        raster_manipulation.create_quicklook(
-                            f,
-                            quicklook_path,
-                            width=512,
-                            height=512,
-                            format="PNG",
-                            bands=[3, 2, 1],
-                            scale_factors=[[0, 2000, 0, 255]],
-                        )
-            tile_log.info("Quicklook complete.")
-
-        '''
-        Final Housekeeping
-        Now that we have created our composite and produced any quicklooks, we tell pyeo 
-            to delete or compress the cloud-masked L2A images that the composite was derived from.
-        '''
-
-        if config_dict["do_quicklooks"] or config_dict["do_all"]:
-            if config_dict["do_delete"]:
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                tile_log.info(
-                    "Deleting intermediate cloud-masked L2A images used for the baseline composite"
-                )
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                f = composite_l2_masked_image_dir
-                tile_log.info("Deleting {}".format(f))
-                shutil.rmtree(f)
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                tile_log.info("Intermediate file products have been deleted.")
-                tile_log.info("They can be reprocessed from the downloaded L2A images.")
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-            else:
-                if config_dict["do_zip"]:
-                    tile_log.info(
-                        "---------------------------------------------------------------"
-                    )
-                    tile_log.info(
-                        "Zipping cloud-masked L2A images used for the baseline composite"
-                    )
-                    tile_log.info(
-                        "---------------------------------------------------------------"
-                    )
-                    filesystem_utilities.zip_contents(composite_l2_masked_image_dir)
-                    tile_log.info(
-                        "---------------------------------------------------------------"
-                    )
-                    tile_log.info("Zipping complete")
-                    tile_log.info(
-                        "---------------------------------------------------------------"
-                    )
-
-            tile_log.info(
-                "---------------------------------------------------------------"
+            tile_log.info("Model used: {}".format(model_path))
+            if skip_existing:
+                tile_log.info("Skipping existing classification images if found.")
+            classification.classify_directory(
+                composite_dir,
+                model_path,
+                categorised_image_dir,
+                prob_out_dir=None,
+                apply_mask=False,
+                out_type="GTiff",
+                chunks=config_dict["chunks"],
+                skip_existing=skip_existing,
             )
+            classification.classify_directory(
+                l2_masked_image_dir,
+                model_path,
+                categorised_image_dir,
+                prob_out_dir=None,
+                apply_mask=False,
+                out_type="GTiff",
+                chunks=config_dict["chunks"],
+                skip_existing=skip_existing,
+            )
+    
+            tile_log.info("---------------------------------------------------------------")
             tile_log.info(
                 "Compressing tiff files in directory {} and all subdirectories".format(
-                    composite_dir
+                    categorised_image_dir
                 )
             )
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
-            for root, dirs, files in os.walk(composite_dir):
+            tile_log.info("---------------------------------------------------------------")
+            for root, dirs, files in os.walk(categorised_image_dir):
                 all_tiffs = [
                     image_name for image_name in files if image_name.endswith(".tif")
                 ]
@@ -1045,18 +1037,494 @@ def detect_change(config_path, tile_id="None"):
                     raster_manipulation.compress_tiff(
                         os.path.join(root, this_tiff), os.path.join(root, this_tiff)
                     )
+    
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("Classification of all images is complete.")
+            tile_log.info("---------------------------------------------------------------")
 
+        tile_log.info(
+            "---------------------------------------------------------------"
+        )
+        tile_log.info("Producing quicklooks.")
+        tile_log.info(
+            "---------------------------------------------------------------"
+        )
+        dirs_for_quicklooks = [categorised_image_dir]
+        for main_dir in dirs_for_quicklooks:
+            # files = [ f.path for f in os.scandir(main_dir) if f.is_file() and os.path.basename(f).endswith(".tif") ]
+            files = [
+                f.path
+                for f in os.scandir(main_dir)
+                if f.is_file()
+                and os.path.basename(f).endswith(".tif")
+                and "class" in os.path.basename(f)
+            ]  # do classification images only
+            if len(files) == 0:
+                tile_log.warning("No images found in {}.".format(main_dir))
+            else:
+                for f in files:
+                    quicklook_path = os.path.join(
+                        quicklook_dir,
+                        os.path.basename(f).split(".")[0] + ".png",
+                    )
+                    tile_log.info("Creating quicklook: {}".format(quicklook_path))
+                    raster_manipulation.create_quicklook(
+                        f, quicklook_path, width=512, height=512, format="PNG"
+                    )
+        tile_log.info("Quicklooks complete.")
+
+        # ------------------------------------------------------------------------
+        # Pair up the class images with the composite baseline map
+        # and identify all pixels with the change between groups of classes of interest.
+        # Optionally applies a sieve filter to the class images if specified in the ini file.
+        # Confirms detected changes by NDVI differencing.
+        #
+        # The overall Change Detection can be summarised as this:
+        # - PyEO first looks for the composite and change imagery classifications 
+        #   and orders them by most recent.
+        # - Then, it searches for existing report files created from previous 
+        #   PyEO runs and archive them, moving them to an archived folder.
+        # - Then it creates the change report by sequentially comparing the 
+        #   classified change imagery against the classified baseline composite.
+        # - Once finished, PyEO does some housekeeping, compressing unneeded files.
+        #
+        # To perform Change Detection, we take the Classified Change Imagery 
+        # and compare it with the Classified Baseline Composite.
+        # Because are concerned with monitoring deforestation for our Change 
+        # Detection, `pyeo` examines whether any forest classes (*classes 1, 11
+        # and 12*) change to non-forest classes (*classes 3, 4, 5 and 13*).
+        # As new change imagery becomes available (*as deforestation monitoring
+        # is an iterative process through time*), these change images are 
+        # classified and compared to the baseline again.
+        #
+
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info("Creating change layers from stacked class images.")
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info("Changes of interest:")
+        tile_log.info("  from any of the classes {}".format(from_classes))
+        tile_log.info("  to   any of the classes {}".format(to_classes))
+
+        # optionally sieve the class images
+        if sieve > 0:
+            tile_log.info("Applying sieve to classification outputs.")
+            raster_manipulation.sieve_directory(
+                in_dir=categorised_image_dir,
+                out_dir=sieved_image_dir,
+                neighbours=8,
+                sieve=sieve,
+                out_type="GTiff",
+                skip_existing=skip_existing,
+            )
+            # if sieve was chosen, work with the sieved class images
+            class_image_dir = sieved_image_dir
+        else:
+            # if sieve was not chosen, work with the original class images
+            class_image_dir = categorised_image_dir
+    
+        # get all image paths in the classification maps directory except the class composites
+        class_image_paths = [
+            f.path
+            for f in os.scandir(class_image_dir)
+            if f.is_file() and f.name.endswith(".tif") and not "composite_" in f.name
+        ]
+        if len(class_image_paths) == 0:
+            raise FileNotFoundError(
+                "No class images found in {}.".format(class_image_dir)
+            )
+    
+        # sort class images by image acquisition date
+        class_image_paths = list(
+            filter(filesystem_utilities.get_image_acquisition_time, class_image_paths)
+        )
+        class_image_paths.sort(
+            key=lambda x: filesystem_utilities.get_image_acquisition_time(x)
+        )
+        for index, image in enumerate(class_image_paths):
+            tile_log.info("{}: {}".format(index, image))
+    
+        # find the latest available composite
+        try:
+            latest_composite_name = filesystem_utilities.sort_by_timestamp(
+                [
+                    image_name
+                    for image_name in os.listdir(composite_dir)
+                    if image_name.endswith(".tif")
+                ],
+                recent_first=True,
+            )[0]
+            latest_composite_path = os.path.join(composite_dir, latest_composite_name)
+            tile_log.info("Most recent composite at {}".format(latest_composite_path))
+        except IndexError:
+            tile_log.critical(
+                "Latest composite not found. The first time you run this script, you need to include the "
+                "--build-composite flag to create a base composite to work off. If you have already done this,"
+                "check that the earliest dated image in your images/merged folder is later than the earliest"
+                " dated image in your composite/ folder."
+            )
+            sys.exit(1)
+    
+        latest_class_composite_path = os.path.join(
+            class_image_dir,
+            [
+                f.path
+                for f in os.scandir(class_image_dir)
+                if f.is_file()
+                and os.path.basename(latest_composite_path)[:-4] in f.name
+                and f.name.endswith(".tif")
+            ][0],
+        )
+    
+        tile_log.info(
+            "Most recent class composite at {}".format(latest_class_composite_path)
+        )
+        if not os.path.exists(latest_class_composite_path):
+            tile_log.critical(
+                "Latest class composite not found. The first time you run this script, you need to include the "
+                "--build-composite flag to create a base composite to work off. If you have already done this,"
+                "check that the earliest dated image in your images/merged folder is later than the earliest"
+                " dated image in your composite/ folder. Then, you need to run the --classify option."
+            )
+            sys.exit(1)
+    
+        if config_dict[
+            "do_dev"
+        ]:  # set the name of the report file in the development version run
+            before_timestamp = filesystem_utilities.get_change_detection_dates(
+                os.path.basename(latest_class_composite_path)
+            )[0]
+            # I.R. 20220611 START
+            ## Timestamp report with the date of most recent classified image that contributes to it
+            after_timestamp = filesystem_utilities.get_image_acquisition_time(
+                os.path.basename(class_image_paths[-1])
+            )
+            ## ORIGINAL
+            # gets timestamp of the earliest change image of those available in class_image_path
+            # after_timestamp  = pyeo.filesystem_utilities.get_image_acquisition_time(os.path.basename(class_image_paths[0]))
+            # I.R. 20220611 END
+            output_product = os.path.join(
+                probability_image_dir,
+                "report_{}_{}_{}.tif".format(
+                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                    tile_to_process,
+                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                ),
+            )
+            tile_log.info("I.R. Report file name will be {}".format(output_product))
+    
+            # if a report file exists, archive it  ( I.R. Changed from 'rename it to show it has been updated')
+            n_report_files = len(
+                [
+                    f
+                    for f in os.scandir(probability_image_dir)
+                    if f.is_file()
+                    and f.name.startswith("report_")
+                    and f.name.endswith(".tif")
+                ]
+            )
+    
+            if n_report_files > 0:
+                # I.R. ToDo: Should iterate over output_product_existing in case more than one report file is present (though unlikely)
+                output_product_existing = [
+                    f.path
+                    for f in os.scandir(probability_image_dir)
+                    if f.is_file()
+                    and f.name.startswith("report_")
+                    and f.name.endswith(".tif")
+                ][0]
+                tile_log.info(
+                    "Found existing report image product: {}".format(
+                        output_product_existing
+                    )
+                )
+    
+                output_product_existing_archived = os.path.join(
+                    os.path.dirname(output_product_existing),
+                    "archived_" + os.path.basename(output_product_existing),
+                )
+                tile_log.info(
+                    "Renaming existing report image product to: {}".format(
+                        output_product_existing_archived
+                    )
+                )
+                os.rename(output_product_existing, output_product_existing_archived)
+    
+        # find change patterns in the stack of classification images
+        for index, image in enumerate(class_image_paths):
+            tile_log.info("")
+            tile_log.info("")
+            tile_log.info(f"  printing index, image   : {index}, {image}")
+            tile_log.info("")
+            tile_log.info("")
+            before_timestamp = filesystem_utilities.get_change_detection_dates(
+                os.path.basename(latest_class_composite_path)
+            )[0]
+            after_timestamp = filesystem_utilities.get_image_acquisition_time(
+                os.path.basename(image)
+            )
+            tile_log.info(
+                "*** PROCESSING CLASSIFIED IMAGE: {} of {} filename: {} ***".format(
+                    index, len(class_image_paths), image
+                )
+            )
+            tile_log.info("  early time stamp: {}".format(before_timestamp))
+            tile_log.info("  late  time stamp: {}".format(after_timestamp))
+            change_raster = os.path.join(
+                probability_image_dir,
+                "change_{}_{}_{}.tif".format(
+                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                    tile_to_process,
+                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                ),
+            )
+            tile_log.info(
+                "  Change raster file to be created: {}".format(change_raster)
+            )
+    
+            dNDVI_raster = os.path.join(
+                probability_image_dir,
+                "dNDVI_{}_{}_{}.tif".format(
+                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                    tile_to_process,
+                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                ),
+            )
+            tile_log.info(
+                "  I.R. dNDVI raster file to be created: {}".format(dNDVI_raster)
+            )
+    
+            NDVI_raster = os.path.join(
+                probability_image_dir,
+                "NDVI_{}_{}_{}.tif".format(
+                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                    tile_to_process,
+                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                ),
+            )
+            tile_log.info(
+                "  I.R. NDVI raster file of change image to be created: {}".format(
+                    NDVI_raster
+                )
+            )
+    
+            if config_dict["do_dev"]:
+                # This function looks for changes from class 'change_from' in the composite to any of the 'change_to_classes'
+                # in the change images. Pixel values are the acquisition date of the detected change of interest or zero.
+                # TODO: In change_from_class_maps(), add a flag (e.g. -1) whether a pixel was a cloud in the later image.
+                # Applying check whether dNDVI < -0.2, i.e. greenness has decreased over changed areas
+    
+                tile_log.info("Update of the report image product based on change detection image.")
+                raster_manipulation.__change_from_class_maps(
+                    old_class_path=latest_class_composite_path,
+                    new_class_path=image,
+                    change_raster=change_raster,
+                    dNDVI_raster=dNDVI_raster,
+                    NDVI_raster=NDVI_raster,
+                    change_from=from_classes,
+                    change_to=to_classes,
+                    report_path=output_product,
+                    skip_existing=skip_existing,
+                    old_image_dir=composite_dir,
+                    new_image_dir=l2_masked_image_dir,
+                    viband1=4,
+                    viband2=3,
+                    dNDVI_threshold=-0.2,
+                    log=tile_log,
+                )
+            else:
+                raster_manipulation.change_from_class_maps(
+                    latest_class_composite_path,
+                    image,
+                    change_raster,
+                    change_from=from_classes,
+                    change_to=to_classes,
+                    skip_existing=skip_existing,
+                )
+    
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info("Post-classification change detection complete.")
+        tile_log.info("---------------------------------------------------------------")
+    
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info(
+            "Compressing tiff files in directory {} and all subdirectories".format(
+                probability_image_dir
+            )
+        )
+        tile_log.info("---------------------------------------------------------------")
+        for root, dirs, files in os.walk(probability_image_dir):
+            all_tiffs = [
+                image_name for image_name in files if image_name.endswith(".tif")
+            ]
+            for this_tiff in all_tiffs:
+                raster_manipulation.compress_tiff(
+                    os.path.join(root, this_tiff), os.path.join(root, this_tiff)
+                )
+    
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info(
+            "Compressing tiff files in directory {} and all subdirectories".format(
+                sieved_image_dir
+            )
+        )
+        tile_log.info("---------------------------------------------------------------")
+        for root, dirs, files in os.walk(sieved_image_dir):
+            all_tiffs = [
+                image_name for image_name in files if image_name.endswith(".tif")
+            ]
+            for this_tiff in all_tiffs:
+                raster_manipulation.compress_tiff(
+                    os.path.join(root, this_tiff), os.path.join(root, this_tiff)
+                )
+    
+        if not config_dict["do_dev"]:
             tile_log.info(
                 "---------------------------------------------------------------"
             )
             tile_log.info(
-                "Baseline image composite, file compression, zipping and deletion of"
+                "Creating aggregated report file. Deprecated in the development version."
             )
-            tile_log.info("intermediate file products (if selected) are complete.")
             tile_log.info(
                 "---------------------------------------------------------------"
             )
+            # combine all change layers into one output raster with two layers:
+            #   (1) pixels show the earliest change detection date (expressed as the number of days since 1/1/2000)
+            #   (2) pixels show the number of change detection dates (summed up over all change images in the folder)
+            date_image_paths = [
+                f.path
+                for f in os.scandir(probability_image_dir)
+                if f.is_file() and f.name.endswith(".tif") and "change_" in f.name
+            ]
+            if len(date_image_paths) == 0:
+                raise FileNotFoundError(
+                    "No class images found in {}.".format(categorised_image_dir)
+                )
+    
+            before_timestamp = filesystem_utilities.get_change_detection_dates(
+                os.path.basename(latest_class_composite_path)
+            )[0]
+            after_timestamp = filesystem_utilities.get_image_acquisition_time(
+                os.path.basename(class_image_paths[-1])
+            )
+            output_product = os.path.join(
+                probability_image_dir,
+                "report_{}_{}_{}.tif".format(
+                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                    tile_to_process,
+                    # tile_id,
+                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                ),
+            )
+            tile_log.info("Combining date maps: {}".format(date_image_paths))
+            raster_manipulation.combine_date_maps(date_image_paths, output_product)
+    
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info(
+            "Report image product completed / updated: {}".format(output_product)
+        )
+            
+        if config_dict["do_all"] or config_dict["do_vectorise"]:
+            from pyeo.apps.acd_national.acd_by_tile_vectorisation import vector_report_generation
+            output_vector_products = vector_report_generation(config_path, tile_to_process)
+        
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("Report image vectorised. Output file(s) created:")
+            for i in range(len(output_vector_products)):
+                tile_log.info("  {}".format(output_vector_products[i]))
 
+        tile_log.info("Compressing the report image.")
+        tile_log.info("---------------------------------------------------------------")
+        raster_manipulation.compress_tiff(output_product, output_product)
+
+        if config_dict["do_delete"]:
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            tile_log.info(
+                "Deleting intermediate class images used in change detection."
+            )
+            tile_log.info(
+                "They can be recreated from the cloud-masked, band-stacked L2A images and the saved model."
+            )
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            directories = [
+                categorised_image_dir,
+                sieved_image_dir,
+                probability_image_dir,
+            ]
+            for directory in directories:
+                paths = [f for f in os.listdir(directory)]
+                for f in paths:
+                    # keep the classified composite layers and the report image product for the next change detection
+                    if not f.startswith("composite_") and not f.startswith("report_"):
+                        tile_log.info("Deleting {}".format(os.path.join(directory, f)))
+                        if os.path.isdir(os.path.join(directory, f)):
+                            shutil.rmtree(os.path.join(directory, f))
+                        else:
+                            os.remove(os.path.join(directory, f))
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            tile_log.info("Deletion of intermediate file products complete.")
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+        else:
+            if config_dict["do_zip"]:
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+                tile_log.info(
+                    "Zipping intermediate class images used in change detection"
+                )
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+                directories = [categorised_image_dir, sieved_image_dir]
+                for directory in directories:
+                    filesystem_utilities.zip_contents(
+                        directory, notstartswith=["composite_", "report_"]
+                    )
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+                tile_log.info("Zipping complete")
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+    
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info(
+            "Change detection and report image product updating, file compression, zipping"
+        )
+        tile_log.info(
+            "and deletion of intermediate file products (if selected) are complete."
+        )
+        tile_log.info("---------------------------------------------------------------")
+    
+        if config_dict["do_delete"]:
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("Deleting temporary directories starting with 'tmp*'")
+            tile_log.info("These can be left over from interrupted processing runs.")
+            tile_log.info("---------------------------------------------------------------")
+            for root, dirs, files in os.walk(tile_dir):
+                temp_dirs = [d for d in dirs if d.startswith("tmp")]
+                for temp_dir in temp_dirs:
+                    tile_log.info("Deleting {}".format(os.path.join(root, temp_dir)))
+                    if os.path.isdir(os.path.join(tile_dir, f)):
+                        shutil.rmtree(os.path.join(tile_dir, f))
+                    else:
+                        tile_log.warning(
+                            "This should not have happened. {} is not a directory. Skipping deletion.".format(
+                                os.path.join(root, temp_dir)
+                            )
+                        )
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("Deletion of temporary directories complete.")
+            tile_log.info("---------------------------------------------------------------")
+   
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("---             TILE PROCESSING END                           ---")
         tile_log.info("---------------------------------------------------------------")
@@ -1073,13 +1541,11 @@ def detect_change(config_path, tile_id="None"):
 
 if __name__ == "__main__":
 
-    # Geopandas can throw an error with the proj installation if multiple subdirectories called proj are within the environment directory:
-    #    PROJ: internal_proj_identify: /home/h/hb91/miniconda3/envs/pyeo_env/share/proj/proj.db lacks DATABASE.LAYOUT.VERSION.MAJOR / DATABASE.LAYOUT.VERSION.MINOR metadata. It comes from another PROJ installation.
-    print(os.environ["PROJ_LIB"])
-
     # Reading in config file
     parser = argparse.ArgumentParser(
-        description="Downloads and preprocesses Sentinel 2 images into median composites."
+        description="Downloads and preprocesses Sentinel 2 images for change detection.\
+            and classifies them using a machine learning model. Performs change\
+            detection against a baseline median image composite. Generates a report file."
     )
     parser.add_argument(
         dest="config_path",
@@ -1093,7 +1559,7 @@ if __name__ == "__main__":
         dest="tile_id",
         type=str,
         default="None",
-        help="Overrides the geojson location with a" "Sentinel-2 tile ID location",
+        help="Overrides the geojson location with a Sentinel-2 tile ID location",
     )
 
     args = parser.parse_args()

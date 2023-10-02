@@ -211,9 +211,9 @@ def acd_initialisation(config_path):
         conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
         log.info(conda_boolean)
         if not conda_boolean:
-            log.error(f"Conda Environment Directory does not exist")
-            log.error(f"Ensure this exists")
-            log.error(f"now exiting the pipeline")
+            log.error("Conda Environment Directory does not exist")
+            log.error("Ensure this exists")
+            log.error("Now exiting the pipeline")
             sys.exit(1)
 
     log.info("---------------------------------------------------------------")

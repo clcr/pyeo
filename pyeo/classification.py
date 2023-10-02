@@ -676,6 +676,7 @@ def classify_directory(
             chunks=chunks,
             skip_existing=skip_existing,
         )
+    return
 
 
 def reshape_raster_for_ml(image_array: np.ndarray) -> np.ndarray:
