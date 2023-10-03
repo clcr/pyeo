@@ -11,22 +11,26 @@ import configparser
 import datetime
 import geopandas as gpd
 import pandas as pd
-import json
+#import json
 import numpy as np
 import os
 from osgeo import gdal
 import shutil
 import sys
 import warnings
-import zipfile
+#import zipfile
 from pyeo import (
     filesystem_utilities, 
     classification,
     queries_and_downloads, 
-    raster_manipulation)
-from pyeo.acd_national import (acd_initialisation,
-                                 acd_config_to_log,
-                                 acd_roi_tile_intersection)
+    raster_manipulation
+    )
+from pyeo.filesystem_utilities import zip_contents
+from pyeo.acd_national import (
+                acd_initialisation,
+                acd_config_to_log,
+                acd_roi_tile_intersection
+                )
 
 gdal.UseExceptions()
 
@@ -44,8 +48,11 @@ def detect_change(config_path, tile_id="None"):
         tile_id : string with the Sentinel-2 tile ID. If not "None", this ID is used
                         instead of the region of interest file to define the area to be processed
 
-    """
 
+    NOTE: The following functions zip_contents() and unzip_contents() are now
+        depracated and are imported from filesystem_utilities. They will be removed
+        here in future versions.
+        
     def zip_contents(directory, notstartswith=None):
         '''
         A function that compresses all files in a directory in zip file format.
@@ -118,6 +125,7 @@ def detect_change(config_path, tile_id="None"):
         else:
             log.error("Unzipping failed")
         return
+    """
 
     # read the ini file contents into a dictionary
     configparser.ConfigParser(allow_no_value=True)
@@ -836,7 +844,7 @@ def detect_change(config_path, tile_id="None"):
                 tile_log.info("---------------------------------------------------------------")
                 tile_log.info("Zipping downloaded L1C images for change detection after atmospheric correction")
                 tile_log.info("---------------------------------------------------------------")
-                filesystem_utilities.zip_contents(l1_image_dir)
+                zip_contents(l1_image_dir)
                 tile_log.info("---------------------------------------------------------------")
                 tile_log.info("Zipping complete")
                 tile_log.info("---------------------------------------------------------------")
@@ -868,7 +876,7 @@ def detect_change(config_path, tile_id="None"):
                     continue
                 else:
                     # extract it if not
-                    filesystem_utilities.unzip_contents(
+                    unzip_contents(
                         os.path.join(l2_image_dir, f),
                         ifstartswith="S2",
                         ending=".SAFE",
@@ -977,7 +985,7 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info(
                 "---------------------------------------------------------------"
             )
-            filesystem_utilities.zip_contents(l2_image_dir)
+            zip_contents(l2_image_dir)
             tile_log.info(
                 "---------------------------------------------------------------"
             )
@@ -1487,7 +1495,7 @@ def detect_change(config_path, tile_id="None"):
                 )
                 directories = [categorised_image_dir, sieved_image_dir]
                 for directory in directories:
-                    filesystem_utilities.zip_contents(
+                    zip_contents(
                         directory, notstartswith=["composite_", "report_"]
                     )
                 tile_log.info(

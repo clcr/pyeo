@@ -582,8 +582,12 @@ def create_file_structure(root: str):
         --bandmerged
         -output
         --classified
+        --sieved
         --probabilities
-
+        --report_image
+        --display_images
+        --quicklooks
+        -log
 
     Parameters
     ----------
@@ -601,14 +605,15 @@ def create_file_structure(root: str):
         "images/stacked_masked/",
         "images/planet/",
         "composite/",
-        "composite/L1C",
-        "composite/L2A",
-        "composite/bandmerged",
+        "composite/L1C/",
+        "composite/L2A/",
+        "composite/bandmerged/",
         "output/",
-        "output/classified",
-        "output/probabilities",
-        "output/report_image",
-        "output/display_images",
+        "output/classified/",
+        "output/sieved/",
+        "output/probabilities/",
+        "output/report_image/",
+        "output/display_images/",
         "output/quicklooks/",
         "log/",
     ]
@@ -617,7 +622,7 @@ def create_file_structure(root: str):
             os.mkdir(dir)
         except FileExistsError:
             pass
-
+    return
 
 def create_folder_structure_for_tiles(root):
     """
@@ -633,7 +638,12 @@ def create_folder_structure_for_tiles(root):
         --cloud_masked
         -output
         --classified
+        --sieved
         --probabilities
+        --report_image
+        --display_images
+        --quicklooks
+        -log
 
     Parameters
     ----------
@@ -655,7 +665,10 @@ def create_folder_structure_for_tiles(root):
         "images/cloud_masked/",
         "output/",
         "output/classified/",
+        "output/sieved/",
         "output/probabilities/",
+        "output/report_image/",
+        "output/display_images/",
         "output/quicklooks/",
         "log/",
     ]
@@ -664,6 +677,7 @@ def create_folder_structure_for_tiles(root):
             os.mkdir(dir)
         except FileExistsError:
             pass
+    return
 
 
 def validate_config_file(config_path):
