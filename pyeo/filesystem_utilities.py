@@ -22,7 +22,7 @@ import glob
 import json
 import logging
 import os
-import sys
+#import sys
 import re
 import shutil
 import zipfile
@@ -1428,7 +1428,11 @@ def serial_date_to_string(srl_no: int) -> str:
 
 
 
-def zip_contents(directory: str, notstartswith=None) -> None:
+def zip_contents(
+                 directory: str, 
+                 notstartswith=None, 
+                 log = logging.getLogger("pyeo")
+                 ) -> None:
     """
     Zip the contents of the specified directory.
 
@@ -1438,7 +1442,8 @@ def zip_contents(directory: str, notstartswith=None) -> None:
         Path to the directory whose contents to zip.
     notstartswith : list or None, optional
         List of prefixes to exclude from zipping. Default is None.
-
+    log : logger object
+    
     Returns
     -------
     None
@@ -1450,32 +1455,35 @@ def zip_contents(directory: str, notstartswith=None) -> None:
 
     """
     
-    paths = [f for f in os.listdir(directory) if not f.endswith(".zip")]
-    for f in paths:
-        do_it = True
-        if notstartswith is not None:
-            for i in notstartswith:
-                if f.startswith(i):
-                    do_it = False
-                    log.info("Skipping file that starts with '{}':   {}".format(i, f))
-        if do_it:
-            file_to_zip = os.path.join(directory, f)
-            zipped_file = file_to_zip.split(".")[0]
-            log.info("Zipping   {}".format(file_to_zip))
-            if os.path.isdir(file_to_zip):
-                shutil.make_archive(zipped_file, "zip", file_to_zip)
-            else:
-                with zipfile.ZipFile(
-                    zipped_file + ".zip", "w", compression=zipfile.ZIP_DEFLATED
-                ) as zf:
-                    zf.write(file_to_zip, os.path.basename(file_to_zip))
-            if os.path.exists(zipped_file + ".zip"):
+    if os.path.exists(directory):
+        paths = [f for f in os.listdir(directory) if not f.endswith(".zip")]
+        for f in paths:
+            do_it = True
+            if notstartswith is not None:
+                for i in notstartswith:
+                    if f.startswith(i):
+                        do_it = False
+                        log.info(f"Skipping file that starts with '{i}' from zipping:   {f}")
+            if do_it:
+                file_to_zip = os.path.join(directory, f)
+                zipped_file = file_to_zip.split(".")[0]
+                log.info("Zipping   {}".format(file_to_zip))
                 if os.path.isdir(file_to_zip):
-                    shutil.rmtree(file_to_zip)
+                    shutil.make_archive(zipped_file, "zip", file_to_zip)
                 else:
-                    os.remove(file_to_zip)
-            else:
-                log.error("Zipping failed: {}".format(zipped_file + ".zip"))
+                    with zipfile.ZipFile(
+                        zipped_file + ".zip", "w", compression=zipfile.ZIP_DEFLATED
+                    ) as zf:
+                        zf.write(file_to_zip, os.path.basename(file_to_zip))
+                if os.path.exists(zipped_file + ".zip"):
+                    if os.path.isdir(file_to_zip):
+                        shutil.rmtree(file_to_zip)
+                    else:
+                        os.remove(file_to_zip)
+                else:
+                    log.error("Zipping failed: {}".format(zipped_file + ".zip"))
+    else:
+        log.warning(f"Directory for zip_contents() not found '{i}':   {f}")
     return
 
 
