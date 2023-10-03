@@ -186,16 +186,15 @@ def detect_change(config_path, tile_id="None"):
         # 'credentials_path': '/home/h/hb91/pyeo_credentials.ini'
         # }
 
-
-        start_date = config_dict["start_date"]
+        #start_date = config_dict["start_date"]
         end_date = config_dict["end_date"]
         if end_date == "TODAY":
             end_date = datetime.date.today().strftime("%Y%m%d")
-        #composite_start_date = config_dict["composite_start"]
-        #composite_end_date = config_dict["composite_end"]
+        composite_start_date = config_dict["composite_start"]
+        composite_end_date = config_dict["composite_end"]
         cloud_cover = config_dict["cloud_cover"]
         #cloud_certainty_threshold = config_dict["cloud_certainty_threshold"]
-        model_path = config_dict["model_path"]
+        #model_path = config_dict["model_path"]
         tile_dir = config_dict["tile_dir"]
         sen2cor_path = config_dict["sen2cor_path"]
         epsg = config_dict["epsg"]
@@ -376,7 +375,7 @@ def detect_change(config_path, tile_id="None"):
                 except FileNotFoundError:
                     tile_log.error("Path to the S2 tile geometry does not exist: {}".format( \
                                 os.path.abspath(tiles_geom_path)))
-   
+
                 tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
                 tile_geom = tile_geom.to_crs(epsg=4326)
                 geometry = tile_geom["geometry"].iloc[0]
@@ -421,7 +420,6 @@ def detect_change(config_path, tile_id="None"):
             cloud_covers = dataspace_products_all["cloudCover"].tolist()
             begin_positions = dataspace_products_all["startDate"].tolist()
             statuses = dataspace_products_all["status"].tolist()
-
             scihub_compatible_df = pd.DataFrame({"title": titles,
                                                 "size": sizes,
                                                 "beginposition": begin_positions,
@@ -576,6 +574,7 @@ def detect_change(config_path, tile_id="None"):
                                 )
 
         df = None
+
         tile_log.info(" {} L1C products for the change detection".format(
             len(l1c_products['title']))
             )
@@ -663,6 +662,7 @@ def detect_change(config_path, tile_id="None"):
                     matching_l2a_products_df = pd.DataFrame.from_dict(
                         matching_l2a_products, orient="index"
                     )
+
                     # 07/03/2023: Matt - Applied Ali's fix for converting 
                     # product size to MB to compare against faulty_grandule_threshold
                     if (
@@ -1535,7 +1535,7 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Deletion of temporary directories complete.")
             tile_log.info("---------------------------------------------------------------")
-   
+
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("---             TILE PROCESSING END                           ---")
         tile_log.info("---------------------------------------------------------------")
