@@ -1483,7 +1483,7 @@ def zip_contents(
                 else:
                     log.error("Zipping failed: {}".format(zipped_file + ".zip"))
     else:
-        log.warning(f"Directory for zip_contents() not found '{i}':   {f}")
+        log.warning(f"Directory for zip_contents() not found: {directory}")
     return
 
 
