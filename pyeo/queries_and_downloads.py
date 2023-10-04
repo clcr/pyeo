@@ -35,6 +35,16 @@ The only download source currently provided is via the Copernicus Dataspace Ecos
     Users do not need to be registered with the CDSE to query images, but `pyeo` expects the user to have provided a valid username and password. 
     The main change from SciHub to CDSE is that Sentinel-2 products are no longer archived beyond a certain time-frame, i.e. the products in the CDSE are always online.
 
+    Attributes for a query:
+      ['collection', 'status', 'license', 'productIdentifier',
+      'parentIdentifier', 'title', 'description', 'organisationName',
+      'startDate', 'completionDate', 'productType', 'processingLevel',
+      'platform', 'instrument', 'resolution', 'sensorMode', 'orbitNumber',
+      'quicklook', 'thumbnail', 'updated', 'published', 'snowCover',
+      'cloudCover', 'gmlgeometry', 'centroid', 'orbitDirection', 'timeliness',
+      'relativeOrbitNumber', 'processingBaseline', 'missionTakeId',
+      'services', 'links'],
+
 Legacy Download Sources
 -----------------------
 There are three other *legacy* download sources which this library no longer supports as they are deprecated in favour of the now active CDSE.
@@ -108,7 +118,16 @@ from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
                                          check_for_invalid_l2_data,
                                          get_sen_2_image_tile)
 from requests import Request
-from sentinelhub.data_request import download_safe_format
+# fix an issue with backwards incompatibility of the sentinelhub library from v3.9.1 onwards
+import sentinelhub
+hubversion = sentinelhub.__version__.split(".")
+if (int(hubversion[0]) > 3) or \
+    (int(hubversion[0]) == 3 and int(hubversion[1]) > 9) or \
+    (int(hubversion[0]) == 3 and int(hubversion[1]) == 9 and int(hubversion[2]) > 0):
+    from sentinelhub.aws.request import download_safe_format
+else:
+    from sentinelhub.data_request import download_safe_format
+
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 log = logging.getLogger("pyeo")
@@ -168,11 +187,14 @@ def query_dataspace_by_polygon(
     response = requests.get(request_string)
     if response.status_code == 200:
         response = response.json()["features"]
-        # log.info(json.dumps(response, indent=4))
-        # sys.exit(1)
         response_dataframe = pd.DataFrame.from_dict(response)
+        if response_dataframe.empty == True:
+            log.error("There were no products returned in the search query and the CDSE API is responding correctly. Expand the query start and end dates and/or increase cloud cover tolerance in the `ini`")
+            sys.exit(1)
+
         response_dataframe = pd.DataFrame.from_records(response_dataframe["properties"])
         return response_dataframe
+    
     elif response.status_code == 401:
         log.error("Dataspace returned a 401 HTTP Status Code")
         log.error("Which means that user credentials for the Copernicus Dataspace Ecosystem are incorrect.")
