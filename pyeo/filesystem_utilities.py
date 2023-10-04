@@ -582,8 +582,12 @@ def create_file_structure(root: str):
         --bandmerged
         -output
         --classified
+        --sieved
         --probabilities
-
+        --report_image
+        --display_images
+        --quicklooks
+        -log
 
     Parameters
     ----------
@@ -601,14 +605,15 @@ def create_file_structure(root: str):
         "images/stacked_masked/",
         "images/planet/",
         "composite/",
-        "composite/L1C",
-        "composite/L2A",
-        "composite/bandmerged",
+        "composite/L1C/",
+        "composite/L2A/",
+        "composite/bandmerged/",
         "output/",
-        "output/classified",
-        "output/probabilities",
-        "output/report_image",
-        "output/display_images",
+        "output/classified/",
+        "output/sieved/",
+        "output/probabilities/",
+        "output/report_image/",
+        "output/display_images/",
         "output/quicklooks/",
         "log/",
     ]
@@ -617,7 +622,7 @@ def create_file_structure(root: str):
             os.mkdir(dir)
         except FileExistsError:
             pass
-
+    return
 
 def create_folder_structure_for_tiles(root):
     """
@@ -633,7 +638,12 @@ def create_folder_structure_for_tiles(root):
         --cloud_masked
         -output
         --classified
+        --sieved
         --probabilities
+        --report_image
+        --display_images
+        --quicklooks
+        -log
 
     Parameters
     ----------
@@ -655,7 +665,10 @@ def create_folder_structure_for_tiles(root):
         "images/cloud_masked/",
         "output/",
         "output/classified/",
+        "output/sieved/",
         "output/probabilities/",
+        "output/report_image/",
+        "output/display_images/",
         "output/quicklooks/",
         "log/",
     ]
@@ -664,7 +677,7 @@ def create_folder_structure_for_tiles(root):
             os.mkdir(dir)
         except FileExistsError:
             pass
-
+    return
 
 def validate_config_file(config_path):
     # TODO: fill
@@ -684,8 +697,6 @@ def get_filenames(path, filepattern, dirpattern):
     Returns:
       a list of all found files with the full path directory
     """
-
-    log = logging.getLogger("pyeo")
 
     filelist = []
     for root, dirs, files in os.walk(path, topdown=True):
@@ -1428,7 +1439,11 @@ def serial_date_to_string(srl_no: int) -> str:
 
 
 
-def zip_contents(directory: str, notstartswith=None) -> None:
+def zip_contents(
+                 directory: str, 
+                 notstartswith=None, 
+                 log = logging.getLogger("pyeo")
+                 ) -> None:
     """
     Zip the contents of the specified directory.
 
@@ -1438,7 +1453,8 @@ def zip_contents(directory: str, notstartswith=None) -> None:
         Path to the directory whose contents to zip.
     notstartswith : list or None, optional
         List of prefixes to exclude from zipping. Default is None.
-
+    log : logger object
+    
     Returns
     -------
     None
@@ -1449,33 +1465,35 @@ def zip_contents(directory: str, notstartswith=None) -> None:
     - If `notstartswith` is provided, files starting with any of the specified prefixes are skipped.
 
     """
-    
-    paths = [f for f in os.listdir(directory) if not f.endswith(".zip")]
-    for f in paths:
-        do_it = True
-        if notstartswith is not None:
-            for i in notstartswith:
-                if f.startswith(i):
-                    do_it = False
-                    log.info("Skipping file that starts with '{}':   {}".format(i, f))
-        if do_it:
-            file_to_zip = os.path.join(directory, f)
-            zipped_file = file_to_zip.split(".")[0]
-            log.info("Zipping   {}".format(file_to_zip))
-            if os.path.isdir(file_to_zip):
-                shutil.make_archive(zipped_file, "zip", file_to_zip)
-            else:
-                with zipfile.ZipFile(
-                    zipped_file + ".zip", "w", compression=zipfile.ZIP_DEFLATED
-                ) as zf:
-                    zf.write(file_to_zip, os.path.basename(file_to_zip))
-            if os.path.exists(zipped_file + ".zip"):
+    if os.path.exists(directory):
+        paths = [f for f in os.listdir(directory) if not f.endswith(".zip")]
+        for f in paths:
+            do_it = True
+            if notstartswith is not None:
+                for i in notstartswith:
+                    if f.startswith(i):
+                        do_it = False
+                        log.info(f"Skipping file that starts with '{i}' from zipping:   {f}")
+            if do_it:
+                file_to_zip = os.path.join(directory, f)
+                zipped_file = file_to_zip.split(".")[0]
+                log.info("Zipping   {}".format(file_to_zip))
                 if os.path.isdir(file_to_zip):
-                    shutil.rmtree(file_to_zip)
+                    shutil.make_archive(zipped_file, "zip", file_to_zip)
                 else:
-                    os.remove(file_to_zip)
+                    with zipfile.ZipFile(
+                        zipped_file + ".zip", "w", compression=zipfile.ZIP_DEFLATED
+                    ) as zf:
+                        zf.write(file_to_zip, os.path.basename(file_to_zip))
+                if os.path.exists(zipped_file + ".zip"):
+                    if os.path.isdir(file_to_zip):
+                        shutil.rmtree(file_to_zip)
+                    else:
+                        os.remove(file_to_zip)
+                else:
+                    log.error("Zipping failed: {}".format(zipped_file + ".zip"))
             else:
-                log.error("Zipping failed: {}".format(zipped_file + ".zip"))
+                log.warning(f"Directory for zip_contents() not found: {directory}")
     return
 
 
