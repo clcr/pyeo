@@ -35,6 +35,16 @@ The only download source currently provided is via the Copernicus Dataspace Ecos
     Users do not need to be registered with the CDSE to query images, but `pyeo` expects the user to have provided a valid username and password. 
     The main change from SciHub to CDSE is that Sentinel-2 products are no longer archived beyond a certain time-frame, i.e. the products in the CDSE are always online.
 
+    Attributes for a query:
+      ['collection', 'status', 'license', 'productIdentifier',
+      'parentIdentifier', 'title', 'description', 'organisationName',
+      'startDate', 'completionDate', 'productType', 'processingLevel',
+      'platform', 'instrument', 'resolution', 'sensorMode', 'orbitNumber',
+      'quicklook', 'thumbnail', 'updated', 'published', 'snowCover',
+      'cloudCover', 'gmlgeometry', 'centroid', 'orbitDirection', 'timeliness',
+      'relativeOrbitNumber', 'processingBaseline', 'missionTakeId',
+      'services', 'links'],
+
 Legacy Download Sources
 -----------------------
 There are three other *legacy* download sources which this library no longer supports as they are deprecated in favour of the now active CDSE.
@@ -108,7 +118,16 @@ from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
                                          check_for_invalid_l2_data,
                                          get_sen_2_image_tile)
 from requests import Request
-from sentinelhub.data_request import download_safe_format
+# fix an issue with backwards incompatibility of the sentinelhub library from v3.9.1 onwards
+import sentinelhub
+hubversion = sentinelhub.__version__.split(".")
+if (int(hubversion[0]) > 3) or \
+    (int(hubversion[0]) == 3 and int(hubversion[1]) > 9) or \
+    (int(hubversion[0]) == 3 and int(hubversion[1]) == 9 and int(hubversion[2]) > 0):
+    from sentinelhub.aws.request import download_safe_format
+else:
+    from sentinelhub.data_request import download_safe_format
+
 from sentinelsat import SentinelAPI, geojson_to_wkt, read_geojson
 
 log = logging.getLogger("pyeo")
@@ -188,12 +207,74 @@ def query_dataspace_by_polygon(
         # this could be improved by catching more specific status codes
         sys.exit(1)
 
+def query_dataspace_by_tile_id(
+    max_cloud_cover: int,
+    start_date: str,
+    end_date: str,
+    tile_id: str,
+    max_records: int,
+    log: logging.Logger
+) -> pd.DataFrame:
+    """
+    This function:
+    
+    Returns a DataFrame of available Sentinel-2 imagery from the Copernicus Dataspace API.
+
+    Parameters
+    ----------
+    max_cloud_cover : int
+        Maximum Cloud Cover
+    start_date : str
+        Start date of the images to query from in (YYYY-MM-DD) format
+    end_date : str
+        End date of the images to query from in (YYYY-MM-DD) format
+    tile_id : str
+        Tile ID of a single Sentinel-2 tile
+    max_records : int
+        Maximum records to return
+
+    Returns
+    -------
+    None
+    """
+
+    request_string = build_dataspace_request_string(
+        max_cloud_cover=max_cloud_cover,
+        start_date=start_date,
+        end_date=end_date,
+        tile_id=tile_id,
+        max_records=max_records,
+    )
+    
+    response = requests.get(request_string)
+    
+    if response.status_code == 200:
+        response = response.json()["features"]
+        # log.info(json.dumps(response, indent=4))
+        # sys.exit(1)
+        response_dataframe = pd.DataFrame.from_dict(response)
+        response_dataframe = pd.DataFrame.from_records(response_dataframe["properties"])
+        return response_dataframe
+    elif response.status_code == 401:
+        log.error("Dataspace returned a 401 HTTP Status Code")
+        log.error("Which means that user credentials for the Copernicus Dataspace Ecosystem are incorrect.")
+        log.error("Now exiting the pipeline, please check your credentials in your credentials_ini")
+        sys.exit(1)
+    else:
+        log.error("Dataspace returned a non-200 HTTP Status Code")
+        log.error(f"The Status Code returned was  : HTTP Status Code {response.status_code}")
+        log.error("Now exiting the pipeline, please rerun when DataSpace API is back online")
+        # this could be improved by catching more specific status codes
+        sys.exit(1)
+
+
 def build_dataspace_request_string(
     max_cloud_cover: int,
     start_date: str,
     end_date: str,
-    area_of_interest: str,
-    max_records: int,
+    area_of_interest="",
+    tile_id="", 
+    max_records=200,
 ) -> str:
     """
     This function:
@@ -210,6 +291,8 @@ def build_dataspace_request_string(
         Ending date of the observations (YYYY-MM-DD format)
     area_of_interest : str
         Area of interest geometry as a string in WKT format
+    tile_id : str
+        Tile ID of a single Sentinel-2 tile
     max_records : int
         Maximum number of products to show per query (queries with very high numbers may not complete in time)
 
@@ -219,13 +302,20 @@ def build_dataspace_request_string(
         API Request String
 
     """
+
     cloud_cover_props = f"cloudCover=[0,{max_cloud_cover}]"
     start_date_props = f"startDate={start_date}"
     end_date_props = f"completionDate={end_date}"
     geometry_props = f"geometry={area_of_interest}"
+    tile_id_props = f"tileId={tile_id}"
     max_records_props = f"maxRecords={max_records}"
 
-    request_string = f"{DATASPACE_API_ROOT}?{cloud_cover_props}&{start_date_props}&{end_date_props}&{geometry_props}&{max_records_props}"
+    if len(tile_id) > 0:
+        request_string = f"{DATASPACE_API_ROOT}?{cloud_cover_props}&{start_date_props}&{end_date_props}&{tile_id_props}&{max_records_props}"
+
+    if len(area_of_interest) > 0:
+        request_string = f"{DATASPACE_API_ROOT}?{cloud_cover_props}&{start_date_props}&{end_date_props}&{geometry_props}&{max_records_props}"            
+
     return request_string
 
 def get_access_token(dataspace_username: str = None,
