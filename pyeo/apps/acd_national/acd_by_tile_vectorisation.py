@@ -1,14 +1,15 @@
 import os
 import sys
 import glob
-import logging
+#import logging
 from pyeo import filesystem_utilities
 from pyeo import vectorisation
 
 
 def vector_report_generation(config_path: str, tile: str):
     """
-    This function vectorises the Change Report Raster, with the aim of producing shapefiles that can be filtered and summarised spatially, and displayed in a GIS.
+    This function vectorises the Change Report Raster, with the aim of producing 
+    shapefiles that can be filtered and summarised spatially, and displayed in a GIS.
 
     Parameters
     ----------

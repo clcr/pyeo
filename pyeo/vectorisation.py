@@ -1,14 +1,29 @@
 """
-Functions for converting raster data to vectors, notably .shp but also .kml and non-geographic formats, .csv and .pkl.
+Functions for converting raster data to vectors, notably .shp but also .kml and 
+non-geographic formats, .csv and .pkl.
 
 Key functions
 -------------
 
-:py:func:`vectorise_from_band` This function uses GDAL to vectorise specific layers of the change report .geotiff.
+:py:func:`vectorise_from_band` This function uses GDAL to vectorise specific 
+layers of the change report .geotiff.
 """
 
+import csv
+import fiona
+import geopandas as gpd
+import glob
 import logging
+import numpy as np
+import os
+from osgeo import gdal, ogr, osr
 import pandas as pd
+#from pathlib import Path
+import shutil
+from tempfile import TemporaryDirectory
+
+from pyeo.filesystem_utilities import serial_date_to_string
+
 
 def band_naming(band: int,
                 log: logging.Logger):
@@ -80,7 +95,8 @@ def vectorise_from_band(
     band: int,
     log: logging.Logger):
     """
-    This function takes the path of a change report raster and using a band integer, vectorises a band layer.
+    This function takes the path of a change report raster and using a 
+    band integer, vectorises a band layer.
 
 
     Parameters
@@ -97,13 +113,10 @@ def vectorise_from_band(
 
     Returns
     -------
-    out_filename : str
+    out_filename_destination : str
         the output path of the vectorised band
 
     """
-    import os
-    from tempfile import TemporaryDirectory
-    from osgeo import gdal, ogr, osr
 
     log.info(f"what is change_report_path  :  {change_report_path}")
     # let GDAL use Python to raise Exceptions, instead of printing to sys.stdout
@@ -126,14 +139,15 @@ def vectorise_from_band(
             proj = osr.SpatialReference(src_ds.GetProjection())
         except RuntimeError as error:
             log.error(
-                f"Could not open band {band}. encountered the following error \n {error}"
+                f"Could not open band {band}. Encountered the following error \n {error}"
             )
 
         # create output datasource
         dst_layername = band_naming(band, log=log)
 
         drv = ogr.GetDriverByName("ESRI Shapefile")
-        out_filename = f"{change_report_path[:-4]}_{dst_layername}.shp"
+        # create the output file in a temporary directory
+        out_filename = os.path.join(td, f"{change_report_path[:-4]}_{dst_layername}.shp")
         dst_ds = drv.CreateDataSource(out_filename)
         dst_layer = dst_ds.CreateLayer(dst_layername, srs=proj)
 
@@ -162,11 +176,14 @@ def vectorise_from_band(
         # close dst_ds and src_band
         dst_ds = None
         src_band = None
+        out_filename_destination = f"{change_report_path[:-4]}_{dst_layername}.shp"
+        # move the output file to the correct path
+        shutil.move(out_filename, out_filename_destination)
         if dst_ds is None:
             log.info(f"Band {band} of {change_report_path} was successfully vectorised")
             log.info(f"Band {band} was written to {out_filename}")
 
-    return out_filename
+    return out_filename_destination
 
 
 def clean_zero_nodata_vectorised_band(
@@ -189,31 +206,27 @@ def clean_zero_nodata_vectorised_band(
     filename : str
 
     """
-    from tempfile import TemporaryDirectory
-    import geopandas as gpd
-    import os
 
     log.info(f"filtering out zeroes and nodata from: {vectorised_band_path}")
 
-    with TemporaryDirectory(dir=os.path.expanduser('~')) as td:
-        # read in shapefile
-        shp = gpd.read_file(vectorised_band_path)
+    # read in shapefile
+    shp = gpd.read_file(vectorised_band_path)
 
-        # create fieldname variable
-        fieldname = os.path.splitext(vectorised_band_path.split("_")[-1])[0]
+    # create fieldname variable
+    fieldname = os.path.splitext(vectorised_band_path.split("_")[-1])[0]
 
-        # filter out 0 and 32767 (nodata) values
-        cleaned = shp.loc[(shp[fieldname] != 0) & (shp[fieldname] != 32767)]
+    # filter out 0 and 32767 (nodata) values
+    cleaned = shp.loc[(shp[fieldname] != 0) & (shp[fieldname] != 32767)]
 
-        # copy to avoid SettingWithCopyWarning
-        cleaned_copy = cleaned.copy()
+    # copy to avoid SettingWithCopyWarning
+    cleaned_copy = cleaned.copy()
 
-        # assign explicit id from index
-        cleaned_copy.loc[:, "id"] = cleaned.reset_index().index
+    # assign explicit id from index
+    cleaned_copy.loc[:, "id"] = cleaned.reset_index().index
 
-        # save to shapefile
-        filename = f"{os.path.splitext(vectorised_band_path)[0]}_filtered.shp"
-        cleaned_copy.to_file(filename=filename, driver="ESRI Shapefile")
+    # save to shapefile
+    filename = f"{os.path.splitext(vectorised_band_path)[0]}_filtered.shp"
+    cleaned_copy.to_file(filename=filename, driver="ESRI Shapefile")
 
     # remove variables to reduce memory (RAM) consumption
     del (shp, cleaned, cleaned_copy)
@@ -367,119 +380,97 @@ def zonal_statistics(
 
     """
 
-    from osgeo import gdal, ogr
-    import numpy as np
-    import pandas as pd
-    import os
-    import csv
-    from tempfile import TemporaryDirectory
-
     # enable gdal to raise exceptions
     gdal.UseExceptions()
 
-    with TemporaryDirectory(dir=os.path.expanduser('~')) as td:
-        mem_driver = ogr.GetDriverByName("Memory")
-        mem_driver_gdal = gdal.GetDriverByName("MEM")
-        shp_name = "temp"
+    mem_driver = ogr.GetDriverByName("Memory")
+    mem_driver_gdal = gdal.GetDriverByName("MEM")
+    shp_name = "temp"
 
-        fn_raster = raster_path
-        fn_zones = shapefile_path
+    fn_raster = raster_path
+    fn_zones = shapefile_path
 
-        r_ds = gdal.Open(fn_raster)
-        p_ds = ogr.Open(fn_zones)
+    r_ds = gdal.Open(fn_raster)
+    p_ds = ogr.Open(fn_zones)
 
-        # lyr = shapefile layer
-        lyr = p_ds.GetLayer()
-        # get projection to apply to temporary files
-        proj = lyr.GetSpatialRef()
-        geot = r_ds.GetGeoTransform()
-        nodata = r_ds.GetRasterBand(1).GetNoDataValue()
+    # lyr = shapefile layer
+    lyr = p_ds.GetLayer()
+    # get projection to apply to temporary files
+    proj = lyr.GetSpatialRef()
+    geot = r_ds.GetGeoTransform()
+    nodata = r_ds.GetRasterBand(1).GetNoDataValue()
 
-        zstats = []
+    zstats = []
 
-        # p_feat = polygon feature
-        p_feat = lyr.GetNextFeature()
-        niter = 0
+    # p_feat = polygon feature
+    p_feat = lyr.GetNextFeature()
+    #niter = 0
 
-        # while lyr.GetNextFeature() returns a polygon feature, do the following:
-        while p_feat:
-            try:
-                # if a geometry is returned from p_feat, do the following:
-                if p_feat.GetGeometryRef() is not None:
-                    if os.path.exists(shp_name):
-                        mem_driver.DeleteDataSource(shp_name)
+    # while lyr.GetNextFeature() returns a polygon feature, do the following:
+    while p_feat:
+        try:
+            # if a geometry is returned from p_feat, do the following:
+            if p_feat.GetGeometryRef() is not None:
+                if os.path.exists(shp_name):
+                    mem_driver.DeleteDataSource(shp_name)
 
-                    # tp_ds = temporary datasource
-                    tp_ds = mem_driver.CreateDataSource(shp_name)
-                    tp_lyr = tp_ds.CreateLayer(
-                        "polygons", srs=proj, geom_type=ogr.wkbPolygon
+                # tp_ds = temporary datasource
+                tp_ds = mem_driver.CreateDataSource(shp_name)
+                tp_lyr = tp_ds.CreateLayer(
+                    "polygons", srs=proj, geom_type=ogr.wkbPolygon
+                )
+                tp_lyr.CreateFeature(p_feat.Clone())
+                offsets = boundingBoxToOffsets(
+                    p_feat.GetGeometryRef().GetEnvelope(), geot
+                )
+                new_geot = geotFromOffsets(offsets[0], offsets[2], geot)
+
+                # tr_ds = target datasource
+                tr_ds = mem_driver_gdal.Create(
+                    "",
+                    offsets[3] - offsets[2],
+                    offsets[1] - offsets[0],
+                    1,
+                    gdal.GDT_Byte,
+                )
+
+                tr_ds.SetGeoTransform(new_geot)
+                gdal.RasterizeLayer(tr_ds, [1], tp_lyr, burn_values=[1])
+                tr_array = tr_ds.ReadAsArray()
+
+                r_array = r_ds.GetRasterBand(report_band).ReadAsArray(
+                    offsets[2],
+                    offsets[0],
+                    offsets[3] - offsets[2],
+                    offsets[1] - offsets[0],
+                )
+
+                # get identifier for
+                id = p_feat.GetFID()
+
+                # if raster array was successfully read, do the following:
+                if r_array is not None:
+                    maskarray = np.ma.MaskedArray(
+                        r_array,
+                        mask=np.logical_or(
+                            r_array == nodata, np.logical_not(tr_array)
+                        ),
                     )
-                    tp_lyr.CreateFeature(p_feat.Clone())
-                    offsets = boundingBoxToOffsets(
-                        p_feat.GetGeometryRef().GetEnvelope(), geot
-                    )
-                    new_geot = geotFromOffsets(offsets[0], offsets[2], geot)
 
-                    # tr_ds = target datasource
-                    tr_ds = mem_driver_gdal.Create(
-                        "",
-                        offsets[3] - offsets[2],
-                        offsets[1] - offsets[0],
-                        1,
-                        gdal.GDT_Byte,
-                    )
-
-                    tr_ds.SetGeoTransform(new_geot)
-                    gdal.RasterizeLayer(tr_ds, [1], tp_lyr, burn_values=[1])
-                    tr_array = tr_ds.ReadAsArray()
-
-                    r_array = r_ds.GetRasterBand(report_band).ReadAsArray(
-                        offsets[2],
-                        offsets[0],
-                        offsets[3] - offsets[2],
-                        offsets[1] - offsets[0],
-                    )
-
-                    # get identifier for
-                    id = p_feat.GetFID()
-
-                    # if raster array was successfully read, do the following:
-                    if r_array is not None:
-                        maskarray = np.ma.MaskedArray(
-                            r_array,
-                            mask=np.logical_or(
-                                r_array == nodata, np.logical_not(tr_array)
-                            ),
+                    if maskarray is not None:
+                        zstats.append(
+                            setFeatureStats(
+                                id,
+                                maskarray.min(),
+                                maskarray.max(),
+                                maskarray.mean(),
+                                np.ma.median(maskarray),
+                                maskarray.std(),
+                                maskarray.sum(),
+                                maskarray.count(),
+                                report_band=report_band,
+                            )
                         )
-
-                        if maskarray is not None:
-                            zstats.append(
-                                setFeatureStats(
-                                    id,
-                                    maskarray.min(),
-                                    maskarray.max(),
-                                    maskarray.mean(),
-                                    np.ma.median(maskarray),
-                                    maskarray.std(),
-                                    maskarray.sum(),
-                                    maskarray.count(),
-                                    report_band=report_band,
-                                )
-                            )
-                        else:
-                            zstats.append(
-                                setFeatureStats(
-                                    id,
-                                    nodata,
-                                    nodata,
-                                    nodata,
-                                    nodata,
-                                    nodata,
-                                    nodata,
-                                    nodata,
-                                    report_band=report_band,
-                                )
-                            )
                     else:
                         zstats.append(
                             setFeatureStats(
@@ -494,27 +485,41 @@ def zonal_statistics(
                                 report_band=report_band,
                             )
                         )
+                else:
+                    zstats.append(
+                        setFeatureStats(
+                            id,
+                            nodata,
+                            nodata,
+                            nodata,
+                            nodata,
+                            nodata,
+                            nodata,
+                            nodata,
+                            report_band=report_band,
+                        )
+                    )
 
-                    # close temporary variables, resetting them for the next iteration
-                    tp_ds = None
-                    tp_lyr = None
-                    tr_ds = None
+                # close temporary variables, resetting them for the next iteration
+                tp_ds = None
+                tp_lyr = None
+                tr_ds = None
 
-                    # once there are no more features to retrieve, p_feat will return as None, exiting the loop
-                    p_feat = lyr.GetNextFeature()
+                # once there are no more features to retrieve, p_feat will return as None, exiting the loop
+                p_feat = lyr.GetNextFeature()
 
-            except RuntimeError as error:
-                print(error)
+        except RuntimeError as error:
+            print(error)
 
-        fn_csv = f"{os.path.splitext(raster_path)[0]}_zstats_over_{band_naming(report_band, log=log)}.csv"
-        col_names = zstats[0].keys()
+    fn_csv = f"{os.path.splitext(raster_path)[0]}_zstats_over_{band_naming(report_band, log=log)}.csv"
+    col_names = zstats[0].keys()
 
-        zstats_df = pd.DataFrame(data=zstats, columns=col_names)
+    zstats_df = pd.DataFrame(data=zstats, columns=col_names)
 
-        with open(fn_csv, "w", newline="") as csvfile:
-            writer = csv.DictWriter(csvfile, col_names)
-            writer.writeheader()
-            writer.writerows(zstats)
+    with open(fn_csv, "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, col_names)
+        writer.writeheader()
+        writer.writerows(zstats)
 
     return zstats_df
 
@@ -590,14 +595,6 @@ def merge_and_calculate_spatial(
         list of output vector files created
 
     """
-
-    import os
-    import glob
-    import pandas as pd
-    import fiona
-    import geopandas as gpd
-    from pathlib import Path
-    from pyeo.filesystem_utilities import serial_date_to_string
 
     binary_dec = gpd.read_file(path_to_vectorised_binary_filtered)
 
