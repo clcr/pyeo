@@ -27,7 +27,7 @@ exceptiongroup==1.1.1
 executing==1.2.0
 fastjsonschema==2.17.1
 Fiona==1.9.4.post1
-fonttools==4.39.4
+fonttools==4.43.0
 GDAL==3.4.3
 geojson==3.0.1
 geomet==1.0.0
