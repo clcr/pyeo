@@ -7,35 +7,52 @@ It is intended to support WhatsApp and Email at this stage.
 It uses some of the ini file parameters but not the do_x flags.
 """
 
+#TODO: add package to env:
+#!pip install redmail
+
 import argparse
 import configparser
 import datetime
-import geopandas as gpd
+#import geopandas as gpd
+#import importlib.util
 import pandas as pd
 #import json
-import numpy as np
+#import numpy as np
 import os
 from osgeo import gdal
-import shutil
+from redmail import gmail
+#import shutil
+#import subprocess
 import sys
-import warnings
+#import warnings
 #import zipfile
 from pyeo import (
     filesystem_utilities, 
-    queries_and_downloads, 
-    raster_manipulation
+    #queries_and_downloads, 
+    #raster_manipulation
     )
-from pyeo.filesystem_utilities import (
-    zip_contents,
-    unzip_contents
-    )
+#from pyeo.filesystem_utilities import (
+#    zip_contents,
+#    unzip_contents
+#    )
 from pyeo.acd_national import (
     acd_initialisation,
     acd_config_to_log,
-    acd_roi_tile_intersection
+    acd_roi_tile_intersection,
     )
+from pyeo.apps.acd_national import acd_by_tile_vectorisation
 
 gdal.UseExceptions()
+
+#TODO: Make vectorise.py a separate app from send_report.py
+
+#TODO: Put these into the config file
+# Choose medium of sending out the reports - check acd_national for functions
+email_alerts = True
+whatsapp_alerts = False
+
+#TODO Read the list of registered users from a file specified in the ini file
+email_list_filename = '/data/clcr/shared/heiko/england/email_list.txt'
 
 def send_report(config_path, tile_id="None"):
     """
@@ -52,7 +69,6 @@ def send_report(config_path, tile_id="None"):
                         instead of the region of interest file to define the area to be processed
 
     """
-
 
     # read the ini file contents into a dictionary
     configparser.ConfigParser(allow_no_value=True)
@@ -83,7 +99,7 @@ def send_report(config_path, tile_id="None"):
         #max_image_number = config_dict["download_limit"]
         #faulty_granule_threshold = config_dict["faulty_granule_threshold"]
         #download_limit = config_dict["download_limit"]
-        skip_existing = config_dict["do_skip_existing"]
+        #skip_existing = config_dict["do_skip_existing"]
         #sieve = config_dict["sieve"]
         #from_classes = config_dict["from_classes"]
         #to_classes = config_dict["to_classes"]
@@ -100,6 +116,32 @@ def send_report(config_path, tile_id="None"):
     except:
         log.error("Could not read the processing arguments from the ini file.")
         sys.exit(1)
+
+    # check and read in credentials for downloading Sentinel-2 data
+    credentials_path = config_dict["credentials_path"]
+    if os.path.exists(credentials_path):
+        try:
+            credentials_conf = configparser.ConfigParser(allow_no_value=True)
+            credentials_conf.read(credentials_path)
+            credentials_dict = {}
+            if email_alerts:
+                log.info("Email forest alerts enabled. Reading in the credentials.")
+                credentials_dict["gmail"] = {}
+                credentials_dict["gmail"]["user"] = credentials_conf["gmail"]["user"]
+                credentials_dict["gmail"]["pass"] = credentials_conf["gmail"]["pass"]
+                gmail.username = credentials_dict["gmail"]["user"]
+                gmail.password = credentials_dict["gmail"]["pass"]
+        except:
+            log.error("Could not open " + credentials_path)
+            log.error("Create the file with your login credentials for gmail.")
+            sys.exit(1)
+        else:
+            log.info("Credentials read from " + credentials_path)
+    else:
+        log.error(credentials_path + " does not exist.")
+        log.error("Did you write the correct filepath in the config file?")
+        sys.exit(1)
+
 
     if tile_id == "None":
         # if no tile ID is given by the call to the function, use the geometry file
@@ -139,7 +181,7 @@ def send_report(config_path, tile_id="None"):
             #l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
             #categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
             probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
-            report_image_dir = os.path.join(individual_tile_directory_path, r"output", r"report_images")
+            report_image_dir = os.path.join(individual_tile_directory_path, r"output", r"report_image")
             #quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
             log.info("Successfully identified the subdirectory paths for this tile")
         except:
@@ -166,12 +208,7 @@ def send_report(config_path, tile_id="None"):
             "Sending out change reports from the latest available report image."
         )
 
-        #TODO: Search the local directories, probabilities and report_images
-        #    for any report images for that tile
-        
-        #TODO: Modify search_term to match report image naming convention
-        # e.g. report_20221104T110129_30UYD_20230915T105701.tif
-        # or   archived_report_20221104T110129_30UYD_20230915T105701.zip
+        '''
         search_term = (
             "report"
             + "_*_"
@@ -179,8 +216,8 @@ def send_report(config_path, tile_id="None"):
             + "_*"
         )
         tile_log.info(
-            "Searching for change report images in this tile directory " +
-            f"containing: {search_term}."
+            f"Searching for change report images in {probability_image_dir}" +
+            f"\n  containing: {search_term}."
             )
         file_list = (
             [
@@ -203,28 +240,95 @@ def send_report(config_path, tile_id="None"):
             f"{len(report_images)} matching report images found."
             )
 
-        # Out of all files found, choose the one with the most recent date stamp
-        
-        
-        # Read the list of registered users from a file specified in the ini file
+        # vectorise the change reports in all report files in the directory
+        tile_log.info(
+            f"Vectorisation based on {config_path} for tile {tile_to_process}."
+            )
+        vector_files = acd_by_tile_vectorisation.vector_report_generation(
+            config_path, 
+            tile_to_process
+            )
+        for f in vector_files:
+            tile_log.info(f"  Created vector file: {f}")
 
+        #TODO:
+        # rename the processed report vector files and zip them
+        # "archived_...zip"
+        '''
+    
+        if email_alerts:
+            
+            print(gmail.username)
+            print(gmail.password)
+            
+            email_list_file = open(email_list_filename, 'r')
+            recipients = email_list_file.readlines()
+            
+            for r, recipient in enumerate(recipients):
+                # Remove the newline character
+                recipient_name = recipient.strip().split(",")[0]
+                recipient_email = recipient.strip().split(",")[1]
+                tile_log.info(f"Sending email from {gmail.username} to {recipient_name} at {recipient_email}.")
+                vector_files=["Test_file.vec"]
+                for f in vector_files:
+                    email_text =  [
+                       f"Dear {recipient_name},",
+                       "",
+                       "New pyeo forest alerts have been detected.",
+                       f"Time period: from {start_date} to {end_date}",
+                       f"Vector file: {f}",
+                       "",
+                       "Please check the individual alerts and consider action " +
+                           "for those you want investigating.",
+                       "",
+                       f"Date of sending this email: {datetime.date.today().strftime('%Y%m%d')}",
+                       "",
+                       "Best regards,",
+                       "",
+                       "The pyeo forest alerts team",
+                       "DISCLAIMER: The alerts are providing without any warranty."
+                       "IMPORTANT: Do not reply to this email."
+                       ]
+    
+                    subject_line = "New pyeo forest alerts are ready for you "+\
+                        f"(Sentinel-2 tile {tile_to_process})"
+    
+                    #TODO: Enable sending with file attachment or download location
+                    gmail.send(
+                               subject = subject_line,
+                               receivers = [recipient_email],
+                               text = "\n".join(email_text),
+                               #attachments={
+                               #    f: Path(f)
+                               #    }
+                              )
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("Report image info has been emailed to the contact list.")
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info(" ")
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("---             TILE PROCESSING END                           ---")
+            tile_log.info("---------------------------------------------------------------")
 
-        # Choose medium of sending out the reports - check acd_national for functions
-        
-        
-        
-        
-        #************************************
-
-
-
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Reports from the report image have been sent to users in the contact list.")
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info(" ")
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---             TILE PROCESSING END                           ---")
-        tile_log.info("---------------------------------------------------------------")
+        if whatsapp_alerts:
+            tile_log.error("WhatsApp alerts have not been implemented yet.")
+            #TODO: WhatsApp
+            # run a separate script in a different Python environment using pywhatkit
+            # os.script("path to bash file")
+            # The bash files needs to do the following:
+            #   make sure WhatsApp is open and running
+            #   conda activate whatsapp_env
+            #   python send_whatsapp.py
+		
+            '''        
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("Report image info has been sent by WhatsApp to the contact list.")
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info(" ")
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("---             TILE PROCESSING END                           ---")
+            tile_log.info("---------------------------------------------------------------")
+            '''        
 
         # process the next tile if more than one tile are specified at this point (for loop)
 

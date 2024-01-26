@@ -37,18 +37,6 @@ def vector_report_generation(config_path: str, tile: str):
     epsg = config_dict["epsg"]
     level_1_boundaries_path = config_dict["level_1_boundaries_path"]
 
-    # Matt: get the report raster from the previous functions
-    # for parallelism reasons, the report path cannot be passed to this function
-    # so we run the report glob again
-
-    # get all report.tif that are within the root_dir with search pattern
-    report_tif_pattern = f"{os.sep}output{os.sep}probabilities{os.sep}report*.tif"
-    search_pattern = f"{tile}{report_tif_pattern}"
-
-    change_report_path = glob.glob(
-        os.path.join(config_dict["tile_dir"], search_pattern)
-    )[0]
-
     ## setting up the per tile logger
     # get path where the tiles are downloaded to
     tile_directory_path = config_dict["tile_dir"]
@@ -60,6 +48,44 @@ def vector_report_generation(config_path: str, tile: str):
         logger_name=f"pyeo_tile_{tile}_log",
     )
 
+
+    # Matt: get the report raster from the previous functions
+    # for parallelism reasons, the report path cannot be passed to this function
+    # so we run the report glob again
+
+    # get all report.tif file names that are within the root_dir with search pattern
+    # from the probabilities subdirectory ...
+    report_tif_pattern = f"{os.sep}output{os.sep}probabilities{os.sep}report*.tif"
+    search_pattern = f"{tile}{report_tif_pattern}"
+
+    change_report_paths = glob.glob(
+        os.path.join(config_dict["tile_dir"], search_pattern)
+    )
+
+    # ... and from the report_image_dir subdirectory
+    report_tif_pattern = f"{os.sep}output{os.sep}report_image{os.sep}report*.tif"
+    search_pattern = f"{tile}{report_tif_pattern}"
+
+    for g in glob.glob(os.path.join(config_dict["tile_dir"], search_pattern)):
+        change_report_paths.append(g)
+        tile_log.info(f"{g}")
+
+    if len(change_report_paths) == 0:
+        tile_log.error("No change report path(s) found.")
+        sys.exit()
+    else:
+        tile_log.info("Change report path(s) found:")
+        for p in change_report_paths:
+            tile_log.info(f"  {p}")
+
+    # use first element from the list of report image files
+    #TODO: use the most recent one instead
+    change_report_path = change_report_paths[0]
+    
+    if len(change_report_paths) > 1:
+        tile_log.warning("More than one change report paths found.")
+        tile_log.info(f"Using report image file: {change_report_path}")
+    
     tile_log.info("--" * 20)
     tile_log.info(f"Starting Vectorisation of the Change Report Raster of Tile: {tile}")
     tile_log.info("--" * 20)
@@ -75,6 +101,10 @@ def vector_report_generation(config_path: str, tile: str):
         vectorised_band_path=path_vectorised_binary,
         log=tile_log
     )
+
+    tile_log.info(f"change_report_path = {change_report_path}")
+    tile_log.info(f"shapefile_path = {path_vectorised_binary_filtered}")
+    tile_log.info(f"report_band = {5}")
 
     rb_ndetections_zstats_df = vectorisation.zonal_statistics(
         raster_path=change_report_path,
@@ -108,7 +138,7 @@ def vector_report_generation(config_path: str, tile: str):
                                         path_to_vectorised_binary_filtered=path_vectorised_binary_filtered,
                                         write_csv=False,
                                         write_shapefile=True,
-                                        write_kmlfile=False,
+                                        write_kml=False,
                                         write_pkl=False,
                                         change_report_path=change_report_path,
                                         log=tile_log,

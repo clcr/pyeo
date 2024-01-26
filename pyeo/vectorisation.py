@@ -18,8 +18,9 @@ import numpy as np
 import os
 from osgeo import gdal, ogr, osr
 import pandas as pd
-#from pathlib import Path
+from pathlib import Path
 import shutil
+import sys
 from tempfile import TemporaryDirectory
 
 from pyeo.filesystem_utilities import serial_date_to_string
@@ -161,7 +162,8 @@ def vectorise_from_band(
         try:
             gdal.Polygonize(
                 src_band,
-                # src_band.GetMaskBand(),  # use .msk to only polygonise values > 0 # can't get gdal.Polygonize to respect .msk
+                # src_band.GetMaskBand(),  # use .msk to only polygonise values > 0 
+                #TODO: can't get gdal.Polygonize to respect .msk
                 None,  # no mask
                 dst_layer,
                 dst_field,  # -1 for no field column
@@ -596,6 +598,18 @@ def merge_and_calculate_spatial(
 
     """
 
+    # check if the required files exist
+    if not Path(level_1_boundaries_path).is_file():
+        log.error(f"File {level_1_boundaries_path} does not exist.")
+        sys.exit()
+    else:
+        log.info(f"Using admin boundary file: {level_1_boundaries_path}")
+    if not Path(path_to_vectorised_binary_filtered).is_file():
+        log.error(f"File {path_to_vectorised_binary_filtered} does not exist.")
+        sys.exit()
+    else:
+        log.info(f"Using forest alerts vector file: {path_to_vectorised_binary_filtered}")
+        
     binary_dec = gpd.read_file(path_to_vectorised_binary_filtered)
 
     # convert first date of change detection in days, to change date

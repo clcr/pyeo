@@ -15,10 +15,11 @@ dependencies:
   - scikit-learn
   - beautifulsoup4
   - yaml
-  - geopandas
+  - geopandas==0.13.0
   - sentinelsat
   - geojson
   - scikit-image
   - lxml
   - botocore
   - sentinelhub
+
