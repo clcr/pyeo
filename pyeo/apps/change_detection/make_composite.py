@@ -7,6 +7,7 @@ It uses some of the ini file parameters but not the do_x flags.
 
 import argparse
 import configparser
+import cProfile
 import datetime
 import geopandas as gpd
 import pandas as pd
@@ -270,7 +271,7 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("  Directory path created: "+individual_tile_directory_path)
         tile_log.info("\n")
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---   PROCESSING START: {}   ---".format(tile_dir))
+        tile_log.info("---   TILE PROCESSING START: {}   ---".format(tile_dir))
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Making an image composite as a baseline map for the change detection.")
         tile_log.info("List of image bands: {}".format(bands))
@@ -1159,6 +1160,9 @@ def create_composite(config_path, tile_id="None"):
 
 
 if __name__ == "__main__":
+    # save runtime statistics of this code
+    profiler = cProfile.Profile()
+    profiler.enable()
 
     # Reading in config file
     parser = argparse.ArgumentParser(
@@ -1182,3 +1186,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     create_composite(**vars(args))
+    
+    profiler.disable()
+    f = "/home/h/hb91/make_composite"
+    i = 1
+    if os.path.exists(f+".prof"):
+        while os.path.exists(f+"_"+str(i)+".prof"):
+            i = i + 1
+        f = f+"_"+str(i)
+    f = f + ".prof"
+    profiler.dump_stats(f)
+    print(f"runtime analysis saved to {f}")
+    print("Run snakeviz over the profile file to interact with the profile information:")
+    print(f">snakeviz {f}")

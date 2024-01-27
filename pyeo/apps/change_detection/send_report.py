@@ -7,34 +7,19 @@ It is intended to support WhatsApp and Email at this stage.
 It uses some of the ini file parameters but not the do_x flags.
 """
 
-#TODO: add package to env:
-#!pip install redmail
-
+from email.message import EmailMessage
+import smtplib
 import argparse
 import configparser
+import cProfile
 import datetime
-#import geopandas as gpd
-#import importlib.util
 import pandas as pd
-#import json
-#import numpy as np
 import os
 from osgeo import gdal
-from redmail import gmail
-#import shutil
-#import subprocess
 import sys
-#import warnings
-#import zipfile
 from pyeo import (
     filesystem_utilities, 
-    #queries_and_downloads, 
-    #raster_manipulation
     )
-#from pyeo.filesystem_utilities import (
-#    zip_contents,
-#    unzip_contents
-#    )
 from pyeo.acd_national import (
     acd_initialisation,
     acd_config_to_log,
@@ -77,7 +62,6 @@ def send_report(config_path, tile_id="None"):
     acd_config_to_log(config_dict, log)
 
     try:
-        # ensure that pyeo is looking in the correct directory
         os.chdir(config_dict["pyeo_dir"]) 
         start_date = config_dict["start_date"]
         end_date = config_dict["end_date"]
@@ -126,22 +110,21 @@ def send_report(config_path, tile_id="None"):
             credentials_dict = {}
             if email_alerts:
                 log.info("Email forest alerts enabled. Reading in the credentials.")
-                credentials_dict["gmail"] = {}
-                credentials_dict["gmail"]["user"] = credentials_conf["gmail"]["user"]
-                credentials_dict["gmail"]["pass"] = credentials_conf["gmail"]["pass"]
-                gmail.username = credentials_dict["gmail"]["user"]
-                gmail.password = credentials_dict["gmail"]["pass"]
+                credentials_dict["email"] = {}
+                credentials_dict["email"]["user"] = credentials_conf["email"]["user"]
+                credentials_dict["email"]["pass"] = credentials_conf["email"]["pass"]
+                sender = credentials_dict["email"]["user"]
+                mail_password = credentials_dict["email"]["pass"]
+                log.info("Credentials read from " + credentials_path)
         except:
-            log.error("Could not open " + credentials_path)
-            log.error("Create the file with your login credentials for gmail.")
+            log.error("Could not read credentials from " + credentials_path)
+            log.error("Check the contents of the file with your login "+
+                      "credentials for sending emails.")
             sys.exit(1)
-        else:
-            log.info("Credentials read from " + credentials_path)
     else:
         log.error(credentials_path + " does not exist.")
         log.error("Did you write the correct filepath in the config file?")
         sys.exit(1)
-
 
     if tile_id == "None":
         # if no tile ID is given by the call to the function, use the geometry file
@@ -202,13 +185,12 @@ def send_report(config_path, tile_id="None"):
             logger_name="pyeo_"+tile_to_process
         )
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---   PROCESSING START: {}   ---".format(tile_dir))
+        tile_log.info("---   TILE PROCESSING START: {}   ---".format(tile_dir))
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(
             "Sending out change reports from the latest available report image."
         )
 
-        '''
         search_term = (
             "report"
             + "_*_"
@@ -251,84 +233,84 @@ def send_report(config_path, tile_id="None"):
         for f in vector_files:
             tile_log.info(f"  Created vector file: {f}")
 
-        #TODO:
-        # rename the processed report vector files and zip them
-        # "archived_...zip"
-        '''
-    
-        if email_alerts:
+        if len(vector_files) == 0:
+            tile_log.info("No new forest alert vector files created.")
+            tile_log.info("No message will be sent.")
             
-            print(gmail.username)
-            print(gmail.password)
-            
-            email_list_file = open(email_list_filename, 'r')
-            recipients = email_list_file.readlines()
-            
-            for r, recipient in enumerate(recipients):
-                # Remove the newline character
-                recipient_name = recipient.strip().split(",")[0]
-                recipient_email = recipient.strip().split(",")[1]
-                tile_log.info(f"Sending email from {gmail.username} to {recipient_name} at {recipient_email}.")
-                vector_files=["Test_file.vec"]
-                for f in vector_files:
-                    email_text =  [
-                       f"Dear {recipient_name},",
-                       "",
-                       "New pyeo forest alerts have been detected.",
-                       f"Time period: from {start_date} to {end_date}",
-                       f"Vector file: {f}",
-                       "",
-                       "Please check the individual alerts and consider action " +
-                           "for those you want investigating.",
-                       "",
-                       f"Date of sending this email: {datetime.date.today().strftime('%Y%m%d')}",
-                       "",
-                       "Best regards,",
-                       "",
-                       "The pyeo forest alerts team",
-                       "DISCLAIMER: The alerts are providing without any warranty."
-                       "IMPORTANT: Do not reply to this email."
-                       ]
-    
-                    subject_line = "New pyeo forest alerts are ready for you "+\
-                        f"(Sentinel-2 tile {tile_to_process})"
-    
-                    #TODO: Enable sending with file attachment or download location
-                    gmail.send(
-                               subject = subject_line,
-                               receivers = [recipient_email],
-                               text = "\n".join(email_text),
-                               #attachments={
-                               #    f: Path(f)
-                               #    }
-                              )
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Report image info has been emailed to the contact list.")
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info(" ")
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("---             TILE PROCESSING END                           ---")
-            tile_log.info("---------------------------------------------------------------")
+        else:
 
-        if whatsapp_alerts:
-            tile_log.error("WhatsApp alerts have not been implemented yet.")
-            #TODO: WhatsApp
-            # run a separate script in a different Python environment using pywhatkit
-            # os.script("path to bash file")
-            # The bash files needs to do the following:
-            #   make sure WhatsApp is open and running
-            #   conda activate whatsapp_env
-            #   python send_whatsapp.py
+            if email_alerts:
+            
+                email_list_file = open(email_list_filename, 'r')
+                recipients = email_list_file.readlines()
+                
+                for r, recipient in enumerate(recipients):
+                    # Remove the newline character
+                    recipient_name = recipient.strip().split(",")[0]
+                    recipient_email = recipient.strip().split(",")[1]
+                    tile_log.info(
+                        f"Sending email from {sender} to {recipient_name} " +
+                        f"at {recipient_email}."
+                        )
+                    for f in vector_files:
+                        message =  [
+                           f"Dear {recipient_name},",
+                           "",
+                           "New pyeo forest alerts have been detected.",
+                           f"Time period: from {start_date} to {end_date}",
+                           "",
+                           f"Vector file: {f}",
+                           "",
+                           "Please check the individual alerts and consider action " +
+                               "for those you want investigating.",
+                           "",
+                           "Date of sending this email: " +
+                           f"{datetime.date.today().strftime('%Y%m%d')}",
+                           "",
+                           "Best regards,",
+                           "",
+                           "The pyeo forest alerts team",
+                           "DISCLAIMER: The alerts are providing without any warranty.",
+                           "IMPORTANT: Do not reply to this email."
+                           ]
+        
+                        subject_line = "New pyeo forest alerts are ready for you "+\
+                            f"(Sentinel-2 tile {tile_to_process})"
+        
+                        #TODO: Enable sending with file attachment or download location
+                        email = EmailMessage()
+                        email["From"] = sender
+                        email["To"] = recipient_email
+                        email["Subject"] = subject_line
+                        email.set_content("\n".join(message))
+                        
+                        smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
+                        smtp.starttls()
+                        smtp.login(sender, mail_password)
+                        smtp.sendmail(sender, recipient_email, email.as_string())
+                        smtp.quit()
+                tile_log.info("Report image info has been emailed to the contact list.")
+                tile_log.info(" ")
+
+            if whatsapp_alerts:
+                tile_log.error("WhatsApp alerts have not been implemented yet.")
+                #TODO: WhatsApp
+                # run a separate script in a different Python environment using pywhatkit
+                # os.script("path to bash file")
+                # The bash files needs to do the following:
+                #   make sure WhatsApp is open and running
+                #   conda activate whatsapp_env
+                #   python send_whatsapp.py
 		
-            '''        
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Report image info has been sent by WhatsApp to the contact list.")
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info(" ")
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("---             TILE PROCESSING END                           ---")
-            tile_log.info("---------------------------------------------------------------")
-            '''        
+                '''        
+                tile_log.info("---------------------------------------------------------------")
+                tile_log.info("Report image info has been sent by WhatsApp to the contact list.")
+                tile_log.info("---------------------------------------------------------------")
+                tile_log.info(" ")
+                '''        
+        tile_log.info("---------------------------------------------------------------")
+        tile_log.info("---             TILE PROCESSING END                           ---")
+        tile_log.info("---------------------------------------------------------------")
 
         # process the next tile if more than one tile are specified at this point (for loop)
 
@@ -341,7 +323,10 @@ def send_report(config_path, tile_id="None"):
 
 
 if __name__ == "__main__":
-
+    # save runtime statistics of this code
+    profiler = cProfile.Profile()
+    profiler.enable()
+    
     # Reading in config file
     parser = argparse.ArgumentParser(
         description="Downloads and preprocesses Sentinel 2 images into median composites."
@@ -364,3 +349,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     send_report(**vars(args))
+
+    profiler.disable()
+    f = "/home/h/hb91/send_report"
+    i = 1
+    if os.path.exists(f+".prof"):
+        while os.path.exists(f+"_"+str(i)+".prof"):
+            i = i + 1
+        f = f+"_"+str(i)
+    f = f + ".prof"
+    profiler.dump_stats(f)
+    print(f"runtime analysis saved to {f}")
+    print("Run snakeviz over the profile file to interact with the profile information:")
+    print(f">snakeviz {f}")

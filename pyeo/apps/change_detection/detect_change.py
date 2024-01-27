@@ -8,6 +8,7 @@ It uses some of the ini file parameters but not the do_x flags.
 
 import argparse
 import configparser
+import cProfile
 import datetime
 import geopandas as gpd
 import pandas as pd
@@ -349,7 +350,7 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info("  Directory path created: "+individual_tile_directory_path)
         tile_log.info("\n")
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---   PROCESSING START: {}   ---".format(tile_dir))
+        tile_log.info("---   TILE PROCESSING START: {}   ---".format(tile_dir))
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Detecting change between classified change detection images")
         tile_log.info("and the baseline median image composite.")
@@ -382,7 +383,7 @@ def detect_change(config_path, tile_id="None"):
                 tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
                 tile_geom = tile_geom.to_crs(epsg=4326)
                 geometry = tile_geom["geometry"].iloc[0]
-                geometry = geometry.representative_point()
+                geometry = geometry.representative_point().wkt
 
                 # attempt a geometry based query
                 try:
@@ -1554,6 +1555,9 @@ def detect_change(config_path, tile_id="None"):
 
 
 if __name__ == "__main__":
+    # save runtime statistics of this code
+    profiler = cProfile.Profile()
+    profiler.enable()
 
     # Reading in config file
     parser = argparse.ArgumentParser(
@@ -1579,3 +1583,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     detect_change(**vars(args))
+        
+    profiler.disable()
+    f = "/home/h/hb91/detect_change"
+    i = 1
+    if os.path.exists(f+".prof"):
+        while os.path.exists(f+"_"+str(i)+".prof"):
+            i = i + 1
+        f = f+"_"+str(i)
+    f = f + ".prof"
+    profiler.dump_stats(f)
+    print(f"runtime analysis saved to {f}")
+    print("Run snakeviz over the profile file to interact with the profile information:")
+    print(f">snakeviz {f}")

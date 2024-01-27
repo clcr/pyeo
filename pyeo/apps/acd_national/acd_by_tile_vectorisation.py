@@ -20,7 +20,7 @@ def vector_report_generation(config_path: str, tile: str):
 
     Returns
     -------
-    output_vector_products : list of str
+    output_vector_files : list of str
         list of output vector file names created
 
     """
@@ -30,7 +30,8 @@ def vector_report_generation(config_path: str, tile: str):
         config_path=config_path
     )
 
-    # changes directory to pyeo_dir, enabling the use of relative paths from the config file
+    # changes directory to pyeo_dir, enabling the use of relative paths from 
+    #   the config file
     os.chdir(config_dict["pyeo_dir"])
     
     # get other parameters
@@ -44,7 +45,9 @@ def vector_report_generation(config_path: str, tile: str):
     individual_tile_directory_path = os.path.join(tile_directory_path, tile)
     # get the logger for this tile
     tile_log = filesystem_utilities.init_log_acd(
-        log_path=os.path.join(individual_tile_directory_path, "log", tile + "_log.txt"),
+        log_path=os.path.join(individual_tile_directory_path, 
+                              "log", 
+                              tile + "_log.txt"),
         logger_name=f"pyeo_tile_{tile}_log",
     )
 
@@ -71,82 +74,85 @@ def vector_report_generation(config_path: str, tile: str):
         tile_log.info(f"{g}")
 
     if len(change_report_paths) == 0:
-        tile_log.error("No change report path(s) found.")
+        tile_log.error("No change report image path(s) found.")
         sys.exit()
     else:
-        tile_log.info("Change report path(s) found:")
+        tile_log.info("Change report image path(s) found:")
         for p in change_report_paths:
             tile_log.info(f"  {p}")
-
-    # use first element from the list of report image files
-    #TODO: use the most recent one instead
-    change_report_path = change_report_paths[0]
-    
-    if len(change_report_paths) > 1:
-        tile_log.warning("More than one change report paths found.")
-        tile_log.info(f"Using report image file: {change_report_path}")
-    
     tile_log.info("--" * 20)
-    tile_log.info(f"Starting Vectorisation of the Change Report Raster of Tile: {tile}")
+    tile_log.info("Starting Vectorisation of the Change Report Rasters " +
+                  f"of Tile: {tile}")
     tile_log.info("--" * 20)
 
-    path_vectorised_binary = vectorisation.vectorise_from_band(
-        change_report_path=change_report_path,
-        band=15,
-        log=tile_log
-    )
-    # was band=6
+    # iterate over the list of report image files
+    output_vector_files = []
+    for change_report_path in change_report_paths:
 
-    path_vectorised_binary_filtered = vectorisation.clean_zero_nodata_vectorised_band(
-        vectorised_band_path=path_vectorised_binary,
-        log=tile_log
-    )
+        tile_log.info(f"change_report_path = {change_report_path}")
 
-    tile_log.info(f"change_report_path = {change_report_path}")
-    tile_log.info(f"shapefile_path = {path_vectorised_binary_filtered}")
-    tile_log.info(f"report_band = {5}")
+        if os.path.exists(change_report_path[:-4]+".shp"):
+            tile_log.info(f"Skipping. Found {change_report_path[:-4]}.shp")
 
-    rb_ndetections_zstats_df = vectorisation.zonal_statistics(
-        raster_path=change_report_path,
-        shapefile_path=path_vectorised_binary_filtered,
-        report_band=5,
-        log=tile_log
-        )
-    # was band=2
+        else:
 
-    rb_confidence_zstats_df = vectorisation.zonal_statistics(
-        raster_path=change_report_path,
-        shapefile_path=path_vectorised_binary_filtered,
-        report_band=9,
-        log=tile_log
-    )
-    # was band=5
-
-    rb_first_changedate_zstats_df = vectorisation.zonal_statistics(
-        raster_path=change_report_path,
-        shapefile_path=path_vectorised_binary_filtered,
-        report_band=4,
-        log=tile_log
-    )
-    # was band=7
-
-    # table joins, area, lat lon, county
-    output_vector_files = vectorisation.merge_and_calculate_spatial(
-                                        rb_ndetections_zstats_df=rb_ndetections_zstats_df,
-                                        rb_confidence_zstats_df=rb_confidence_zstats_df,
-                                        rb_first_changedate_zstats_df=rb_first_changedate_zstats_df,
-                                        path_to_vectorised_binary_filtered=path_vectorised_binary_filtered,
-                                        write_csv=False,
-                                        write_shapefile=True,
-                                        write_kml=False,
-                                        write_pkl=False,
-                                        change_report_path=change_report_path,
-                                        log=tile_log,
-                                        epsg=epsg,
-                                        level_1_boundaries_path=level_1_boundaries_path,
-                                        tileid=tile,
-                                        delete_intermediates=True,
-                                    )
+            path_vectorised_binary = vectorisation.vectorise_from_band(
+                change_report_path=change_report_path,
+                band=15,
+                log=tile_log
+            )
+            # was band=6
+    
+            path_vectorised_binary_filtered = vectorisation.clean_zero_nodata_vectorised_band(
+                vectorised_band_path=path_vectorised_binary,
+                log=tile_log
+            )
+    
+            tile_log.info(f"vectorised_file_path = {path_vectorised_binary_filtered}")
+    
+            rb_ndetections_zstats_df = vectorisation.zonal_statistics(
+                raster_path=change_report_path,
+                shapefile_path=path_vectorised_binary_filtered,
+                report_band=5,
+                log=tile_log
+                )
+            # was band=2
+    
+            rb_confidence_zstats_df = vectorisation.zonal_statistics(
+                raster_path=change_report_path,
+                shapefile_path=path_vectorised_binary_filtered,
+                report_band=9,
+                log=tile_log
+            )
+            # was band=5
+        
+            rb_first_changedate_zstats_df = vectorisation.zonal_statistics(
+                raster_path=change_report_path,
+                shapefile_path=path_vectorised_binary_filtered,
+                report_band=4,
+                log=tile_log
+            )
+            # was band=7
+        
+            # table joins, area, lat lon, county
+            output_vector_files.append(
+                vectorisation.merge_and_calculate_spatial(
+                    rb_ndetections_zstats_df=rb_ndetections_zstats_df,
+                    rb_confidence_zstats_df=rb_confidence_zstats_df,
+                    rb_first_changedate_zstats_df=rb_first_changedate_zstats_df,
+                    path_to_vectorised_binary_filtered=path_vectorised_binary_filtered,
+                    write_csv=False,
+                    write_shapefile=True,
+                    write_kml=False,
+                    write_pkl=False,
+                    change_report_path=change_report_path,
+                    log=tile_log,
+                    epsg=epsg,
+                    level_1_boundaries_path=level_1_boundaries_path,
+                    tileid=tile,
+                    delete_intermediates=True,
+                )
+            )
 
     tile_log.info("---------------------------------------------------------------")
     tile_log.info("Vectorisation of the Change Report Raster complete")
@@ -155,5 +161,6 @@ def vector_report_generation(config_path: str, tile: str):
     return(list(output_vector_files))
 
 if __name__ == "__main__":
-    # assuming argv[0] is script name, config_path passed as index 1 and tile string as index 2
+    # assuming argv[0] is script name, config_path passed as index 1 and 
+    #   tile string as index 2
     vector_report_generation(config_path=sys.argv[1], tile=sys.argv[2])
