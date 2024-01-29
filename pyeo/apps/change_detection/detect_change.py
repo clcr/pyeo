@@ -1587,7 +1587,7 @@ if __name__ == "__main__":
     detect_change(**vars(args))
         
     profiler.disable()
-    f = "/home/h/hb91/detect_change"
+    f = "~/detect_change"
     i = 1
     if os.path.exists(f+".prof"):
         while os.path.exists(f+"_"+str(i)+".prof"):

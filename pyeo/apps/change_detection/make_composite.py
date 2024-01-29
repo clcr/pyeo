@@ -1184,7 +1184,7 @@ if __name__ == "__main__":
     create_composite(**vars(args))
     
     profiler.disable()
-    f = "/home/h/hb91/make_composite"
+    f = "~/make_composite"
     i = 1
     if os.path.exists(f+".prof"):
         while os.path.exists(f+"_"+str(i)+".prof"):
