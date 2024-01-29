@@ -1459,7 +1459,8 @@ def detect_change(config_path, tile_id="None"):
                 "Deleting intermediate class images used in change detection."
             )
             tile_log.info(
-                "They can be recreated from the cloud-masked, band-stacked L2A images and the saved model."
+                "They can be recreated from the cloud-masked, band-stacked " + 
+                "L2A images and the saved model."
             )
             tile_log.info(
                 "---------------------------------------------------------------"
@@ -1472,7 +1473,8 @@ def detect_change(config_path, tile_id="None"):
             for directory in directories:
                 paths = [f for f in os.listdir(directory)]
                 for f in paths:
-                    # keep the classified composite layers and the report image product for the next change detection
+                    # keep the classified composite layers and the report image
+                    #   product for the next change detection
                     if not f.startswith("composite_") and not f.startswith("report_"):
                         tile_log.info("Deleting {}".format(os.path.join(directory, f)))
                         if os.path.isdir(os.path.join(directory, f)):
@@ -1532,9 +1534,9 @@ def detect_change(config_path, tile_id="None"):
                         shutil.rmtree(os.path.join(tile_dir, f))
                     else:
                         tile_log.warning(
-                            "This should not have happened. {} is not a directory. Skipping deletion.".format(
-                                os.path.join(root, temp_dir)
-                            )
+                            "This should not have happened. "+
+                            f"{os.path.join(root, temp_dir)} is not a "+
+                            "directory. Skipping deletion."
                         )
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Deletion of temporary directories complete.")

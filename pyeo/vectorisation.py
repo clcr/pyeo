@@ -119,7 +119,7 @@ def vectorise_from_band(
 
     """
 
-    log.info(f"what is change_report_path  :  {change_report_path}")
+    log.info(f"change_report_path  :  {change_report_path}")
     # let GDAL use Python to raise Exceptions, instead of printing to sys.stdout
     gdal.UseExceptions()
 
@@ -371,14 +371,19 @@ def zonal_statistics(
     Returns
     -------
     zstats_df : pd.DataFrame
+        Returns None if no polygon statistics could be computer.
 
     Notes
     -----
-    The raster at raster_path needs to be an even shape, e.g. 10980, 10980, not 10979, 10979.
+    The raster at raster_path needs to be an even shape, e.g. 10980, 10980, 
+      not 10979, 10979.
 
-    The original implementation of this function was written by Konrad Hafen and can be found at: https://opensourceoptions.com/blog/zonal-statistics-algorithm-with-python-in-4-steps/
+    The original implementation of this function was written by Konrad Hafen 
+      and can be found at: 
+      https://opensourceoptions.com/blog/zonal-statistics-algorithm-with-python-in-4-steps/
 
-    Aspects of this function were amended to accommodate library updates from GDAL, OGR and numpy.ma.MaskedArray().
+    Aspects of this function were amended to accommodate library updates from 
+      GDAL, OGR and numpy.ma.MaskedArray().
 
     """
 
@@ -397,6 +402,10 @@ def zonal_statistics(
 
     # lyr = shapefile layer
     lyr = p_ds.GetLayer()
+
+    if lyr.GetFeatureCount() < 1:
+        log.error(f"No features contained in the shapefile in zonal_stats: {fn_zones}")
+        
     # get projection to apply to temporary files
     proj = lyr.GetSpatialRef()
     geot = r_ds.GetGeoTransform()
@@ -507,21 +516,27 @@ def zonal_statistics(
                 tp_lyr = None
                 tr_ds = None
 
-                # once there are no more features to retrieve, p_feat will return as None, exiting the loop
+                # once there are no more features to retrieve, p_feat will 
+                #   return as None, exiting the loop
                 p_feat = lyr.GetNextFeature()
 
         except RuntimeError as error:
             print(error)
 
-    fn_csv = f"{os.path.splitext(raster_path)[0]}_zstats_over_{band_naming(report_band, log=log)}.csv"
-    col_names = zstats[0].keys()
-
-    zstats_df = pd.DataFrame(data=zstats, columns=col_names)
-
-    with open(fn_csv, "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, col_names)
-        writer.writeheader()
-        writer.writerows(zstats)
+    if zstats == []:
+        log.warning("Empty zonal statistics dataframe! This may cause problems.")
+        zstats_df = None
+    else:
+        fn_csv = f"{os.path.splitext(raster_path)[0]}_zstats_over_" +\
+            f"{band_naming(report_band, log=log)}.csv"
+        col_names = zstats[0].keys()
+    
+        zstats_df = pd.DataFrame(data=zstats, columns=col_names)
+    
+        with open(fn_csv, "w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, col_names)
+            writer.writeheader()
+            writer.writerows(zstats)
 
     return zstats_df
 
