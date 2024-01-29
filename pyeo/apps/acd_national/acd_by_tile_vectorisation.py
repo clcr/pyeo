@@ -109,7 +109,12 @@ def vector_report_generation(config_path: str, tile: str):
             )
     
             tile_log.info(f"vectorised_file_path = {path_vectorised_binary_filtered}")
-    
+
+            #TODO: Note: zonal_statistics() returns None if no statistics were computed.
+            # In cases where the shapefile is not right, this causes an error.
+            # In the code below, check whether vectorisation returns None and if
+            # so, catch the error.
+            
             rb_ndetections_zstats_df = vectorisation.zonal_statistics(
                 raster_path=change_report_path,
                 shapefile_path=path_vectorised_binary_filtered,

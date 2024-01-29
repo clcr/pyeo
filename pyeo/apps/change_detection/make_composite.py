@@ -449,19 +449,15 @@ def create_composite(config_path, tile_id="None"):
             "  Dropping baseline N9999 where it is duplicating another baseline."
         )
         
-        l2a_products["start_date"] = "n/a"
-        l2a_products["processing_baseline"] = "n/a"
+        l2a_products.loc[:,('start_date')] = np.repeat("n/a", 
+                                                 len(l2a_products.loc[:('start_date')]))
+        l2a_products.loc[:,('processing_baseline')] = np.repeat("n/a", 
+                                                         len(l2a_products.loc[:('processing_baseline')]))
         for product in l2a_products["title"]:
-            l2a_products.loc[l2a_products["title"] == product, "start_date"] = \
+            l2a_products.loc[l2a_products.loc[:,('title')] == product, "start_date"] = \
                 get_start_date(product)
-            l2a_products.loc[l2a_products["title"] == product, "processing_baseline"] = \
+            l2a_products.loc[l2a_products.loc[:,('title')] == product, "processing_baseline"] = \
                 "N" + get_processing_baseline(product)
-        #log.info(l2a_products.sort_values(by=["start_date"])["start_date"])
-
-        #To print out the column names of the dataframe, use:
-        #log.info("Column names of the L2A Pandas Dataframe:")
-        #for col in l2a_products.columns:
-        #    log.info(col)
         
         acq_dates = np.unique(l2a_products["start_date"])
         

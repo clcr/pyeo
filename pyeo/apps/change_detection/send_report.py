@@ -2,7 +2,10 @@
 send_report
 -------------------------------------
 An app for sending out summary information on detected changes between
-classified image maps to users in various ways.
+the vectorised change detection report images to users in various ways.
+Vectorisation should be done as part of detect_change.py
+but send_report will search for report images and vectorise them if they have
+not been done yet.
 It is intended to support WhatsApp and Email at this stage.
 It uses some of the ini file parameters but not the do_x flags.
 """
@@ -28,8 +31,6 @@ from pyeo.acd_national import (
 from pyeo.apps.acd_national import acd_by_tile_vectorisation
 
 gdal.UseExceptions()
-
-#TODO: Make vectorise.py a separate app from send_report.py
 
 #TODO: Put these into the config file
 # Choose medium of sending out the reports - check acd_national for functions
@@ -185,7 +186,7 @@ def send_report(config_path, tile_id="None"):
             logger_name="pyeo_"+tile_to_process
         )
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---   TILE PROCESSING START: {}   ---".format(tile_dir))
+        tile_log.info(f"---   TILE PROCESSING START: {os.path.join(tile_dir+tile_to_process)}   ---")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(
             "Sending out change reports from the latest available report image."
