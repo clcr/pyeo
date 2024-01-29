@@ -616,14 +616,23 @@ def merge_and_calculate_spatial(
     # check if the required files exist
     if not Path(level_1_boundaries_path).is_file():
         log.error(f"File {level_1_boundaries_path} does not exist.")
-        sys.exit()
+        return([])
     else:
         log.info(f"Using admin boundary file: {level_1_boundaries_path}")
     if not Path(path_to_vectorised_binary_filtered).is_file():
         log.error(f"File {path_to_vectorised_binary_filtered} does not exist.")
-        sys.exit()
+        return([])
     else:
         log.info(f"Using forest alerts vector file: {path_to_vectorised_binary_filtered}")
+    if rb_ndetections_zstats_df == [] or rb_ndetections_zstats_df == None:
+        log.error("Empty zonal statistics dataframe! Cannot vectorise.")
+        return([])
+    if rb_confidence_zstats_df == [] or rb_confidence_zstats_df == None:
+        log.error("Empty zonal statistics dataframe! Cannot vectorise.")
+        return([])
+    if rb_first_changedate_zstats_df == [] or rb_first_changedate_zstats_df == None:
+        log.error("Empty zonal statistics dataframe! Cannot vectorise.")
+        return([])
         
     binary_dec = gpd.read_file(path_to_vectorised_binary_filtered)
 

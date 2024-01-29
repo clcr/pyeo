@@ -352,7 +352,7 @@ if __name__ == "__main__":
     send_report(**vars(args))
 
     profiler.disable()
-    f = "/home/h/hb91/send_report"
+    f = "~/send_report"
     i = 1
     if os.path.exists(f+".prof"):
         while os.path.exists(f+"_"+str(i)+".prof"):
