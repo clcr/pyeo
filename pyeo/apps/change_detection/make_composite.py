@@ -25,7 +25,7 @@ from pyeo.acd_national import (acd_initialisation,
                                  acd_roi_tile_intersection)
 
 gdal.UseExceptions()
-
+           
 def create_composite(config_path, tile_id="None"):
     """
     The main function that creates the image composite with the parameters specified 

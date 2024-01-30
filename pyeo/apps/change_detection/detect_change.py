@@ -10,7 +10,7 @@ import argparse
 import configparser
 import cProfile
 import datetime
-import geopandas as gpd
+#import geopandas as gpd
 import pandas as pd
 #import json
 import numpy as np

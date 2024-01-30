@@ -3803,7 +3803,7 @@ def atmospheric_correction(
 
     # log = logging.getLogger(__name__)
     images = [
-        image for image in os.listdir(in_directory) if image.startswith("MSIL1C", 4)
+        image for image in os.listdir(in_directory) if image.startswith("MSIL1C", 4) and image.isdir()
     ]
     # Opportunity for multithreading here
     for image in images:
