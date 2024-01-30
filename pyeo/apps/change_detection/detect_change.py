@@ -10,7 +10,7 @@ import argparse
 import configparser
 import cProfile
 import datetime
-import geopandas as gpd
+#import geopandas as gpd
 import pandas as pd
 #import json
 import numpy as np
@@ -274,6 +274,7 @@ def detect_change(config_path, tile_id="None"):
         #   to get the tile ID list
         tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
+        log.info("Region of interest based processing selected.")
         log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
     else:
@@ -281,10 +282,8 @@ def detect_change(config_path, tile_id="None"):
         #   method to get the tile ID list
         tile_based_processing_override = True
         tiles_to_process = [tile_id]
-
-    if tile_based_processing_override:
-        log.info("Tile based processing selected. Overriding the geometry file intersection method")
-        log.info("  to get the list of tile IDs.")
+        log.info("Tile based processing selected. Overriding the geometry "+
+                 "file intersection method to get the list of tile IDs.")
 
     log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
@@ -350,7 +349,7 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info("  Directory path created: "+individual_tile_directory_path)
         tile_log.info("\n")
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---   TILE PROCESSING START: {}   ---".format(tile_dir))
+        tile_log.info(f"---  TILE PROCESSING START: {individual_tile_directory_path}  ---")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Detecting change between classified change detection images")
         tile_log.info("and the baseline median image composite.")
@@ -366,6 +365,7 @@ def detect_change(config_path, tile_id="None"):
             date_object = datetime.datetime.strptime(end_date, "%Y%m%d")
             dataspace_change_end = date_object.strftime("%Y-%m-%d")
 
+            '''
             if not tile_based_processing_override:
                 tiles_geom_path = os.path.join(config_dict["pyeo_dir"], \
                                     os.path.join(config_dict["geometry_dir"], \
@@ -398,13 +398,15 @@ def detect_change(config_path, tile_id="None"):
                 except Exception as error:
                     tile_log.error("Query_dataspace_by_polygon received this error: {}".format(error))
             else:
+            '''
+            if 1<2:
                 # attempt a tile ID based query
                 try:
                     dataspace_products_all = queries_and_downloads.query_dataspace_by_tile_id(
                         max_cloud_cover=cloud_cover,
                         start_date=dataspace_change_start,
                         end_date=dataspace_change_end,
-                        tile_id=tile_id,
+                        tile_id=tile_to_process,
                         max_records=100,
                         log=tile_log
                     )
@@ -1399,9 +1401,7 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info(
                 "---------------------------------------------------------------"
             )
-            # combine all change layers into one output raster with two layers:
-            #   (1) pixels show the earliest change detection date (expressed as the number of days since 1/1/2000)
-            #   (2) pixels show the number of change detection dates (summed up over all change images in the folder)
+
             date_image_paths = [
                 f.path
                 for f in os.scandir(probability_image_dir)
@@ -1543,7 +1543,7 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("---------------------------------------------------------------")
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---             TILE PROCESSING END                           ---")
+        tile_log.info(f"---  TILE PROCESSING END: {individual_tile_directory_path} ---")
         tile_log.info("---------------------------------------------------------------")
 
         # process the next tile if more than one tile are specified at this point (for loop)

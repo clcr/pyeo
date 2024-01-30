@@ -9,7 +9,7 @@ import argparse
 import configparser
 import cProfile
 import datetime
-import geopandas as gpd
+#import geopandas as gpd
 import pandas as pd
 #import json
 import numpy as np
@@ -25,7 +25,7 @@ from pyeo.acd_national import (acd_initialisation,
                                  acd_roi_tile_intersection)
 
 gdal.UseExceptions()
-
+           
 def create_composite(config_path, tile_id="None"):
     """
     The main function that creates the image composite with the parameters specified 
@@ -215,6 +215,7 @@ def create_composite(config_path, tile_id="None"):
         #   to get the tile ID list
         tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
+        log.info("Region of interest based processing selected.")
         log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
     else:
@@ -222,10 +223,8 @@ def create_composite(config_path, tile_id="None"):
         #   method to get the tile ID list
         tile_based_processing_override = True
         tiles_to_process = [tile_id]
-
-    if tile_based_processing_override:
-        log.info("Tile based processing selected. Overriding the geometry file intersection method")
-        log.info("  to get the list of tile IDs.")
+        log.info("Tile based processing selected. Overriding the geometry "+
+                 "file intersection method to get the list of tile IDs.")
 
     log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
@@ -271,10 +270,10 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("  Directory path created: "+individual_tile_directory_path)
         tile_log.info("\n")
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---   TILE PROCESSING START: {}   ---".format(tile_dir))
+        tile_log.info(f"--- TILE PROCESSING START: {individual_tile_directory_path} ---")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Making an image composite as a baseline map for the change detection.")
-        tile_log.info("List of image bands: {}".format(bands))
+        tile_log.info(f"List of image bands: {bands}")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(
             "Creating an initial cloud-free median composite from Sentinel-2 as a baseline map"
@@ -291,6 +290,7 @@ def create_composite(config_path, tile_id="None"):
             date_object = datetime.datetime.strptime(composite_end_date, "%Y%m%d")
             dataspace_composite_end = date_object.strftime("%Y-%m-%d")
 
+            '''
             if not tile_based_processing_override:
                 tiles_geom_path = os.path.join(config_dict["pyeo_dir"], \
                                     os.path.join(config_dict["geometry_dir"], \
@@ -330,13 +330,15 @@ def create_composite(config_path, tile_id="None"):
                     tile_log.error(f"  max_records={100}")
                     sys.exit(1)
             else:
+            '''
+            if 1<2:
                 # attempt a tile ID based query
                 try:
                     dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_tile_id(
                         max_cloud_cover=cloud_cover,
                         start_date=dataspace_composite_start,
                         end_date=dataspace_composite_end,
-                        tile_id=tile_id,
+                        tile_id=tile_to_process,
                         max_records=100,
                         log=tile_log
                     )
@@ -439,26 +441,25 @@ def create_composite(config_path, tile_id="None"):
         # See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html
         # Where two processing baselines of the same L2A granule are available,
         #   choose only the original baseline version, and discard the 9999 version.
-        #TODO
 
         # if there are some duplicate acquisition time stamps, remove N9999 baselines
         tile_log.info("--------------------------------------------------")
         tile_log.info(
             "Filtering out L2A products that have the same 'start_date'"+
             "  as another L2A product with a different processing baseline."+
-            "  Dropping baseline N9999 where it is duplicating another baseline."
+            "  Dropping baseline N9999 where it is duplicating an existing baseline."
         )
         
-        l2a_products.loc[:,('start_date')] = np.repeat("n/a", 
-                                                 len(l2a_products.loc[:('start_date')]))
-        l2a_products.loc[:,('processing_baseline')] = np.repeat("n/a", 
-                                                         len(l2a_products.loc[:('processing_baseline')]))
-        for product in l2a_products["title"]:
-            l2a_products.loc[l2a_products.loc[:,('title')] == product, "start_date"] = \
-                get_start_date(product)
-            l2a_products.loc[l2a_products.loc[:,('title')] == product, "processing_baseline"] = \
-                "N" + get_processing_baseline(product)
-        
+        #tile_log.info("Columns of the query dataframe:")
+        #tile_log.info(f"{l2a_products.columns}")
+ 
+        l2a_products.insert(2, "start_date", np.repeat("n/a", len(l2a_products.title)), True)
+        l2a_products.insert(2, "processing_baseline", np.repeat("n/a", len(l2a_products.title)), True)
+            
+        for product in l2a_products.title:
+            l2a_products.loc[l2a_products.title == product, 'start_date'] = get_start_date(product)
+            l2a_products.loc[l2a_products.title == product, 'processing_baseline'] = "N" + get_processing_baseline(product)
+
         acq_dates = np.unique(l2a_products["start_date"])
         
         tile_log.info(f"Unique acq dates: {len(acq_dates)}")
@@ -1142,7 +1143,7 @@ def create_composite(config_path, tile_id="None"):
             )
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("---             TILE PROCESSING END                           ---")
+        tile_log.info("---  TILE PROCESSING END: {individual_tile_directory_path}  ---")
         tile_log.info("---------------------------------------------------------------")
 
         # process the next tile if more than one tile are specified at this point (for loop)

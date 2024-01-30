@@ -3801,14 +3801,14 @@ def atmospheric_correction(
             is used.
     """
 
-    # log = logging.getLogger(__name__)
     images = [
-        image for image in os.listdir(in_directory) if image.startswith("MSIL1C", 4)
+        image for image in os.listdir(in_directory) \
+            if image.startswith("MSIL1C", 4) and \
+            os.path.isdir(image)
     ]
     # Opportunity for multithreading here
     for image in images:
         log.info("Atmospheric correction of {}".format(image))
-        # log.info("   sen2cor path = " + sen2cor_path)
         image_path = os.path.join(in_directory, image)
         log.info("   image path = " + image_path)
         # update the product discriminator part of the output file name
