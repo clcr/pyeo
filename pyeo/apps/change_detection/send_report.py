@@ -186,7 +186,7 @@ def send_report(config_path, tile_id="None"):
             logger_name="pyeo_"+tile_to_process
         )
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info(f"---   TILE PROCESSING START: {os.path.join(tile_dir+tile_to_process)}   ---")
+        tile_log.info(f"---  TILE PROCESSING START: {individual_tile_directory_path}  ---")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(
             "Sending out change reports from the latest available report image."
@@ -240,7 +240,7 @@ def send_report(config_path, tile_id="None"):
             
         else:
 
-            if email_alerts:
+            if email_alerts and len(vector_files)>0:
             
                 email_list_file = open(email_list_filename, 'r')
                 recipients = email_list_file.readlines()
@@ -293,7 +293,7 @@ def send_report(config_path, tile_id="None"):
                 tile_log.info("Report image info has been emailed to the contact list.")
                 tile_log.info(" ")
 
-            if whatsapp_alerts:
+            if whatsapp_alerts and len(vector_files)>0:
                 tile_log.error("WhatsApp alerts have not been implemented yet.")
                 #TODO: WhatsApp
                 # run a separate script in a different Python environment using pywhatkit
