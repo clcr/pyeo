@@ -11,6 +11,7 @@ import configparser
 import cProfile
 import datetime
 #import geopandas as gpd
+import glob
 import pandas as pd
 #import json
 import numpy as np
@@ -31,9 +32,14 @@ from pyeo.filesystem_utilities import (
     unzip_contents
     )
 from pyeo.acd_national import (
-                acd_initialisation,
                 acd_config_to_log,
                 acd_roi_tile_intersection
+                )
+from pyeo.vectorisation import (
+                zonal_statistics, 
+                merge_and_calculate_spatial, 
+                vectorise_from_band, 
+                clean_zero_nodata_vectorised_band
                 )
 
 gdal.UseExceptions()
@@ -135,61 +141,41 @@ def detect_change(config_path, tile_id="None"):
     configparser.ConfigParser(allow_no_value=True)
     config_dict = filesystem_utilities.config_path_to_config_dict(config_path)
 
-    config_dict, log = acd_initialisation(config_path)
+    ##########################################################
+    # Initialisation
+    ##########################################################
+    
+    # changes directory to pyeo_dir, enabling the use of relative paths from 
+    #    the config file
+    os.chdir(config_dict["pyeo_dir"])
+
+    # check that log directory exists and create if not
+    if not os.path.exists(config_dict["log_dir"]):
+        os.makedirs(config_dict["log_dir"])
+
+    # initialise log file
+    log = filesystem_utilities.init_log_acd(
+        log_path=os.path.join(config_dict["log_dir"], config_dict["log_filename"]),
+        logger_name="pyeo_log",
+    )
+
+    # check conda directory exists
+    if config_dict["environment_manager"] == "conda":
+        conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
+        log.info(conda_boolean)
+        if not conda_boolean:
+            log.error("Conda Environment Directory does not exist.")
+            log.error("Ensure this exists before running pyeo.")
+            log.error("Now exiting the pipeline.")
+            sys.exit(1)
+
+    log.info(f"Config file that controls the processing run: {config_path}")
+    log.info("---------------------------------------------------------------")
+
     acd_config_to_log(config_dict, log)
-    log.info(config_dict)
 
     try:
         os.chdir(config_dict["pyeo_dir"]) # ensures pyeo is looking in the correct directory
-        #'qsub_processor_options': 'nodes=1:ppn=16,vmem=64Gb', 
-        #'do_parallel': False, 
-        #'wall_time_hours': 3, 
-        #'watch_time_hours': 3, 
-        #'watch_period_seconds': 60, 
-        #'do_tile_intersection': True, 
-        #'do_raster': True, 
-        #'do_dev': True, 
-        #'do_all': False, 'do_classify': True, 'do_change': True, 'do_download': True, 
-        #'do_update': False, 'do_quicklooks': True, 'do_delete': False, 'do_zip': True,
-        #'build_composite': True, 'build_prob_image': False, 'do_skip_existing': True,
-        #'start_date': '20230601', 
-        #'end_date': 'TODAY', 
-        #'composite_start': '20220101', 
-        #'composite_end': '20221231', 
-        #'epsg': 27700, 
-        #'cloud_cover': 25, 
-        #'cloud_certainty_threshold': 0, #
-        #'model_path': './models/model_36MYE_Unoptimised_20230505_no_haze.pkl', 
-        #'download_source': 'dataspace', 
-        #'bands': ['B02', 'B03', 'B04', 'B08'], 
-        #'resolution_string': '"10m"', 
-        #'output_resolution': 10, 
-        #'buffer_size_cloud_masking': 20, 
-        #'buffer_size_cloud_masking_composite': 10, 
-        #'download_limit': 20, 
-        #'faulty_granule_threshold': 200, #
-        #'sieve': 0, #
-        #'chunks': 10, 
-        #'class_labels': ['primary forest', 'plantation forest', 'bare soil', 
-        #   'crops', 'grassland', 'open water', 'burn scar', 'cloud', 'cloud shadow', 
-        #   'haze', 'sparse woodland', 'dense woodland', 'artificial'], 
-        # 'from_classes': [1, 2, 12], 'to_classes': [3, 4, 5, 7, 11, 13], 
-        # 'environment_manager': 'conda', 'conda_directory': '/home/h/hb91/miniconda3', 
-        # 'conda_env_name': 'pyeo_env', 'pyeo_dir': '/home/h/hb91/pyeo', 
-        #  tile_dir': '/data/clcr/shared/heiko/england', 
-        # 'integrated_dir': './integrated', 'roi_dir': './roi', 
-        # 'roi_filename': '', 'geometry_dir': '', 
-        # 's2_tiles_filename': '', 'log_dir': './log', 
-        # 'log_filename': 'england.log', 
-        # 'sen2cor_path': '/home/h/hb91/Sen2Cor-02.10.01-Linux64/bin/L2A_Process', 
-        # 'level_1_filename': '', 'level_2_filename': '', 'level_3_filename': '', 
-        # 'level_1_boundaries_path': '', 'do_delete_existing_vector': True,
-        # 'do_vectorise': True, 'do_integrate': True, 'do_filter': False, 
-        # 'counties_of_interest': [], 'minimum_area_to_report_m2': 120, 
-        # 'do_distribution': False, 
-        # 'credentials_path': '/home/h/hb91/pyeo_credentials.ini'
-        # }
-
         start_date = config_dict["start_date"]
         end_date = config_dict["end_date"]
         if end_date == "TODAY":
@@ -201,6 +187,7 @@ def detect_change(config_path, tile_id="None"):
         model_path = config_dict["model_path"]
         tile_dir = config_dict["tile_dir"]
         sen2cor_path = config_dict["sen2cor_path"]
+        level_1_boundaries_path = config_dict["level_1_boundaries_path"]
         epsg = config_dict["epsg"]
         bands = config_dict["bands"]
         #resolution = config_dict["resolution_string"]
@@ -272,19 +259,35 @@ def detect_change(config_path, tile_id="None"):
     if tile_id == "None":
         # if no tile ID is given by the call to the function, use the geometry file
         #   to get the tile ID list
-        tile_based_processing_override = False
+        #tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
         log.info("Region of interest based processing selected.")
-        log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
+        '''
+        # move filelist file from roi dir to main log directory
+        tilelist_filepath = shutil.move(
+            tilelist_filepath, 
+            os.path.join(
+                config_dict["log_dir"], 
+                tilelist_filepath.split(os.path.sep)[-1])
+        )
+        '''
     else:
         # if a tile ID is specified, use that and do not use the tile intersection
         #   method to get the tile ID list
-        tile_based_processing_override = True
+        #tile_based_processing_override = True
         tiles_to_process = [tile_id]
         log.info("Tile based processing selected. Overriding the geometry "+
                  "file intersection method to get the list of tile IDs.")
+        try:
+            pd.DataFrame({"tile": tiles_to_process}).to_csv(
+                tilelist_filepath, 
+                header=True, 
+                index=False)
+        except:
+            log.error(f"Could not write to {tilelist_filepath}")
 
+    log.info(f"Saved Sentinel-2 tile ID list: {tilelist_filepath}")
     log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
     # iterate over the tiles
@@ -475,7 +478,8 @@ def detect_change(config_path, tile_id="None"):
         if download_source == "scihub":
             min_granule_size = faulty_granule_threshold
         else:
-            min_granule_size = 0  # Required for dataspace API which doesn't report size correctly (often reported as zero)
+            min_granule_size = 0  # Required for dataspace API which doesn't 
+            # report size correctly (often reported as zero)
 
         df = df_all.query("size >= " + str(min_granule_size))
 
@@ -1201,51 +1205,47 @@ def detect_change(config_path, tile_id="None"):
             )
             sys.exit(1)
     
-        if config_dict[
-            "do_dev"
-        ]:  # set the name of the report file in the development version run
-            before_timestamp = filesystem_utilities.get_change_detection_dates(
-                os.path.basename(latest_class_composite_path)
-            )[0]
-            # I.R. 20220611 START
-            ## Timestamp report with the date of most recent classified image that contributes to it
-            after_timestamp = filesystem_utilities.get_image_acquisition_time(
-                os.path.basename(class_image_paths[-1])
-            )
-            ## ORIGINAL
-            # gets timestamp of the earliest change image of those available in class_image_path
-            # after_timestamp  = pyeo.filesystem_utilities.get_image_acquisition_time(os.path.basename(class_image_paths[0]))
-            # I.R. 20220611 END
-            output_product = os.path.join(
-                probability_image_dir,
-                "report_{}_{}_{}.tif".format(
-                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
-                    tile_to_process,
-                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
-                ),
-            )
-            tile_log.info("I.R. Report file name will be {}".format(output_product))
-    
-            # if a report file exists, archive it  ( I.R. Changed from 'rename it to show it has been updated')
-            n_report_files = len(
-                [
-                    f
-                    for f in os.scandir(probability_image_dir)
-                    if f.is_file()
-                    and f.name.startswith("report_")
-                    and f.name.endswith(".tif")
-                ]
-            )
-    
-            if n_report_files > 0:
-                # I.R. ToDo: Should iterate over output_product_existing in case more than one report file is present (though unlikely)
-                output_product_existing = [
-                    f.path
-                    for f in os.scandir(probability_image_dir)
-                    if f.is_file()
-                    and f.name.startswith("report_")
-                    and f.name.endswith(".tif")
-                ][0]
+        # set the name of the report file in the development version run
+        before_timestamp = filesystem_utilities.get_change_detection_dates(
+            os.path.basename(latest_class_composite_path)
+        )[0]
+        ## Timestamp report with the date of most recent classified image that contributes to it
+        after_timestamp = filesystem_utilities.get_image_acquisition_time(
+            os.path.basename(class_image_paths[-1])
+        )
+        ## Previously:
+        # gets timestamp of the earliest change image of those available in class_image_path
+        # after_timestamp  = pyeo.filesystem_utilities.get_image_acquisition_time(os.path.basename(class_image_paths[0]))
+        output_product = os.path.join(
+            probability_image_dir,
+            "report_{}_{}_{}.tif".format(
+                before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                tile_to_process,
+                after_timestamp.strftime("%Y%m%dT%H%M%S"),
+            ),
+        )
+        tile_log.info("I.R. Report file name will be {}".format(output_product))
+
+        # if a report file exists, archive it  ( I.R. Changed from 'rename it to show it has been updated')
+        n_report_files = len(
+            [
+                f
+                for f in os.scandir(probability_image_dir)
+                if f.is_file()
+                and f.name.startswith("report_")
+                and f.name.endswith(".tif")
+            ]
+        )
+
+        if n_report_files > 0:
+            output_products_existing = [
+                f.path
+                for f in os.scandir(probability_image_dir)
+                if f.is_file()
+                and f.name.startswith("report_")
+                and f.name.endswith(".tif")
+            ]
+            for output_product_existing in output_products_existing:
                 tile_log.info(
                     "Found existing report image product: {}".format(
                         output_product_existing
@@ -1265,11 +1265,6 @@ def detect_change(config_path, tile_id="None"):
     
         # find change patterns in the stack of classification images
         for index, image in enumerate(class_image_paths):
-            tile_log.info("")
-            tile_log.info("")
-            tile_log.info(f"  printing index, image   : {index}, {image}")
-            tile_log.info("")
-            tile_log.info("")
             before_timestamp = filesystem_utilities.get_change_detection_dates(
                 os.path.basename(latest_class_composite_path)
             )[0]
@@ -1277,10 +1272,9 @@ def detect_change(config_path, tile_id="None"):
                 os.path.basename(image)
             )
             tile_log.info(
-                "*** PROCESSING CLASSIFIED IMAGE: {} of {} filename: {} ***".format(
-                    index, len(class_image_paths), image
+                f"PROCESSING CLASSIFIED IMAGE: {index} of "+
+                f"{len(class_image_paths)} \n  filename: {image}"
                 )
-            )
             tile_log.info("  early time stamp: {}".format(before_timestamp))
             tile_log.info("  late  time stamp: {}".format(after_timestamp))
             change_raster = os.path.join(
@@ -1320,40 +1314,39 @@ def detect_change(config_path, tile_id="None"):
                     NDVI_raster
                 )
             )
+            
+            # This bit looks for changes from class 'change_from' in the composite to any of the 'change_to_classes'
+            # in the change images. Pixel values are the acquisition date of the detected change of interest or zero.
+            # TODO: In change_from_class_maps(), add a flag (e.g. -1) whether a pixel was a cloud in the later image.
+            # Applying check whether dNDVI < -0.2, i.e. greenness has decreased over changed areas
     
-            if config_dict["do_dev"]:
-                # This function looks for changes from class 'change_from' in the composite to any of the 'change_to_classes'
-                # in the change images. Pixel values are the acquisition date of the detected change of interest or zero.
-                # TODO: In change_from_class_maps(), add a flag (e.g. -1) whether a pixel was a cloud in the later image.
-                # Applying check whether dNDVI < -0.2, i.e. greenness has decreased over changed areas
-    
-                tile_log.info("Update of the report image product based on change detection image.")
-                raster_manipulation.__change_from_class_maps(
-                    old_class_path=latest_class_composite_path,
-                    new_class_path=image,
-                    change_raster=change_raster,
-                    dNDVI_raster=dNDVI_raster,
-                    NDVI_raster=NDVI_raster,
-                    change_from=from_classes,
-                    change_to=to_classes,
-                    report_path=output_product,
-                    skip_existing=skip_existing,
-                    old_image_dir=composite_dir,
-                    new_image_dir=l2_masked_image_dir,
-                    viband1=4,
-                    viband2=3,
-                    dNDVI_threshold=-0.2,
-                    log=tile_log,
-                )
-            else:
-                raster_manipulation.change_from_class_maps(
-                    latest_class_composite_path,
-                    image,
-                    change_raster,
-                    change_from=from_classes,
-                    change_to=to_classes,
-                    skip_existing=skip_existing,
-                )
+            tile_log.info("Update of the report image product based on change detection image.")
+            raster_manipulation.change_from_class_maps(
+                old_class_path=latest_class_composite_path,
+                new_class_path=image,
+                change_raster=change_raster,
+                dNDVI_raster=dNDVI_raster,
+                NDVI_raster=NDVI_raster,
+                change_from=from_classes,
+                change_to=to_classes,
+                report_path=output_product,
+                skip_existing=skip_existing,
+                old_image_dir=composite_dir,
+                new_image_dir=l2_masked_image_dir,
+                viband1=4,
+                viband2=3,
+                dNDVI_threshold=-0.2,
+                log=tile_log,
+            )
+        else:
+            raster_manipulation.change_from_class_maps(
+                latest_class_composite_path,
+                image,
+                change_raster,
+                change_from=from_classes,
+                change_to=to_classes,
+                skip_existing=skip_existing,
+            )
     
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Post-classification change detection complete.")
@@ -1390,7 +1383,9 @@ def detect_change(config_path, tile_id="None"):
                 raster_manipulation.compress_tiff(
                     os.path.join(root, this_tiff), os.path.join(root, this_tiff)
                 )
-    
+
+        '''    
+        #do_dev is now depracated
         if not config_dict["do_dev"]:
             tile_log.info(
                 "---------------------------------------------------------------"
@@ -1429,6 +1424,7 @@ def detect_change(config_path, tile_id="None"):
             )
             tile_log.info("Combining date maps: {}".format(date_image_paths))
             raster_manipulation.combine_date_maps(date_image_paths, output_product)
+        '''    
     
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(
@@ -1436,20 +1432,111 @@ def detect_change(config_path, tile_id="None"):
         )
             
         if config_dict["do_all"] or config_dict["do_vectorise"]:
-            from pyeo.apps.acd_national.acd_by_tile_vectorisation import vector_report_generation
-            output_vector_products = vector_report_generation(
-                                        config_path, 
-                                        tile_to_process
-                                        )
-        
+            tile_log.info("--" * 20)
+            tile_log.info("Starting Vectorisation of the Change Report Rasters " +
+                          f"of Tile: {tile_to_process}")
+            tile_log.info("--" * 20)
+            output_vector_products = []
+            # get all report.tif file names that are within the root_dir with 
+            #   search pattern from the probabilities subdirectory
+            report_tif_pattern = f"{os.sep}output{os.sep}probabilities{os.sep}report*.tif"
+            search_pattern_1 = f"{tile_to_process}{report_tif_pattern}"
+            change_report_paths = glob.glob(
+                os.path.join(tile_dir, tile_to_process, search_pattern_1)
+            )
+            # ... and from the report_image_dir subdirectory
+            report_tif_pattern = f"{os.sep}output{os.sep}report_image{os.sep}report*.tif"
+            search_pattern_2 = f"{tile_to_process}{report_tif_pattern}"
+            for g in glob.glob(os.path.join(tile_dir, search_pattern_2)):
+                change_report_paths.append(g)
+                if len(change_report_paths) == 0:
+                    tile_log.error("No change report image path(s) found.")
+                    tile_log.error("Search patterns used: "+
+                                   f"{search_pattern_1} \n{search_pattern_2}")
+                    sys.exit(1)
+                else:
+                    tile_log.info("")
+                    tile_log.info("Change report image path(s) found:")
+                    for p in change_report_paths:
+                        tile_log.info(f"  {p}")
+                    tile_log.info("")
+
+                # iterate over the list of report image files
+                for change_report_path in change_report_paths:
+                    tile_log.info(f"change_report_path = {change_report_path}")
+
+                    # skip if vector file exists?
+                    #if os.path.exists(change_report_path[:-4]+".shp"):
+                    #    tile_log.info(f"Skipping. Found {change_report_path[:-4]}.shp")
+                    #else:
+
+                    # band 15 in pyeo 1.0 was band=6 in pyeo 0.9
+                    path_vectorised_binary = vectorise_from_band(
+                        change_report_path=change_report_path,
+                        band=15,
+                        log=tile_log
+                    )
+                    path_vectorised_binary_filtered = clean_zero_nodata_vectorised_band(
+                        vectorised_band_path=path_vectorised_binary,
+                        log=tile_log
+                    )
+            
+                    tile_log.info("vectorised_file_path = \n"+
+                                  f"{path_vectorised_binary_filtered}")
+
+                    # band 5 in pyeo 1.0 was band 2 in pyeo 0.9
+                    rb_ndetections_zstats_df = zonal_statistics(
+                        raster_path=change_report_path,
+                        shapefile_path=path_vectorised_binary_filtered,
+                        report_band=5,
+                        log=tile_log
+                        )
+                
+                    # band 9 in pyeo 1.0 was band 5 in pyeo 0.9
+                    rb_confidence_zstats_df = zonal_statistics(
+                        raster_path=change_report_path,
+                        shapefile_path=path_vectorised_binary_filtered,
+                        report_band=9,
+                        log=tile_log
+                    )
+                
+                    # band 4 in pyeo 1.0 was band 7 in pyeo 0.9
+                    rb_first_changedate_zstats_df = zonal_statistics(
+                        raster_path=change_report_path,
+                        shapefile_path=path_vectorised_binary_filtered,
+                        report_band=4,
+                        log=tile_log
+                    )
+                    
+                    # table joins, area, lat lon, county
+                    output_vector_products.append(
+                        merge_and_calculate_spatial(
+                            rb_ndetections_zstats_df=rb_ndetections_zstats_df,
+                            rb_confidence_zstats_df=rb_confidence_zstats_df,
+                            rb_first_changedate_zstats_df=rb_first_changedate_zstats_df,
+                            path_to_vectorised_binary_filtered=path_vectorised_binary_filtered,
+                            write_csv=False,
+                            write_shapefile=True,
+                            write_kml=False,
+                            write_pkl=False,
+                            change_report_path=change_report_path,
+                            log=tile_log,
+                            epsg=epsg,
+                            level_1_boundaries_path=level_1_boundaries_path,
+                            tileid=tile_to_process,
+                            delete_intermediates=True,
+                        )
+                    )
+
+            tile_log.info("Compressing the report image.")
+            raster_manipulation.compress_tiff(output_product, output_product)
+
             tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Report image vectorised. Output file(s) created:")
+            tile_log.info("Vectorisation complete")
+            tile_log.info("---------------------------------------------------------------")
             for i in range(len(output_vector_products)):
                 tile_log.info("  {}".format(output_vector_products[i]))
 
-        tile_log.info("Compressing the report image.")
-        tile_log.info("---------------------------------------------------------------")
-        raster_manipulation.compress_tiff(output_product, output_product)
 
         if config_dict["do_delete"]:
             tile_log.info(
@@ -1552,8 +1639,7 @@ def detect_change(config_path, tile_id="None"):
     log.info("---------------------------------------------------------------")
     log.info("---                  ALL PROCESSING END                      ---")
     log.info("---------------------------------------------------------------")
-    return
-
+    return tile_dir
 
 
 if __name__ == "__main__":
@@ -1565,7 +1651,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Downloads and preprocesses Sentinel 2 images for change detection.\
             and classifies them using a machine learning model. Performs change\
-            detection against a baseline median image composite. Generates a report file."
+            detection against a baseline median image composite. Generates a\
+            report image file and optionally vectorises it if selected in the\
+            ini file."
     )
     parser.add_argument(
         dest="config_path",
@@ -1584,10 +1672,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    detect_change(**vars(args))
+    tile_dir = detect_change(**vars(args))
         
     profiler.disable()
-    f = "~/detect_change"
+    f = os.path.join(tile_dir, "detect_change")
     i = 1
     if os.path.exists(f+".prof"):
         while os.path.exists(f+"_"+str(i)+".prof"):

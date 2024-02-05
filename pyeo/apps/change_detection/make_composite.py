@@ -20,9 +20,11 @@ import sys
 import warnings
 import zipfile
 from pyeo import (filesystem_utilities, queries_and_downloads, raster_manipulation)
-from pyeo.acd_national import (acd_initialisation,
-                                 acd_config_to_log,
-                                 acd_roi_tile_intersection)
+from pyeo.acd_national import (
+    #acd_initialisation,
+    acd_config_to_log,
+    acd_roi_tile_intersection
+    )
 
 gdal.UseExceptions()
            
@@ -127,7 +129,37 @@ def create_composite(config_path, tile_id="None"):
     configparser.ConfigParser(allow_no_value=True)
     config_dict = filesystem_utilities.config_path_to_config_dict(config_path)
 
-    config_dict, log = acd_initialisation(config_path)
+    ##########################################################
+    # Initialisation
+    ##########################################################
+    
+    # changes directory to pyeo_dir, enabling the use of relative paths from 
+    #    the config file
+    os.chdir(config_dict["pyeo_dir"])
+
+    # check that log directory exists and create if not
+    if not os.path.exists(config_dict["log_dir"]):
+        os.makedirs(config_dict["log_dir"])
+
+    # initialise log file
+    log = filesystem_utilities.init_log_acd(
+        log_path=os.path.join(config_dict["log_dir"], config_dict["log_filename"]),
+        logger_name="pyeo_log",
+    )
+
+    # check conda directory exists
+    if config_dict["environment_manager"] == "conda":
+        conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
+        log.info(conda_boolean)
+        if not conda_boolean:
+            log.error("Conda Environment Directory does not exist.")
+            log.error("Ensure this exists before running pyeo.")
+            log.error("Now exiting the pipeline.")
+            sys.exit(1)
+
+    log.info(f"Config file that controls the processing run: {config_path}")
+    log.info("---------------------------------------------------------------")
+
     acd_config_to_log(config_dict, log)
 
     try:
@@ -157,15 +189,6 @@ def create_composite(config_path, tile_id="None"):
         #from_classes = config_dict["from_classes"]
         #to_classes = config_dict["to_classes"]
         download_source = config_dict["download_source"]
-        if download_source == "scihub":
-            log.info("scihub API is the download source")
-        if download_source == "dataspace":
-            log.info("dataspace API is the download source")
-        log.info("Faulty Granule Threshold is set to   : {}".format(
-                config_dict['faulty_granule_threshold'])
-                )
-        log.info("    Files below this threshold will not be downloaded")
-        log.info("Successfully read the processing arguments")
     except:
         log.error("Could not read the processing arguments from the ini file.")
         sys.exit(1)
@@ -213,27 +236,35 @@ def create_composite(config_path, tile_id="None"):
     if tile_id == "None":
         # if no tile ID is given by the call to the function, use the geometry file
         #   to get the tile ID list
-        tile_based_processing_override = False
-        tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
+        #tile_based_processing_override = False
         log.info("Region of interest based processing selected.")
-        log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
+        tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
+        #log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
     else:
         # if a tile ID is specified, use that and do not use the tile intersection
         #   method to get the tile ID list
-        tile_based_processing_override = True
+        #tile_based_processing_override = True
         tiles_to_process = [tile_id]
         log.info("Tile based processing selected. Overriding the geometry "+
                  "file intersection method to get the list of tile IDs.")
 
-    log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
+    log.info(str(len(tiles_to_process)) + " Sentinel-2 tile(s) to process.")
 
     # iterate over the tiles
     for tile_to_process in tiles_to_process:
+        log.info("--"*30)
         log.info("Processing Sentinel-2 tile: " + tile_to_process)
-        log.info("    See tile log file for details.")
         individual_tile_directory_path = os.path.join(tile_dir, tile_to_process)
-        log.info(individual_tile_directory_path)
+        # initialise tile log file
+        tile_log_file = os.path.join(
+            individual_tile_directory_path, 
+            "log", 
+            tile_to_process + ".log"
+            )
+        log.info(f"    See tile log file for details: {tile_log_file}")
+        log.info(f"    Tile data directory: {individual_tile_directory_path}")
+        log.info("--"*30)
 
         try:
             filesystem_utilities.create_folder_structure_for_tiles(individual_tile_directory_path)
@@ -248,39 +279,22 @@ def create_composite(config_path, tile_id="None"):
             #categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
             #probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
             quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
-            log.info("Successfully created the subdirectory paths for this tile")
+            #log.info("Successfully created the subdirectory paths for this tile")
         except:
             log.error("ERROR: Tile subdirectory paths could not be created")
             sys.exit(1)
 
-        # initialise tile log file
-        tile_log_file = os.path.join(
-            individual_tile_directory_path, 
-            "log", 
-            tile_to_process + ".log"
-            )
-        log.info("---------------------------------------------------------------")
-        log.info(f"--- Redirecting log output to tile log: {tile_log_file}")
-        log.info("---------------------------------------------------------------")
         tile_log = filesystem_utilities.init_log_acd(
             log_path=tile_log_file,
             logger_name="pyeo_"+tile_to_process
         )
-        tile_log.info("Folder structure build successfully finished for tile "+tile_to_process)
-        tile_log.info("  Directory path created: "+individual_tile_directory_path)
-        tile_log.info("\n")
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info(f"--- TILE PROCESSING START: {individual_tile_directory_path} ---")
-        tile_log.info("---------------------------------------------------------------")
+        tile_log.info(f"--- TILE PROCESSING START: {tile_to_process}          ---")
+        tile_log.info(f"Tile directory path: {individual_tile_directory_path}")
+        tile_log.info("")
         tile_log.info("Making an image composite as a baseline map for the change detection.")
-        tile_log.info(f"List of image bands: {bands}")
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info(
-            "Creating an initial cloud-free median composite from Sentinel-2 as a baseline map"
-        )
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Searching for images for initial composite.")
-
 
         if download_source == "dataspace":
 
@@ -369,7 +383,9 @@ def create_composite(config_path, tile_id="None"):
                                                 "status": statuses})
 
             # check granule sizes on the server
-            scihub_compatible_df["size"] = scihub_compatible_df["size"].apply(lambda x: round(float(x) * 1e-6, 2))
+            scihub_compatible_df["size"] = scihub_compatible_df["size"].apply(
+                lambda x: round(float(x) * 1e-6, 2)
+                )
             # reassign to match the scihub variable
             df_all = scihub_compatible_df
 
@@ -390,11 +406,8 @@ def create_composite(config_path, tile_id="None"):
             except Exception as error:
                 tile_log.error("check_for_s2_data_by_date failed:  {}".format(error))
 
-            tile_log.info(
-                "--> Found {} L1C and L2A products for the composite:".format(
-                    len(composite_products_all)
-                )
-            )
+            tile_log.info(f"Found {len(composite_products_all)} L1C and L2A "+
+                          "products for the composite:")
 
             df_all = pd.DataFrame.from_dict(composite_products_all, orient="index")
 
@@ -431,10 +444,8 @@ def create_composite(config_path, tile_id="None"):
 
         l1c_products = df[df.processinglevel == "Level-1C"]
         l2a_products = df[df.processinglevel == "Level-2A"]
-        tile_log.info("    {} L1C products".format(l1c_products.shape[0]))
-        tile_log.info("    {} L2A products".format(l2a_products.shape[0]))
-
-
+        tile_log.info(f"    {l1c_products.shape[0]} L1C products")
+        tile_log.info(f"    {l2a_products.shape[0]} L2A products")
 
         # Processing baseline 9999 for some L2A products originates from 
         #   ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem.
@@ -462,8 +473,10 @@ def create_composite(config_path, tile_id="None"):
 
         acq_dates = np.unique(l2a_products["start_date"])
         
+        '''
         tile_log.info(f"Unique acq dates: {len(acq_dates)}")
         tile_log.info(f"All acq dates: {len(l2a_products['start_date'])}")
+        '''
         
         duplicate_start_dates = len(l2a_products["start_date"]) - len(acq_dates)
         if duplicate_start_dates == 1:
@@ -481,24 +494,23 @@ def create_composite(config_path, tile_id="None"):
                 tempdf = l2a_products.loc[l2a_products["start_date"] == acq_date].sort_values(by=['processing_baseline'])
                 if len(tempdf["start_date"]) > 1:
                     uuids = uuids + [list(tempdf['uuid'])[0]]
+                    '''
                     tile_log.info("Dropping L2A products with the same start date:")
                     for product in tempdf["title"][1:]:
                         tile_log.info(f"       {product}")
                     tile_log.info("Keeping only this one:")
                     tile_log.info(f"       {list(tempdf['title'])[0]}")
+                    '''
                 else:
                     uuids = uuids + [list(tempdf['uuid'])[0]]
-            tile_log.info("Found unique L2A products without duplicate acquisiton dates:")
+            tile_log.info(
+                f"  {l2a_products.shape[0]} L2A products remain after removing "+
+                    "duplicate acquisition dates:")
             l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
             for product in l2a_products["title"]:
                 tile_log.info(f"       {product}")
-        tile_log.info(
-            f"  {l2a_products.shape[0]} L2A products remain after removing "+\
-                "duplicate acquisition dates:"
-        )
         tile_log.info("--------------------------------------------------")
                         
-
         if l1c_products.shape[0] > 0 and l2a_products.shape[0] > 0:
             tile_log.info(
                 "Filtering out L1C products that have the same 'beginposition'"+
@@ -540,12 +552,10 @@ def create_composite(config_path, tile_id="None"):
                     )
                 # keeps least cloudy n (max image number)
                 l1c_products = l1c_products[l1c_products["uuid"].isin(uuids)]
-                tile_log.info(
-                    "    {} L1C products remain:".format(l1c_products.shape[0])
-                )
-                for product in l1c_products["title"]:
-                    tile_log.info("       {}".format(product))
-                tile_log.info("Number of L1C products for download is {}".format(len(l1c_products['title'])))
+                #tile_log.info("    {} L1C products remain:".format(l1c_products.shape[0]))
+                #for product in l1c_products["title"]:
+                #    tile_log.info("       {}".format(product))
+                #tile_log.info("Number of L1C products for download is {}".format(len(l1c_products['title'])))
 
         rel_orbits = np.unique(l2a_products["relativeorbitnumber"])
         if len(rel_orbits) > 0:
@@ -568,15 +578,13 @@ def create_composite(config_path, tile_id="None"):
                         ]
                     )
                 l2a_products = l2a_products[l2a_products["uuid"].isin(uuids)]
-                tile_log.info(
-                    "    {} L2A products remain:".format(l2a_products.shape[0])
-                )
-                for product in l2a_products["title"]:
-                    tile_log.info("       {}".format(product))
-                tile_log.info("Number of L2A products for download is {}".format(
-                    len(l2a_products['title'])
-                    )
-                )
+                #tile_log.info("    {} L2A products remain:".format(l2a_products.shape[0]))
+                #for product in l2a_products["title"]:
+                #    tile_log.info("       {}".format(product))
+                #tile_log.info("Number of L2A products for download is {}".format(
+                #    len(l2a_products['title'])
+                #    )
+                #)
 
         df = None
 
@@ -586,8 +594,6 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info(" {} L2A products for the Composite".format(
             len(l2a_products['title']))
             )
-        tile_log.info("Successfully queried the L1C and L2A products for "+
-                      "the Composite")
 
         # Search the local directories, composite/L2A and L1C, checking if 
         #    scenes have already been downloaded and/or processed whilst 
@@ -648,12 +654,13 @@ def create_composite(config_path, tile_id="None"):
                         + "*"
                     )
 
-
+                    '''
                     tile_log.info(
                         "Searching on the data hub for files containing: {}.".format(
                             search_term
                         )
                     )
+                    '''
                     matching_l2a_products = queries_and_downloads._file_api_query(
                         user=sen_user,
                         passwd=sen_pass,
@@ -667,7 +674,8 @@ def create_composite(config_path, tile_id="None"):
                     matching_l2a_products_df = pd.DataFrame.from_dict(
                         matching_l2a_products, orient="index"
                     )
-                    # 07/03/2023: Matt - Applied Ali's fix for converting product size to MB to compare against faulty_grandule_threshold
+                    # 07/03/2023: Matt - Applied Ali's fix for converting product 
+                    #   size to MB to compare against faulty_granule_threshold
                     if (
                         len(matching_l2a_products_df) == 1
                         and [
@@ -676,13 +684,14 @@ def create_composite(config_path, tile_id="None"):
                         ][0]
                         > faulty_granule_threshold
                     ):
+                        '''
                         tile_log.info("Replacing L1C {} with L2A product:".format(id))
                         tile_log.info(
                             "              {}".format(
                                 matching_l2a_products_df.iloc[0, :]["title"]
                             )
                         )
-
+                        '''
                         drop.append(l1c_products.index[r])
                         add.append(matching_l2a_products_df.iloc[0, :])
                     if len(matching_l2a_products_df) == 0:
@@ -709,12 +718,14 @@ def create_composite(config_path, tile_id="None"):
                             )
                             > faulty_granule_threshold
                         ):
+                            '''
                             tile_log.info("Replacing L1C {} with L2A product:".format(id))
                             tile_log.info(
                                 "              {}".format(
                                     matching_l2a_products_df.iloc[0, :]["title"]
                                 )
                             )
+                            '''
                             drop.append(l1c_products.index[r])
                             add.append(matching_l2a_products_df.iloc[0, :])
                 if len(drop) > 0:
@@ -723,7 +734,7 @@ def create_composite(config_path, tile_id="None"):
                     add = pd.DataFrame(add)
                     l2a_products = pd.concat([l2a_products, add])
 
-                tile_log.info("\n Successfully searched for the L2A counterparts for the L1C products for the Composite")
+                #tile_log.info("\n Successfully searched for the L2A counterparts for the L1C products for the Composite")
                 
             # here, dataspace and scihub derived l1c_products and l2a_products lists are the "same"
             l2a_products = l2a_products.drop_duplicates(subset="title")
@@ -852,7 +863,8 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("Housekeeping after download successfully finished")
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Applying simple cloud, cloud shadow and haze mask based on SCL files and stacking the masked band raster files.")
+        tile_log.info("Applying simple cloud, cloud shadow and haze mask based ")
+        tile_log.info("  on SCL files and stacking the masked band raster files.")
         tile_log.info("---------------------------------------------------------------")
 
         directory = composite_l2_masked_image_dir
@@ -862,9 +874,9 @@ def create_composite(config_path, tile_id="None"):
             if f.endswith(".tif") and os.path.isfile(os.path.join(directory, f))
         ]
 
+        # also process the zipped L2A files
         directory = composite_l2_image_dir
         l2a_zip_file_paths = [f for f in os.listdir(directory) if f.endswith(".zip")]
-
         if len(l2a_zip_file_paths) > 0:
             for f in l2a_zip_file_paths:
                 # check whether the zipped file has already been cloud masked
@@ -1069,30 +1081,29 @@ def create_composite(config_path, tile_id="None"):
             to delete or compress the cloud-masked L2A images that the composite was derived from.
         '''
 
-        if config_dict["do_quicklooks"] or config_dict["do_all"]:
-            if config_dict["do_delete"]:
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                tile_log.info(
-                    "Deleting intermediate cloud-masked L2A images used for the baseline composite"
-                )
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                f = composite_l2_masked_image_dir
-                tile_log.info("Deleting {}".format(f))
-                shutil.rmtree(f)
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                tile_log.info("Intermediate file products have been deleted.")
-                tile_log.info("They can be reprocessed from the downloaded L2A images.")
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-            else:
-                if config_dict["do_zip"]:
+        if config_dict["do_delete"]:
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            tile_log.info(
+                "Deleting intermediate cloud-masked L2A images used for the baseline composite"
+            )
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            f = composite_l2_masked_image_dir
+            tile_log.info("Deleting {}".format(f))
+            shutil.rmtree(f)
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            tile_log.info("Intermediate file products have been deleted.")
+            tile_log.info("They can be reprocessed from the downloaded L2A images.")
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+        else:
+            if config_dict["do_zip"] or config_dict["do_all"]:
                     tile_log.info(
                         "---------------------------------------------------------------"
                     )
@@ -1152,7 +1163,7 @@ def create_composite(config_path, tile_id="None"):
     log.info("---------------------------------------------------------------")
     log.info("---                  ALL PROCESSING END                      ---")
     log.info("---------------------------------------------------------------")
-    return
+    return tile_dir
 
 
 
@@ -1182,10 +1193,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    create_composite(**vars(args))
+    tile_dir = create_composite(**vars(args))
     
     profiler.disable()
-    f = "~/make_composite"
+    f = os.path.join(tile_dir, "make_composite")
     i = 1
     if os.path.exists(f+".prof"):
         while os.path.exists(f+"_"+str(i)+".prof"):

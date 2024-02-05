@@ -666,8 +666,21 @@ def merge_and_calculate_spatial(
         f"reading in administrative boundary information from {level_1_boundaries_path}"
     )
     boundaries = gpd.read_file(level_1_boundaries_path)
-    boundaries = boundaries.filter(["NAME_1", "geometry"]).rename(
-        columns={"NAME_1": "County"}
+
+    #TODO: check whether column name NAME_1 exists
+    # enable handing over column name when calling this function
+    names = boundaries.col_names
+    for n in names:
+        log.info(n)
+    if "NAME_1" not in names:
+        col_name = names[0] 
+        log.warning("Did not find NAME_1 in column names of attribute table of admin boundary file.")
+        log.warning(f"Using column {col_name} instead.")
+    else:
+        col_name = "NAME_1"
+
+    boundaries = boundaries.filter([col_name, "geometry"]).rename(
+        columns={col_name: "Admin_area"}
     )
 
     # check crs logic

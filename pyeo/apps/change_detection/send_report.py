@@ -59,7 +59,38 @@ def send_report(config_path, tile_id="None"):
     # read the ini file contents into a dictionary
     configparser.ConfigParser(allow_no_value=True)
     config_dict = filesystem_utilities.config_path_to_config_dict(config_path)
-    config_dict, log = acd_initialisation(config_path)
+
+    ##########################################################
+    # Initialisation
+    ##########################################################
+    
+    # changes directory to pyeo_dir, enabling the use of relative paths from 
+    #    the config file
+    os.chdir(config_dict["pyeo_dir"])
+
+    # check that log directory exists and create if not
+    if not os.path.exists(config_dict["log_dir"]):
+        os.makedirs(config_dict["log_dir"])
+
+    # initialise log file
+    log = filesystem_utilities.init_log_acd(
+        log_path=os.path.join(config_dict["log_dir"], config_dict["log_filename"]),
+        logger_name="pyeo_log",
+    )
+
+    # check conda directory exists
+    if config_dict["environment_manager"] == "conda":
+        conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
+        log.info(conda_boolean)
+        if not conda_boolean:
+            log.error("Conda Environment Directory does not exist.")
+            log.error("Ensure this exists before running pyeo.")
+            log.error("Now exiting the pipeline.")
+            sys.exit(1)
+
+    log.info(f"Config file that controls the processing run: {config_path}")
+    log.info("---------------------------------------------------------------")
+
     acd_config_to_log(config_dict, log)
 
     try:
@@ -320,7 +351,7 @@ def send_report(config_path, tile_id="None"):
     log.info("---------------------------------------------------------------")
     log.info("---                  ALL PROCESSING END                      ---")
     log.info("---------------------------------------------------------------")
-    return
+    return tile_dir
 
 
 if __name__ == "__main__":
@@ -349,10 +380,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    send_report(**vars(args))
+    tile_dir = send_report(**vars(args))
 
     profiler.disable()
-    f = "~/send_report"
+    f = os.path.join(tile_dir, "send_report")
     i = 1
     if os.path.exists(f+".prof"):
         while os.path.exists(f+"_"+str(i)+".prof"):

@@ -211,9 +211,9 @@ def acd_initialisation(config_path):
         conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
         log.info(conda_boolean)
         if not conda_boolean:
-            log.error(f"Conda Environment Directory does not exist")
-            log.error(f"Ensure this exists")
-            log.error(f"now exiting the pipeline")
+            log.error("Conda Environment Directory does not exist")
+            log.error("Ensure this exists")
+            log.error("now exiting the pipeline")
             sys.exit(1)
 
     log.info("---------------------------------------------------------------")
@@ -228,7 +228,7 @@ def acd_initialisation(config_path):
 
 def acd_config_to_log(config_dict: dict, log: logging.Logger) -> None:
     """
-    This function echoes the contents of config_dict to the log file. \n
+    This function echoes the contents of config_dict to the log file.
     It does not return anything.
 
     Parameters
@@ -246,146 +246,156 @@ def acd_config_to_log(config_dict: dict, log: logging.Logger) -> None:
     None
 
     """
-
-    log.info("Options:")
-    log.info(f"The Environment Manager configured to use is : {config_dict['environment_manager']}")
-    if config_dict["environment_manager"] == "conda":
-        log.info(
-        f"The Conda Environment specified in .ini file is :  {config_dict['conda_env_name']}"
-    )
-    if config_dict["do_parallel"]:
-        log.info("  --do_parallel")
-        log.info(
-            "        running in parallel mode, parallel functions will be enabled where available"
-        )
-
-    if config_dict["do_dev"]:
-        log.info(
-            "  --dev Running in development mode, choosing development versions of functions where available"
-        )
-    else:
-        log.info(
-            "  Running in production mode, avoiding any development versions of functions."
-        )
-    if config_dict["do_tile_intersection"]:
-        log.info("  -do_tile_intersection")
-        log.info("      Sentinel-2 tile intersection with ROI enabled")
-    if config_dict["do_raster"]:
-        log.info("  --do_raster")
-        log.info("      raster pipeline enabled")
-        if config_dict["do_all"]:
-            log.info("  --do_all")
-        if config_dict["build_composite"]:
-            log.info("  --build_composite for baseline composite")
-            log.info("  --download_source = {}".format(config_dict["download_source"]))
-            log.info(f"         composite start date  : {config_dict['start_date']}")
-            log.info(f"         composite end date  : {config_dict['end_date']}")
-        if config_dict["do_download"]:
-            log.info("  --download for change detection images")
+    for key in config_dict:
+        value = config_dict[key]
+        found = False # flag whether the key was found in and logged
+        if key == "pyeo_dir":
+            log.info(f"Pyeo Working Directory is   : {config_dict['pyeo_dir']}")
+            log.info(f"  Integrated Directory           : {config_dict['integrated_dir']}")
+            log.info(f"  ROI Directory for image search : {config_dict['roi_dir']}")
+            log.info(f"  Geometry Directory for admin shapefile : {config_dict['geometry_dir']}")
             log.info(
-                "  --download_source = {}".format(config_dict["download_source"])
+                f"  Path to the Admin Boundaries for Vectorisation : {config_dict['level_1_boundaries_path']}"
+            )
+            found = True
+        if key == "tile_dir":
+            log.info(f"Main Tile Directory for tile subdirs : {config_dict['tile_dir']}")
+            found = True
+        if key == "environment_manager":
+            log.info(f"    Environment Manager to use is : {value}")
+            if config_dict["environment_manager"] == "conda":
+                log.info(
+                    f"The Conda Environment specified in .ini file is :  {config_dict['conda_env_name']}"
+                    )
+            found = True
+        if key == "epsg":
+            log.info(f"  EPSG code for output map projection: {config_dict['epsg']}")
+            found = True
+        if key == "do_parallel":
+            log.warning("   --do_parallel is depracated")
+            found = True
+        if key == "do_dev":
+            log.warning("   --do_dev is depracated")
+            found = True
+        if key == "do_tile_intersection" and value:
+            log.info("  --do_tile_intersection enables Sentinel-2 tile " +
+                     "intersection with region of interest (ROI).")
+            found = True
+        if key == "do_raster":
+            log.warning("   --do_raster is depracated")
+            found = True
+        if key == "do_all" and value:
+            log.info("  --do_all enables all processing steps")
+            found = True
+        if key == "build_composite" and value:
+            log.info("  --build_composite makes a baseline image composite")
+            log.info(f"    --download_source = {config_dict['download_source']}")
+            log.info(f"      composite start date :  {config_dict['composite_start']}")
+            log.info(f"      composite end date   : {config_dict['composite_end']}")
+            found = True
+        if key == "do_download" and value:
+            log.info("  --download of change detection images enabled")
+            found = True
+        if key == "download_source":
+            if config_dict["download_source"] == "scihub":
+                log.info("scihub API is selected as download source.")
+            else:
+                if config_dict["download_source"] == "dataspace":
+                    log.info("dataspace selected as download source for the Copernicus"+
+                             " Data Space Ecosystem.")
+                else:
+                    log.error(f"{config_dict['download_source']} is selected as "+
+                              "download source.")
+                    log.error("Use 'dataspace' instead to access the Copernicus Data "+
+                              "Space Ecosystem.")
+                    sys.exit(1)
+            log.info(
+                f"    Faulty Granule Threshold: {config_dict['faulty_granule_threshold']}"
+            )
+            found == True
+        if key == "sen2cor_path":
+            log.info(f"Path to Sen2Cor is   : {config_dict['sen2cor_path']}")
+            found = True
+        if key == "do_classify" and value:
+            log.info(
+                "  --do_classify applies the random forest model and creates "+
+                "classification layers"
+            )
+            found = True
+        if key == "bands":
+            log.info(f"  List of image bands: {config_dict['bands']}")
+            found = True
+        if key == "class_labels":
+            log.info("  List of class labels:")
+            for c, this_class in enumerate(config_dict["class_labels"]):
+                log.info(f"    {c + 1} : {this_class}")
+            log.info(
+                f"Detecting changes from any of the classes: {config_dict['from_classes']}"
+            )
+            log.info(f"                    to any of the classes: {config_dict['to_classes']}")
+            found = True
+        if key == "model_path":
+            log.info(f"Model used: {config_dict['model_path']}")
+            found = True
+        if key == "build_prob_image" and value:
+            log.info("  --build_prob_image saves classification probability layers")
+            found = True
+        if key == "do_change" and value:
+            log.info("  --do_change produces change detection layers and "+
+                     "report images")
+            log.info(f"    --download_source = {config_dict['download_source']}")
+            log.info(f"      change start date : {config_dict['start_date']}")
+            log.info(f"      change end date   : {config_dict['end_date']}")
+            found = True
+        if key == "do_update":
+            log.warning("   --do_update is depracated")
+            found = True
+        if key == "do_vectorise" and value:
+            log.info("  --do_vectorise produces vector files from raster "+
+                     "report images")
+            found = True
+        if key == "do_delete_existing_vector" and value:
+            log.info(
+                "  --do_delete_existing_vector, when vectorising the change report rasters,"
             )
             log.info(
-                f"  Faulty Granule Threshold  : {config_dict['faulty_granule_threshold']}"
+                "    existing vectors files will be deleted and new vector files created."
             )
-        if config_dict["do_classify"]:
+            found = True
+        if key == "do_integrate" and value:
+            log.info("  --do_integrate merges vectorised reports together")
+            found = True
+        if key == "counties_of_interest":
+            log.info("  --counties_of_interest")
+            log.info("        Counties to filter the national geodataframe:")
+            for n, county in enumerate(config_dict["counties_of_interest"]):
+                log.info(f"        {n}  :  {county}")
+            log.info("  --minimum_area_to_report_m2")
             log.info(
-                "  --classify to apply the random forest model and create classification layers"
+                "    Only Change Detections > "+
+                f"{config_dict['minimum_area_to_report_m2']} square metres "+
+                "will be reported"
             )
-        if config_dict["build_prob_image"]:
-            log.info("  --build_prob_image to save classification probability layers")
-        if config_dict["do_change"]:
-            log.info("  --change to produce change detection layers and report images")
-            log.info(f"         change start date  : {config_dict['composite_start']}")
-            log.info(f"         change end date  : {config_dict['composite_end']}")
-        if config_dict["do_update"]:
+            found = True
+        if key == "do_quicklooks" and value:
+            log.info("  --quicklooks saves image quicklooks for visual quality checking")
+            found = True
+        if key == "do_delete" and value:
+            log.info("  --do_delete removes downloaded images and intermediate"+
+                     "    image products after processing to free up disk space.")
             log.info(
-                "  --update to update the baseline composite with new observations"
+                "    Overrides --zip for the files for deletion. WARNING! FILE LOSS!"
             )
-        if config_dict["do_quicklooks"]:
-            log.info("  --quicklooks to create image quicklooks")
-        if config_dict["do_delete"]:
-            log.info("  --remove downloaded L1C images and intermediate image products")
+            found = True
+        if key == "do_zip" and value:
             log.info(
-                "           (cloud-masked band-stacked rasters, class images, change layers) after use."
+                "  --do_zip archives downloaded and intermediate image products"+
+                "    to reduce disk space usage."
             )
-            log.info(
-                "           Deletes remaining temporary directories starting with 'tmp' from interrupted processing runs."
-            )
-            log.info("           Keeps only L2A images, composites and report files.")
-            log.info(
-                "           Overrides --zip for the above files. WARNING! FILE LOSS!"
-            )
-        if config_dict["do_zip"]:
-            log.info(
-                "  --zip archives L2A images, and if --remove is not selected also L1C,"
-            )
-            log.info(
-                "           cloud-masked band-stacked rasters, class images and change layers after use."
-            )
-    if config_dict["do_delete_existing_vector"]:
-        log.info(
-            "  --do_delete_existing_vector , when vectorising the change report rasters, "
-        )
-        log.info(
-            "            existing vectors files will be deleted and new vector files created."
-        )
-    if config_dict["do_vectorise"]:
-        log.info("  --do_vectorise")
-        log.info("      raster change reports will be vectorised")
-
-    if config_dict["do_integrate"]:
-        log.info("  --do_integrate")
-        log.info("      vectorised reports will be merged together")
-
-    if config_dict["counties_of_interest"]:
-        log.info("  --counties_of_interest")
-        log.info("        Counties to filter the national geodataframe:")
-        for n, county in enumerate(config_dict["counties_of_interest"]):
-            log.info(f"        {n}  :  {county}")
-
-        log.info("  --minimum_area_to_report_m2")
-        log.info(
-            f"       Only Change Detections > {config_dict['minimum_area_to_report_m2']} metres squared will be reported"
-        )
-    # reporting more parameters
-    log.info(f"EPSG used is: {config_dict['epsg']}")
-    log.info(f"List of image bands: {config_dict['bands']}")
-    log.info(f"Model used: {config_dict['model_path']}")
-    log.info(f"")
-    log.info("List of class labels:")
-    for c, this_class in enumerate(config_dict["class_labels"]):
-        log.info("  {} : {}".format(c + 1, this_class))
-    log.info(
-        f"Detecting changes from any of the classes: {config_dict['from_classes']}"
-    )
-    log.info(f"                    to any of the classes: {config_dict['to_classes']}")
-    log.info("--" * 30)
-    log.info("Reporting Directories and Filepaths")
-    log.info(f"Tile Directory is   : {config_dict['tile_dir']}")
-    log.info(f"Working Directory is   : {config_dict['pyeo_dir']}")
-    log.info(
-        "The following directories are relative to the working directory, i.e. stored underneath:"
-    )
-    log.info(f"Integrated Directory is   : {config_dict['integrated_dir']}")
-    log.info(f"ROI Directory is   : {config_dict['roi_dir']}")
-    log.info(f"Geometry Directory is   : {config_dict['geometry_dir']}")
-    log.info(
-        f"Path to the Administrative Boundaries used in the Change Report Vectorisation   : {config_dict['level_1_boundaries_path']}"
-    )
-    log.info(f"Path to Sen2Cor is   : {config_dict['sen2cor_path']}")
-
- 
-    log.info("-------------------------------------------")
-    log.info("-------------------------------------------")
-
-    # log.info("Streaming config parameters to log file for reference")
-    # # todo: for everything in config_dict, log the parameter
-    # for each_section in config.sections():
-    #     log.info(f"{each_section}")
-    #     for (each_key, each_val) in config.items(each_section):
-    #         log.info(f"     {each_key} :  {each_val}")
-
+            found = True
+        if not found:
+            log.info(f"  {key} :  {value}")
+        log.info("-----------------------------------------------------------")
     return
 
 
@@ -394,9 +404,11 @@ def acd_roi_tile_intersection(config_dict: dict, log: logging.Logger) -> str:
 
     This function:
 
-    - accepts a Region of Interest (RoI) (specified by config_dict) and writes a tilelist.txt of the Sentinel-2 tiles that the RoI covers.
+    - accepts a Region of Interest (RoI) (specified by config_dict) and writes 
+      a tilelist.txt of the Sentinel-2 tiles that the RoI covers.
 
-    - the tilelist.txt is then used to perform the tile-based processes, raster and vector.
+    - the tilelist.csv is then used to perform the tile-based processes, 
+      raster and vector.
 
     Parameters
     ----------
@@ -409,13 +421,13 @@ def acd_roi_tile_intersection(config_dict: dict, log: logging.Logger) -> str:
     Returns
     -------
     tilelist_filepath : str
-        Filepath of a .txt containing the list of tiles on which to perform raster processes
+        Filepath of a .csv containing the list of tiles on which to perform 
+          raster processes
 
     """
 
-    log.info("Checking which Sentinel-2 tiles overlap with the ROI (region of interest)")
+    #log.info("Checking which Sentinel-2 tiles overlap with the ROI (region of interest)")
 
-    ####### read in roi
     # roi_filepath is relative to pyeo_dir supplied in pyeo.ini
     roi_filepath = os.path.join(config_dict["roi_dir"], config_dict["roi_filename"])
     roi = gpd.read_file(roi_filepath)
@@ -431,22 +443,19 @@ def acd_roi_tile_intersection(config_dict: dict, log: logging.Logger) -> str:
     intersection = s2_tile_geometry.sjoin(roi)
     tiles_list = list(intersection["Name"].unique())
     tiles_list.sort()
-    log.info(f"The provided ROI intersects with {len(tiles_list)} Sentinel-2 tiles")
-    log.info("These tiles are  :")
+    log.info(f"The provided ROI intersects with {len(tiles_list)} Sentinel-2 tiles:")
     for n, this_tile in enumerate(tiles_list):
         log.info("  {} : {}".format(n + 1, this_tile))
 
     tilelist_filepath = os.path.join(config_dict["roi_dir"], "tilelist.csv")
-    log.info(
-        f"Writing Sentinel-2 tiles that intersect with the provided ROI to  : {tilelist_filepath}"
-    )
+    log.info(f"Writing Sentinel-2 tile list to : {tilelist_filepath}")
 
     try:
         tiles_list_df = pd.DataFrame({"tile": tiles_list})
         tiles_list_df.to_csv(tilelist_filepath, header=True, index=False)
     except:
         log.error(f"Could not write to {tilelist_filepath}")
-    log.info("Finished ROI tile intersection")
+    #log.info("Finished ROI tile intersection")
 
     return tilelist_filepath
 
@@ -531,8 +540,7 @@ def acd_integrated_raster(
         if not config_dict["do_parallel"]:
             acd_by_tile_raster.acd_by_tile_raster(config_path, tile[0])
             log.info(f"Finished ACD Raster Processes for Tile :  {tile[0]}")
-            log.info(f"")
-            log.info(f"")
+            log.info("")
 
         if config_dict["do_parallel"]:
             # Launch an instance for this tile using qsub for parallelism
