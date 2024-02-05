@@ -17,12 +17,11 @@ Function reference
 
 import configparser
 import datetime
-import datetime as dt
 import glob
 import json
 import logging
 import os
-import sys
+#import sys
 import re
 import shutil
 import zipfile
@@ -199,10 +198,13 @@ def init_log(log_path):
 
 def init_log_acd(log_path, logger_name):
     """
-    This function differs slightly to `init_log` in that it accomodates a logger_name. This enables \n
-    unique logger objects to be created so multiple loggers can be run at a time.
+    This function differs slightly to `init_log` in that it accommodates a 
+    logger_name. This enables unique logger objects to be created so multiple 
+    loggers can be run at a time.
 
-    Sets up the log format and log handlers; one for stdout and to write to a file, 'log_path'.
+    Sets up the log format and log handlers; one for stdout and to write to a 
+    file, 'log_path'.
+    
     Returns the log for the calling script.
 
     Parameters
@@ -229,7 +231,7 @@ def init_log_acd(log_path, logger_name):
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     logger.info("---------------------------------------------------------------")
-    logger.info("                    ****PROCESSING START****")
+    logger.info("---                 PROCESSING START                        ---")
     logger.info("---------------------------------------------------------------")
 
 
@@ -339,6 +341,7 @@ def config_path_to_config_dict(config_path: str):
         "raster_processing_parameters", "do_skip_existing"
     )
 
+    config_dict["aoi_name"] = config["forest_sentinel"]["aoi_name"]
     config_dict["start_date"] = config["forest_sentinel"]["start_date"]
     config_dict["end_date"] = config["forest_sentinel"]["end_date"]
     config_dict["composite_start"] = config["forest_sentinel"]["composite_start"]
@@ -1185,7 +1188,7 @@ def get_image_acquisition_time(image_name):
         A DateTime object providing the acquisition time
     """
     try:
-        return dt.datetime.strptime(
+        return datetime.datetime.strptime(
             get_sen_2_image_timestamp(image_name), "%Y%m%dT%H%M%S"
         )
     except AttributeError:
@@ -1473,7 +1476,6 @@ def zip_contents(
                 for i in notstartswith:
                     if f.startswith(i):
                         do_it = False
-                        log.info(f"Skipping file that starts with '{i}' from zipping:   {f}")
             if do_it:
                 file_to_zip = os.path.join(directory, f)
                 zipped_file = file_to_zip.split(".")[0]
@@ -1493,7 +1495,9 @@ def zip_contents(
                 else:
                     log.error("Zipping failed: {}".format(zipped_file + ".zip"))
             else:
-                log.warning(f"Directory for zip_contents() not found: {directory}")
+                log.info(f"Skipping file starting with '{i}' from zipping: \n  {f}")
+    else:
+        log.warning(f"Directory for zip_contents() not found: {directory}")
     return
 
 

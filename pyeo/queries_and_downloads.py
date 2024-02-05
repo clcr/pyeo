@@ -86,11 +86,11 @@ import logging
 import os
 import re
 import shutil
-import subprocess
+#import subprocess
 import sys
 import tarfile
-import time
-from tqdm import tqdm
+#import time
+#from tqdm import tqdm
 import zipfile
 from multiprocessing.dummy import Pool
 from tempfile import TemporaryDirectory
@@ -100,20 +100,19 @@ from xml.etree import ElementTree
 import numpy as np
 import pandas as pd
 import pyeo.filesystem_utilities as fu
-import pyeo.windows_compatability
+#import pyeo.windows_compatability
 import requests
 import tenacity
 from botocore.exceptions import ClientError
-from bs4 import \
-    BeautifulSoup  # I didn't really want to use BS, but I can't see a choice.
-
+from bs4 import BeautifulSoup
 from osgeo import ogr, osr
 from pyeo.coordinate_manipulation import (get_vector_projection,
                                             reproject_vector)
 from pyeo.exceptions import (BadDataSourceExpection,
                                InvalidDateFormatException,
                                InvalidGeometryFormatException,
-                               NoL2DataAvailableException, TooManyRequests)
+                               NoL2DataAvailableException, 
+                               TooManyRequests)
 from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
                                          check_for_invalid_l2_data,
                                          get_sen_2_image_tile)
@@ -157,7 +156,8 @@ def query_dataspace_by_polygon(
     """
     This function:
     
-    Returns a DataFrame of available Sentinel-2 imagery from the Copernicus Dataspace API.
+    Returns a DataFrame of available Sentinel-2 imagery from the Copernicus 
+      Data Space Ecosystem API.
 
     Parameters
     ----------
@@ -171,10 +171,13 @@ def query_dataspace_by_polygon(
         Region of interest centroid in WKT format
     max_records : int
         Maximum records to return
+    log: logging.Logger
+        object to direct logging output to
 
     Returns
     -------
-    None
+    response_dataframe : Pandas dataframe with query results if successful
+    None : if query was unsuccessful
     """
 
     request_string = build_dataspace_request_string(
@@ -189,7 +192,10 @@ def query_dataspace_by_polygon(
         response = response.json()["features"]
         response_dataframe = pd.DataFrame.from_dict(response)
         if response_dataframe.empty == True:
-            log.error("There were no products returned in the search query and the CDSE API is responding correctly. Expand the query start and end dates and/or increase cloud cover tolerance in the `ini`")
+            log.error("There were no products returned in the search query "+
+                      "and the CDSE API is responding correctly. Check the "+
+                      "query start and end dates and/or increase cloud cover "+
+                      "tolerance in the `ini` file.")
             sys.exit(1)
 
         response_dataframe = pd.DataFrame.from_records(response_dataframe["properties"])
@@ -197,8 +203,10 @@ def query_dataspace_by_polygon(
     
     elif response.status_code == 401:
         log.error("Dataspace returned a 401 HTTP Status Code")
-        log.error("Which means that user credentials for the Copernicus Dataspace Ecosystem are incorrect.")
-        log.error("Now exiting the pipeline, please check your credentials in your credentials_ini")
+        log.error("Which means that user credentials for the Copernicus Data "+
+                  "Space Ecosystem are incorrect.")
+        log.error("Now exiting the pipeline, please check your credentials "+
+                  "in your credentials_ini file.")
         sys.exit(1)
     else:
         log.error("Dataspace returned a non-200 HTTP Status Code")
@@ -206,6 +214,7 @@ def query_dataspace_by_polygon(
         log.error("Now exiting the pipeline, please rerun when DataSpace API is back online")
         # this could be improved by catching more specific status codes
         sys.exit(1)
+    return
 
 def query_dataspace_by_tile_id(
     max_cloud_cover: int,
@@ -235,7 +244,8 @@ def query_dataspace_by_tile_id(
 
     Returns
     -------
-    None
+    response_dataframe : Pandas dataframe with query results if successful
+    None : if query was unsuccessful
     """
 
     request_string = build_dataspace_request_string(
@@ -250,15 +260,15 @@ def query_dataspace_by_tile_id(
     
     if response.status_code == 200:
         response = response.json()["features"]
-        # log.info(json.dumps(response, indent=4))
-        # sys.exit(1)
         response_dataframe = pd.DataFrame.from_dict(response)
         response_dataframe = pd.DataFrame.from_records(response_dataframe["properties"])
         return response_dataframe
     elif response.status_code == 401:
         log.error("Dataspace returned a 401 HTTP Status Code")
-        log.error("Which means that user credentials for the Copernicus Dataspace Ecosystem are incorrect.")
-        log.error("Now exiting the pipeline, please check your credentials in your credentials_ini")
+        log.error("Which means that user credentials for the Copernicus Data "+
+                  " Space Ecosystem are incorrect.")
+        log.error("Now exiting the pipeline, please check your credentials "+
+                  "in your credentials_ini")
         sys.exit(1)
     else:
         log.error("Dataspace returned a non-200 HTTP Status Code")
@@ -388,7 +398,8 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
     
     This function:
     
-    Wraps around `download_dataspace_product`, providing the necessary directories dependent on product type (L1C/L2A).
+    Wraps around `download_dataspace_product`, providing the necessary 
+      directories dependent on product type (L1C/L2A).
 
     Parameters
     ----------
@@ -418,7 +429,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
     """
         
     for counter, product in enumerate(product_df.itertuples(index=False)):
-        log.info(f"    Checking {counter+1} of {len(product_df)} : {product.title}")
+        log.info(f"***** Checking {counter+1} of {len(product_df)} : {product.title}")
 
         # if L1C have been passed, download to the l1c_directory
         if product.processinglevel == "Level-1C":
@@ -426,7 +437,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
             #   already exists and skip download if it is found
             out_glob = os.path.join(l1c_directory, 
                                     "_".join(product.title.split("_")[0:6])+"*")
-            log.info("   Looking for file pattern: " + out_glob)
+            #log.info("   Looking for file pattern: " + out_glob)
             matching_l1c = glob.glob(out_glob)
             if matching_l1c:
                 log.info(f"Skipping download of L1C product : {product.title}")
@@ -445,7 +456,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                     #   next iteration of the for loop
                     continue
                 try:
-                    log.info(f"        Downloading : {product.title}")
+                    log.info(f"    Downloading : {product.title}")
                     download_dataspace_product(
                         product_uuid=product.uuid,
                         dataspace_username=dataspace_username,
@@ -465,7 +476,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
             #   already exists and skip download if it is found
             out_glob = os.path.join(l2a_directory, 
                                     "_".join(product.title.split("_")[0:6])+"*")
-            log.info("   Looking for file pattern: " + out_glob)
+            #log.info("   Looking for file pattern: " + out_glob)
             matching_l2a = glob.glob(out_glob)
             if matching_l2a:
                 log.info(f"Skipping download of L2A product : {product.title}")
@@ -483,7 +494,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                     # continue means to skip the current iteration and move to the next iteration of the for loop
                     continue
                 try:
-                    log.info(f"        Downloading  : {product.title}")
+                    log.info(f"    Downloading  : {product.title}")
                     download_dataspace_product(
                         product_uuid=product.uuid,
                         dataspace_username=dataspace_username,
@@ -493,7 +504,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                         log=log
                     )
                 except Exception as error:
-                    log.error(f"Download from dataspace of L2A Product did not finish")
+                    log.error("Download from dataspace of L2A Product did not finish")
                     log.error(f"Received error   {error}")
 
         else:
@@ -551,17 +562,17 @@ def download_dataspace_product(product_uuid: str,
     session.headers.update({'Authorization': f"Bearer {auth_access_token}"})
     url=f"{DATASPACE_DOWNLOAD_URL}({product_uuid})/$value"
 
-    log.info('Obtaining the download URL - via redirect from url constructed from uuid')
+    #log.info('Obtaining the download URL - via redirect from url constructed from uuid')
     response = session.get(url, allow_redirects=False)
     while response.status_code in (301, 302, 303, 307):
         log.info(f"response.status_code: {response.status_code}")
-        log.info(f"download url = response.headers['Location']: {url}")
+        #log.info(f"download url = response.headers['Location']: {url}")
         url = response.headers['Location']
         response = session.get(url, allow_redirects=False)
 
-    log.info(f"Final response redirects to url: {url}")
+    #log.info(f"Final response redirects to url: {url}")
 
-    log.info('Refresh access token as url redirect may take longer than 600s token expiry time')
+    #log.info('Refresh access token as url redirect may take longer than 600s token expiry time')
     auth_refresh_token = auth_response["refresh_token"]
     auth_response = get_access_token(
         dataspace_username=dataspace_username,
@@ -571,12 +582,8 @@ def download_dataspace_product(product_uuid: str,
     auth_access_token = auth_response["access_token"]
     session.headers.update({'Authorization': f"Bearer {auth_access_token}"})
 
-    log.info('Download the zipped image file')
+    log.info('Downloading the zipped image file')
     file = session.get(url, verify=False, allow_redirects=True)
-
-    min_file_size = 2000  # in bytes
-    if (len(file.content) <= min_file_size):
-        log.info(f'  Downloaded file too small, length: {len(file.content)} bytes, contents: {file.content}')
 
     # The following fix is needed on Windows to avoid errors because of long file names.
     # But it causes a directory error on the Linux HPC because it resolves the user home directory wrongly.
@@ -587,7 +594,7 @@ def download_dataspace_product(product_uuid: str,
 
     with TemporaryDirectory(dir=temp_dir_platform_specific) as temp_dir:
         temporary_path = f"{temp_dir}{os.sep}{product_name}.zip"
-        log.info(f"Downloaded file temporary_path: {temporary_path}")
+        #log.info(f"Downloaded file temporary_path: {temporary_path}")
 
         with open(temporary_path, 'wb') as download:
             download.write(file.content)
@@ -596,13 +603,8 @@ def download_dataspace_product(product_uuid: str,
         destination_path = safe_directory
         log.info(f"Downloaded file destination path: {destination_path}")
 
-        downloaded_file_size = os.path.getsize(temporary_path)
+        #downloaded_file_size = os.path.getsize(temporary_path)
         #log.info(f"Downloaded file size: {downloaded_file_size} bytes")
-        if (downloaded_file_size < min_file_size):
-            log.info('  Downloaded file too small, contents are:')
-            file_dnld = open(temporary_path, 'r')
-            log.info(file_dnld.readline())
-            file_dnld.close()
 
         #log.info("    unpacking archive...")
         shutil.unpack_archive(temporary_path, unzipped_path)
@@ -613,7 +615,7 @@ def download_dataspace_product(product_uuid: str,
         within_folder_path = glob.glob(os.path.join(unzipped_path, "*"))
         #log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
 
-        log.info(f"    moving directory from {within_folder_path[0]} to {destination_path}")
+        #log.info(f"    moving directory from {within_folder_path[0]} to {destination_path}")
         shutil.move(src=within_folder_path[0], dst=destination_path)
 
     return
