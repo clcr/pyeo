@@ -32,13 +32,13 @@ import logging
 import os
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from osgeo import gdalconst
+#from osgeo import gdalconst
 from osgeo import gdal
 from osgeo import osr
 from osgeo import ogr
 import pandas as pd
 import joblib
-import matplotlib
+#import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -57,13 +57,13 @@ from sklearn.model_selection import (
 from sklearn import metrics
 import sys
 
-from pyeo.coordinate_manipulation import get_local_top_left
+#from pyeo.coordinate_manipulation import get_local_top_left
 from pyeo.filesystem_utilities import get_mask_path
 from pyeo.raster_manipulation import (
     stack_images,
     create_matching_dataset,
     apply_array_image_mask,
-    get_masked_array,
+    #get_masked_array,
 )
 import pyeo.windows_compatability
 
@@ -598,7 +598,7 @@ def autochunk(dataset, mem_limit=None):
     """
     pixels = dataset.RasterXSize * dataset.RasterYSize
     bytes_per_pixel = dataset.GetVirtualMemArray().dtype.itemsize * dataset.RasterCount
-    image_bytes = bytes_per_pixel * pixels
+    #image_bytes = bytes_per_pixel * pixels
     if not mem_limit:
         mem_limit = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_AVPHYS_PAGES")
         # Lets assume that 20% of memory is being used for non-map bits
@@ -621,6 +621,7 @@ def classify_directory(
     out_type: str = "GTiff",
     chunks: int = 4,
     skip_existing: bool = False,
+    log: logging.Logger = logging.getLogger("pyeo")
 ) -> None:
     """
     Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
@@ -646,13 +647,13 @@ def classify_directory(
         The number of chunks to break each image into for processing. See :py:func:`classify_image`
     skip_existing : boolean, optional
         If True, skips the classification if the output file already exists.
+    log : logging.Logger object into which the log output will be written
 
     Returns
     -------
     None
     """
 
-    log = logging.getLogger(__name__)
     log.info("Classifying files in {}".format(in_dir))
     log.info("Class files saved in {}".format(class_out_dir))
     if prob_out_dir is not None:

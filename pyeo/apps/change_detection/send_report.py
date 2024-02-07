@@ -3,11 +3,11 @@ send_report
 -------------------------------------
 An app for sending out summary information on detected changes between
 the vectorised change detection report images to users in various ways.
-Vectorisation should be done as part of detect_change.py
-but send_report will search for report images and vectorise them if they have
-not been done yet.
+Vectorisation should be done as part of detect_change.py by setting in the ini file:
+  do_vectorise = True
 It is intended to support WhatsApp and Email at this stage.
 It uses some of the ini file parameters but not the do_x flags.
+Shapefiles in the reports_dir will be zipped up to avoid sending the same file twice.
 """
 
 from email.message import EmailMessage
@@ -16,29 +16,21 @@ import argparse
 import configparser
 import cProfile
 import datetime
+import glob
 import pandas as pd
 import os
 from osgeo import gdal
 import sys
-from pyeo import (
-    filesystem_utilities, 
-    )
+from pyeo import filesystem_utilities
 from pyeo.acd_national import (
-    acd_initialisation,
+    #acd_initialisation,
     acd_config_to_log,
     acd_roi_tile_intersection,
     )
-from pyeo.apps.acd_national import acd_by_tile_vectorisation
+#from pyeo.apps.acd_national import acd_by_tile_vectorisation
+import zipfile
 
 gdal.UseExceptions()
-
-#TODO: Put these into the config file
-# Choose medium of sending out the reports - check acd_national for functions
-email_alerts = True
-whatsapp_alerts = False
-
-#TODO Read the list of registered users from a file specified in the ini file
-email_list_filename = '/data/clcr/shared/heiko/england/email_list.txt'
 
 def send_report(config_path, tile_id="None"):
     """
@@ -99,6 +91,11 @@ def send_report(config_path, tile_id="None"):
         end_date = config_dict["end_date"]
         if end_date == "TODAY":
             end_date = datetime.date.today().strftime("%Y%m%d")
+        email_alerts = config_dict['email_alerts']
+        email_list_file = config_dict['email_list_file']
+        whatsapp_alerts = config_dict['whatsapp_alerts']
+        #whatsapp_list_file = config_dict['whatsapp_list_file']
+        #whatsapp_sender = config_dict['whatsapp_sender']
         #composite_start_date = config_dict["composite_start"]
         #composite_end_date = config_dict["composite_end"]
         #cloud_cover = config_dict["cloud_cover"]
@@ -139,25 +136,24 @@ def send_report(config_path, tile_id="None"):
         try:
             credentials_conf = configparser.ConfigParser(allow_no_value=True)
             credentials_conf.read(credentials_path)
-            credentials_dict = {}
             if email_alerts:
-                log.info("Email forest alerts enabled. Reading in the credentials.")
-                credentials_dict["email"] = {}
-                credentials_dict["email"]["user"] = credentials_conf["email"]["user"]
-                credentials_dict["email"]["pass"] = credentials_conf["email"]["pass"]
-                sender = credentials_dict["email"]["user"]
-                mail_password = credentials_dict["email"]["pass"]
-                log.info("Credentials read from " + credentials_path)
+                log.info(f"Reading your email credentials from {credentials_path}")
+                email_sender = credentials_conf["email"]["user"]
+                email_password = credentials_conf["email"]["pass"]
+            if whatsapp_alerts:
+                log.info(f"Reading your WhatsApp credentials from {credentials_path}")
+                whatsapp_sender = credentials_conf["whatsapp"]["user"]
+                whatsapp_password = credentials_conf["whatsapp"]["pass"]
         except:
-            log.error("Could not read credentials from " + credentials_path)
-            log.error("Check the contents of the file with your login "+
-                      "credentials for sending emails.")
+            log.error("Could not open " + credentials_path)
+            log.error("Create the file with your login credentials.")
             sys.exit(1)
     else:
         log.error(credentials_path + " does not exist.")
         log.error("Did you write the correct filepath in the config file?")
         sys.exit(1)
 
+    # start tile processing
     if tile_id == "None":
         # if no tile ID is given by the call to the function, use the geometry file
         #   to get the tile ID list
@@ -180,7 +176,6 @@ def send_report(config_path, tile_id="None"):
     # iterate over the tiles
     for tile_to_process in tiles_to_process:
         log.info("Sending out the latest reports for Sentinel-2 tile: " + tile_to_process)
-        log.info("    See tile log file for details.")
         individual_tile_directory_path = os.path.join(tile_dir, tile_to_process)
         log.info(individual_tile_directory_path)
 
@@ -195,10 +190,9 @@ def send_report(config_path, tile_id="None"):
             #l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
             #l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
             #categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
-            probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
-            report_image_dir = os.path.join(individual_tile_directory_path, r"output", r"report_image")
+            #probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
+            reports_dir = os.path.join(individual_tile_directory_path, r"output", r"reports")
             #quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
-            log.info("Successfully identified the subdirectory paths for this tile")
         except:
             log.error("ERROR: Tile subdirectory paths could not be created")
             sys.exit(1)
@@ -209,71 +203,61 @@ def send_report(config_path, tile_id="None"):
             "log", 
             tile_to_process + ".log"
             )
-        log.info("---------------------------------------------------------------")
-        log.info(f"--- Redirecting log output to tile log: {tile_log_file}")
-        log.info("---------------------------------------------------------------")
+        log.info(f"Redirecting log output to tile log: {tile_log_file}")
         tile_log = filesystem_utilities.init_log_acd(
             log_path=tile_log_file,
             logger_name="pyeo_"+tile_to_process
         )
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info(f"---  TILE PROCESSING START: {individual_tile_directory_path}  ---")
+        tile_log.info(f"---  TILE PROCESSING START: {tile_to_process}                          ---")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(
-            "Sending out change reports from the latest available report image."
+            "Sending out information about vectorised reports."
         )
 
-        search_term = (
-            "report"
-            + "_*_"
-            + tile_to_process
-            + "_*"
-        )
+        search_term = "report_*" + tile_to_process + "*.shp"
+
         tile_log.info(
-            f"Searching for change report images in {probability_image_dir}" +
+            f"Searching for vectorised change report shapefiles in {reports_dir}" +
             f"\n  containing: {search_term}."
             )
-        file_list = (
-            [
-                os.path.join(probability_image_dir, f)
-                for f in os.listdir(probability_image_dir)
-            ]
-            + [
-                os.path.join(report_image_dir, f)
-                for f in os.listdir(report_image_dir)
-            ]
+
+        vector_files = glob.glob(
+            os.path.join(reports_dir, search_term)
         )
+        
+        # zip up all the shapefiles and ancillary files
+        zipped_vector_files = []
+        paths = [f for f in vector_files if not f.endswith(".zip")]
+        for sf in paths:
+            # split off the ".shp" file extension
+            file_id = sf.split(sep=".")[0]
+            files_to_zip = [f for f in os.listdir(reports_dir) if f.startswith(file_id)]
+            files_to_zip = [os.path.join(reports_dir, f) for f in files_to_zip]
+            zipped_file = os.path.join(reports_dir, file_id + '.zip')
+            with zipfile.ZipFile(
+                zipped_file, "w", compression=zipfile.ZIP_DEFLATED
+            ) as zf:
+                for f in files_to_zip:
+                    zf.write(f, os.path.basename(f))
 
-        report_images = []
-        for f in file_list:
-            if search_term in f:
-                tile_log.info(f"  Report image found: {f}")
-                report_images.append(f)
+            if os.path.exists(zipped_file):
+                zipped_vector_files.append(zipped_file)
+                for f in files_to_zip:
+                    os.remove(f)
+            else:
+                log.error(f"Zipping failed: {zipped_file}")
 
         tile_log.info(
-            f"{len(report_images)} matching report images found."
+            f"{len(zipped_vector_files)} report shapefiles found and zipped up."
             )
 
-        # vectorise the change reports in all report files in the directory
-        tile_log.info(
-            f"Vectorisation based on {config_path} for tile {tile_to_process}."
-            )
-        vector_files = acd_by_tile_vectorisation.vector_report_generation(
-            config_path, 
-            tile_to_process
-            )
-        for f in vector_files:
-            tile_log.info(f"  Created vector file: {f}")
-
-        if len(vector_files) == 0:
-            tile_log.info("No new forest alert vector files created.")
+        if len(zipped_vector_files) == 0:
+            tile_log.info("No new forest alert vector files found.")
             tile_log.info("No message will be sent.")
-            
         else:
-
-            if email_alerts and len(vector_files)>0:
-            
-                email_list_file = open(email_list_filename, 'r')
+            if email_alerts and len(zipped_vector_files)>0:            
+                email_list_file = open(email_list_file, 'r')
                 recipients = email_list_file.readlines()
                 
                 for r, recipient in enumerate(recipients):
@@ -281,10 +265,10 @@ def send_report(config_path, tile_id="None"):
                     recipient_name = recipient.strip().split(",")[0]
                     recipient_email = recipient.strip().split(",")[1]
                     tile_log.info(
-                        f"Sending email from {sender} to {recipient_name} " +
+                        f"Sending email from {email_sender} to {recipient_name} " +
                         f"at {recipient_email}."
                         )
-                    for f in vector_files:
+                    for f in zipped_vector_files:
                         message =  [
                            f"Dear {recipient_name},",
                            "",
@@ -311,17 +295,18 @@ def send_report(config_path, tile_id="None"):
         
                         #TODO: Enable sending with file attachment or download location
                         email = EmailMessage()
-                        email["From"] = sender
+                        email["From"] = email_sender
                         email["To"] = recipient_email
                         email["Subject"] = subject_line
                         email.set_content("\n".join(message))
                         
                         smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
                         smtp.starttls()
-                        smtp.login(sender, mail_password)
-                        smtp.sendmail(sender, recipient_email, email.as_string())
+                        smtp.login(email_sender, email_password)
+                        smtp.sendmail(email_sender, recipient_email, email.as_string())
                         smtp.quit()
-                tile_log.info("Report image info has been emailed to the contact list.")
+                tile_log.info(" ")
+                tile_log.info("Info on vectorised reports has been emailed to the contact list.")
                 tile_log.info(" ")
 
             if whatsapp_alerts and len(vector_files)>0:
@@ -336,7 +321,7 @@ def send_report(config_path, tile_id="None"):
 		
                 '''        
                 tile_log.info("---------------------------------------------------------------")
-                tile_log.info("Report image info has been sent by WhatsApp to the contact list.")
+                tile_log.info("Info on vectorised reports has been sent via WhatsApp to the contact list.")
                 tile_log.info("---------------------------------------------------------------")
                 tile_log.info(" ")
                 '''        
@@ -361,7 +346,10 @@ if __name__ == "__main__":
     
     # Reading in config file
     parser = argparse.ArgumentParser(
-        description="Downloads and preprocesses Sentinel 2 images into median composites."
+        description="Sends information on vectorised reports to a list of "+
+        "recipients." +
+        "Currently only email is implemented. WhatsApp will be added in future."+
+        "Options are set in the .ini file and login details in the credentials file."        
     )
     parser.add_argument(
         dest="config_path",
