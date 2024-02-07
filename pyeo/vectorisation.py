@@ -20,7 +20,7 @@ from osgeo import gdal, ogr, osr
 import pandas as pd
 from pathlib import Path
 import shutil
-import sys
+#import sys
 from tempfile import TemporaryDirectory
 
 from pyeo.filesystem_utilities import serial_date_to_string
@@ -646,8 +646,11 @@ def merge_and_calculate_spatial(
 
     # table join on id
     merged = binary_dec.merge(rb_ndetections_zstats_df, on="id", how="inner")
+    log.info(f"1. Merged columns: {merged.columns}")
     merged2 = merged.merge(rb_confidence_zstats_df, on="id", how="inner")
+    log.info(f"2. Merged2 columns: {merged2.columns}")
     merged3 = merged2.merge(rb_first_changedate_zstats_df, on="id", how="inner")
+    log.info(f"3. Merged3 columns: {merged3.columns}")
     merged = merged3
 
     log.info("Merging Complete")
@@ -660,15 +663,15 @@ def merge_and_calculate_spatial(
     # add lat long from centroid that falls within the polygon
     merged["long"] = merged.representative_point().map(lambda p: p.x)
     merged["lat"] = merged.representative_point().map(lambda p: p.y)
+    log.info(f"4. Merged columns: {merged.columns}")
 
-    # read in county boundaries from ini, and keep only County and geometry columns
+    # read in admin area boundaries from ini, and keep only admin area and geometry columns
     log.info(
         f"reading in administrative boundary information from {level_1_boundaries_path}"
     )
     boundaries = gpd.read_file(level_1_boundaries_path)
 
-    #TODO: check whether column name NAME_1 exists
-    # enable handing over column name when calling this function
+    #TODO: enable handing over column name when calling this function and put in ini file
     names = boundaries.col_names
     for n in names:
         log.info(n)
@@ -696,6 +699,8 @@ def merge_and_calculate_spatial(
         ["index_right"], axis=1
     )
 
+    log.info(f"5. Merged columns: {merged.columns}")
+
     # add user and decision columns, for verification
     merged["tileid"] = tileid
     merged["user"] = pd.Series(dtype="string")
@@ -703,11 +708,15 @@ def merge_and_calculate_spatial(
     merged["follow_up"] = pd.Series(dtype="string")
     merged["comments"] = pd.Series(dtype="string")
 
+    log.info(f"6. Merged columns: {merged.columns}")
+
     # reorder geometry to be the last column
     columns = list(merged.columns)
     columns.remove("geometry")
     columns.append("geometry")
     merged = merged.reindex(columns=columns)
+
+    log.info(f"7. Merged columns: {merged.columns}")
 
     shp_fname = f"{os.path.splitext(change_report_path)[0]}.shp"
     kml_fname = f"{os.path.splitext(change_report_path)[0]}.kml"
@@ -741,12 +750,9 @@ def merge_and_calculate_spatial(
             directory = os.path.dirname(change_report_path)
             binary_dec_pattern = f"{directory}{os.sep}*band*"
             zstats_pattern = f"{directory}{os.sep}*zstats*"
-
             intermediate_files = glob.glob(binary_dec_pattern)
             zstat_files = glob.glob(zstats_pattern)
-
             intermediate_files.extend(zstat_files)
-
             for file in intermediate_files:
                 os.remove(file)
         except:

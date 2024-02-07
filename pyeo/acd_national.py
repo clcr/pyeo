@@ -448,7 +448,7 @@ def acd_roi_tile_intersection(config_dict: dict, log: logging.Logger) -> str:
         log.info("  {} : {}".format(n + 1, this_tile))
 
     tilelist_filepath = os.path.join(config_dict["roi_dir"], "tilelist.csv")
-    log.info(f"Writing Sentinel-2 tile list to : {tilelist_filepath}")
+    #log.info(f"Writing Sentinel-2 tile list to : {tilelist_filepath}")
 
     try:
         tiles_list_df = pd.DataFrame({"tile": tiles_list})

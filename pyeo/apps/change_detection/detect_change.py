@@ -58,85 +58,8 @@ def detect_change(config_path, tile_id="None"):
         tile_id : string with the Sentinel-2 tile ID. If not "None", this ID is used
                         instead of the region of interest file to define the area to be processed
 
-
-    NOTE: The following functions zip_contents() and unzip_contents() are now
-        depracated and are imported from filesystem_utilities. They will be removed
-        here in future versions.
-        
-    def zip_contents(directory, notstartswith=None):
-        '''
-        A function that compresses all files in a directory in zip file format.
-    
-        Args:
-    
-            directory : string with the full path to the files that will all be compressed in separate zip files
-    
-            notstartswith (optional) : string specifying the start of filenames that will be skipped and not zipped
-    
-        '''
-        paths = [f for f in os.listdir(directory) if not f.endswith(".zip")]
-        for f in paths:
-            do_it = True
-            if notstartswith is not None:
-                for i in notstartswith:
-                    if f.startswith(i):
-                        do_it = False
-                        log.info(
-                            "Skipping file that starts with '{}':   {}".format(i, f)
-                        )
-            if do_it:
-                file_to_zip = os.path.join(directory, f)
-                zipped_file = file_to_zip.split(".")[0]
-                log.info("Zipping   {}".format(file_to_zip))
-                if os.path.isdir(file_to_zip):
-                    shutil.make_archive(zipped_file, "zip", file_to_zip)
-                else:
-                    with zipfile.ZipFile(
-                        zipped_file + ".zip", "w", compression=zipfile.ZIP_DEFLATED
-                    ) as zf:
-                        zf.write(file_to_zip, os.path.basename(file_to_zip))
-                if os.path.exists(zipped_file + ".zip"):
-                    if os.path.isdir(file_to_zip):
-                        shutil.rmtree(file_to_zip)
-                    else:
-                        os.remove(file_to_zip)
-                else:
-                    log.error("Zipping failed: {}".format(zipped_file + ".zip"))
-        return
-    
-    
-    def unzip_contents(directory, ifstartswith=None, ending=None):
-        '''
-        A function that uncompresses a zip directory or file.
-    
-        Args:
-    
-            directory : string with the full path to the zip directory or file that will be decompressed
-    
-            ifstartswith (optional) : string specifying a pattern for the start of a filename
-    
-            ending (optional) : string specifying the ending that will be attached to the directory name 
-                                of the unzipped directory in case ifstartswith is also defined
-    
-        '''
-        dirpath = directory[:-4]  # cut away the  .zip ending
-        if ifstartswith is not None and ending is not None:
-            if dirpath.startswith(ifstartswith):
-                dirpath = dirpath + ending
-        log.info("Unzipping {}".format(directory))
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-        if os.path.exists(dirpath):
-            if os.path.exists(directory):
-                shutil.unpack_archive(
-                    filename=directory, extract_dir=dirpath, format="zip"
-                )
-                os.remove(directory)
-        else:
-            log.error("Unzipping failed")
-        return
     """
-
+    
     # read the ini file contents into a dictionary
     configparser.ConfigParser(allow_no_value=True)
     config_dict = filesystem_utilities.config_path_to_config_dict(config_path)
@@ -261,32 +184,32 @@ def detect_change(config_path, tile_id="None"):
         #   to get the tile ID list
         #tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
-        log.info("Region of interest based processing selected.")
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
-        '''
-        # move filelist file from roi dir to main log directory
+        # move filelist file from roi dir to main directory
         tilelist_filepath = shutil.move(
             tilelist_filepath, 
             os.path.join(
-                config_dict["log_dir"], 
+                config_dict["tile_dir"], 
                 tilelist_filepath.split(os.path.sep)[-1])
         )
-        '''
+        log.info("Region of interest processing based on ROI file.")        
     else:
         # if a tile ID is specified, use that and do not use the tile intersection
         #   method to get the tile ID list
         #tile_based_processing_override = True
         tiles_to_process = [tile_id]
-        log.info("Tile based processing selected. Overriding the geometry "+
-                 "file intersection method to get the list of tile IDs.")
+        log.info(f"Tile based processing: {tile_id}. Ignoring ROI file.")
         try:
+            tilelist_filepath = os.path.join(
+                    config_dict["tile_dir"],
+                    "tile_list.txt"
+                    )
             pd.DataFrame({"tile": tiles_to_process}).to_csv(
                 tilelist_filepath, 
                 header=True, 
                 index=False)
         except:
             log.error(f"Could not write to {tilelist_filepath}")
-
     log.info(f"Saved Sentinel-2 tile ID list: {tilelist_filepath}")
     log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
@@ -310,6 +233,7 @@ def detect_change(config_path, tile_id="None"):
             sieved_image_dir = os.path.join(individual_tile_directory_path, r"images", r"sieved")
             categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
             probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
+            reports_dir = os.path.join(individual_tile_directory_path, r"output", r"reports")
             quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
             if start_date == "LATEST":
                 report_file_name = [
@@ -352,7 +276,7 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info("  Directory path created: "+individual_tile_directory_path)
         tile_log.info("\n")
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info(f"---  TILE PROCESSING START: {individual_tile_directory_path}  ---")
+        tile_log.info(f"---  TILE PROCESSING START: {tile_to_process}  ---")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Detecting change between classified change detection images")
         tile_log.info("and the baseline median image composite.")
@@ -1019,6 +943,7 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("Model used: {}".format(model_path))
             if skip_existing:
                 tile_log.info("Skipping existing classification images if found.")
+            
             classification.classify_directory(
                 composite_dir,
                 model_path,
@@ -1352,13 +1277,11 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info("Post-classification change detection complete.")
         tile_log.info("---------------------------------------------------------------")
     
-        tile_log.info("---------------------------------------------------------------")
         tile_log.info(
             "Compressing tiff files in directory {} and all subdirectories".format(
                 probability_image_dir
             )
         )
-        tile_log.info("---------------------------------------------------------------")
         for root, dirs, files in os.walk(probability_image_dir):
             all_tiffs = [
                 image_name for image_name in files if image_name.endswith(".tif")
@@ -1426,26 +1349,27 @@ def detect_change(config_path, tile_id="None"):
             raster_manipulation.combine_date_maps(date_image_paths, output_product)
         '''    
     
-        tile_log.info("---------------------------------------------------------------")
         tile_log.info(
-            "Report image product completed / updated: {}".format(output_product)
+            f"Report image product completed / updated: {output_product}"
         )
             
         if config_dict["do_all"] or config_dict["do_vectorise"]:
-            tile_log.info("--" * 20)
+            tile_log.info("---------------------------------------------------------------")
             tile_log.info("Starting Vectorisation of the Change Report Rasters " +
                           f"of Tile: {tile_to_process}")
-            tile_log.info("--" * 20)
+            tile_log.info("---------------------------------------------------------------")
             output_vector_products = []
             # get all report.tif file names that are within the root_dir with 
             #   search pattern from the probabilities subdirectory
-            report_tif_pattern = f"{os.sep}output{os.sep}probabilities{os.sep}report*.tif"
+            report_tif_pattern = f"{os.sep}output{os.sep}{probability_image_dir}"+\
+                "{os.sep}report*.tif"
             search_pattern_1 = f"{tile_to_process}{report_tif_pattern}"
             change_report_paths = glob.glob(
                 os.path.join(tile_dir, tile_to_process, search_pattern_1)
             )
-            # ... and from the report_image_dir subdirectory
-            report_tif_pattern = f"{os.sep}output{os.sep}report_image{os.sep}report*.tif"
+            # ... and from the reports subdirectory
+            report_tif_pattern = f"{os.sep}output{os.sep}reports{os.sep}"+\
+                "report*.tif"
             search_pattern_2 = f"{tile_to_process}{report_tif_pattern}"
             for g in glob.glob(os.path.join(tile_dir, search_pattern_2)):
                 change_report_paths.append(g)
@@ -1470,12 +1394,17 @@ def detect_change(config_path, tile_id="None"):
                     #    tile_log.info(f"Skipping. Found {change_report_path[:-4]}.shp")
                     #else:
 
+                    log.info("calling vectorise_from_band")
+
                     # band 15 in pyeo 1.0 was band=6 in pyeo 0.9
                     path_vectorised_binary = vectorise_from_band(
                         change_report_path=change_report_path,
                         band=15,
                         log=tile_log
                     )
+
+                    log.info("calling clean_zero_nodata...")
+
                     path_vectorised_binary_filtered = clean_zero_nodata_vectorised_band(
                         vectorised_band_path=path_vectorised_binary,
                         log=tile_log
@@ -1483,6 +1412,8 @@ def detect_change(config_path, tile_id="None"):
             
                     tile_log.info("vectorised_file_path = \n"+
                                   f"{path_vectorised_binary_filtered}")
+
+                    log.info("calling zonal_stats")
 
                     # band 5 in pyeo 1.0 was band 2 in pyeo 0.9
                     rb_ndetections_zstats_df = zonal_statistics(
@@ -1509,6 +1440,7 @@ def detect_change(config_path, tile_id="None"):
                     )
                     
                     # table joins, area, lat lon, county
+                    log.info("calling merge_and_calculate_spatial")
                     output_vector_products.append(
                         merge_and_calculate_spatial(
                             rb_ndetections_zstats_df=rb_ndetections_zstats_df,
@@ -1531,12 +1463,29 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("Compressing the report image.")
             raster_manipulation.compress_tiff(output_product, output_product)
 
+            # log output file names and move from probabilities dir to reports dir
+            # move all shapefile related files and tables
+            file_endings = ["prj","shp","shx","dbf","cpg"]
+            for i in range(len(output_vector_products)):
+                filename_start = output_vector_products[i].split(sep=os.sep)[-1].split(sep=".")[0]
+                for fe in file_endings:
+                    shutil.move(
+                        os.path.join(
+                            probability_image_dir, 
+                            filename_start+"."+fe
+                            ), 
+                        reports_dir
+                        )
+                    tile_log.info("  {}".format(os.path.join(
+                            reports_dir, 
+                            filename_start+"."+fe
+                            )
+                        )
+                    )
+
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Vectorisation complete")
             tile_log.info("---------------------------------------------------------------")
-            for i in range(len(output_vector_products)):
-                tile_log.info("  {}".format(output_vector_products[i]))
-
 
         if config_dict["do_delete"]:
             tile_log.info(
@@ -1630,7 +1579,7 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("---------------------------------------------------------------")
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info(f"---  TILE PROCESSING END: {individual_tile_directory_path} ---")
+        tile_log.info(f"---  TILE PROCESSING END: {tile_to_process} ---")
         tile_log.info("---------------------------------------------------------------")
 
         # process the next tile if more than one tile are specified at this point (for loop)

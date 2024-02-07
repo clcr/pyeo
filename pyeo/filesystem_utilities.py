@@ -430,18 +430,30 @@ def config_path_to_config_dict(config_path: str):
     config_dict["do_filter"] = config.getboolean(
         "vector_processing_parameters", "do_filter"
     )
-
-    config_dict["counties_of_interest"] = json.loads(
-        config["vector_processing_parameters"]["counties_of_interest"]
+    config_dict["admin_areas_of_interest"] = json.loads(
+        config["vector_processing_parameters"]["admin_areas_of_interest"]
     )
     config_dict["minimum_area_to_report_m2"] = int(
         config["vector_processing_parameters"]["minimum_area_to_report_m2"]
     )
     config_dict["do_distribution"] = config.getboolean(
-        "vector_processing_parameters", "do_distribution"
+        "alerts_sending_options", "do_distribution"
     )
-
-    config_dict["credentials_path"] = config["environment"]["credentials_path"]
+    config_dict["email_alerts"] = config.getboolean(
+        "alerts_sending_options", "email_alerts"
+    )
+    config_dict["email_list_file"] = config["alerts_sending_options"][
+        "email_list_file"
+        ]
+    config_dict["whatsapp_alerts"] = config.getboolean(
+        "alerts_sending_options", "whatsapp_alerts"
+    )
+    config_dict["whatsapp_list_file"] = config["alerts_sending_options"][
+        "whatsapp_list_file"
+        ]
+    config_dict["credentials_path"] = config["environment"][
+        "credentials_path"
+        ]
 
     return config_dict
 
@@ -587,8 +599,7 @@ def create_file_structure(root: str):
         --classified
         --sieved
         --probabilities
-        --report_image
-        --display_images
+        --reports
         --quicklooks
         -log
 
@@ -615,8 +626,7 @@ def create_file_structure(root: str):
         "output/classified/",
         "output/sieved/",
         "output/probabilities/",
-        "output/report_image/",
-        "output/display_images/",
+        "output/reports/",
         "output/quicklooks/",
         "log/",
     ]
@@ -643,8 +653,7 @@ def create_folder_structure_for_tiles(root):
         --classified
         --sieved
         --probabilities
-        --report_image
-        --display_images
+        --reports
         --quicklooks
         -log
 
@@ -670,8 +679,7 @@ def create_folder_structure_for_tiles(root):
         "output/classified/",
         "output/sieved/",
         "output/probabilities/",
-        "output/report_image/",
-        "output/display_images/",
+        "output/reports/",
         "output/quicklooks/",
         "log/",
     ]
