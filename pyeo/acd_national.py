@@ -395,7 +395,7 @@ def acd_config_to_log(config_dict: dict, log: logging.Logger) -> None:
             found = True
         if not found:
             log.info(f"  {key} :  {value}")
-        log.info("-----------------------------------------------------------")
+    log.info("-----------------------------------------------------------")
     return
 
 

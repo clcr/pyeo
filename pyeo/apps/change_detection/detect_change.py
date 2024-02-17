@@ -29,12 +29,10 @@ from pyeo import (
     )
 from pyeo.filesystem_utilities import (
     zip_contents,
-    unzip_contents
+    unzip_contents,
+    config_to_log
     )
-from pyeo.acd_national import (
-                acd_config_to_log,
-                acd_roi_tile_intersection
-                )
+from pyeo.acd_national import acd_roi_tile_intersection
 from pyeo.vectorisation import (
                 zonal_statistics, 
                 merge_and_calculate_spatial, 
@@ -59,6 +57,24 @@ def detect_change(config_path, tile_id="None"):
                         instead of the region of interest file to define the area to be processed
 
     """
+
+    #TODO: To speed up processing, limit the classification and change detection
+    #  to forest areas only using https://glad.umd.edu/Potapov/TCC_2010/
+    '''
+    downloadfile = os.path.join(SAVE_DIR, file_name)
+    # treecover files have filename pattern: 
+    #   'treecover2010_70N_160E.tif'
+    # coordinates are in steps of 10 degrees lat, lon
+    #   from 0...80 lat and 0...170 lon
+    #TODO: Determine the coordinates from the tile extent
+    coords = '70N_160E'
+    response = requests.get(
+        'https://glad.umd.edu/Potapov/TCC_2010/treecover2010_'+coords+'.tif',
+        stream=True
+        )
+    with open(downloadfile,'wb') as d:
+        d.write(response.content)
+    '''
     
     # read the ini file contents into a dictionary
     configparser.ConfigParser(allow_no_value=True)
@@ -84,18 +100,18 @@ def detect_change(config_path, tile_id="None"):
 
     # check conda directory exists
     if config_dict["environment_manager"] == "conda":
-        conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
-        log.info(conda_boolean)
-        if not conda_boolean:
+        conda_env_found = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
+        if not conda_env_found:
             log.error("Conda Environment Directory does not exist.")
             log.error("Ensure this exists before running pyeo.")
             log.error("Now exiting the pipeline.")
             sys.exit(1)
 
-    log.info(f"Config file that controls the processing run: {config_path}")
+    log.info("---------------------------------------------------------------")
+    log.info(f"Config file: {config_path}")
     log.info("---------------------------------------------------------------")
 
-    acd_config_to_log(config_dict, log)
+    config_to_log(config_dict, log)
 
     try:
         os.chdir(config_dict["pyeo_dir"]) # ensures pyeo is looking in the correct directory
@@ -230,7 +246,7 @@ def detect_change(config_path, tile_id="None"):
             l1_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L1C")
             l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
             l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
-            sieved_image_dir = os.path.join(individual_tile_directory_path, r"images", r"sieved")
+            sieved_image_dir = os.path.join(individual_tile_directory_path, r"output", r"sieved")
             categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
             probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
             reports_dir = os.path.join(individual_tile_directory_path, r"output", r"reports")
@@ -274,7 +290,7 @@ def detect_change(config_path, tile_id="None"):
         )
         tile_log.info("Folder structure build successfully finished for tile "+tile_to_process)
         tile_log.info("  Directory path created: "+individual_tile_directory_path)
-        tile_log.info("\n")
+        tile_log.info("")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(f"---  TILE PROCESSING START: {tile_to_process}  ---")
         tile_log.info("---------------------------------------------------------------")
@@ -284,6 +300,8 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info("List of class labels: {}".format(class_labels))
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Searching for change detection images.")
+        if skip_existing:
+            tile_log.info("Skipping existing change detection images if found.")
 
         if download_source == "dataspace":
             # convert date string to YYYY-MM-DD
@@ -338,7 +356,7 @@ def detect_change(config_path, tile_id="None"):
                         log=tile_log
                     )
                 except Exception as error:
-                    tile_log.error("Query_dataspace_by_tile received this error: {}".format(error))
+                    tile_log.error(f"Query_dataspace_by_tile received this error: {error}")
 
             titles = dataspace_products_all["title"].tolist()
             sizes = list()
@@ -363,7 +381,9 @@ def detect_change(config_path, tile_id="None"):
                                                 "status": statuses})
 
             # check granule sizes on the server
-            scihub_compatible_df["size"] = scihub_compatible_df["size"].apply(lambda x: round(float(x) * 1e-6, 2))
+            scihub_compatible_df["size"] = scihub_compatible_df["size"].apply(
+                lambda x: round(float(x) * 1e-6, 2)
+                )
             # reassign to match the scihub variable
             df_all = scihub_compatible_df
 
@@ -436,7 +456,6 @@ def detect_change(config_path, tile_id="None"):
                 tile_log.info(
                     "Relative orbits found covering tile: {}".format(rel_orbits)
                 )
-                tile_log.info("dataspace branch reaches here")
                 uuids = []
                 for orb in rel_orbits:
                     uuids = uuids + list(
@@ -655,7 +674,7 @@ def detect_change(config_path, tile_id="None"):
                     add = pd.DataFrame(add)
                     l2a_products = pd.concat([l2a_products, add])
 
-                tile_log.info("\n Successfully searched for the L2A counterparts for\
+                tile_log.info("Successfully searched for the L2A counterparts for\
                               the L1C products for the change detection.")
                 
             # here, dataspace and scihub derived l1c_products and l2a_products lists are the "same"
@@ -711,7 +730,8 @@ def detect_change(config_path, tile_id="None"):
                 log=tile_log
             )
 
-        tile_log.info("Successful atmospheric correction of the Sentinel-2 L1C products to L2A.")
+        tile_log.info("Successful atmospheric correction of the Sentinel-2 L1C"+
+                      " products to L2A.")
 
         # Download the L2A images
         if l2a_products.shape[0] > 0:
@@ -751,13 +771,20 @@ def detect_change(config_path, tile_id="None"):
                     tile_log.warning("Found likely incomplete download of size {} MB: {}".format(
                             str(round(sizes[index] / 1024 / 1024)), safe_dir))
 
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Image download and atmospheric correction for change detection is complete.")
-        tile_log.info("---------------------------------------------------------------")
+        tile_log.info(
+            "---------------------------------------------------------------"
+            )
+        tile_log.info("Image download and atmospheric correction for change "+
+                      "detection is complete.")
+        tile_log.info(
+            "---------------------------------------------------------------"
+            )
 
         # Housekeeping
         if config_dict["do_delete"]:
-            tile_log.info("---------------------------------------------------------------")
+            tile_log.info(
+                "---------------------------------------------------------------"
+                )
             tile_log.info("Deleting downloaded L1C images for change detection.")
             tile_log.info("Keeping only derived L2A products.")
             tile_log.info(
@@ -885,7 +912,6 @@ def detect_change(config_path, tile_id="None"):
                     for f in os.scandir(main_dir)
                     if f.is_file() and os.path.basename(f).endswith(".tif")
                 ]
-                # files = [ f.path for f in os.scandir(main_dir) if f.is_file() and os.path.basename(f).endswith(".tif") and "class" in os.path.basename(f) ] # do classification images only
                 if len(files) == 0:
                     tile_log.warning("No images found in {}.".format(main_dir))
                 else:
@@ -894,16 +920,22 @@ def detect_change(config_path, tile_id="None"):
                             quicklook_dir,
                             os.path.basename(f).split(".")[0] + ".png",
                         )
-                        tile_log.info("Creating quicklook: {}".format(quicklook_path))
-                        raster_manipulation.create_quicklook(
-                            f,
-                            quicklook_path,
-                            width=512,
-                            height=512,
-                            format="PNG",
-                            bands=[3, 2, 1],
-                            scale_factors=[[0, 2000, 0, 255]],
-                        )
+                        if os.path.isfile(quicklook_path) and skip_existing:
+                            tile_log.info(
+                                "Quicklook already exists - skipping: "+
+                                f"{quicklook_path}"
+                                )
+                        else:
+                            tile_log.info(f"Creating quicklook: {quicklook_path}")
+                            raster_manipulation.create_quicklook(
+                                f,
+                                quicklook_path,
+                                width=512,
+                                height=512,
+                                format="PNG",
+                                bands=[3, 2, 1],
+                                scale_factors=[[0, 2000, 0, 255]],
+                            )
             tile_log.info("Quicklooks complete.")
         else:
             tile_log.info("Quicklook option disabled in ini file.")
@@ -935,9 +967,12 @@ def detect_change(config_path, tile_id="None"):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
-            tile_log.info("---------------------------------------------------------------")
             tile_log.info(
-                "Classify a land cover map for each L2A image and composite image using a saved model"
+                "---------------------------------------------------------------"
+                )
+            tile_log.info(
+                "Classify a land cover map for each L2A image and composite "+
+                "image using a saved model"
             )
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Model used: {}".format(model_path))
@@ -953,6 +988,7 @@ def detect_change(config_path, tile_id="None"):
                 out_type="GTiff",
                 chunks=config_dict["chunks"],
                 skip_existing=skip_existing,
+                log=tile_log
             )
             classification.classify_directory(
                 l2_masked_image_dir,
@@ -963,58 +999,70 @@ def detect_change(config_path, tile_id="None"):
                 out_type="GTiff",
                 chunks=config_dict["chunks"],
                 skip_existing=skip_existing,
+                log=tile_log
             )
     
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info(
-                "Compressing tiff files in directory {} and all subdirectories".format(
-                    categorised_image_dir
-                )
-            )
-            tile_log.info("---------------------------------------------------------------")
             for root, dirs, files in os.walk(categorised_image_dir):
                 all_tiffs = [
                     image_name for image_name in files if image_name.endswith(".tif")
                 ]
+            if len(all_tiffs) > 0:
+                tile_log.info(
+                    "Compressing tiff files in directory {} and all subdirectories".format(
+                        categorised_image_dir
+                    )
+                )
                 for this_tiff in all_tiffs:
                     raster_manipulation.compress_tiff(
-                        os.path.join(root, this_tiff), os.path.join(root, this_tiff)
+                        os.path.join(root, this_tiff), 
+                        os.path.join(root, this_tiff),
+                        tile_log
                     )
     
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Classification of all images is complete.")
             tile_log.info("---------------------------------------------------------------")
 
-        tile_log.info(
-            "---------------------------------------------------------------"
-        )
-        tile_log.info("Producing quicklooks.")
-        tile_log.info(
-            "---------------------------------------------------------------"
-        )
-        dirs_for_quicklooks = [categorised_image_dir]
-        for main_dir in dirs_for_quicklooks:
-            # files = [ f.path for f in os.scandir(main_dir) if f.is_file() and os.path.basename(f).endswith(".tif") ]
-            files = [
-                f.path
-                for f in os.scandir(main_dir)
-                if f.is_file()
-                and os.path.basename(f).endswith(".tif")
-                and "class" in os.path.basename(f)
-            ]  # do classification images only
-            if len(files) == 0:
-                tile_log.warning("No images found in {}.".format(main_dir))
-            else:
-                for f in files:
-                    quicklook_path = os.path.join(
-                        quicklook_dir,
-                        os.path.basename(f).split(".")[0] + ".png",
-                    )
-                    tile_log.info("Creating quicklook: {}".format(quicklook_path))
-                    raster_manipulation.create_quicklook(
-                        f, quicklook_path, width=512, height=512, format="PNG"
-                    )
-        tile_log.info("Quicklooks complete.")
+        if config_dict["do_quicklooks"]:
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            tile_log.info("Producing quicklooks.")
+            tile_log.info(
+                "---------------------------------------------------------------"
+            )
+            dirs_for_quicklooks = [categorised_image_dir]
+            for main_dir in dirs_for_quicklooks:
+                files = [
+                    f.path
+                    for f in os.scandir(main_dir)
+                    if f.is_file()
+                    and os.path.basename(f).endswith(".tif")
+                    and "class" in os.path.basename(f)
+                ]  # do classification images only
+                if len(files) == 0:
+                    tile_log.warning("No images found in {}.".format(main_dir))
+                else:
+                    for f in files:
+                        quicklook_path = os.path.join(
+                            quicklook_dir,
+                            os.path.basename(f).split(".")[0] + ".png",
+                            )
+                        if os.path.isfile(quicklook_path) and skip_existing:
+                            tile_log.info(
+                                "Quicklook already exists - skipping: "+
+                                f"{quicklook_path}"
+                                )  
+                        else:
+                            tile_log.info(f"Creating quicklook: {quicklook_path}")
+                            raster_manipulation.create_quicklook(
+                                f, 
+                                quicklook_path, 
+                                width=512, 
+                                height=512,
+                                format="PNG"
+                                )
+            tile_log.info("Quicklook creation complete.")
 
         # ------------------------------------------------------------------------
         # Pair up the class images with the composite baseline map
@@ -1072,511 +1120,532 @@ def detect_change(config_path, tile_id="None"):
             if f.is_file() and f.name.endswith(".tif") and not "composite_" in f.name
         ]
         if len(class_image_paths) == 0:
-            raise FileNotFoundError(
-                "No class images found in {}.".format(class_image_dir)
-            )
-    
-        # sort class images by image acquisition date
-        class_image_paths = list(
-            filter(filesystem_utilities.get_image_acquisition_time, class_image_paths)
-        )
-        class_image_paths.sort(
-            key=lambda x: filesystem_utilities.get_image_acquisition_time(x)
-        )
-        for index, image in enumerate(class_image_paths):
-            tile_log.info("{}: {}".format(index, image))
-    
-        # find the latest available composite
-        try:
-            latest_composite_name = filesystem_utilities.sort_by_timestamp(
-                [
-                    image_name
-                    for image_name in os.listdir(composite_dir)
-                    if image_name.endswith(".tif")
-                ],
-                recent_first=True,
-            )[0]
-            latest_composite_path = os.path.join(composite_dir, latest_composite_name)
-            tile_log.info("Most recent composite at {}".format(latest_composite_path))
-        except IndexError:
-            tile_log.critical(
-                "Latest composite not found. The first time you run this script, you need to include the "
-                "--build-composite flag to create a base composite to work off. If you have already done this,"
-                "check that the earliest dated image in your images/merged folder is later than the earliest"
-                " dated image in your composite/ folder."
-            )
-            sys.exit(1)
-    
-        latest_class_composite_path = os.path.join(
-            class_image_dir,
-            [
-                f.path
-                for f in os.scandir(class_image_dir)
-                if f.is_file()
-                and os.path.basename(latest_composite_path)[:-4] in f.name
-                and f.name.endswith(".tif")
-            ][0],
-        )
-    
-        tile_log.info(
-            "Most recent class composite at {}".format(latest_class_composite_path)
-        )
-        if not os.path.exists(latest_class_composite_path):
-            tile_log.critical(
-                "Latest class composite not found. The first time you run this script, you need to include the "
-                "--build-composite flag to create a base composite to work off. If you have already done this,"
-                "check that the earliest dated image in your images/merged folder is later than the earliest"
-                " dated image in your composite/ folder. Then, you need to run the --classify option."
-            )
-            sys.exit(1)
-    
-        # set the name of the report file in the development version run
-        before_timestamp = filesystem_utilities.get_change_detection_dates(
-            os.path.basename(latest_class_composite_path)
-        )[0]
-        ## Timestamp report with the date of most recent classified image that contributes to it
-        after_timestamp = filesystem_utilities.get_image_acquisition_time(
-            os.path.basename(class_image_paths[-1])
-        )
-        ## Previously:
-        # gets timestamp of the earliest change image of those available in class_image_path
-        # after_timestamp  = pyeo.filesystem_utilities.get_image_acquisition_time(os.path.basename(class_image_paths[0]))
-        output_product = os.path.join(
-            probability_image_dir,
-            "report_{}_{}_{}.tif".format(
-                before_timestamp.strftime("%Y%m%dT%H%M%S"),
-                tile_to_process,
-                after_timestamp.strftime("%Y%m%dT%H%M%S"),
-            ),
-        )
-        tile_log.info("I.R. Report file name will be {}".format(output_product))
-
-        # if a report file exists, archive it  ( I.R. Changed from 'rename it to show it has been updated')
-        n_report_files = len(
-            [
-                f
-                for f in os.scandir(probability_image_dir)
-                if f.is_file()
-                and f.name.startswith("report_")
-                and f.name.endswith(".tif")
-            ]
-        )
-
-        if n_report_files > 0:
-            output_products_existing = [
-                f.path
-                for f in os.scandir(probability_image_dir)
-                if f.is_file()
-                and f.name.startswith("report_")
-                and f.name.endswith(".tif")
-            ]
-            for output_product_existing in output_products_existing:
-                tile_log.info(
-                    "Found existing report image product: {}".format(
-                        output_product_existing
-                    )
-                )
-    
-                output_product_existing_archived = os.path.join(
-                    os.path.dirname(output_product_existing),
-                    "archived_" + os.path.basename(output_product_existing),
-                )
-                tile_log.info(
-                    "Renaming existing report image product to: {}".format(
-                        output_product_existing_archived
-                    )
-                )
-                os.rename(output_product_existing, output_product_existing_archived)
-    
-        # find change patterns in the stack of classification images
-        for index, image in enumerate(class_image_paths):
-            before_timestamp = filesystem_utilities.get_change_detection_dates(
-                os.path.basename(latest_class_composite_path)
-            )[0]
-            after_timestamp = filesystem_utilities.get_image_acquisition_time(
-                os.path.basename(image)
-            )
-            tile_log.info(
-                f"PROCESSING CLASSIFIED IMAGE: {index} of "+
-                f"{len(class_image_paths)} \n  filename: {image}"
-                )
-            tile_log.info("  early time stamp: {}".format(before_timestamp))
-            tile_log.info("  late  time stamp: {}".format(after_timestamp))
-            change_raster = os.path.join(
-                probability_image_dir,
-                "change_{}_{}_{}.tif".format(
-                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
-                    tile_to_process,
-                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
-                ),
-            )
-            tile_log.info(
-                "  Change raster file to be created: {}".format(change_raster)
-            )
-    
-            dNDVI_raster = os.path.join(
-                probability_image_dir,
-                "dNDVI_{}_{}_{}.tif".format(
-                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
-                    tile_to_process,
-                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
-                ),
-            )
-            tile_log.info(
-                "  I.R. dNDVI raster file to be created: {}".format(dNDVI_raster)
-            )
-    
-            NDVI_raster = os.path.join(
-                probability_image_dir,
-                "NDVI_{}_{}_{}.tif".format(
-                    before_timestamp.strftime("%Y%m%dT%H%M%S"),
-                    tile_to_process,
-                    after_timestamp.strftime("%Y%m%dT%H%M%S"),
-                ),
-            )
-            tile_log.info(
-                "  I.R. NDVI raster file of change image to be created: {}".format(
-                    NDVI_raster
-                )
-            )
-            
-            # This bit looks for changes from class 'change_from' in the composite to any of the 'change_to_classes'
-            # in the change images. Pixel values are the acquisition date of the detected change of interest or zero.
-            # TODO: In change_from_class_maps(), add a flag (e.g. -1) whether a pixel was a cloud in the later image.
-            # Applying check whether dNDVI < -0.2, i.e. greenness has decreased over changed areas
-    
-            tile_log.info("Update of the report image product based on change detection image.")
-            raster_manipulation.change_from_class_maps(
-                old_class_path=latest_class_composite_path,
-                new_class_path=image,
-                change_raster=change_raster,
-                dNDVI_raster=dNDVI_raster,
-                NDVI_raster=NDVI_raster,
-                change_from=from_classes,
-                change_to=to_classes,
-                report_path=output_product,
-                skip_existing=skip_existing,
-                old_image_dir=composite_dir,
-                new_image_dir=l2_masked_image_dir,
-                viband1=4,
-                viband2=3,
-                dNDVI_threshold=-0.2,
-                log=tile_log,
-            )
+            log.warning(f"No class tif images found in {class_image_dir}")
         else:
-            raster_manipulation.change_from_class_maps(
-                latest_class_composite_path,
-                image,
-                change_raster,
-                change_from=from_classes,
-                change_to=to_classes,
-                skip_existing=skip_existing,
+            # sort class images by image acquisition date
+            class_image_paths = list(
+                filter(filesystem_utilities.get_image_acquisition_time, class_image_paths)
             )
-    
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Post-classification change detection complete.")
-        tile_log.info("---------------------------------------------------------------")
-    
-        tile_log.info(
-            "Compressing tiff files in directory {} and all subdirectories".format(
-                probability_image_dir
+            class_image_paths.sort(
+                key=lambda x: filesystem_utilities.get_image_acquisition_time(x)
             )
-        )
-        for root, dirs, files in os.walk(probability_image_dir):
-            all_tiffs = [
-                image_name for image_name in files if image_name.endswith(".tif")
-            ]
-            for this_tiff in all_tiffs:
-                raster_manipulation.compress_tiff(
-                    os.path.join(root, this_tiff), os.path.join(root, this_tiff)
+            for index, image in enumerate(class_image_paths):
+                tile_log.info(f"{index}: {image}")
+        
+            # find the latest available composite
+            try:
+                latest_composite_name = filesystem_utilities.sort_by_timestamp(
+                    [
+                        image_name
+                        for image_name in os.listdir(composite_dir)
+                        if image_name.endswith(".tif")
+                    ],
+                    recent_first=True,
+                )[0]
+                latest_composite_path = os.path.join(composite_dir, latest_composite_name)
+                tile_log.info("Most recent existing composite:")
+                tile_log.info(f"  {latest_composite_path}")
+            except IndexError:
+                tile_log.critical(
+                    "Latest composite not found. The first time you run this script, you need to include the "
+                    "--build-composite flag to create a base composite to work off. If you have already done this,"
+                    "check that the earliest dated image in your images/merged folder is later than the earliest"
+                    " dated image in your composite/ folder."
                 )
-    
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info(
-            "Compressing tiff files in directory {} and all subdirectories".format(
-                sieved_image_dir
+                sys.exit(1)
+        
+            latest_class_composite_path = os.path.join(
+                class_image_dir,
+                [
+                    f.path
+                    for f in os.scandir(class_image_dir)
+                    if f.is_file()
+                    and os.path.basename(latest_composite_path)[:-4] in f.name
+                    and f.name.endswith(".tif")
+                ][0],
             )
-        )
-        tile_log.info("---------------------------------------------------------------")
-        for root, dirs, files in os.walk(sieved_image_dir):
-            all_tiffs = [
-                image_name for image_name in files if image_name.endswith(".tif")
-            ]
-            for this_tiff in all_tiffs:
-                raster_manipulation.compress_tiff(
-                    os.path.join(root, this_tiff), os.path.join(root, this_tiff)
+        
+            if not os.path.exists(latest_class_composite_path):
+                tile_log.critical(
+                    "Latest class composite not found. The first time you run this script, you need to include the "
+                    "--build-composite flag to create a base composite to work off. If you have already done this,"
+                    "check that the earliest dated image in your images/merged folder is later than the earliest"
+                    " dated image in your composite/ folder. Then, you need to run the --classify option."
                 )
-
-        '''    
-        #do_dev is now depracated
-        if not config_dict["do_dev"]:
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
-            tile_log.info(
-                "Creating aggregated report file. Deprecated in the development version."
-            )
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
-
-            date_image_paths = [
-                f.path
-                for f in os.scandir(probability_image_dir)
-                if f.is_file() and f.name.endswith(".tif") and "change_" in f.name
-            ]
-            if len(date_image_paths) == 0:
-                raise FileNotFoundError(
-                    "No class images found in {}.".format(categorised_image_dir)
-                )
-    
+                sys.exit(1)
+        
+            # set the name of the report file
             before_timestamp = filesystem_utilities.get_change_detection_dates(
                 os.path.basename(latest_class_composite_path)
             )[0]
+            # Timestamp report with the date of most recent classified image that 
+            #   contributes to it
             after_timestamp = filesystem_utilities.get_image_acquisition_time(
                 os.path.basename(class_image_paths[-1])
             )
+            # Previously:
+            # gets timestamp of the earliest change image of those available in class_image_path
+            # after_timestamp  = pyeo.filesystem_utilities.get_image_acquisition_time(os.path.basename(class_image_paths[0]))
             output_product = os.path.join(
                 probability_image_dir,
                 "report_{}_{}_{}.tif".format(
                     before_timestamp.strftime("%Y%m%dT%H%M%S"),
                     tile_to_process,
-                    # tile_id,
                     after_timestamp.strftime("%Y%m%dT%H%M%S"),
                 ),
             )
-            tile_log.info("Combining date maps: {}".format(date_image_paths))
-            raster_manipulation.combine_date_maps(date_image_paths, output_product)
-        '''    
     
-        tile_log.info(
-            f"Report image product completed / updated: {output_product}"
-        )
-            
-        if config_dict["do_all"] or config_dict["do_vectorise"]:
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Starting Vectorisation of the Change Report Rasters " +
-                          f"of Tile: {tile_to_process}")
-            tile_log.info("---------------------------------------------------------------")
-            output_vector_products = []
-            # get all report.tif file names that are within the root_dir with 
-            #   search pattern from the probabilities subdirectory
-            report_tif_pattern = f"{os.sep}output{os.sep}{probability_image_dir}"+\
-                "{os.sep}report*.tif"
-            search_pattern_1 = f"{tile_to_process}{report_tif_pattern}"
-            change_report_paths = glob.glob(
-                os.path.join(tile_dir, tile_to_process, search_pattern_1)
+            # check whether a report file of that name already exists
+            if os.path.isfile(output_product):
+                tile_log.info(f"Report file already exists:  {output_product}")
+            else:
+                tile_log.info(f"Report file name will be:  {output_product}")
+    
+            # if an earlier report file exists, archive it
+            n_report_files = len(
+                [
+                    f
+                    for f in os.scandir(probability_image_dir)
+                    if f.is_file()
+                    and f.name.startswith("report_")
+                    and f.name.endswith(".tif")
+                ]
             )
-            # ... and from the reports subdirectory
-            report_tif_pattern = f"{os.sep}output{os.sep}reports{os.sep}"+\
-                "report*.tif"
-            search_pattern_2 = f"{tile_to_process}{report_tif_pattern}"
-            for g in glob.glob(os.path.join(tile_dir, search_pattern_2)):
-                change_report_paths.append(g)
+    
+            if n_report_files > 0:
+                output_products_existing = [
+                    f.path
+                    for f in os.scandir(probability_image_dir)
+                    if f.is_file()
+                    and f.name.startswith("report_")
+                    and f.name.endswith(".tif")
+                ]
+                for output_product_existing in output_products_existing:
+                    # do not archive the current report image file
+                    if output_product_existing != output_product:
+                        tile_log.info(
+                            "Found existing earlier report image product: "+
+                            f" {output_product_existing}"
+                            )
+            
+                        output_product_existing_archived = os.path.join(
+                            os.path.dirname(output_product_existing),
+                            "archived_" + os.path.basename(output_product_existing),
+                        )
+                        tile_log.info(
+                            "Renaming existing report image product to: "+
+                            f" {output_product_existing_archived}"
+                        )
+                        os.rename(
+                            output_product_existing, 
+                            output_product_existing_archived
+                            )
+        
+            # find change patterns in the stack of classification images
+            for index, image in enumerate(class_image_paths):
+                before_timestamp = filesystem_utilities.get_change_detection_dates(
+                    os.path.basename(latest_class_composite_path)
+                )[0]
+                after_timestamp = filesystem_utilities.get_image_acquisition_time(
+                    os.path.basename(image)
+                )
+                tile_log.info(
+                    f"Processing class image {index+1} of "+
+                    f"{len(class_image_paths)} - filename: {image}"
+                    )
+                #tile_log.info("  early time stamp: {}".format(before_timestamp))
+                #tile_log.info("  late  time stamp: {}".format(after_timestamp))
+                change_raster = os.path.join(
+                    probability_image_dir,
+                    "change_{}_{}_{}.tif".format(
+                        before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                        tile_to_process,
+                        after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                    ),
+                )
+                
+                # skip if change maps already exist and skip_existing is True
+                if os.path.isfile(change_raster) and skip_existing:
+                    tile_log.info(
+                        f"  Change raster file already exists:   {change_raster}"
+                    )
+                    tile_log.info("    Skipping change raster production.")
+                else:            
+                    tile_log.info(
+                        f"  Change raster file to be created:   {change_raster}"
+                    )
+        
+                    dNDVI_raster = os.path.join(
+                        probability_image_dir,
+                        "dNDVI_{}_{}_{}.tif".format(
+                            before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                            tile_to_process,
+                            after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                        ),
+                    )
+                    tile_log.info(
+                        "  dNDVI raster file to be created: {}".format(dNDVI_raster)
+                    )
+        
+                    NDVI_raster = os.path.join(
+                        probability_image_dir,
+                        "NDVI_{}_{}_{}.tif".format(
+                            before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                            tile_to_process,
+                            after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                        ),
+                    )
+                    #tile_log.info(
+                    #    "  I.R. NDVI raster file of change image to be created: {}".format(
+                    #        NDVI_raster
+                    #    )
+                    #)
+                    
+                    # The following function call looks for changes from class 
+                    #   'change_from' in the composite to any of the 
+                    #   'change_to_classes' in the change images. Pixel values are 
+                    #   the acquisition date of the detected change of interest or 
+                    #   zero.
+                    # Applying check whether dNDVI < -0.2, i.e. greenness has 
+                    #   decreased over changed areas
+            
+                    # TODO: In change_from_class_maps(), add a flag (e.g. -1) whether a pixel was a cloud in the later image.
+                    tile_log.info("Update of the report image product based on change detection image.")
+                    raster_manipulation.change_from_class_maps(
+                        old_class_path=latest_class_composite_path,
+                        new_class_path=image,
+                        change_raster=change_raster,
+                        dNDVI_raster=dNDVI_raster,
+                        NDVI_raster=NDVI_raster,
+                        change_from=from_classes,
+                        change_to=to_classes,
+                        report_path=output_product,
+                        skip_existing=skip_existing,
+                        old_image_dir=composite_dir,
+                        new_image_dir=l2_masked_image_dir,
+                        viband1=4,
+                        viband2=3,
+                        dNDVI_threshold=-0.2,
+                        log=tile_log,
+                    )
+        
+            for root, dirs, files in os.walk(probability_image_dir):
+                all_tiffs = [
+                    image_name for image_name in files if image_name.endswith(".tif")
+                ]
+            if len(all_tiffs) > 0:
+                tile_log.info(
+                    f"Compressing tiff files in {probability_image_dir} and all subdirectories"
+                    )
+                for this_tiff in all_tiffs:
+                    raster_manipulation.compress_tiff(
+                        os.path.join(root, this_tiff), 
+                        os.path.join(root, this_tiff),
+                        tile_log
+                    )
+        
+            for root, dirs, files in os.walk(sieved_image_dir):
+                all_tiffs = [
+                    image_name for image_name in files if image_name.endswith(".tif")
+                ]
+            if len(all_tiffs) > 0:
+                tile_log.info(
+                    f"Compressing tiff files in {sieved_image_dir} and all subdirectories"
+                    )
+                for this_tiff in all_tiffs:
+                    raster_manipulation.compress_tiff(
+                        os.path.join(root, this_tiff), 
+                        os.path.join(root, this_tiff),
+                        tile_log
+                    )
+    
+            tile_log.info("---------------------------------------------------------------")
+            tile_log.info("Post-classification change detection complete.")
+            tile_log.info("---------------------------------------------------------------")
+        
+            '''    
+            #do_dev is now depracated
+            if not config_dict["do_dev"]:
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+                tile_log.info(
+                    "Creating aggregated report file. Deprecated in the development version."
+                )
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+    
+                date_image_paths = [
+                    f.path
+                    for f in os.scandir(probability_image_dir)
+                    if f.is_file() and f.name.endswith(".tif") and "change_" in f.name
+                ]
+                if len(date_image_paths) == 0:
+                    raise FileNotFoundError(
+                        "No class images found in {}.".format(categorised_image_dir)
+                    )
+        
+                before_timestamp = filesystem_utilities.get_change_detection_dates(
+                    os.path.basename(latest_class_composite_path)
+                )[0]
+                after_timestamp = filesystem_utilities.get_image_acquisition_time(
+                    os.path.basename(class_image_paths[-1])
+                )
+                output_product = os.path.join(
+                    probability_image_dir,
+                    "report_{}_{}_{}.tif".format(
+                        before_timestamp.strftime("%Y%m%dT%H%M%S"),
+                        tile_to_process,
+                        # tile_id,
+                        after_timestamp.strftime("%Y%m%dT%H%M%S"),
+                    ),
+                )
+                tile_log.info("Combining date maps: {}".format(date_image_paths))
+                raster_manipulation.combine_date_maps(date_image_paths, output_product)
+            '''    
+        
+            tile_log.info(
+                f"Report image product completed / updated: {output_product}"
+            )
+                
+            if config_dict["do_all"] or config_dict["do_vectorise"]:
+                tile_log.info("---------------------------------------------------------------")
+                tile_log.info("Starting Vectorisation of the Change Report Rasters " +
+                              f"of tile: {tile_to_process}")
+                tile_log.info("---------------------------------------------------------------")
+                # get all report tif file names that are within the root_dir with 
+                #   search pattern from the probabilities subdirectory
+                report_tif_pattern = f"{os.path.join(probability_image_dir, 'report*.tif')}"
+                tile_log.info(f"Searching for {report_tif_pattern}...")
+                change_report_paths = glob.glob(report_tif_pattern)
+                #tile_log.info(f"change report paths from first search: {change_report_paths}")
+                '''                
+                # ... and from the reports subdirectory
+                report_tif_pattern = f"{os.path.join(reports_dir, 'report*.tif')}"
+                tile_log.info(f"Searching for {report_tif_pattern}...")
+                for g in glob.glob(report_tif_pattern):
+                    change_report_paths.append(g)
+                '''                
                 if len(change_report_paths) == 0:
                     tile_log.error("No change report image path(s) found.")
-                    tile_log.error("Search patterns used: "+
-                                   f"{search_pattern_1} \n{search_pattern_2}")
-                    sys.exit(1)
+                    tile_log.error("They may have been zipped.")
                 else:
-                    tile_log.info("")
                     tile_log.info("Change report image path(s) found:")
-                    for p in change_report_paths:
-                        tile_log.info(f"  {p}")
+                    for change_report_path in change_report_paths:
+                        tile_log.info(f"  {change_report_path}")
                     tile_log.info("")
-
-                # iterate over the list of report image files
-                for change_report_path in change_report_paths:
-                    tile_log.info(f"change_report_path = {change_report_path}")
-
-                    # skip if vector file exists?
-                    #if os.path.exists(change_report_path[:-4]+".shp"):
-                    #    tile_log.info(f"Skipping. Found {change_report_path[:-4]}.shp")
-                    #else:
-
-                    log.info("calling vectorise_from_band")
-
-                    # band 15 in pyeo 1.0 was band=6 in pyeo 0.9
-                    path_vectorised_binary = vectorise_from_band(
-                        change_report_path=change_report_path,
-                        band=15,
-                        log=tile_log
-                    )
-
-                    log.info("calling clean_zero_nodata...")
-
-                    path_vectorised_binary_filtered = clean_zero_nodata_vectorised_band(
-                        vectorised_band_path=path_vectorised_binary,
-                        log=tile_log
-                    )
-            
-                    tile_log.info("vectorised_file_path = \n"+
-                                  f"{path_vectorised_binary_filtered}")
-
-                    log.info("calling zonal_stats")
-
-                    # band 5 in pyeo 1.0 was band 2 in pyeo 0.9
-                    rb_ndetections_zstats_df = zonal_statistics(
-                        raster_path=change_report_path,
-                        shapefile_path=path_vectorised_binary_filtered,
-                        report_band=5,
-                        log=tile_log
-                        )
-                
-                    # band 9 in pyeo 1.0 was band 5 in pyeo 0.9
-                    rb_confidence_zstats_df = zonal_statistics(
-                        raster_path=change_report_path,
-                        shapefile_path=path_vectorised_binary_filtered,
-                        report_band=9,
-                        log=tile_log
-                    )
-                
-                    # band 4 in pyeo 1.0 was band 7 in pyeo 0.9
-                    rb_first_changedate_zstats_df = zonal_statistics(
-                        raster_path=change_report_path,
-                        shapefile_path=path_vectorised_binary_filtered,
-                        report_band=4,
-                        log=tile_log
-                    )
-                    
-                    # table joins, area, lat lon, county
-                    log.info("calling merge_and_calculate_spatial")
-                    output_vector_products.append(
-                        merge_and_calculate_spatial(
-                            rb_ndetections_zstats_df=rb_ndetections_zstats_df,
-                            rb_confidence_zstats_df=rb_confidence_zstats_df,
-                            rb_first_changedate_zstats_df=rb_first_changedate_zstats_df,
-                            path_to_vectorised_binary_filtered=path_vectorised_binary_filtered,
-                            write_csv=False,
-                            write_shapefile=True,
-                            write_kml=False,
-                            write_pkl=False,
+        
+                    # iterate over the list of report image files
+                    for change_report_path in change_report_paths:
+                        #tile_log.info(f"change_report_path = {change_report_path}")
+        
+                        # skip if vector file exists?
+                        #if os.path.exists(change_report_path[:-4]+".shp"):
+                        #    tile_log.info(f"Skipping. Found {change_report_path[:-4]}.shp")
+                        #else:
+        
+                        #tile_log.info("calling vectorise_from_band")
+        
+                        # band 15 in pyeo 1.0 was band=6 in pyeo 0.9
+                        path_vectorised_binary = vectorise_from_band(
                             change_report_path=change_report_path,
-                            log=tile_log,
-                            epsg=epsg,
-                            level_1_boundaries_path=level_1_boundaries_path,
-                            tileid=tile_to_process,
-                            delete_intermediates=True,
+                            band=15,
+                            log=tile_log
                         )
-                    )
-
-            tile_log.info("Compressing the report image.")
-            raster_manipulation.compress_tiff(output_product, output_product)
-
-            # log output file names and move from probabilities dir to reports dir
-            # move all shapefile related files and tables
-            file_endings = ["prj","shp","shx","dbf","cpg"]
-            for i in range(len(output_vector_products)):
-                filename_start = output_vector_products[i].split(sep=os.sep)[-1].split(sep=".")[0]
-                for fe in file_endings:
-                    shutil.move(
-                        os.path.join(
-                            probability_image_dir, 
-                            filename_start+"."+fe
-                            ), 
-                        reports_dir
+        
+                        #tile_log.info("calling clean_zero_nodata...")
+        
+                        path_vectorised_binary_filtered = clean_zero_nodata_vectorised_band(
+                            vectorised_band_path=path_vectorised_binary,
+                            log=tile_log
                         )
-                    tile_log.info("  {}".format(os.path.join(
-                            reports_dir, 
-                            filename_start+"."+fe
+                
+                        #tile_log.info(f"vectorised_file_path = {path_vectorised_binary_filtered}")
+        
+                        #tile_log.info("calling zonal_stats")
+        
+                        # band 5 in pyeo 1.0 was band 2 in pyeo 0.9
+                        rb_ndetections_zstats_df = zonal_statistics(
+                            raster_path=change_report_path,
+                            shapefile_path=path_vectorised_binary_filtered,
+                            report_band=5,
+                            log=tile_log
                             )
+                    
+                        # band 9 in pyeo 1.0 was band 5 in pyeo 0.9
+                        rb_confidence_zstats_df = zonal_statistics(
+                            raster_path=change_report_path,
+                            shapefile_path=path_vectorised_binary_filtered,
+                            report_band=9,
+                            log=tile_log
                         )
-                    )
+                    
+                        # band 4 in pyeo 1.0 was band 7 in pyeo 0.9
+                        rb_first_changedate_zstats_df = zonal_statistics(
+                            raster_path=change_report_path,
+                            shapefile_path=path_vectorised_binary_filtered,
+                            report_band=4,
+                            log=tile_log
+                        )
 
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Vectorisation complete")
-            tile_log.info("---------------------------------------------------------------")
+                        empty_zonal_stats = False
+                        if rb_ndetections_zstats_df is None:
+                            tile_log.warning("Empty zonal statistics dataframe"+
+                                             " for number of detections.")
+                            empty_zonal_stats = True
+                        if rb_confidence_zstats_df is None:
+                            tile_log.warning("Empty zonal statistics dataframe"+
+                                             " for confidence layer.")
+                            empty_zonal_stats = True
+                        if rb_first_changedate_zstats_df is None:
+                            tile_log.warning("Empty zonal statistics dataframe."+
+                                             "for first date of change detected.")
+                            empty_zonal_stats = True
 
-        if config_dict["do_delete"]:
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
-            tile_log.info(
-                "Deleting intermediate class images used in change detection."
-            )
-            tile_log.info(
-                "They can be recreated from the cloud-masked, band-stacked " + 
-                "L2A images and the saved model."
-            )
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
-            directories = [
-                categorised_image_dir,
-                sieved_image_dir,
-                probability_image_dir,
-            ]
-            for directory in directories:
-                paths = [f for f in os.listdir(directory)]
-                for f in paths:
-                    # keep the classified composite layers and the report image
-                    #   product for the next change detection
-                    if not f.startswith("composite_") and not f.startswith("report_"):
-                        tile_log.info("Deleting {}".format(os.path.join(directory, f)))
-                        if os.path.isdir(os.path.join(directory, f)):
-                            shutil.rmtree(os.path.join(directory, f))
+                        if empty_zonal_stats:
+                            pass
                         else:
-                            os.remove(os.path.join(directory, f))
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
-            tile_log.info("Deletion of intermediate file products complete.")
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
-        else:
-            if config_dict["do_zip"]:
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                tile_log.info(
-                    "Zipping intermediate class images used in change detection"
-                )
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                directories = [categorised_image_dir, sieved_image_dir]
-                for directory in directories:
-                    zip_contents(
-                        directory, notstartswith=["composite_", "report_"]
-                    )
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                tile_log.info("Zipping complete")
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-    
-        tile_log.info("---------------------------------------------------------------")
-        tile_log.info(
-            "Change detection and report image product updating, file compression, zipping"
-        )
-        tile_log.info(
-            "and deletion of intermediate file products (if selected) are complete."
-        )
-        tile_log.info("---------------------------------------------------------------")
-    
-        if config_dict["do_delete"]:
-            tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Deleting temporary directories starting with 'tmp*'")
-            tile_log.info("These can be left over from interrupted processing runs.")
-            tile_log.info("---------------------------------------------------------------")
-            for root, dirs, files in os.walk(tile_dir):
-                temp_dirs = [d for d in dirs if d.startswith("tmp")]
-                for temp_dir in temp_dirs:
-                    tile_log.info("Deleting {}".format(os.path.join(root, temp_dir)))
-                    if os.path.isdir(os.path.join(tile_dir, f)):
-                        shutil.rmtree(os.path.join(tile_dir, f))
+                            # table joins, area, lat lon, county
+                            #tile_log.info("calling merge_and_calculate_spatial")
+                            output_vector_products = merge_and_calculate_spatial(
+                                    rb_ndetections_zstats_df=rb_ndetections_zstats_df,
+                                    rb_confidence_zstats_df=rb_confidence_zstats_df,
+                                    rb_first_changedate_zstats_df=rb_first_changedate_zstats_df,
+                                    path_to_vectorised_binary_filtered=path_vectorised_binary_filtered,
+                                    write_csv=False,
+                                    write_shapefile=True,
+                                    write_kml=False,
+                                    write_pkl=False,
+                                    change_report_path=change_report_path,
+                                    log=tile_log,
+                                    epsg=epsg,
+                                    level_1_boundaries_path=level_1_boundaries_path,
+                                    tileid=tile_to_process,
+                                    delete_intermediates=True
+                                    )
+            
+                            #tile_log.info(f"Returned output vector file paths: {output_vector_products}")
+        
+                    tile_log.info("Compressing the report image.")
+                    raster_manipulation.compress_tiff(output_product, 
+                                                      output_product,
+                                                      tile_log
+                                                      )
+        
+                    # log output file names and move from probabilities dir to reports dir
+                    # move all shapefile related files and tables, pickle objects,
+                    #    kml files and csv tables to reports dir if they exist
+                    if len(output_vector_products) > 0:
+                        file_endings = ["prj","shp","shx","dbf","cpg", "kml", "pkl", "csv"]
+                        for i, f in enumerate(output_vector_products):
+                            filepath_start = f.split(".")[0]
+                            for fe in file_endings:
+                                this_file =  os.path.join(probability_image_dir, 
+                                                          filepath_start+"."+fe
+                                                          ) 
+                                if os.path.isfile(this_file):
+                                    shutil.move(
+                                        this_file,
+                                        reports_dir
+                                        )
+                                    tile_log.info(f"  Moved {f} to reports dir: {this_file}")
                     else:
-                        tile_log.warning(
-                            "This should not have happened. "+
-                            f"{os.path.join(root, temp_dir)} is not a "+
-                            "directory. Skipping deletion."
+                        tile_log.error("  List of created output vector files is empty.")
+    
+                tile_log.info("---------------------------------------------------------------")
+                tile_log.info("Vectorisation complete")
+                tile_log.info("---------------------------------------------------------------")
+    
+            if config_dict["do_delete"]:
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+                tile_log.info(
+                    "Deleting intermediate class images used in change detection."
+                )
+                tile_log.info(
+                    "They can be recreated from the cloud-masked, band-stacked " + 
+                    "L2A images and the saved model."
+                )
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+                directories = [
+                    categorised_image_dir,
+                    sieved_image_dir,
+                    probability_image_dir,
+                ]
+                for directory in directories:
+                    paths = [f for f in os.listdir(directory)]
+                    for f in paths:
+                        # keep the classified composite layers and the report image
+                        #   product for the next change detection
+                        if not f.startswith("composite_") and not f.startswith("report_"):
+                            tile_log.info("Deleting {}".format(os.path.join(directory, f)))
+                            if os.path.isdir(os.path.join(directory, f)):
+                                shutil.rmtree(os.path.join(directory, f))
+                            else:
+                                os.remove(os.path.join(directory, f))
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+                tile_log.info("Deletion of intermediate file products complete.")
+                tile_log.info(
+                    "---------------------------------------------------------------"
+                )
+            else:
+                if config_dict["do_zip"]:
+                    tile_log.info(
+                        "---------------------------------------------------------------"
+                    )
+                    tile_log.info(
+                        "Zipping intermediate class images used in change detection"
+                    )
+                    tile_log.info(
+                        "---------------------------------------------------------------"
+                    )
+                    directories = [categorised_image_dir, sieved_image_dir]
+                    for directory in directories:
+                        zip_contents(
+                            directory, notstartswith=["composite_", "report_"]
                         )
+                    tile_log.info(
+                        "---------------------------------------------------------------"
+                    )
+                    tile_log.info("Zipping complete")
+                    tile_log.info(
+                        "---------------------------------------------------------------"
+                    )
+        
             tile_log.info("---------------------------------------------------------------")
-            tile_log.info("Deletion of temporary directories complete.")
+            tile_log.info(
+                "Change detection and report image product updating, file "+
+                "compression, zipping and deletion of intermediate file products "+
+                "(if selected) are complete."
+                )
             tile_log.info("---------------------------------------------------------------")
+        
+            if config_dict["do_delete"]:
+                tile_log.info("---------------------------------------------------------------")
+                tile_log.info("Deleting temporary directories starting with 'tmp*'")
+                tile_log.info("These can be left over from interrupted processing runs.")
+                tile_log.info("---------------------------------------------------------------")
+                for root, dirs, files in os.walk(tile_dir):
+                    temp_dirs = [d for d in dirs if d.startswith("tmp")]
+                    for temp_dir in temp_dirs:
+                        tile_log.info("Deleting {}".format(os.path.join(root, temp_dir)))
+                        if os.path.isdir(os.path.join(tile_dir, f)):
+                            shutil.rmtree(os.path.join(tile_dir, f))
+                        else:
+                            tile_log.warning(
+                                "This should not have happened. "+
+                                f"{os.path.join(root, temp_dir)} is not a "+
+                                "directory. Skipping deletion."
+                            )
+                tile_log.info("---------------------------------------------------------------")
+                tile_log.info("Deletion of temporary directories complete.")
+                tile_log.info("---------------------------------------------------------------")
 
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(f"---  TILE PROCESSING END: {tile_to_process} ---")

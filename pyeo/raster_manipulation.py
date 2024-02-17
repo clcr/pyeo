@@ -3134,14 +3134,14 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
     if not os.path.exists(out_tif_directory):
         os.mkdir(out_tif_directory)
 
-    log.info(f"Radiometric offset correction if processing_baseline > 0400 in" + \
-             " directory: {in_tif_directory}")
-    log.info("NOTE: Processing baseline in the file names will be set to e.g. \"A400\"" + \
+    log.info("Radiometric offset correction if processing_baseline > 0400 in" +
+             f" directory: {in_tif_directory}")
+    log.info("NOTE: Processing baseline in the file names will be set to e.g. 'A400'" +
              " if correction has been applied.")
-    log.info("NOTE: Processing baseline 9999 for some L2A products originates from "+\
-             " ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem."+\
-             " These will be skipped.\n"+\
-             " See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html")
+    log.info("NOTE: Processing baseline 9999 for some L2A products originates from "+
+             " ESA Cloud.Ferro and not from the Copernicus Data Space Ecosystem."+
+             " These will be skipped.")
+    log.info(" See https://documentation.dataspace.copernicus.eu/Data/Sentinel2.html")
 
     image_files = [
         f
@@ -6142,9 +6142,12 @@ def sieve_directory(
     return out_image_paths
 
 
-def compress_tiff(in_path, out_path):
+def compress_tiff(in_path: str, 
+                  out_path: str,
+                  log: logging.Logger
+                  ):
     """
-    Compresses a Geotiff file using gdal.
+    LZW-compresses a Geotiff file using gdal if not already done.
 
     Parameters
     ----------
@@ -6152,19 +6155,28 @@ def compress_tiff(in_path, out_path):
         The path to the input GeoTiff file.
     out_path : str
         The path to the output GeoTiff file.
+    log : logging.Logger
+        Logging output
     """
+    
+    dataset = gdal.OpenEx(in_path)
+    md = dataset.GetMetadata('IMAGE_STRUCTURE')
+    compression = md.get('COMPRESSION', None)
+    if compression == 'LZW':
+        log.info(f"GeoTiff file is already LZW compressed: {in_path}")
+        return
+    log.info(f"Compressing GeoTiff file: {in_path}")
     with TemporaryDirectory(dir=os.path.expanduser('~')) as td:
         try:
             tmp_path = os.path.join(td, "tmp_compressed.tif")
-            # translateoptions = gdal.TranslateOptions(gdal.ParseCommandLine("-of GTiff -co COMPRESS=DEFLATE -co LZW -co OVERVIEWS=NONE"))
             translateoptions = gdal.TranslateOptions(
                 gdal.ParseCommandLine("-of Gtiff -co COMPRESS=LZW")
             )
             gdal.Translate(tmp_path, in_path, options=translateoptions)
             shutil.move(tmp_path, out_path)
         except RuntimeError as e:
-            log.error("Error opening GeoTiff file: {}".format(in_path))
-            log.error("  {}".format(e))
+            log.error(f"Error opening GeoTiff file: {in_path}")
+            log.error(f"  {e}")
     return
 
 
