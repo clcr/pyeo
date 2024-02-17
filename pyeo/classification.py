@@ -159,14 +159,17 @@ def classify_image(
     chunks: int = 4,
     nodata: int = 0,
     skip_existing: bool = False,
+    log: logging.Logger = logging.getLogger("pyeo")
 ) -> str:
     """
 
     Produces a class map from a raster and a model.
 
-    This applies the model's fit() function to each pixel in the input raster, and saves the result into an output
-    raster. The model is presumed to be a scikit-learn fitted model created using one of the other functions in this
-    library (:py:func:`create_model_from_signatures` or :py:func:`create_trained_model`).
+    This applies the model's fit() function to each pixel in the input raster, 
+      and saves the result into an output raster. The model is presumed to be 
+      a scikit-learn fitted model created using one of the other functions in 
+      this library 
+      (:py:func:`create_model_from_signatures` or :py:func:`create_trained_model`).
 
     Parameters
     ----------
@@ -180,23 +183,29 @@ def classify_image(
         The path that the classified map will be saved at.
 
     prob_out_path : str, optional
-        If present, the path that the class probability map will be stored at. Default None
+        If present, the path that the class probability map will be stored at. 
+        Default None
         
     apply_mask : bool, optional
-        If True, uses the .msk file corresponding to the image at image_path to skip any invalid pixels. Default False.
+        If True, uses the .msk file corresponding to the image at image_path 
+        to skip any invalid pixels. Default False.
 
     out_type : str, optional
-        The raster format of the class image. Defaults to "GTiff" (geotif). See gdal docs for valid types.
+        The raster format of the class image. Defaults to "GTiff" (geotif). 
+        See gdal docs for valid types.
 
     chunks : int, optional
-        The number of chunks the image is broken into prior to classification. The smaller this number, the faster
-        classification will run - but the more likely you are to get a outofmemory error. Default 10.
+        The number of chunks the image is broken into prior to classification. 
+        The smaller this number, the faster classification will run - but the 
+        more likely you are to get a outofmemory error. Default 10.
 
     nodata : int, optional
         The value to write to masked pixels. Defaults to 0.
 
     skip_existing : bool, optional
         If true, do not run if class_out_path already exists. Defaults to False.
+
+    log : logging.Logger object into which the log output will be written
 
     Returns
     -------
@@ -205,30 +214,44 @@ def classify_image(
 
     Notes
     -----
-    If you want to create a custom model, the object is presumed to have the following methods and attributes:
+    If you want to create a custom model, the object is presumed to have the 
+      following methods and attributes:
 
     -   - model.n_classes_ : the number of classes the model will produce
     -   - model.n_cores : The number of CPU cores used to run the model
-    -   - model.predict() : A function that will take a set of band inputs from a pixel and produce a class.
-    -   - model.predict_proba() : If called with prob_out_path, a function that takes a set of n band inputs from a pixel and produces :code:`n_classes_` outputs corresponding to the probabilties of a given pixel being that class
+    -   - model.predict() : A function that will take a set of band inputs from 
+                            a pixel and produce a class.
+    -   - model.predict_proba() : If called with prob_out_path, a function that 
+                            takes a set of n band inputs from a pixel and 
+                            produces :code:`n_classes_` outputs corresponding 
+                            to the probabilties of a given pixel being 
+                            that class
 
     """
 
     if skip_existing:
-        log.info("Checking for existing classification {}".format(class_out_path))
+        log.info("Checking for existing classification files:")
+        log.info(f"  {class_out_path}")
+        # also check whether it has been zipped
+        zipped_out_path = class_out_path.split(".")[0] + '.zip'
+        log.info(f"  {zipped_out_path}")
         if os.path.isfile(class_out_path):
             try:
                 f = gdal.Open(class_out_path)
                 f = None
                 log.info("Class image exists and is readable - skipping.")
+                log.info(f"  {class_out_path}")
                 return class_out_path
             except:
                 log.info(
-                    "Class image exists but is not readable - deleting and redoing: {}".format(
-                        class_out_path
+                    "Class image exists but is not readable - deleting and "+
+                    f"redoing: {class_out_path}"
                     )
-                )
                 os.remove(class_out_path)
+        if os.path.exists(zipped_out_path):
+            log.info("Zipped class image exists and is readable - skipping.")
+            log.info(f"  {zipped_out_path}")
+            return zipped_out_path
     if not os.path.exists(image_path):
         log.error("File not found: {}".format(image_path))
     if not os.path.exists(model_path):
@@ -238,7 +261,7 @@ def classify_image(
     try:
         image = gdal.Open(image_path)
     except RuntimeError as e:
-        log.info("Exception: {}".format(e))
+        log.error("Exception: {}".format(e))
         exit(1)
     if chunks == None:
         log.info("No chunk size given, attempting autochunk.")
@@ -624,8 +647,9 @@ def classify_directory(
     log: logging.Logger = logging.getLogger("pyeo")
 ) -> None:
     """
-    Classifies every file ending in .tif in in_dir using model at model_path. Outputs are saved
-    in class_out_dir and prob_out_dir, named [input_name]_class and _prob, respectively.
+    Classifies every file ending in .tif in in_dir using model at model_path. 
+    Outputs are saved in class_out_dir and prob_out_dir, named 
+      [input_name]_class and _prob, respectively.
 
     See the documentation for :py:func:`classify_image` for more details.
 
@@ -638,13 +662,17 @@ def classify_directory(
     class_out_dir : str
         The directory that will store the classified maps
     prob_out_dir : str, optional
-        If present, the directory that will store the probability maps of the classified maps. If not provided, will not generate probability maps.
+        If present, the directory that will store the probability maps of the 
+          classified maps. If not provided, will not generate probability maps.
     apply_mask : bool, optional
-        If present, uses the corresponding .msk files to mask the directories. Defaults to True.
+        If present, uses the corresponding .msk files to mask the directories. 
+          Defaults to True.
     out_type : str, optional
-        The raster format of the class image. Defaults to "GTiff" (geotif). See gdal docs for valid datatypes.
+        The raster format of the class image. Defaults to "GTiff" (geotif). 
+          See gdal docs for valid datatypes.
     chunks : int, optional
-        The number of chunks to break each image into for processing. See :py:func:`classify_image`
+        The number of chunks to break each image into for processing. 
+          See :py:func:`classify_image`
     skip_existing : boolean, optional
         If True, skips the classification if the output file already exists.
     log : logging.Logger object into which the log output will be written
@@ -676,6 +704,7 @@ def classify_directory(
             out_format=out_type,
             chunks=chunks,
             skip_existing=skip_existing,
+            log=log
         )
 
 
@@ -1511,7 +1540,7 @@ def train_rf_model(
                 log.info(image_array.shape)
                 log.info(shape_array.shape)
                 for j in range(image_array.shape[0] - 1):
-                    log.info("\n{}".format(shape_array[j, :]))
+                    log.info("  {}".format(shape_array[j, :]))
                 X = image_array[:, shape_array > 0]
                 Y = shape_array[shape_array > 0].flatten()
                 log.info(X.shape)
@@ -1719,14 +1748,14 @@ def train_rf_model(
     log.info("            Reference class ->")
     log.info("                |")
     log.info("Predicted class v")
-    log.info("\n{}".format(confusion))
+    log.info("{}".format(confusion))
     # Matt: 13/03/2023, added classification report functionality
     # Classification Report: useful metrics, recall, precision, accuracy, f1-score.
     log.info("--" * 20)
     report = metrics.classification_report(y_true=testing_classes, y_pred=preds)
     # target_names argument would provide class names in the classification report, but we would need to allow users to input their own labels (in order of digits 1 to n)
     log.info("Classification Report")
-    log.info("\n{}".format(report))
+    log.info("{}".format(report))
 
     # save report
     out_folder = Path(modelfile).parent.absolute()

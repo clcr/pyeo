@@ -429,7 +429,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
     """
         
     for counter, product in enumerate(product_df.itertuples(index=False)):
-        log.info(f"***** Checking {counter+1} of {len(product_df)} : {product.title}")
+        #log.info(f"***** Checking {counter+1} of {len(product_df)} : {product.title}")
 
         # if L1C have been passed, download to the l1c_directory
         if product.processinglevel == "Level-1C":
@@ -440,6 +440,8 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
             #log.info("   Looking for file pattern: " + out_glob)
             matching_l1c = glob.glob(out_glob)
             if matching_l1c:
+                pass
+                '''
                 log.info(f"Skipping download of L1C product : {product.title}")
                 if len(matching_l1c) == 1:
                     log.info(f"  because an L1C product already exists: {matching_l1c[0]}")
@@ -447,11 +449,13 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                     log.info("  because matching L1C product files already exist:")
                     for item in matching_l1c:
                         log.info(f"  {item}")
+                '''
                 continue
             else:
                 out_path = os.path.join(l1c_directory, product.title)
                 if check_for_invalid_l1_data(out_path) == 1:
-                    log.info(f"        {out_path} imagery already exists, skipping download")
+                    pass
+                    #log.info(f"        {out_path} imagery already exists, skipping download")
                     # continue means skip the current iteration and move to the 
                     #   next iteration of the for loop
                     continue
@@ -479,6 +483,8 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
             #log.info("   Looking for file pattern: " + out_glob)
             matching_l2a = glob.glob(out_glob)
             if matching_l2a:
+                pass
+                '''
                 log.info(f"Skipping download of L2A product : {product.title}")
                 if len(matching_l2a) == 1:
                     log.info(f"  because an L2A product already exists: {matching_l2a[0]}")
@@ -486,11 +492,13 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                     log.info("  because matching L2A product files already exist:")
                     for item in matching_l2a:
                         log.info(f"  {item}")
+                '''
                 continue
             else:
                 out_path = os.path.join(l2a_directory, product.title)
                 if check_for_invalid_l2_data(out_path) == 1:
-                    log.info(f"        {out_path} imagery already exists, skipping download")
+                    pass
+                    #log.info(f"        {out_path} imagery already exists, skipping download")
                     # continue means to skip the current iteration and move to the next iteration of the for loop
                     continue
                 try:

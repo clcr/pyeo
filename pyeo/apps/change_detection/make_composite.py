@@ -1123,23 +1123,18 @@ def create_composite(config_path, tile_id="None"):
                     )
 
             tile_log.info(
-                "---------------------------------------------------------------"
-            )
-            tile_log.info(
-                "Compressing tiff files in directory {} and all subdirectories".format(
-                    composite_dir
+                "Compressing tiff files in {composite_dir} and all subdirectories"
                 )
-            )
-            tile_log.info(
-                "---------------------------------------------------------------"
-            )
             for root, dirs, files in os.walk(composite_dir):
                 all_tiffs = [
                     image_name for image_name in files if image_name.endswith(".tif")
                 ]
+            if len(all_tiffs) > 0:
                 for this_tiff in all_tiffs:
                     raster_manipulation.compress_tiff(
-                        os.path.join(root, this_tiff), os.path.join(root, this_tiff)
+                        os.path.join(root, this_tiff), 
+                        os.path.join(root, this_tiff),
+                        tile_log
                     )
 
             tile_log.info(

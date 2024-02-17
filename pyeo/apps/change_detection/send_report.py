@@ -215,6 +215,57 @@ def send_report(config_path, tile_id="None"):
             "Sending out information about vectorised reports."
         )
 
+        '''
+        from Ciaran, needs writing a vectorisation.send_email function and can then be tested.
+
+        try:
+            # hacky; fix later
+            last_class_name = fu.sort_by_timestamp(os.listdir(args.class_raster_path))[0].rsplit('.')[0]+".tif"
+            last_class_path = os.path.join(args.class_raster_path, last_class_name)
+            last_comparison_name = fu.sort_by_timestamp(os.listdir(args.imagery_path))[0].rsplit('.')[0]+".tif"
+            last_comparison_path = os.path.join(args.imagery_path, last_comparison_name)
+            last_timestamp = re.findall(r"\d{8}T\d{6}", last_class_name)[0]
+            kml_path = os.path.join(args.output_kml_path, "{}.kml".format(last_timestamp))
+            json_path = os.path.join(args.output_json_path, "{}.json".format(last_timestamp))
+            comparison_dir = os.path.join(args.comparison_dir, last_timestamp)
+            try:
+                os.mkdir(comparison_dir)
+            except FileExistsError:
+                pass
+            kml_root_name = "{}_{}".format(args.region, last_timestamp)
+    
+            log.info("Creating report for {}".format(last_class_name))
+    
+            log.info("Creating change report for {} and {}".format(args.class_raster_path, args.imagery_path))
+            report_date = datetime.datetime.now()
+            change_report = rt.ChangeReport(
+                class_raster_path=last_class_path,
+                imagery_path=last_comparison_path,
+                class_of_interest=args.class_of_interest,
+                region=args.region,
+                out_comparison_dir=comparison_dir,
+                date=report_date,
+                max_changes=args.max_polygons,
+                filter_map=args.filter_map,
+                filter_classes=args.filter_classes,
+                log_path=args.log_path
+            )
+            log.info("Creating change event list")
+            change_report.create_change_event_list()
+            log.info("Creating comparison images")
+            change_report.create_before_and_after_images()
+            log.info("Uploading report to AWS")
+            change_report.upload_report_to_backend()
+            if args.display_bucket_credentials and args.display_layer_pallette:
+                log.info("Uploading map to Ecometrica")
+                change_report.upload_to_eolabs(args.display_bucket_credentials, args.display_layer_pallette)
+            log.info("Sending email")
+            change_report.send_email_report(list(args.email_list))
+        except Exception:
+            log.exception("Fatal error in report with email module")
+       '''
+
+
         search_term = "report_*" + tile_to_process + "*.shp"
 
         tile_log.info(

@@ -24,6 +24,7 @@ import os
 #import sys
 import re
 import shutil
+import sys
 import zipfile
 
 import numpy as np
@@ -248,6 +249,8 @@ def conda_check(config_dict: dict, log):
 
     config_dict : dict
         config_dict containing `conda_directory` and `conda_env_name`, which will be checked to see if they exist.
+    log : logging.logger
+        where output will be directed
 
     Returns
     --------
@@ -259,10 +262,11 @@ def conda_check(config_dict: dict, log):
     conda_directory = config_dict["conda_directory"]
     conda_env_name = config_dict["conda_env_name"]
     conda_env_path = f"{conda_directory}{os.sep}envs{os.sep}{conda_env_name}"
-    log.info(conda_env_path)
     if os.path.exists(conda_env_path):
+        log.info(f"conda environment path found: {conda_env_path}")
         return True
     else:
+        log.warning(f"conda environment path from ini file does not exist: {conda_env_path}")
         return False
 
 
@@ -306,11 +310,6 @@ def config_path_to_config_dict(config_path: str):
     )
     config_dict["do_dev"] = config.getboolean("raster_processing_parameters", "do_dev")
     config_dict["do_all"] = config.getboolean("raster_processing_parameters", "do_all")
-
-    # config_dict["do_download_from_scihub"] = config.getboolean("raster_processing_parameters", "do_download_from_scihub")
-
-    # config_dict["do_download_from_dataspace"] = config.getboolean("raster_processing_parameters", "do_download_from_dataspace")
-    
     config_dict["do_classify"] = config.getboolean(
         "raster_processing_parameters", "do_classify"
     )
@@ -329,7 +328,6 @@ def config_path_to_config_dict(config_path: str):
     config_dict["do_delete"] = config.getboolean(
         "raster_processing_parameters", "do_delete"
     )
-
     config_dict["do_zip"] = config.getboolean("raster_processing_parameters", "do_zip")
     config_dict["build_composite"] = config.getboolean(
         "raster_processing_parameters", "do_build_composite"
@@ -340,7 +338,6 @@ def config_path_to_config_dict(config_path: str):
     config_dict["do_skip_existing"] = config.getboolean(
         "raster_processing_parameters", "do_skip_existing"
     )
-
     config_dict["aoi_name"] = config["forest_sentinel"]["aoi_name"]
     config_dict["start_date"] = config["forest_sentinel"]["start_date"]
     config_dict["end_date"] = config["forest_sentinel"]["end_date"]
@@ -355,12 +352,9 @@ def config_path_to_config_dict(config_path: str):
     config_dict["download_source"] = config["raster_processing_parameters"][
         "download_source"
     ]
-
-    # print(config["raster_processing_parameters"]["band_names"])
     config_dict["bands"] = json.loads(
         config["raster_processing_parameters"]["band_names"]
     )
-
     config_dict["resolution_string"] = config["raster_processing_parameters"][
         "resolution_string"
     ]
@@ -456,6 +450,189 @@ def config_path_to_config_dict(config_path: str):
         ]
 
     return config_dict
+
+def config_to_log(config_dict: dict, log: logging.Logger) -> None:
+    """
+    This function echoes the contents of config_dict to the log file.
+    It does not return anything.
+
+    Parameters
+    ----------
+
+    config_dict : dict
+        config_dict variable
+
+    log : logging.Logger
+        log variable
+
+    Returns
+    -------
+
+    None
+
+    """
+    log.info("Contents of the config file:")
+    log.info("----------------------------")
+    for key in config_dict:
+        value = config_dict[key]
+        found = False # flag whether the key was found in and logged
+        if key == "pyeo_dir":
+            log.info(f"Pyeo Working Directory is   : {config_dict['pyeo_dir']}")
+            log.info(f"  Integrated Directory           : {config_dict['integrated_dir']}")
+            log.info(f"  ROI Directory for image search : {config_dict['roi_dir']}")
+            log.info(f"  Geometry Directory for admin shapefile : {config_dict['geometry_dir']}")
+            log.info(
+                f"  Path to the Admin Boundaries for Vectorisation : {config_dict['level_1_boundaries_path']}"
+            )
+            found = True
+        if key == "tile_dir":
+            log.info(f"Main Tile Directory for tile subdirs : {config_dict['tile_dir']}")
+            found = True
+        if key == "environment_manager":
+            log.info(f"    Environment Manager to use is : {value}")
+            if config_dict["environment_manager"] == "conda":
+                log.info(
+                    f"The Conda Environment specified in .ini file is :  {config_dict['conda_env_name']}"
+                    )
+            found = True
+        if key == "epsg":
+            log.info(f"  EPSG code for output map projection: {config_dict['epsg']}")
+            found = True
+        if key == "do_parallel":
+            log.warning("   --do_parallel is depracated")
+            found = True
+        if key == "do_dev":
+            log.warning("   --do_dev is depracated")
+            found = True
+        if key == "do_tile_intersection" and value:
+            log.info("  --do_tile_intersection selected. It enables Sentinel-2 tile " +
+                     "intersection with region of interest (ROI) vector file.")
+            found = True
+        if key == "do_raster":
+            log.warning("   --do_raster is depracated")
+            found = True
+        if key == "do_all" and value:
+            log.info("  --do_all is selected. It enables all processing steps.")
+            found = True
+        if key == "build_composite" and value:
+            log.info("  --build_composite is selected. It makes a baseline image composite")
+            log.info(f"    --download_source = {config_dict['download_source']}")
+            log.info(f"      composite start date :  {config_dict['composite_start']}")
+            log.info(f"      composite end date   : {config_dict['composite_end']}")
+            found = True
+        if key == "do_download" and value:
+            log.info("  --do_download is selected. Download of change detection images enabled")
+            found = True
+        if key == "download_source":
+            if config_dict["download_source"] == "scihub":
+                log.info("scihub API is selected as download source.")
+            else:
+                if config_dict["download_source"] == "dataspace":
+                    log.info("dataspace selected as download source for the Copernicus"+
+                             " Data Space Ecosystem.")
+                else:
+                    log.error(f"{config_dict['download_source']} is selected as "+
+                              "download source.")
+                    log.error("Use 'dataspace' instead to access the Copernicus Data "+
+                              "Space Ecosystem.")
+                    sys.exit(1)
+            log.info(
+                f"    Faulty Granule Threshold: {config_dict['faulty_granule_threshold']}"
+            )
+            found == True
+        if key == "sen2cor_path":
+            log.info(f"Path to Sen2Cor is   : {config_dict['sen2cor_path']}")
+            if os.path.exists(config_dict['sen2cor_path']):
+                log.info("  Sen2Cor path exists.")
+            else:
+                log.warning("  Sen2Cor path does not exist. Cannot convert L1C to L2A.")
+            found = True
+        if key == "do_classify" and value:
+            log.info(
+                "  --do_classify selected. It applies the random forest model and creates "+
+                "classification layers"
+            )
+            found = True
+        if key == "bands":
+            log.info(f"  List of image bands: {config_dict['bands']}")
+            found = True
+        if key == "class_labels":
+            log.info("  List of class labels:")
+            for c, this_class in enumerate(config_dict["class_labels"]):
+                log.info(f"    {c + 1} : {this_class}")
+            log.info(
+                f"Detecting changes from any of the classes: {config_dict['from_classes']}"
+            )
+            log.info(f"                    to any of the classes: {config_dict['to_classes']}")
+            found = True
+        if key == "model_path":
+            log.info(f"Machine learning model used: {config_dict['model_path']}")
+            if os.path.exists(config_dict['model_path']):
+                log.info("  Model path exists.")
+            else:
+                log.warning("  Model path does not exist. Cannot classify images.")
+            found = True
+        if key == "build_prob_image" and value:
+            log.info("  --build_prob_image saves classification probability layers")
+            found = True
+        if key == "do_change" and value:
+            log.info("  --do_change selected. It produces change detection layers and "+
+                     "report images")
+            log.info(f"    --download_source = {config_dict['download_source']}")
+            log.info(f"      change start date : {config_dict['start_date']}")
+            log.info(f"      change end date   : {config_dict['end_date']}")
+            found = True
+        if key == "do_update":
+            log.warning("   --do_update is depracated")
+            found = True
+        if key == "do_vectorise" and value:
+            log.info("  --do_vectorise selected. It produces vector files from raster "+
+                     "report images")
+            found = True
+        if key == "do_delete_existing_vector" and value:
+            log.info(
+                "  --do_delete_existing_vector selected. When vectorising the change report rasters,"
+            )
+            log.info(
+                "    existing vectors files will be deleted and new vector files created."
+            )
+            found = True
+        if key == "do_integrate" and value:
+            log.info("  --do_integrate selected. It merges vectorised reports together")
+            found = True
+        if key == "admin_areas_of_interest":
+            log.info("  --admin_areas_of_interest")
+            log.info("        Admin areas of interest to filter the national geodataframe:")
+            for n, a in enumerate(config_dict["admin_areas_of_interest"]):
+                log.info(f"        {n}  :  {a}")
+            log.info("  --minimum_area_to_report_m2")
+            log.info(
+                "    Only Change Detections > "+
+                f"{config_dict['minimum_area_to_report_m2']} square metres "+
+                "will be reported"
+            )
+            found = True
+        if key == "do_quicklooks" and value:
+            log.info("  --do_quicklooks selected. It saves image quicklooks for visual quality checking")
+            found = True
+        if key == "do_delete" and value:
+            log.info("  --do_delete selected. It removes downloaded images and intermediate"+
+                     "    image products after processing to free up disk space.")
+            log.info(
+                "    Overrides --zip for the files for deletion. WARNING! FILE LOSS!"
+            )
+            found = True
+        if key == "do_zip" and value:
+            log.info(
+                "  --do_zip selected. It archives downloaded and intermediate image products"+
+                "    to reduce disk space usage."
+            )
+            found = True
+        if not found:
+            log.info(f"  {key} :  {value}")
+    log.info("-----------------------------------------------------------")
+    return
+
 
 def lines_that_contain(substr, fp):
     """
@@ -1503,7 +1680,7 @@ def zip_contents(
                 else:
                     log.error("Zipping failed: {}".format(zipped_file + ".zip"))
             else:
-                log.info(f"Skipping file starting with '{i}' from zipping: \n  {f}")
+                log.info(f"Skipping file starting with '{i}' from zipping: {f}")
     else:
         log.warning(f"Directory for zip_contents() not found: {directory}")
     return
