@@ -20,11 +20,11 @@ import glob
 import pandas as pd
 import os
 from osgeo import gdal
+import shutil
 import sys
 from pyeo import filesystem_utilities
+from pyeo.filesystem_utilities import config_to_log
 from pyeo.acd_national import (
-    #acd_initialisation,
-    acd_config_to_log,
     acd_roi_tile_intersection,
     )
 #from pyeo.apps.acd_national import acd_by_tile_vectorisation
@@ -58,8 +58,13 @@ def send_report(config_path, tile_id="None"):
     
     # changes directory to pyeo_dir, enabling the use of relative paths from 
     #    the config file
-    os.chdir(config_dict["pyeo_dir"])
-
+    try:
+        os.chdir(config_dict["pyeo_dir"])
+    except:
+        print("Error: Pyeo directory not found. Check the ini file and change "+
+              "'pyeo_dir'.")
+        sys.exit(1)
+ 
     # check that log directory exists and create if not
     if not os.path.exists(config_dict["log_dir"]):
         os.makedirs(config_dict["log_dir"])
@@ -83,7 +88,7 @@ def send_report(config_path, tile_id="None"):
     log.info(f"Config file that controls the processing run: {config_path}")
     log.info("---------------------------------------------------------------")
 
-    acd_config_to_log(config_dict, log)
+    config_to_log(config_dict, log)
 
     try:
         os.chdir(config_dict["pyeo_dir"]) 
@@ -159,8 +164,30 @@ def send_report(config_path, tile_id="None"):
         #   to get the tile ID list
         tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
-        log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
+
+        # move filelist file from roi dir to main directory and save txt file
+        tilelist_filepath = shutil.move(
+            tilelist_filepath, 
+            os.path.join(
+                config_dict["tile_dir"], 
+                tilelist_filepath.split(os.path.sep)[-1])
+            )
+        try:
+            tilelist_txt_filepath = os.path.join(
+                            config_dict["tile_dir"], 
+                            tilelist_filepath.split(os.path.sep)[-1].split('.')[0]+'.txt'
+                            )
+
+            pd.DataFrame({"tile": tiles_to_process}).to_csv(
+                tilelist_txt_filepath, 
+                header=True, 
+                index=False)
+            log.info(f"Saved: {tilelist_txt_filepath}")
+        except:
+            log.error(f"Could not write to {tilelist_filepath}")
+
+        log.info("Region of interest processing based on ROI file.")        
     else:
         # if a tile ID is specified, use that and do not use the tile intersection
         #   method to get the tile ID list
@@ -212,85 +239,40 @@ def send_report(config_path, tile_id="None"):
         tile_log.info(f"---  TILE PROCESSING START: {tile_to_process}                          ---")
         tile_log.info("---------------------------------------------------------------")
         tile_log.info(
-            "Sending out information about vectorised reports."
+            "Sending vectorised reports if available."
         )
-
-        '''
-        from Ciaran, needs writing a vectorisation.send_email function and can then be tested.
-
-        try:
-            # hacky; fix later
-            last_class_name = fu.sort_by_timestamp(os.listdir(args.class_raster_path))[0].rsplit('.')[0]+".tif"
-            last_class_path = os.path.join(args.class_raster_path, last_class_name)
-            last_comparison_name = fu.sort_by_timestamp(os.listdir(args.imagery_path))[0].rsplit('.')[0]+".tif"
-            last_comparison_path = os.path.join(args.imagery_path, last_comparison_name)
-            last_timestamp = re.findall(r"\d{8}T\d{6}", last_class_name)[0]
-            kml_path = os.path.join(args.output_kml_path, "{}.kml".format(last_timestamp))
-            json_path = os.path.join(args.output_json_path, "{}.json".format(last_timestamp))
-            comparison_dir = os.path.join(args.comparison_dir, last_timestamp)
-            try:
-                os.mkdir(comparison_dir)
-            except FileExistsError:
-                pass
-            kml_root_name = "{}_{}".format(args.region, last_timestamp)
-    
-            log.info("Creating report for {}".format(last_class_name))
-    
-            log.info("Creating change report for {} and {}".format(args.class_raster_path, args.imagery_path))
-            report_date = datetime.datetime.now()
-            change_report = rt.ChangeReport(
-                class_raster_path=last_class_path,
-                imagery_path=last_comparison_path,
-                class_of_interest=args.class_of_interest,
-                region=args.region,
-                out_comparison_dir=comparison_dir,
-                date=report_date,
-                max_changes=args.max_polygons,
-                filter_map=args.filter_map,
-                filter_classes=args.filter_classes,
-                log_path=args.log_path
-            )
-            log.info("Creating change event list")
-            change_report.create_change_event_list()
-            log.info("Creating comparison images")
-            change_report.create_before_and_after_images()
-            log.info("Uploading report to AWS")
-            change_report.upload_report_to_backend()
-            if args.display_bucket_credentials and args.display_layer_pallette:
-                log.info("Uploading map to Ecometrica")
-                change_report.upload_to_eolabs(args.display_bucket_credentials, args.display_layer_pallette)
-            log.info("Sending email")
-            change_report.send_email_report(list(args.email_list))
-        except Exception:
-            log.exception("Fatal error in report with email module")
-       '''
-
 
         search_term = "report_*" + tile_to_process + "*.shp"
 
         tile_log.info(
-            f"Searching for vectorised change report shapefiles in {reports_dir}" +
-            f"\n  containing: {search_term}."
+            f"Searching for vectorised change report shapefiles in {reports_dir}"
+            )
+        tile_log.info(
+            f" containing: {search_term}."
             )
 
         vector_files = glob.glob(
             os.path.join(reports_dir, search_term)
-        )
+            )
         
         # zip up all the shapefiles and ancillary files
         zipped_vector_files = []
-        paths = [f for f in vector_files if not f.endswith(".zip")]
-        for sf in paths:
+        for sf in vector_files:
+            #tile_log.info(f"found vector file: {sf}")
             # split off the ".shp" file extension
-            file_id = sf.split(sep=".")[0]
-            files_to_zip = [f for f in os.listdir(reports_dir) if f.startswith(file_id)]
-            files_to_zip = [os.path.join(reports_dir, f) for f in files_to_zip]
+            file_id = sf.split(".")[0]
+            #tile_log.info(f"file path starts with: {file_id}")
+            files_to_zip = glob.glob(file_id+"*")
+            files_to_zip = [f for f in files_to_zip if not f.endswith('.zip')]
+            #tile_log.info(f"{len(files_to_zip)} files to include in zip file")
+            #for z in files_to_zip:
+            #    tile_log.info(f"included in zip file: {z}")
             zipped_file = os.path.join(reports_dir, file_id + '.zip')
             with zipfile.ZipFile(
                 zipped_file, "w", compression=zipfile.ZIP_DEFLATED
-            ) as zf:
-                for f in files_to_zip:
-                    zf.write(f, os.path.basename(f))
+                ) as zf:
+                    for f in files_to_zip:
+                        zf.write(f, os.path.basename(f))
 
             if os.path.exists(zipped_file):
                 zipped_vector_files.append(zipped_file)
@@ -308,8 +290,8 @@ def send_report(config_path, tile_id="None"):
             tile_log.info("No message will be sent.")
         else:
             if email_alerts and len(zipped_vector_files)>0:            
-                email_list_file = open(email_list_file, 'r')
-                recipients = email_list_file.readlines()
+                elf = open(email_list_file, 'r')
+                recipients = elf.readlines()
                 
                 for r, recipient in enumerate(recipients):
                     # Remove the newline character
@@ -320,6 +302,7 @@ def send_report(config_path, tile_id="None"):
                         f"at {recipient_email}."
                         )
                     for f in zipped_vector_files:
+                        file_size_mb = os.stat(f).st_size / (1024 * 1024)
                         message =  [
                            f"Dear {recipient_name},",
                            "",
@@ -327,6 +310,7 @@ def send_report(config_path, tile_id="None"):
                            f"Time period: from {start_date} to {end_date}",
                            "",
                            f"Vector file: {f}",
+                           f"Zipped vector file size: {file_size_mb}",
                            "",
                            "Please check the individual alerts and consider action " +
                                "for those you want investigating.",
@@ -344,12 +328,22 @@ def send_report(config_path, tile_id="None"):
                         subject_line = "New pyeo forest alerts are ready for you "+\
                             f"(Sentinel-2 tile {tile_to_process})"
         
-                        #TODO: Enable sending with file attachment or download location
                         email = EmailMessage()
                         email["From"] = email_sender
                         email["To"] = recipient_email
                         email["Subject"] = subject_line
                         email.set_content("\n".join(message))
+                        
+                        # Add attachment.
+                        # Careful: Some mail servers block emails with zip file 
+                        #   attachments
+                        with open(f, "rb") as file_to_attach:
+                            email.add_attachment(
+                                file_to_attach.read(),
+                                filename=os.path.basename(f),
+                                maintype="application",
+                                subtype="zip"
+                            )                        
                         
                         smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
                         smtp.starttls()
