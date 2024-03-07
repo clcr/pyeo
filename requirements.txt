@@ -137,3 +137,6 @@ scipy==1.10.1
 
 # Current version of GDAL installed in SEPAL
 GDAL==3.8.3
+
+# pyeo
+git+https://github.com/clcr/pyeo
