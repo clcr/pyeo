@@ -6223,3 +6223,63 @@ def write_n_band_tiff(tiff_paths: list, output_path: str) -> None:
     log.info(f"Successfully merged {num_bands} TIFF images into {output_path}.")
 
     return
+
+def roi_tile_intersection(config_dict: dict, log: logging.Logger) -> str:
+    """
+
+    This function:
+
+    - accepts a Region of Interest (RoI) (specified by config_dict) and writes 
+      a tilelist.txt of the Sentinel-2 tiles that the RoI covers.
+
+    - the tilelist.csv is then used to perform the tile-based processes, 
+      raster and vector.
+
+    Parameters
+    ----------
+    config_dict : dict
+        Dictionary of the Configuration Parameters specified in the `.ini`
+
+    log : logging.Logger
+        Logger object
+
+    Returns
+    -------
+    tilelist_filepath : str
+        Filepath of a .csv containing the list of tiles on which to perform 
+          raster processes
+
+    """
+
+    #log.info("Checking which Sentinel-2 tiles overlap with the ROI (region of interest)")
+
+    # roi_filepath is relative to pyeo_dir supplied in pyeo.ini
+    roi_filepath = os.path.join(config_dict["roi_dir"], config_dict["roi_filename"])
+    roi = gpd.read_file(roi_filepath)
+    
+    # check if s2_tiles exists (it should, as is provided with git clone pyeo)
+    s2_tiles_filepath = os.path.join(config_dict["geometry_dir"], config_dict["s2_tiles_filename"])
+    s2_tile_geometry = gpd.read_file(s2_tiles_filepath)
+
+    # change projection
+    roi = roi.to_crs(s2_tile_geometry.crs)
+
+    # intersect roi with s2 tiles to return
+    intersection = s2_tile_geometry.sjoin(roi)
+    tiles_list = list(intersection["Name"].unique())
+    tiles_list.sort()
+    log.info(f"The provided ROI intersects with {len(tiles_list)} Sentinel-2 tiles:")
+    for n, this_tile in enumerate(tiles_list):
+        log.info("  {} : {}".format(n + 1, this_tile))
+
+    tilelist_filepath = os.path.join(config_dict["roi_dir"], "tilelist.csv")
+    #log.info(f"Writing Sentinel-2 tile list to : {tilelist_filepath}")
+
+    try:
+        tiles_list_df = pd.DataFrame({"tile": tiles_list})
+        tiles_list_df.to_csv(tilelist_filepath, header=True, index=False)
+    except:
+        log.error(f"Could not write to {tilelist_filepath}")
+    #log.info("Finished ROI tile intersection")
+
+    return tilelist_filepath
