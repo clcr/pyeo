@@ -167,7 +167,7 @@ def automatic_change_detection_national(config_path) -> None:
 
 
 ############################
-# the functions below are those required by acd_national()
+# the functions below are those required by apps.acd_national()
 ############################
 
 
@@ -368,8 +368,21 @@ def acd_config_to_log(config_dict: dict, log: logging.Logger) -> None:
         if key == "counties_of_interest":
             log.info("  --counties_of_interest")
             log.info("        Counties to filter the national geodataframe:")
+            log.warning("        This is depracated. Use admin_areas_of_interest instead.")
             for n, county in enumerate(config_dict["counties_of_interest"]):
                 log.info(f"        {n}  :  {county}")
+            log.info("  --minimum_area_to_report_m2")
+            log.info(
+                "    Only Change Detections > "+
+                f"{config_dict['minimum_area_to_report_m2']} square metres "+
+                "will be reported"
+            )
+            found = True
+        if key == "admin_areas_of_interest":
+            log.info("  --admin_areas_of_interest")
+            log.info("        Admin boundaries to filter the national geodataframe:")
+            for n, a in enumerate(config_dict["admin_areas_of_interest"]):
+                log.info(f"        {n}  :  {a}")
             log.info("  --minimum_area_to_report_m2")
             log.info(
                 "    Only Change Detections > "+
@@ -551,13 +564,12 @@ def acd_integrated_raster(
             ## (Temporary test paths point to a test function 'apps/automation/_random_duration_test_program.py' that returns after a short random time delay)
             data_directory = config_dict[
                 "tile_dir"
-            ]  # '/data/clcr/shared/IMPRESS/Ivan/pyeo/pyeo/pyeo/apps/automation' #
+            ]
             sen2cor_path = config_dict[
                 "sen2cor_path"
-            ]  # '/home/i/ir81/Sen2Cor-02.09.00-Linux64'  #
+            ]
 
             conda_directory = config_dict["conda_directory"]
-            # conda_environment_directory = "/home/i/ir81/miniconda3/envs"  # config_dict["conda_env_directory"] (NOTE: Doesn't exist in ini file yet)
             conda_environment_name = config_dict["conda_env_name"]  # 'pyeo_env'  #
             conda_environment_path = os.path.join(
                 conda_directory, conda_environment_name
@@ -1041,6 +1053,7 @@ def acd_national_filtering(log: logging.Logger, config_dict: dict):
 
     return
 
+
     #     """
 
     #     This function:
@@ -1054,7 +1067,6 @@ def acd_national_filtering(log: logging.Logger, config_dict: dict):
 
 
     #     """
-
     # def acd_national_manual_validation():
     #     """
 
