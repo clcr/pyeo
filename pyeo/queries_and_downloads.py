@@ -78,45 +78,49 @@ Functions
 # :py:func:`check_for_s2_data_by_date` Queries the Sentinel 2 archive for products between two dates
 # :py:func:`download_s2_data` Downloads Sentinel 2 data from Scihub by default
 
+from botocore.exceptions import ClientError
+from bs4 import BeautifulSoup
 import datetime as dt
 import glob
 import itertools
 import json
 import logging
+from multiprocessing.dummy import Pool
+import numpy as np
 import os
+from osgeo import ogr, osr
+import pandas as pd
 import re
+import requests
+from requests import Request
 import shutil
-#import subprocess
 import sys
 import tarfile
-#import time
-#from tqdm import tqdm
-import zipfile
-from multiprocessing.dummy import Pool
 from tempfile import TemporaryDirectory
+import tenacity
 from urllib.parse import urlencode
 from xml.etree import ElementTree
+import zipfile
 
-import numpy as np
-import pandas as pd
+from pyeo.coordinate_manipulation import (
+    get_vector_projection,
+    reproject_vector
+)
+from pyeo.exceptions import (
+    BadDataSourceExpection,
+    InvalidDateFormatException,
+    InvalidGeometryFormatException,
+    NoL2DataAvailableException, 
+    TooManyRequests
+)
 import pyeo.filesystem_utilities as fu
-#import pyeo.windows_compatability
-import requests
-import tenacity
-from botocore.exceptions import ClientError
-from bs4 import BeautifulSoup
-from osgeo import ogr, osr
-from pyeo.coordinate_manipulation import (get_vector_projection,
-                                            reproject_vector)
-from pyeo.exceptions import (BadDataSourceExpection,
-                               InvalidDateFormatException,
-                               InvalidGeometryFormatException,
-                               NoL2DataAvailableException, 
-                               TooManyRequests)
-from pyeo.filesystem_utilities import (check_for_invalid_l1_data,
-                                         check_for_invalid_l2_data,
-                                         get_sen_2_image_tile)
-from requests import Request
+from pyeo.filesystem_utilities import (
+    check_for_invalid_l1_data,
+    check_for_invalid_l2_data,
+    get_sen_2_image_tile,
+    move_file
+)
+
 # fix an issue with backwards incompatibility of the sentinelhub library from v3.9.1 onwards
 import sentinelhub
 hubversion = sentinelhub.__version__.split(".")
@@ -144,6 +148,7 @@ rest_url = "https://apihub.copernicus.eu/apihub/search"
 DATASPACE_API_ROOT = "http://catalogue.dataspace.copernicus.eu/resto/api/collections/Sentinel2/search.json"
 DATASPACE_DOWNLOAD_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
 DATASPACE_REFRESH_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+
 
 def query_dataspace_by_polygon(
     max_cloud_cover: int,
@@ -357,7 +362,7 @@ def get_access_token(dataspace_username: str = None,
     """
 
     if refresh_token:
-        print("refreshing access token...")
+        #print("refreshing access token...")
         payload = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
@@ -429,7 +434,8 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
     """
         
     for counter, product in enumerate(product_df.itertuples(index=False)):
-        #log.info(f"***** Checking {counter+1} of {len(product_df)} : {product.title}")
+        log.info("--"*40)
+        log.info(f"Checking {counter+1} of {len(product_df)} : {product.title}")
 
         # if L1C have been passed, download to the l1c_directory
         if product.processinglevel == "Level-1C":
@@ -440,8 +446,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
             #log.info("   Looking for file pattern: " + out_glob)
             matching_l1c = glob.glob(out_glob)
             if matching_l1c:
-                pass
-                '''
+                #pass
                 log.info(f"Skipping download of L1C product : {product.title}")
                 if len(matching_l1c) == 1:
                     log.info(f"  because an L1C product already exists: {matching_l1c[0]}")
@@ -449,12 +454,11 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                     log.info("  because matching L1C product files already exist:")
                     for item in matching_l1c:
                         log.info(f"  {item}")
-                '''
                 continue
             else:
                 out_path = os.path.join(l1c_directory, product.title)
                 if check_for_invalid_l1_data(out_path) == 1:
-                    pass
+                    #pass
                     #log.info(f"        {out_path} imagery already exists, skipping download")
                     # continue means skip the current iteration and move to the 
                     #   next iteration of the for loop
@@ -483,8 +487,7 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
             #log.info("   Looking for file pattern: " + out_glob)
             matching_l2a = glob.glob(out_glob)
             if matching_l2a:
-                pass
-                '''
+                #pass
                 log.info(f"Skipping download of L2A product : {product.title}")
                 if len(matching_l2a) == 1:
                     log.info(f"  because an L2A product already exists: {matching_l2a[0]}")
@@ -492,13 +495,12 @@ def download_s2_data_from_dataspace(product_df: pd.DataFrame,
                     log.info("  because matching L2A product files already exist:")
                     for item in matching_l2a:
                         log.info(f"  {item}")
-                '''
                 continue
             else:
                 out_path = os.path.join(l2a_directory, product.title)
                 if check_for_invalid_l2_data(out_path) == 1:
-                    pass
-                    #log.info(f"        {out_path} imagery already exists, skipping download")
+                    #pass
+                    log.info(f"        {out_path} imagery already exists, skipping download")
                     # continue means to skip the current iteration and move to the next iteration of the for loop
                     continue
                 try:
@@ -561,10 +563,9 @@ def download_dataspace_product(product_uuid: str,
         dataspace_password=dataspace_password,
         )
 
-    ############################
     # auth limited to 10 minutes
     auth_access_token = auth_response["access_token"]
-    # # refresh limited to 1 hour
+    # refresh limited to 1 hour
 
     session = requests.Session()
     session.headers.update({'Authorization': f"Bearer {auth_access_token}"})
@@ -574,7 +575,7 @@ def download_dataspace_product(product_uuid: str,
     response = session.get(url, allow_redirects=False)
     while response.status_code in (301, 302, 303, 307):
         log.info(f"response.status_code: {response.status_code}")
-        #log.info(f"download url = response.headers['Location']: {url}")
+        log.info(f"download url = response.headers['Location']: {url}")
         url = response.headers['Location']
         response = session.get(url, allow_redirects=False)
 
@@ -590,41 +591,47 @@ def download_dataspace_product(product_uuid: str,
     auth_access_token = auth_response["access_token"]
     session.headers.update({'Authorization': f"Bearer {auth_access_token}"})
 
-    log.info('Downloading the zipped image file')
+    #log.info('Downloading the zipped image file')
+    requests.packages.urllib3.disable_warnings() 
     file = session.get(url, verify=False, allow_redirects=True)
 
-    # The following fix is needed on Windows to avoid errors because of long file names.
-    # But it causes a directory error on the Linux HPC because it resolves the user home directory wrongly.
-    if sys.platform.startswith("win"):
-        temp_dir_platform_specific = os.path.expanduser('~')
-    else:
-        temp_dir_platform_specific = os.path.split(safe_directory)[0]
-
-    with TemporaryDirectory(dir=temp_dir_platform_specific) as temp_dir:
+    with TemporaryDirectory(dir=os.getcwd()) as temp_dir:
         temporary_path = f"{temp_dir}{os.sep}{product_name}.zip"
         #log.info(f"Downloaded file temporary_path: {temporary_path}")
-
         with open(temporary_path, 'wb') as download:
             download.write(file.content)
-        unzipped_path = os.path.splitext(temporary_path)[0]
-        #OLD: destination_path = f"{safe_directory}{os.sep}{product_name}"
-        destination_path = safe_directory
-        log.info(f"Downloaded file destination path: {destination_path}")
 
         #downloaded_file_size = os.path.getsize(temporary_path)
         #log.info(f"Downloaded file size: {downloaded_file_size} bytes")
 
         #log.info("    unpacking archive...")
+        shutil.unpack_archive(temporary_path, extract_dir=safe_directory)
+        #log.info(f"Unpacked SAFE file path: {safe_directory}")
+
+        '''
+        OLD:
+        unzipped_path = temp_dir
+        #OLD: unzipped_path = os.path.splitext(temporary_path)[0]
+        destination_path = safe_directory
+        #OLD: destination_path = f"{safe_directory}{os.sep}{product_name}"
+        log.info(f"Downloaded file destination path: {destination_path}")
+
+        downloaded_file_size = os.path.getsize(temporary_path)
+        log.info(f"Downloaded file size: {downloaded_file_size} bytes")
+
+        log.info("    unpacking archive...")
         shutil.unpack_archive(temporary_path, unzipped_path)
+        log.info(f"Unpacked Archive Path: {unzipped_path}")
 
-        #log.info(f"Unpacked Archive Path: {unzipped_path}")
-
-        # # restructure paths
+        # restructure paths
         within_folder_path = glob.glob(os.path.join(unzipped_path, "*"))
-        #log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
+        log.info(f"Downloaded file within_folder path: {within_folder_path[0]}")
 
-        #log.info(f"    moving directory from {within_folder_path[0]} to {destination_path}")
+        log.info(f"    moving directory from {within_folder_path[0]} to {destination_path}")
+        #move_file(within_folder_path[0], destination_path)
         shutil.move(src=within_folder_path[0], dst=destination_path)
+        '''
+    #log.info(f'Download finished: {destination_path}')
 
     return
 
@@ -716,6 +723,7 @@ def _rest_query(
     #    Page 1: https://scihub.copernicus.eu/dhus/search?start=0&rows=100&q=*
     #    Page 2: https://scihub.copernicus.eu/dhus/search?start=100&rows=100&q=*
     #    Page 3: https://scihub.copernicus.eu/dhus/search?start=200&rows=100&q=*
+
     session = requests.Session()
     session.auth = (user, passwd)
     search_params = {
