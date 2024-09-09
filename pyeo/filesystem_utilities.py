@@ -239,6 +239,61 @@ def init_log_acd(log_path, logger_name):
     return logger
 
 
+def initialisation(config_path):
+    """
+
+    This function initialises the .log file, making the log object available.
+
+    Parameters
+    ----------
+    config_path : str
+        The path to the config file, which is an .ini
+
+    Returns
+    -------
+    config_dict : dict
+        A dictionary composed of configuration parameters read from the `.ini` file.
+    log : logging.Logger
+        A log object
+
+    """
+
+    # build dictionary of configuration parameters
+    config_dict = config_path_to_config_dict(config_path)
+
+    # changes directory to pyeo_dir, enabling the use of relative paths from the config file
+    os.chdir(config_dict["pyeo_dir"])
+
+    # check that log directory exists and create if not
+    if not os.path.exists(config_dict["log_dir"]):
+        os.makedirs(config_dict["log_dir"])
+
+    # initialise log file
+    log = filesystem_utilities.init_log_acd(
+        log_path=os.path.join(config_dict["log_dir"], config_dict["log_filename"]),
+        logger_name="pyeo_acd_log",
+    )
+
+    # check conda directory exists
+    if config_dict["environment_manager"] == "conda":
+        conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
+        log.info(conda_boolean)
+        if not conda_boolean:
+            log.error("Conda Environment Directory does not exist")
+            log.error("Ensure this exists")
+            log.error("now exiting the pipeline")
+            sys.exit(1)
+
+    log.info("---------------------------------------------------------------")
+    log.info("---                  PROCESSING START                       ---")
+    log.info("---------------------------------------------------------------")
+
+    log.info(f"Reading in parameters defined in: {config_path}")
+    log.info("---------------------------------------------------------------")
+
+    return config_dict, log
+
+
 def conda_check(config_dict: dict, log):
     """
 
