@@ -9,9 +9,7 @@ import argparse
 import configparser
 import cProfile
 import datetime
-#import geopandas as gpd
 import pandas as pd
-#import json
 import numpy as np
 import os
 from osgeo import gdal
@@ -19,12 +17,16 @@ import shutil
 import sys
 import warnings
 import zipfile
-from pyeo import (filesystem_utilities, queries_and_downloads, raster_manipulation)
+from pyeo import (
+    filesystem_utilities, 
+    queries_and_downloads, 
+    raster_manipulation
+)
 from pyeo.acd_national import (
-    #acd_initialisation,
     acd_config_to_log,
     acd_roi_tile_intersection
-    )
+)
+from filesystem_utilities import move_and_rename_old_file
 
 gdal.UseExceptions()
            
@@ -237,19 +239,47 @@ def create_composite(config_path, tile_id="None"):
         # if no tile ID is given by the call to the function, use the geometry file
         #   to get the tile ID list
         #tile_based_processing_override = False
-        log.info("Region of interest based processing selected.")
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
-        #log.info("Sentinel-2 tile ID list: " + tilelist_filepath)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
+        # move filelist file from roi dir to main directory and rename old file if it exists
+        tilelist_filepath = move_and_rename_old_file(
+            tilelist_filepath, 
+            os.path.join(
+                config_dict["tile_dir"], 
+                tilelist_filepath.split(os.path.sep)[-1])
+        )
+        log.info("Region of interest processing based on ROI file.")        
     else:
         # if a tile ID is specified, use that and do not use the tile intersection
         #   method to get the tile ID list
         #tile_based_processing_override = True
         tiles_to_process = [tile_id]
-        log.info("Tile based processing selected. Overriding the geometry "+
-                 "file intersection method to get the list of tile IDs.")
+        log.info(f"Tile based processing: {tile_id}. Ignoring ROI file.")
+        tilelist_filepath = os.path.join(
+            config_dict["tile_dir"],
+            "tile_list.txt"
+        )
+        try:
+            with TemporaryDirectory(os.getcwd()) as td:
+                tmp_filepath = os.path.join(td, "tile_list.txt")
+                pd.DataFrame({"tile": tiles_to_process}).to_csv(
+                    tmp_filepath, 
+                    header=True, 
+                    index=False
+                )
+                # move filelist file from temporary dir to main directory and rename 
+                #    old file if it exists
+                tilelist_filepath = move_and_rename_old_file(
+                    tilelist_filepath, 
+                    os.path.join(
+                        config_dict["tile_dir"], 
+                        tilelist_filepath.split(os.path.sep)[-1])
+                )
+        except:
+            log.error(f"Could not write to {tilelist_filepath}")
 
-    log.info(str(len(tiles_to_process)) + " Sentinel-2 tile(s) to process.")
+    log.info(f"Saved Sentinel-2 tile ID list: {tilelist_filepath}")
+    log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
     # iterate over the tiles
     for tile_to_process in tiles_to_process:
@@ -304,60 +334,18 @@ def create_composite(config_path, tile_id="None"):
             date_object = datetime.datetime.strptime(composite_end_date, "%Y%m%d")
             dataspace_composite_end = date_object.strftime("%Y-%m-%d")
 
-            '''
-            if not tile_based_processing_override:
-                tiles_geom_path = os.path.join(config_dict["pyeo_dir"], \
-                                    os.path.join(config_dict["geometry_dir"], \
-                                    config_dict["s2_tiles_filename"]))
-                tile_log.info("Path to the S2 tile information file: {}".format( \
-                            os.path.abspath(tiles_geom_path)))
-    
-                #try opening the Sentinel-2 tile file as a geometry file (e.g. shape file)
-                try:
-                    tiles_geom = gpd.read_file(os.path.abspath(tiles_geom_path))
-                except FileNotFoundError:
-                    tile_log.error("Path to the S2 tile geometry does not exist: {}".format( \
-                                os.path.abspath(tiles_geom_path)))
-    
-    
-                tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
-                tile_geom = tile_geom.to_crs(epsg=4326)
-                geometry = tile_geom["geometry"].iloc[0]
-                geometry = geometry.representative_point().wkt
-                
-                # attempt a geometry based query
-                try:
-                    dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_polygon(
-                        max_cloud_cover=cloud_cover,
-                        start_date=dataspace_composite_start,
-                        end_date=dataspace_composite_end,
-                        area_of_interest=geometry,
-                        max_records=100,
-                        log=tile_log
-                    )
-                except Exception as error:
-                    tile_log.error(f"Query_dataspace_by_polygon received this error: {error}")
-                    tile_log.error(f"  max_cloud_cover={cloud_cover}")
-                    tile_log.error(f"  start_date={dataspace_composite_start}")
-                    tile_log.error(f"  end_date={dataspace_composite_end}")
-                    tile_log.error(f"  area_of_interest={geometry}")
-                    tile_log.error(f"  max_records={100}")
-                    sys.exit(1)
-            else:
-            '''
-            if 1<2:
-                # attempt a tile ID based query
-                try:
-                    dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_tile_id(
-                        max_cloud_cover=cloud_cover,
-                        start_date=dataspace_composite_start,
-                        end_date=dataspace_composite_end,
-                        tile_id=tile_to_process,
-                        max_records=100,
-                        log=tile_log
-                    )
-                except Exception as error:
-                    tile_log.error("Query_dataspace_by_tile received this error: {}".format(error))
+            # attempt a tile ID based query
+            try:
+                dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_tile_id(
+                    max_cloud_cover=cloud_cover,
+                    start_date=dataspace_composite_start,
+                    end_date=dataspace_composite_end,
+                    tile_id=tile_to_process,
+                    max_records=100,
+                    log=tile_log
+                )
+            except Exception as error:
+                tile_log.error("Query_dataspace_by_tile received this error: {}".format(error))
 
             titles = dataspace_composite_products_all["title"].tolist()
             sizes = list()
@@ -595,9 +583,6 @@ def create_composite(config_path, tile_id="None"):
             len(l2a_products['title']))
             )
 
-        # Search the local directories, composite/L2A and L1C, checking if 
-        #    scenes have already been downloaded and/or processed whilst 
-        #    checking their dir sizes
         if download_source == "scihub":
             if l1c_products.shape[0] > 0:
                 tile_log.info(
@@ -750,9 +735,16 @@ def create_composite(config_path, tile_id="None"):
             )
 
         ##################################
-        # Download the L1C images
+        # Download the L1C images if Sen2Cor is installed and atmospheric correction can be done
         ##################################
-        if l1c_products.shape[0] > 0:
+        tile_log.info(f"Path to Sen2Cor is   : {config_dict['sen2cor_path']}")
+        if not os.path.exists(config_dict['sen2cor_path']):
+            sen2cor_found = False
+            log.warning("  Sen2Cor path does not exist. Cannot convert L1C to L2A. Skipping download of L1C images.")
+        else:
+            sen2cor_found = True
+
+        if l1c_products.shape[0]>0 and sen2cor_found:
             tile_log.info("Downloading Sentinel-2 L1C products from {}".format(download_source))
 
             if download_source == "scihub":
@@ -789,7 +781,7 @@ def create_composite(config_path, tile_id="None"):
                 log=tile_log
             )
 
-        tile_log.info("Successful atmospheric correction of the Sentinel-2 L1C products to L2A.")
+            tile_log.info("Completed the atmospheric correction of the Sentinel-2 L1C products to L2A.")
 
         # Download the L2A images
         if l2a_products.shape[0] > 0:
@@ -925,7 +917,9 @@ def create_composite(config_path, tile_id="None"):
                 out_resolution=out_resolution,
                 haze=None,
                 epsg=epsg,
-                skip_existing=skip_existing)
+                skip_existing=skip_existing,
+                log=tile_log
+            )
             tile_log.info("Cloud-masking successfully finished")
 
         '''
@@ -944,14 +938,17 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("---------------------------------------------------------------")
 
         raster_manipulation.apply_processing_baseline_offset_correction_to_tiff_file_directory(
-            composite_l2_masked_image_dir, composite_l2_masked_image_dir)
+            composite_l2_masked_image_dir, 
+            composite_l2_masked_image_dir,
+            log=tile_log
+        )
 
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Offsetting of cloud masked L2A images for composite complete.")
         tile_log.info("---------------------------------------------------------------")
 
 
-        if config_dict["do_quicklooks"] or config_dict["do_all"]:
+       if config_dict["do_quicklooks"] or config_dict["do_all"]:
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Producing quicklooks.")
             tile_log.info("---------------------------------------------------------------")
@@ -980,6 +977,7 @@ def create_composite(config_path, tile_id="None"):
                             format="PNG",
                             bands=[3, 2, 1],
                             scale_factors=[[0, 2000, 0, 255]],
+                            log=tile_log
                         )
             tile_log.info("Quicklooks complete.")
         else:
@@ -1072,6 +1070,7 @@ def create_composite(config_path, tile_id="None"):
                             format="PNG",
                             bands=[3, 2, 1],
                             scale_factors=[[0, 2000, 0, 255]],
+                            log=tile_log
                         )
             tile_log.info("Quicklook complete.")
 
@@ -1134,7 +1133,7 @@ def create_composite(config_path, tile_id="None"):
                     raster_manipulation.compress_tiff(
                         os.path.join(root, this_tiff), 
                         os.path.join(root, this_tiff),
-                        tile_log
+                        log=tile_log
                     )
 
             tile_log.info(
