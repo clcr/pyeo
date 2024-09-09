@@ -32,21 +32,17 @@ import logging
 import os
 from tempfile import TemporaryDirectory
 from pathlib import Path
-#from osgeo import gdalconst
 from osgeo import gdal
 from osgeo import osr
 from osgeo import ogr
 import pandas as pd
 import joblib
-#import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import random
 from scipy import sparse as sp
-import shutil
 from sklearn import ensemble as ens
 
-# I.R.
 # from sklearn.externals import joblib as sklearn_joblib
 from sklearn.model_selection import (
     cross_val_score,
@@ -57,13 +53,11 @@ from sklearn.model_selection import (
 from sklearn import metrics
 import sys
 
-#from pyeo.coordinate_manipulation import get_local_top_left
 from pyeo.filesystem_utilities import get_mask_path
 from pyeo.raster_manipulation import (
     stack_images,
     create_matching_dataset,
     apply_array_image_mask,
-    #get_masked_array,
 )
 import pyeo.windows_compatability
 
@@ -82,7 +76,7 @@ def change_from_composite(
     apply_mask: bool = False,
 ) -> None:
     """
-    Stacks an image with a composite and classifies each pixel change with a scikit-learn model.
+    Stacks a change detection image with a composite and classifies each pixel change with a scikit-learn model.
 
     The image that is classified has the following bands:
 
@@ -90,10 +84,10 @@ def change_from_composite(
     2.  2. composite green
     3.  3. composite red
     4.  4. composite IR
-    5.  5. image blue
-    6.  6. image green
-    7.  7. image red
-    8.  8. image IR
+    5.  5. change image blue
+    6.  6. change image green
+    7.  7. change image red
+    8.  8. change image IR
 
     Parameters
     ----------
@@ -268,17 +262,11 @@ def classify_image(
         chunks = autochunk(image)
         log.info("Autochunk to {} chunks".format(chunks))
     try:
-        # I.R.
-        # model = sklearn_joblib.load(model_path)
         model = joblib.load(model_path)
     except KeyError as e:
-        # log.warning("Sklearn joblib import failed,trying generic joblib")
         log.warning("KeyError: joblib import failed: {}".format(e))
-        # model = joblib.load(model_path)
     except TypeError as e:
         log.warning("TypeError: joblib import failed: {}".format(e))
-        # log.warning("Sklearn joblib import failed,trying generic joblib: {}".format(e))
-        # model = joblib.load(model_path)
     with TemporaryDirectory(dir=os.getcwd()) as td:
         class_out_temp = os.path.join(td, os.path.basename(class_out_path))
         class_out_image = create_matching_dataset(
@@ -373,19 +361,29 @@ def classify_image(
         )
         if prob_out_path:
             prob_out_array = np.full((n_samples, model.n_classes_), nodata)
+            
             for i, prob_val in zip(good_indices, probs):
                 prob_out_array[i] = prob_val
-            prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[
-                :, :, :
-            ] = reshape_prob_out_to_raster(
-                prob_out_array, image.RasterXSize, image.RasterYSize
-            )
+            
+            prob_out_image.GetVirtualMemArray(eAccess=gdal.GF_Write)[:, :, :] = \
+                reshape_prob_out_to_raster(
+                    prob_out_array, image.RasterXSize, image.RasterYSize
+                )
+            
             prob_out_image = None
             prob_out_array = None
-            shutil.move(prob_out_temp, prob_out_path)
+
+            move_file(prob_out_temp, prob_out_path)
+                
         class_out_image = None
         class_out_array = None
-        shutil.move(class_out_temp, class_out_path)
+        image = None
+
+        #log.warning(f"Moving {class_out_temp} to {class_out_path}")
+        #log.warning(f"Lengths {len(class_out_temp)} to {len(class_out_path)}")
+        #log.warning(f"{os.path.exists(class_out_temp)}, {os.path.exists(class_out_path)}")
+        move_file(class_out_temp, class_out_path)
+
     # verify that the output file(s) have been created
     if not os.path.exists(class_out_path):
         log.error("Classification output file not found: {}".format(class_out_path))
@@ -781,7 +779,10 @@ def reshape_prob_out_to_raster(probs: np.ndarray, width: int, height: int):
 
 
 def extract_features_to_csv(
-    in_ras_path: str, training_shape_path: str, out_path: str, attribute: str = "CODE"
+    in_ras_path: str, 
+    training_shape_path: str, 
+    out_path: str, 
+    attribute: str = "CODE"
 ):
     """
     Given a raster and a shapefile containing training polygons, extracts all pixels into a CSV file for further
@@ -814,11 +815,16 @@ def extract_features_to_csv(
     with open(out_path, "w", newline="") as outfile:
         writer = csv.writer(outfile)
         writer.writerows(sigs.T)
+        outfile.close()
+        
     return
 
 
 def create_trained_model(
-    training_image_file_paths: list[str], cross_val_repeats: int = 10, attribute: str = "CODE"
+    training_image_file_paths: list[str], 
+    cross_val_repeats: int = 10, 
+    attribute: str = "CODE",
+    log: logging.Logger = logging.getLogger("pyeo")
 ):
     """
     Creates a trained model from a set of training images with associated shapefiles.
@@ -856,6 +862,7 @@ def create_trained_model(
         The number of cross-validation repeats to use. Defaults to 10.
     attribute : str, optional.
         The label of the field in the training shapefiles that contains the classification labels. Defaults to CODE.
+    log : logging.Logger object
 
     Returns
     -------
@@ -943,10 +950,17 @@ def create_trained_model(
         model, learning_data, classes, scoring="accuracy", cv=cross_val_repeats
     )
     log.info("Accuracy: {.3f} ({.3f})".format(np.mean(scores), np.std(scores)))
+    
     return model, scores
 
 
-def create_model_for_region(path_to_region: str, model_out: str, scores_out: str, attribute: str = "CODE") -> None:
+def create_model_for_region(
+    path_to_region: str, 
+    model_out: str, 
+    scores_out: str, 
+    attribute: str = "CODE",
+    log: logging.Logger = logging.getLogger("pyeo")
+) -> None:
     """
     Takes all .tif files in a given folder and creates a pickled scikit-learn model for classifying them.
     Wraps :py:func:`create_trained_model`; see docs for that for the details.
@@ -961,6 +975,7 @@ def create_model_for_region(path_to_region: str, model_out: str, scores_out: str
         Path to save the cross-validation scores
     attribute : str, optional
         The label of the field in the training shapefiles that contains the classification labels. Defaults to "CODE".
+    log : logging.Logger object
     
     Returns
     -------
@@ -974,13 +989,22 @@ def create_model_for_region(path_to_region: str, model_out: str, scores_out: str
     model, scores = create_trained_model(image_list, attribute=attribute)
     joblib.dump(model, model_out)
     log.info("Making file: {}".format(scores_out))
+    
     with open(scores_out, "w") as score_file:
         score_file.write(str(scores))
-        score_file = None
+        score_file.close()
+    
+    return
 
 
 def create_rf_model_for_region(
-    path_to_region: str, model_out: str, attribute: str = "CODE", band_names: list[str] = [], gridsearch: int = 1, k_fold: int = 5
+    path_to_region: str, 
+    model_out: str, 
+    attribute: str = "CODE", 
+    band_names: list[str] = [], 
+    gridsearch: int = 1, 
+    k_fold: int = 5,
+    log: logging.Logger = logging.getLogger("pyeo")
 ) -> None:
     """
     Takes all .tif files in a given folder and creates a pickled scikit-learn random forest model.
@@ -1001,6 +1025,7 @@ def create_rf_model_for_region(
         Number of randomized random forests for gridsearch. Defaults to 1.
     k_fold : int, optional
         Number of groups for k-fold validation during gridsearch. Defaults to 5.
+    log : logging.Logger object
 
     Returns
     -------
@@ -1025,9 +1050,12 @@ def create_rf_model_for_region(
     return
 
 
-def create_model_from_signatures(sig_csv_path: str,
-                                 model_out: str,
-                                 sig_datatype=np.int32):
+def create_model_from_signatures(
+    sig_csv_path: str,
+    model_out: str,
+    sig_datatype=np.int32
+):
+    
     """
     Takes a .csv file containing class signatures - produced by extract_features_to_csv - and uses it to train
     and pickle a scikit-learn model.
@@ -1070,6 +1098,7 @@ def create_model_from_signatures(sig_csv_path: str,
 
     model.fit(features, labels)
     joblib.dump(model, model_out)
+    return
 
 
 def load_signatures(sig_csv_path: str, sig_datatype=np.int32):
@@ -1137,7 +1166,12 @@ def get_shp_extent(shapefile: str):
     return (extent, SpatialRef, EPSG)
 
 
-def get_training_data(image_path: str, shape_path: str, attribute: str = "CODE"):
+def get_training_data(
+    image_path: str, 
+    shape_path: str, 
+    attribute: str = "CODE",
+    log: logging.Logger = logging.getLogger("pyeo")
+):
     """
     Given an image and a shapefile with categories, returns training data and features suitable
     for fitting a scikit-learn classifier.Image and shapefile must be in the same map projection /
@@ -1152,7 +1186,8 @@ def get_training_data(image_path: str, shape_path: str, attribute: str = "CODE")
     shape_path : str
         The path to the shapefile containing labelled class polygons
     attribute : str, optional
-        The shapefile field containing the class labels. Defaults to "CODE".
+        The shapefile field containing the class labels. Defaults to "CODE"
+    log : logging.Logger object
 
     Returns
     -------
@@ -1167,8 +1202,6 @@ def get_training_data(image_path: str, shape_path: str, attribute: str = "CODE")
     This means that this will ignore any classes with a label of '0'.
 
     """
-    # TODO: WRITE A TEST FOR THIS TOO; if this goes wrong, it'll go wrong
-    # quietly and in a way that'll cause the most issues further on down the line
     log.info("Get training data from {}".format(image_path))
     log.info("                   and {}".format(shape_path))
     if not os.path.exists(image_path):
@@ -1216,12 +1249,21 @@ def get_training_data(image_path: str, shape_path: str, attribute: str = "CODE")
             training_data[index, :] = image_array[:, y[index], x[index]]
         image_array = None
         shape_array = None
-        image = None
         rasterised_shapefile = None
-        return training_data, training_pixels
+
+    image = None
+    
+    return training_data, training_pixels
 
 
-def raster_reclass_binary(img_path: str, rcl_value: int, outFn: str, outFmt: str = "GTiff", write_out: bool = True) -> np.ndarray:
+def raster_reclass_binary(
+    img_path: str, 
+    rcl_value: int, 
+    outFn: str, 
+    outFmt: str = "GTiff", 
+    write_out: bool = True,
+    log: logging.Logger = logging.getLogger("pyeo")
+) -> np.ndarray:
     """
     Takes a raster and reclassifies rcl_value to 1, with all others becoming 0. In-place operation if write_out is True.
 
@@ -1237,13 +1279,14 @@ def raster_reclass_binary(img_path: str, rcl_value: int, outFn: str, outFmt: str
         Output format. Set to GTiff by default. Other GDAL options available.
     write_out : bool, optional.
         Set to True by default. Will write raster to disk. If False, only an array is returned
+    log : logging.Logger object
 
     Returns
     -------
     in_array : np.ndarray
         Reclassifies numpy array
     """
-    log = logging.getLogger(__name__)
+
     log.info("Starting raster reclassification.")
     # load in classification raster
     in_ds = gdal.Open(img_path)
@@ -1372,6 +1415,7 @@ def train_rf_model(
     balanced: bool=True,
     gridsearch: int=1,
     k_fold: int=5,
+    log: logging.Logger = logging.getLogger("pyeo")
 ):
     """
     This function:
@@ -1406,6 +1450,9 @@ def train_rf_model(
 
     k_fold : int, optional
         Number of groups for k-fold validation during gridsearch. Defaults to 5.
+
+    log : logging.Logger object
+
 
     Returns
     -------
@@ -1763,6 +1810,7 @@ def train_rf_model(
     log.info(f"Saving classification report to {fname}")
     with open(fname, "w") as txt:
         print(report, file=txt)
+        txt.close()
 
     # build the Random Forest Classifier
     # for more information: http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
@@ -1804,10 +1852,13 @@ def train_rf_model(
     return rf  # returns the random forest model object
 
 
-def classify_rf(raster_path: str,
-                modelfile: str,
-                outfile: str,
-                verbose: bool=False):
+def classify_rf(
+    raster_path: str,
+    modelfile: str,
+    outfile: str,
+    verbose: bool=False,
+    log: logging.Logger = logging.getLogger("pyeo")
+):
     """
     This function:
     
@@ -1823,6 +1874,7 @@ def classify_rf(raster_path: str,
         filename and path to the output file with the classified map in uint8 format
     verbose: bool, optional
         Defaults to False. If True, provides additional printed output.
+    log : logging.Logger object
 
     Returns
     -------
@@ -1876,12 +1928,17 @@ def classify_rf(raster_path: str,
     tmpfile.write(class_prediction, 1)
 
     tmpfile.close()
+    image = None
+    
     return
 
 
-def plot_signatures(learning_path: str,
-                    out_path: str,
-                    format: str="PNG"):
+def plot_signatures(
+    learning_path: str,
+    out_path: str,
+    format: str="PNG",
+    log: logging.Logger = logging.getLogger("pyeo")
+):
     """
     This function:
     
@@ -1895,11 +1952,13 @@ def plot_signatures(learning_path: str,
         The string containing the full directory path to the output file for graphical plots
     format : str, optional
         GDAL format for the quicklook raster file, defaults to PNG
+    log : logging.Logger object
 
     Returns
     -------
     None
     """
+    
     if format != "PNG" and format != "GTiff":
         log.warning("Invalid plot format specified. Changing to PNG.")
         format = "PNG"
@@ -1944,4 +2003,6 @@ def plot_signatures(learning_path: str,
         log.info("Saving figure to {}".format(out_path))
         plt.savefig(out_path, dpi=72, format=format, pad_inches=0.1, facecolor="white")
         plt.close(fig)
+        
     return
+
