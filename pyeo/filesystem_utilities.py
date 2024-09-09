@@ -271,7 +271,7 @@ def initialisation(config_path):
     # initialise log file
     log = init_log_acd(
         log_path=os.path.join(config_dict["log_dir"], config_dict["log_filename"]),
-        logger_name="pyeo_acd_log",
+        logger_name="pyeo_log",
     )
 
     # check conda directory exists
