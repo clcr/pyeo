@@ -10,17 +10,14 @@ import argparse
 import configparser
 import cProfile
 import datetime
-#import geopandas as gpd
 import glob
 import pandas as pd
-#import json
 import numpy as np
 import os
 from osgeo import gdal
 import shutil
 import sys
 import warnings
-#import zipfile
 from pyeo import (
     filesystem_utilities, 
     classification,
@@ -30,7 +27,8 @@ from pyeo import (
 from pyeo.filesystem_utilities import (
     zip_contents,
     unzip_contents,
-    config_to_log
+    config_to_log,
+    move_and_rename_old_file
     )
 from pyeo.acd_national import acd_roi_tile_intersection
 from pyeo.vectorisation import (
@@ -195,14 +193,15 @@ def detect_change(config_path, tile_id="None"):
         sys.exit(1)
 
     os.chdir(config_dict["pyeo_dir"]) # ensures pyeo is looking in the correct directory
+    
     if tile_id == "None":
         # if no tile ID is given by the call to the function, use the geometry file
         #   to get the tile ID list
         #tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
-        # move filelist file from roi dir to main directory
-        tilelist_filepath = shutil.move(
+        # move filelist file from roi dir to main directory and rename old file if it exists
+        tilelist_filepath = move_and_rename_old_file(
             tilelist_filepath, 
             os.path.join(
                 config_dict["tile_dir"], 
@@ -215,17 +214,29 @@ def detect_change(config_path, tile_id="None"):
         #tile_based_processing_override = True
         tiles_to_process = [tile_id]
         log.info(f"Tile based processing: {tile_id}. Ignoring ROI file.")
+        tilelist_filepath = os.path.join(
+            config_dict["tile_dir"],
+            "tile_list.txt"
+        )
         try:
-            tilelist_filepath = os.path.join(
-                    config_dict["tile_dir"],
-                    "tile_list.txt"
-                    )
-            pd.DataFrame({"tile": tiles_to_process}).to_csv(
-                tilelist_filepath, 
-                header=True, 
-                index=False)
+            with TemporaryDirectory(os.getcwd()) as td:
+                tmp_filepath = os.path.join(td, "tile_list.txt")
+                pd.DataFrame({"tile": tiles_to_process}).to_csv(
+                    tmp_filepath, 
+                    header=True, 
+                    index=False
+                )
+                # move filelist file from temporary dir to main directory and rename 
+                #    old file if it exists
+                tilelist_filepath = move_and_rename_old_file(
+                    tilelist_filepath, 
+                    os.path.join(
+                        config_dict["tile_dir"], 
+                        tilelist_filepath.split(os.path.sep)[-1])
+                )
         except:
             log.error(f"Could not write to {tilelist_filepath}")
+
     log.info(f"Saved Sentinel-2 tile ID list: {tilelist_filepath}")
     log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
@@ -309,54 +320,18 @@ def detect_change(config_path, tile_id="None"):
             dataspace_change_start = date_object.strftime("%Y-%m-%d")
             date_object = datetime.datetime.strptime(end_date, "%Y%m%d")
             dataspace_change_end = date_object.strftime("%Y-%m-%d")
-
-            '''
-            if not tile_based_processing_override:
-                tiles_geom_path = os.path.join(config_dict["pyeo_dir"], \
-                                    os.path.join(config_dict["geometry_dir"], \
-                                    config_dict["s2_tiles_filename"]))
-                tile_log.info("Path to the S2 tile information file: {}".format( \
-                            os.path.abspath(tiles_geom_path)))
-    
-                #try opening the Sentinel-2 tile file as a geometry file (e.g. shape file)
-                try:
-                    tiles_geom = gpd.read_file(os.path.abspath(tiles_geom_path))
-                except FileNotFoundError:
-                    tile_log.error("Path to the S2 tile geometry does not exist: {}".format( \
-                                os.path.abspath(tiles_geom_path)))
-
-                tile_geom = tiles_geom[tiles_geom["Name"] == tile_to_process]
-                tile_geom = tile_geom.to_crs(epsg=4326)
-                geometry = tile_geom["geometry"].iloc[0]
-                geometry = geometry.representative_point().wkt
-
-                # attempt a geometry based query
-                try:
-                    dataspace_products_all = queries_and_downloads.query_dataspace_by_polygon(
-                        max_cloud_cover=cloud_cover,
-                        start_date=dataspace_change_start,
-                        end_date=dataspace_change_end,
-                        area_of_interest=geometry,
-                        max_records=100,
-                        log=tile_log
-                    )
-                except Exception as error:
-                    tile_log.error("Query_dataspace_by_polygon received this error: {}".format(error))
-            else:
-            '''
-            if 1<2:
-                # attempt a tile ID based query
-                try:
-                    dataspace_products_all = queries_and_downloads.query_dataspace_by_tile_id(
-                        max_cloud_cover=cloud_cover,
-                        start_date=dataspace_change_start,
-                        end_date=dataspace_change_end,
-                        tile_id=tile_to_process,
-                        max_records=100,
-                        log=tile_log
-                    )
-                except Exception as error:
-                    tile_log.error(f"Query_dataspace_by_tile received this error: {error}")
+            # attempt a tile ID based query
+            try:
+                dataspace_products_all = queries_and_downloads.query_dataspace_by_tile_id(
+                    max_cloud_cover=cloud_cover,
+                    start_date=dataspace_change_start,
+                    end_date=dataspace_change_end,
+                    tile_id=tile_to_process,
+                    max_records=100,
+                    log=tile_log
+                )
+            except Exception as error:
+                tile_log.error(f"Query_dataspace_by_tile received this error: {error}")
 
             titles = dataspace_products_all["title"].tolist()
             sizes = list()
@@ -534,8 +509,6 @@ def detect_change(config_path, tile_id="None"):
         tile_log.info(" {} L2A products for the change detection".format(
             len(l2a_products['title']))
             )
-        tile_log.info("Successfully queried the L1C and L2A products for "+
-                      "the change detection.")
 
         # Search the local directories, images/L2A and L1C, checking if 
         #    scenes have already been downloaded and/or processed whilst 
@@ -613,7 +586,8 @@ def detect_change(config_path, tile_id="None"):
                     )
 
                     matching_l2a_products_df = pd.DataFrame.from_dict(
-                        matching_l2a_products, orient="index"
+                        matching_l2a_products, 
+                        orient="index"
                     )
 
                     # 07/03/2023: Matt - Applied Ali's fix for converting 
@@ -691,9 +665,16 @@ def detect_change(config_path, tile_id="None"):
             )
 
         ##################################
-        # Download the L1C images
+        # Download the L1C images if Sen2Cor is installed and atmospheric correction can be done
         ##################################
-        if l1c_products.shape[0] > 0:
+        tile_log.info(f"Path to Sen2Cor is   : {config_dict['sen2cor_path']}")
+        if not os.path.exists(config_dict['sen2cor_path']):
+            sen2cor_found = False
+            log.warning("  Sen2Cor path does not exist. Cannot convert L1C to L2A. Skipping download of L1C images.")
+        else:
+            sen2cor_found = True
+
+       if l1c_products.shape[0]>0 and sen2cor_found:
             tile_log.info("Downloading Sentinel-2 L1C products from {}".format(download_source))
 
             if download_source == "scihub":
@@ -875,7 +856,9 @@ def detect_change(config_path, tile_id="None"):
                 out_resolution=out_resolution,
                 haze=None,
                 epsg=epsg,
-                skip_existing=skip_existing)
+                skip_existing=skip_existing,
+                log=tile_log
+            )
             tile_log.info("Cloud-masking successfully finished")
 
         '''
@@ -890,11 +873,14 @@ def detect_change(config_path, tile_id="None"):
         '''
 
         tile_log.info("---------------------------------------------------------------")
-        tile_log.info("Offsetting cloud masked L2A images for change detection.")
+        tile_log.info("Beginning radiometric offsetting of cloud-masked L2A images for change detection.")
         tile_log.info("---------------------------------------------------------------")
 
         raster_manipulation.apply_processing_baseline_offset_correction_to_tiff_file_directory(
-            l2_masked_image_dir, l2_masked_image_dir)
+            l2_masked_image_dir, 
+            l2_masked_image_dir,
+            log=tile_log
+        )
 
         tile_log.info("---------------------------------------------------------------")
         tile_log.info("Offsetting of cloud masked L2A images for change detection complete.")
@@ -935,6 +921,7 @@ def detect_change(config_path, tile_id="None"):
                                 format="PNG",
                                 bands=[3, 2, 1],
                                 scale_factors=[[0, 2000, 0, 255]],
+                                log=tile_log
                             )
             tile_log.info("Quicklooks complete.")
         else:
@@ -1060,7 +1047,8 @@ def detect_change(config_path, tile_id="None"):
                                 quicklook_path, 
                                 width=512, 
                                 height=512,
-                                format="PNG"
+                                format="PNG",
+                                log=tile_log
                                 )
             tile_log.info("Quicklook creation complete.")
 
@@ -1106,6 +1094,7 @@ def detect_change(config_path, tile_id="None"):
                 sieve=sieve,
                 out_type="GTiff",
                 skip_existing=skip_existing,
+                log=tile_log
             )
             # if sieve was chosen, work with the sieved class images
             class_image_dir = sieved_image_dir
@@ -1183,9 +1172,6 @@ def detect_change(config_path, tile_id="None"):
             after_timestamp = filesystem_utilities.get_image_acquisition_time(
                 os.path.basename(class_image_paths[-1])
             )
-            # Previously:
-            # gets timestamp of the earliest change image of those available in class_image_path
-            # after_timestamp  = pyeo.filesystem_utilities.get_image_acquisition_time(os.path.basename(class_image_paths[0]))
             output_product = os.path.join(
                 probability_image_dir,
                 "report_{}_{}_{}.tif".format(
@@ -1295,11 +1281,17 @@ def detect_change(config_path, tile_id="None"):
                             after_timestamp.strftime("%Y%m%dT%H%M%S"),
                         ),
                     )
-                    #tile_log.info(
-                    #    "  I.R. NDVI raster file of change image to be created: {}".format(
-                    #        NDVI_raster
-                    #    )
-                    #)
+
+                    # skip if change maps already exist and skip_existing is True
+                    if os.path.isfile(change_raster) and skip_existing:
+                        tile_log.info(
+                            f"  Change raster file already exists:   {change_raster}"
+                        )
+                        tile_log.info("    Skipping change raster production.")
+                    else:            
+                        tile_log.info(
+                            f"  Change raster file to be created:   {change_raster}"
+                        )
                     
                     # The following function call looks for changes from class 
                     #   'change_from' in the composite to any of the 
@@ -1309,7 +1301,8 @@ def detect_change(config_path, tile_id="None"):
                     # Applying check whether dNDVI < -0.2, i.e. greenness has 
                     #   decreased over changed areas
             
-                    # TODO: In change_from_class_maps(), add a flag (e.g. -1) whether a pixel was a cloud in the later image.
+                    # TODO: In change_from_class_maps(), add a flag (e.g. -1) whether a pixel 
+                    #       was a cloud in the later image.
                     tile_log.info("Update of the report image product based on change detection image.")
                     raster_manipulation.change_from_class_maps(
                         old_class_path=latest_class_composite_path,
@@ -1362,53 +1355,13 @@ def detect_change(config_path, tile_id="None"):
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Post-classification change detection complete.")
             tile_log.info("---------------------------------------------------------------")
-        
-            '''    
-            #do_dev is now depracated
-            if not config_dict["do_dev"]:
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-                tile_log.info(
-                    "Creating aggregated report file. Deprecated in the development version."
-                )
-                tile_log.info(
-                    "---------------------------------------------------------------"
-                )
-    
-                date_image_paths = [
-                    f.path
-                    for f in os.scandir(probability_image_dir)
-                    if f.is_file() and f.name.endswith(".tif") and "change_" in f.name
-                ]
-                if len(date_image_paths) == 0:
-                    raise FileNotFoundError(
-                        "No class images found in {}.".format(categorised_image_dir)
-                    )
-        
-                before_timestamp = filesystem_utilities.get_change_detection_dates(
-                    os.path.basename(latest_class_composite_path)
-                )[0]
-                after_timestamp = filesystem_utilities.get_image_acquisition_time(
-                    os.path.basename(class_image_paths[-1])
-                )
-                output_product = os.path.join(
-                    probability_image_dir,
-                    "report_{}_{}_{}.tif".format(
-                        before_timestamp.strftime("%Y%m%dT%H%M%S"),
-                        tile_to_process,
-                        # tile_id,
-                        after_timestamp.strftime("%Y%m%dT%H%M%S"),
-                    ),
-                )
-                tile_log.info("Combining date maps: {}".format(date_image_paths))
-                raster_manipulation.combine_date_maps(date_image_paths, output_product)
-            '''    
-        
+                
             tile_log.info(
                 f"Report image product completed / updated: {output_product}"
             )
-                
+
+            # Vectorisation
+            
             if config_dict["do_all"] or config_dict["do_vectorise"]:
                 tile_log.info("---------------------------------------------------------------")
                 tile_log.info("Starting Vectorisation of the Change Report Rasters " +
@@ -1523,7 +1476,7 @@ def detect_change(config_path, tile_id="None"):
                                     level_1_boundaries_path=level_1_boundaries_path,
                                     tileid=tile_to_process,
                                     delete_intermediates=True
-                                    )
+                            )
             
                             #tile_log.info(f"Returned output vector file paths: {output_vector_products}")
         
