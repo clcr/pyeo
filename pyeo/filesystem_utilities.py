@@ -20,15 +20,14 @@ import datetime
 import glob
 import json
 import logging
+import numpy as np
 import os
-#import sys
+import pandas as pd
 import re
 import shutil
+import stat
 import sys
 import zipfile
-
-import numpy as np
-import pandas as pd
 from pyeo.exceptions import CreateNewStacksException
 
 # Set up logging on import
@@ -192,12 +191,17 @@ def init_log(log_path):
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     log.addHandler(file_handler)
-    log.info("****PROCESSING START****")
+    log.info("---------------------------------------------------------------")
+    log.info("---                 PROCESSING START                        ---")
+    log.info("---------------------------------------------------------------")
 
     return log
 
 
-def init_log_acd(log_path, logger_name):
+def init_log_acd(
+    log_path, 
+    logger_name
+):
     """
     This function differs slightly to `init_log` in that it accommodates a 
     logger_name. This enables unique logger objects to be created so multiple 
@@ -234,7 +238,6 @@ def init_log_acd(log_path, logger_name):
     logger.info("---------------------------------------------------------------")
     logger.info("---                 PROCESSING START                        ---")
     logger.info("---------------------------------------------------------------")
-
 
     return logger
 
@@ -294,7 +297,10 @@ def initialisation(config_path):
     return config_dict, log
 
 
-def conda_check(config_dict: dict, log):
+def conda_check(
+    config_dict: dict, 
+    log
+):
     """
 
     This function takes the path to the config (pyeo.ini) and checks whether the conda environment exists.
@@ -324,7 +330,9 @@ def conda_check(config_dict: dict, log):
         log.warning(f"conda environment path from ini file does not exist: {conda_env_path}")
         return False
 
-def config_path_to_config_dict(config_path: str):
+def config_path_to_config_dict(
+    config_path: str
+):
     """
 
     This function takes the path to the config (pyeo.ini) and simplifies the keys
@@ -344,13 +352,18 @@ def config_path_to_config_dict(config_path: str):
     """
 
     config = configparser.ConfigParser(allow_no_value=True)
+
+    if not os.path.isfile(config_path):
+        print(f"Config file not found: {config_path}")
+        sys.exit(1)
+
     config.read(config_path)
 
-    config_dict = {}
+    config_dict = dict()
 
     for s in config.sections():
         for key in config[s]:
-            print(s,key)
+            #print(s,key)
             config_dict[s] = key
 
     #TODO [run_mode] is now depracated in the ini file
@@ -514,7 +527,10 @@ def config_path_to_config_dict(config_path: str):
 
     return config_dict
 
-def config_to_log(config_dict: dict, log: logging.Logger) -> None:
+def config_to_log(
+    config_dict: dict, 
+    log: logging.Logger
+) -> None:
     """
     This function echoes the contents of config_dict to the log file.
     It does not return anything.
@@ -534,6 +550,7 @@ def config_to_log(config_dict: dict, log: logging.Logger) -> None:
     None
 
     """
+    log.info("----------------------------")
     log.info("Contents of the config file:")
     log.info("----------------------------")
     for key in config_dict:
@@ -836,7 +853,7 @@ def create_file_structure(root: str):
         --L2A
         --bandmerged
         -output
-        --classified
+        --classifications
         --sieved
         --probabilities
         --reports
@@ -850,25 +867,25 @@ def create_file_structure(root: str):
     """
     os.chdir(root)
     dirs = [
-        "images/",
-        "images/L1C/",
-        "images/L2A/",
-        "images/bandmerged/",
-        "images/stacked/",
-        "images/stacked_mosaic/",
-        "images/stacked_masked/",
-        "images/planet/",
-        "composite/",
-        "composite/L1C/",
-        "composite/L2A/",
-        "composite/bandmerged/",
-        "output/",
-        "output/classified/",
-        "output/sieved/",
-        "output/probabilities/",
-        "output/reports/",
-        "output/quicklooks/",
-        "log/",
+        "composite"+os.sep,
+        os.path.join("composite","L1C")+os.sep,
+        os.path.join("composite","L2A")+os.sep,
+        os.path.join("composite","bandmerged")+os.sep,
+        "images"+os.sep,
+        os.path.join("images","L1C")+os.sep,
+        os.path.join("images","L2A")+os.sep,
+        os.path.join("images","bandmerged")+os.sep,
+        os.path.join("images","stacked")+os.sep,
+        os.path.join("images","stacked_mosaic")+os.sep,
+        os.path.join("images","stacked_masked")+os.sep,
+        os.path.join("images","planet")+os.sep,
+        "output"+os.sep,
+        os.path.join("output","classifications")+os.sep,
+        os.path.join("output","sieved")+os.sep,
+        os.path.join("output","probablities")+os.sep,
+        os.path.join("output","reports")+os.sep,
+        os.path.join("output","quicklooks")+os.sep,
+        "log"+os.sep,
     ]
     for dir in dirs:
         try:
@@ -890,7 +907,7 @@ def create_folder_structure_for_tiles(root):
         --L2A
         --cloud_masked
         -output
-        --classified
+        --classifications
         --sieved
         --probabilities
         --reports
@@ -907,21 +924,21 @@ def create_folder_structure_for_tiles(root):
         os.makedirs(root)
     os.chdir(root)
     dirs = [
-        "composite/",
-        "composite/L1C/",
-        "composite/L2A/",
-        "composite/cloud_masked/",
-        "images/",
-        "images/L1C/",
-        "images/L2A/",
-        "images/cloud_masked/",
-        "output/",
-        "output/classified/",
-        "output/sieved/",
-        "output/probabilities/",
-        "output/reports/",
-        "output/quicklooks/",
-        "log/",
+        "composite"+os.sep,
+        os.path.join("composite","L1C")+os.sep,
+        os.path.join("composite","L2A")+os.sep,
+        os.path.join("composite","cloud_masked")+os.sep,
+        "images"+os.sep,
+        os.path.join("images","L1C")+os.sep,
+        os.path.join("images","L2A")+os.sep,
+        os.path.join("images","cloud_masked")+os.sep,
+        "output"+os.sep,
+        os.path.join("output","classifications")+os.sep,
+        os.path.join("output","sieved")+os.sep,
+        os.path.join("output","probabilities")+os.sep,
+        os.path.join("output","reports")+os.sep,
+        os.path.join("output","quicklooks")+os.sep,
+        "log"+os.sep,
     ]
     for dir in dirs:
         try:
@@ -931,7 +948,7 @@ def create_folder_structure_for_tiles(root):
     return
 
 def validate_config_file(config_path):
-    # TODO: fill
+    # TODO: write this function and call from main code
     pass
 
 
@@ -961,7 +978,12 @@ def get_filenames(path, filepattern, dirpattern):
     return sorted(filelist)
 
 
-def get_raster_paths(paths, filepatterns, dirpattern):
+def get_raster_paths(
+    paths:list, 
+    filepatterns:list, 
+    dirpattern:str,
+    log: logging.Logger
+) -> pd.dataframe:
     """
     Iterates over get_filenames for different paths and different file patterns and
     returns a dataframe of all directory paths that match the conditions together with
@@ -971,6 +993,7 @@ def get_raster_paths(paths, filepatterns, dirpattern):
       paths = list of strings indicating the path to a root directory in which the search will be done
       filepatterns = list of strings of the file name patterns to search for
       dirpattern = string of the directory name pattern to search for
+      log = logger object for output
     Returns:
       a dataframe of all found file paths, one line per path
     """
@@ -1009,7 +1032,7 @@ def get_raster_paths(paths, filepatterns, dirpattern):
         # log.info("  row     = {}".format(row))
         results.extend(row)
         # log.info("  results = {}".format(results))
-    # todo: the following line expects exactly one search result per path. Challenge that assumption
+    #TODO: the following line expects exactly one search result per path. Challenge that assumption
     if len(results) == len(paths) * (len(filepatterns) + 1):
         arr = np.array(results, dtype=object).reshape(len(paths), len(filepatterns) + 1)
         results = pd.DataFrame(arr, columns=cols)
@@ -1023,7 +1046,12 @@ def get_raster_paths(paths, filepatterns, dirpattern):
     return results
 
 
-def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m", bands = ["B08", "B04", "B03", "B02"]):
+def check_for_invalid_l2_data(
+    l2_SAFE_file, 
+    resolution="10m", 
+    bands = ["B08", "B04", "B03", "B02"],
+    log = logging.getLogger("pyeo")
+) -> int:
     """
     Checks the existence of the specified resolution of imagery. Returns a True-value with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
@@ -1036,14 +1064,13 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m", bands = ["B08", "B
         The resolution of imagery to check. Defaults to 10m.
     bands : list of strings
         Indicating the band file name components to include in the check, e.g. ["B08", "B04"].
+    log : logger object for text output
 
     Returns
     -------
     result : int
        1 if imagery is valid, 0 if not and 2 if an invalid .SAFE file
     """
-
-    log = logging.getLogger("pyeo")
 
     if not os.path.exists(l2_SAFE_file):
         log.info("{} does not exist.".format(l2_SAFE_file))
@@ -1076,57 +1103,20 @@ def check_for_invalid_l2_data(l2_SAFE_file, resolution="10m", bands = ["B08", "B
         log.warning("Found {} bands when expecting to find {}".format(nb, len(bands)))
         return 0
 
+def check_for_invalid_l1_data(
+    l1_SAFE_file,
+    log = logging.getLogger("pyeo")
+) -> int:
     """
-    # NOT USED
-    
-    def find_file(name, path):
-        for root, dirs, files in os.walk(path):
-            if name in files:
-                return os.path.join(root, name)
-
-    def find_dir(name, path):
-        for root, dirs, files in os.walk(path):
-            if name in dirs:
-                return os.path.join(root, name)
-    """
-
-    """
-    # check whether the band rasters are in the IMG_DATA/R10 or similar subdirectory
-    granule_path = r"GRANULE/*/IMG_DATA/R{}/*_B0[8,4,3,2]*.jp2".format(resolution)
-    image_glob = os.path.join(l2_SAFE_file, granule_path)
-    if len(glob.glob(image_glob)) == 4:
-        log.info("All necessary bands are complete")
-        return 1
-    else:
-        #TODO: check whether the moving of band raster files into the "Rxx" subdirectory works OK
-        # check whether the band rasters are in the IMG_DATA subdirectory
-        granule_path = r"GRANULE/*/IMG_DATA/*_B0[8,4,3,2]*.jp2"
-        image_glob = os.path.join(l2_SAFE_file, granule_path)
-        if len(glob.glob(image_glob)) == 4:
-            log.info("All necessary bands are complete")
-            d=find_dir(r"GRANULE/*/IMG_DATA/R{}".format(resolution), l2_SAFE_file)
-            os.mkdir(d)
-            bands=["B08","B04","B03","B02"]
-            for band in bands:
-                path=glob.glob(os.path.join(l2_SAFE_file, r"GRANULE/*/IMG_DATA"))
-                f=find_file(band, l2_SAFE_file)
-                os.rename(f, os.path.join(os.path.dirname(f),r"R{}".format(resolution),os.path.basename(f)))
-            return 1
-        else:
-            log.warning("Not all necessary bands have been found in the SAFE directory")
-            return 0
-    """
-
-
-def check_for_invalid_l1_data(l1_SAFE_file):
-    """
-    Checks the existance of the specified resolution of imagery. Returns True with a warning if passed
+    Checks the existence of the specified resolution of imagery. Returns True with a warning if passed
     an invalid SAFE directory; this will prevent disconnected files from being deleted.
 
     Parameters
     ----------
     l1_SAFE_file : str
         Path to the L1 file to check
+    log : logging.Logger
+        logger object for text output
 
     Returns
     -------
@@ -1150,7 +1140,12 @@ def check_for_invalid_l1_data(l1_SAFE_file):
         return 0
 
 
-def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
+def clean_l2_data(
+    l2_SAFE_file, 
+    resolution="10m", 
+    warning=True,
+    log = logging.getLogger("pyeo")
+) -> None:
     """
     Removes a safe file if it doesn't have bands 2, 3, 4 or 8 in the specified resolution folder.
     If warning=True, prompts before removal.
@@ -1159,6 +1154,10 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
     ----------
     l2_SAFE_file : str
         Path to the L2 .SAFE file
+    resolution : {"10m", "20m", "60m"}
+        The resolution of imagery to check. Defaults to 10m.
+    warning : flag whether to warn before deleting a file
+    log : logger object for text output
 
     """
     is_valid = check_for_invalid_l2_data(l2_SAFE_file, resolution)
@@ -1172,9 +1171,15 @@ def clean_l2_data(l2_SAFE_file, resolution="10m", warning=True):
                 return
         log.warning("Missing band data. Removing {}".format(l2_SAFE_file))
         shutil.rmtree(l2_SAFE_file)
+    return
 
 
-def clean_l2_dir(l2_dir, resolution="10m", warning=True):
+def clean_l2_dir(
+    l2_dir, 
+    resolution="10m", 
+    warning=True,
+    log = logging.getLogger("pyeo")
+) -> None:
     """
     Calls clean_l2_data on every SAFE file in l2_dir
 
@@ -1186,17 +1191,14 @@ def clean_l2_dir(l2_dir, resolution="10m", warning=True):
         Resolution to check. Defaults to 10m
     warning : bool, optional
         If True, prompts user before deleting files.
-
-
-    Returns
-    -------
-
+    log : logger object for text output
     """
     log.info("Scanning {} for missing band data in .SAFE files".format(l2_dir))
     for safe_file_path in [
         os.path.join(l2_dir, safe_file_name) for safe_file_name in os.listdir(l2_dir)
     ]:
         clean_l2_data(safe_file_path, resolution, warning)
+    return
 
 
 def clean_aoi(aoi_dir, images_to_keep=4, warning=True):
@@ -1691,10 +1693,10 @@ def serial_date_to_string(srl_no: int) -> str:
 
 
 def zip_contents(
-                 directory: str, 
-                 notstartswith=None, 
-                 log = logging.getLogger("pyeo")
-                 ) -> None:
+    directory: str, 
+    notstartswith=None, 
+    log = logging.getLogger("pyeo")
+) -> None:
     """
     Zip the contents of the specified directory.
 
@@ -1749,7 +1751,12 @@ def zip_contents(
     return
 
 
-def unzip_contents(zippath: str, ifstartswith=None, ending=None) -> None:
+def unzip_contents(
+    zippath: str, 
+    ifstartswith=None, 
+    ending=None,
+    log = logging.getLogger("pyeo")
+) -> None:
     """
     Unzip the contents of the specified zipped folder.
 
@@ -1761,6 +1768,8 @@ def unzip_contents(zippath: str, ifstartswith=None, ending=None) -> None:
         Prefix to check before extracting. Default is None.
     ending : str or None, optional
         Suffix to add to the extracted folder name. Default is None.
+    log : logging.Logger
+        logger object for text output
 
     Returns
     -------
