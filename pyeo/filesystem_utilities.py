@@ -269,14 +269,14 @@ def initialisation(config_path):
         os.makedirs(config_dict["log_dir"])
 
     # initialise log file
-    log = filesystem_utilities.init_log_acd(
+    log = init_log_acd(
         log_path=os.path.join(config_dict["log_dir"], config_dict["log_filename"]),
         logger_name="pyeo_acd_log",
     )
 
     # check conda directory exists
     if config_dict["environment_manager"] == "conda":
-        conda_boolean = filesystem_utilities.conda_check(config_dict=config_dict, log=log)
+        conda_boolean = conda_check(config_dict=config_dict, log=log)
         log.info(conda_boolean)
         if not conda_boolean:
             log.error("Conda Environment Directory does not exist")
