@@ -47,7 +47,8 @@ python -m pip install -vv .
 ```
 
 ### Google Colab (Linux)
-```# from a Jupyter Notebook in Colab, do this:
+```
+# from a Jupyter Notebook in Colab, do this:
 # clone and install a github repo on Colab: https://github.com/clcr/pyeo
 !pwd
 !git clone https://github.com/clcr/pyeo.git
