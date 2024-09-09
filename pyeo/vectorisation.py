@@ -18,8 +18,6 @@ import json
 import logging
 import matplotlib
 import matplotlib.pyplot as plt
-#TODO: either remove or do a pip install into env
-#from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 import os
 from osgeo import gdal, ogr, osr
@@ -35,7 +33,7 @@ import xml.etree.ElementTree as et
 
 import pyeo.coordinate_manipulation as coordinate_manipulation
 import pyeo.filesystem_utilities as filesystem_utilities
-from pyeo.filesystem_utilities import serial_date_to_string
+from pyeo.filesystem_utilities import serial_date_to_string, move_and_rename_old_file
 import pyeo.raster_manipulation as raster_manipulation
 
 class ChangeEvent:
@@ -1017,7 +1015,9 @@ def zonal_statistics(
         the path to the shapefile which we will use as the "zones".
     band : int
         the band to run zonal statistics on.
-
+    log : logging.Logger
+        logger object
+        
     Returns
     -------
     zstats_df : pd.DataFrame
