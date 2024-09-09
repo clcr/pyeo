@@ -22,13 +22,17 @@ import os
 from osgeo import gdal
 import shutil
 import sys
+import zipfile
+
 from pyeo import filesystem_utilities
-from pyeo.filesystem_utilities import config_to_log
+from pyeo.filesystem_utilities import (
+    config_to_log,
+    move_and_rename_old_file
+)
+
 from pyeo.acd_national import (
     acd_roi_tile_intersection,
-    )
-#from pyeo.apps.acd_national import acd_by_tile_vectorisation
-import zipfile
+)
 
 gdal.UseExceptions()
 
@@ -162,43 +166,48 @@ def send_report(config_path, tile_id="None"):
     if tile_id == "None":
         # if no tile ID is given by the call to the function, use the geometry file
         #   to get the tile ID list
-        tile_based_processing_override = False
+        #tile_based_processing_override = False
         tilelist_filepath = acd_roi_tile_intersection(config_dict, log)
         tiles_to_process = list(pd.read_csv(tilelist_filepath)["tile"])
-
-        # move filelist file from roi dir to main directory and save txt file
-        tilelist_filepath = shutil.move(
+        # move filelist file from roi dir to main directory and rename old file if it exists
+        tilelist_filepath = move_and_rename_old_file(
             tilelist_filepath, 
             os.path.join(
                 config_dict["tile_dir"], 
                 tilelist_filepath.split(os.path.sep)[-1])
-            )
-        try:
-            tilelist_txt_filepath = os.path.join(
-                            config_dict["tile_dir"], 
-                            tilelist_filepath.split(os.path.sep)[-1].split('.')[0]+'.txt'
-                            )
-
-            pd.DataFrame({"tile": tiles_to_process}).to_csv(
-                tilelist_txt_filepath, 
-                header=True, 
-                index=False)
-            log.info(f"Saved: {tilelist_txt_filepath}")
-        except:
-            log.error(f"Could not write to {tilelist_filepath}")
-
+        )
         log.info("Region of interest processing based on ROI file.")        
     else:
         # if a tile ID is specified, use that and do not use the tile intersection
         #   method to get the tile ID list
-        tile_based_processing_override = True
+        #tile_based_processing_override = True
         tiles_to_process = [tile_id]
+        log.info(f"Tile based processing: {tile_id}. Ignoring ROI file.")
+        tilelist_filepath = os.path.join(
+            config_dict["tile_dir"],
+            "tile_list.txt"
+        )
+        try:
+            with TemporaryDirectory(os.getcwd()) as td:
+                tmp_filepath = os.path.join(td, "tile_list.txt")
+                pd.DataFrame({"tile": tiles_to_process}).to_csv(
+                    tmp_filepath, 
+                    header=True, 
+                    index=False
+                )
+                # move filelist file from temporary dir to main directory and rename 
+                #    old file if it exists
+                tilelist_filepath = move_and_rename_old_file(
+                    tilelist_filepath, 
+                    os.path.join(
+                        config_dict["tile_dir"], 
+                        tilelist_filepath.split(os.path.sep)[-1])
+                )
+        except:
+            log.error(f"Could not write to {tilelist_filepath}")
 
-    if tile_based_processing_override:
-        log.info("Tile based processing selected. Overriding the geometry file intersection method")
-        log.info("  to get the list of tile IDs.")
-
-    log.info(str(len(tiles_to_process)) + " Sentinel-2 tile reports to process.")
+    log.info(f"Saved Sentinel-2 tile ID list: {tilelist_filepath}")
+    log.info(str(len(tiles_to_process)) + " Sentinel-2 tiles to process.")
 
     # iterate over the tiles
     for tile_to_process in tiles_to_process:
@@ -261,13 +270,14 @@ def send_report(config_path, tile_id="None"):
             #tile_log.info(f"found vector file: {sf}")
             # split off the ".shp" file extension
             file_id = sf.split(".")[0]
-            #tile_log.info(f"file path starts with: {file_id}")
-            files_to_zip = glob.glob(file_id+"*")
-            files_to_zip = [f for f in files_to_zip if not f.endswith('.zip')]
-            #tile_log.info(f"{len(files_to_zip)} files to include in zip file")
-            #for z in files_to_zip:
-            #    tile_log.info(f"included in zip file: {z}")
+            tile_log.info(f"file path starts with: {file_id}")
             zipped_file = os.path.join(reports_dir, file_id + '.zip')
+            tile_log.info(f"Creating zip file: {zipped_file}")
+            files_to_zip = glob.glob(file_id+".*")
+            files_to_zip = [f for f in files_to_zip if not f.endswith('.zip')]
+            tile_log.info(f"{len(files_to_zip)} files to include in zip file:")
+            for z in files_to_zip:
+                tile_log.info(f"  {z}")
             with zipfile.ZipFile(
                 zipped_file, "w", compression=zipfile.ZIP_DEFLATED
                 ) as zf:
@@ -289,11 +299,20 @@ def send_report(config_path, tile_id="None"):
             tile_log.info("No new forest alert vector files found.")
             tile_log.info("No message will be sent.")
         else:
-            if email_alerts and len(zipped_vector_files)>0:            
-                elf = open(email_list_file, 'r')
-                recipients = elf.readlines()
-                
-                for r, recipient in enumerate(recipients):
+            if email_alerts:
+                try:
+                    elf = open(email_list_file, 'r')
+                    recipients = elf.readlines()
+                    tile_log.info("Recipients of email alerts:")
+                    for line in recipients:
+                        name = line.split(",")[0]
+                        email_address = line.split(",")[1]
+                        tile_log.info(f"{name}, {email_address}")
+                    elf.close()
+                except:
+                    log.error(f"ABORTING. Email distribution list file could not be read: {email_list_file}.")
+                    sys.exit(1)            
+                 for r, recipient in enumerate(recipients):
                     # Remove the newline character
                     recipient_name = recipient.strip().split(",")[0]
                     recipient_email = recipient.strip().split(",")[1]
@@ -301,42 +320,49 @@ def send_report(config_path, tile_id="None"):
                         f"Sending email from {email_sender} to {recipient_name} " +
                         f"at {recipient_email}."
                         )
+                    
+                    # compose the email message text
+                    message =  [
+                        f"Dear {recipient_name},",
+                        "",
+                        "New pyeo forest alerts have been detected.",
+                        f"Time period: from {start_date} to {end_date}",
+                        ""
+                    ]
                     for f in zipped_vector_files:
-                        file_size_mb = os.stat(f).st_size / (1024 * 1024)
-                        message =  [
-                           f"Dear {recipient_name},",
-                           "",
-                           "New pyeo forest alerts have been detected.",
-                           f"Time period: from {start_date} to {end_date}",
-                           "",
-                           f"Vector file: {f}",
-                           f"Zipped vector file size: {file_size_mb}",
-                           "",
-                           "Please check the individual alerts and consider action " +
-                               "for those you want investigating.",
-                           "",
-                           "Date of sending this email: " +
-                           f"{datetime.date.today().strftime('%Y%m%d')}",
-                           "",
-                           "Best regards,",
-                           "",
-                           "The pyeo forest alerts team",
-                           "DISCLAIMER: The alerts are providing without any warranty.",
-                           "IMPORTANT: Do not reply to this email."
-                           ]
-        
-                        subject_line = "New pyeo forest alerts are ready for you "+\
-                            f"(Sentinel-2 tile {tile_to_process})"
-        
-                        email = EmailMessage()
-                        email["From"] = email_sender
-                        email["To"] = recipient_email
-                        email["Subject"] = subject_line
-                        email.set_content("\n".join(message))
+                        file_size_kb = os.stat(f).st_size / 1024
+                        message = message + [
+                            f"Vector file: {f}",
+                            f"Zipped vector file size (KB): {round(file_size_kb,3)}"
+                        ]
+
+                    message = message + [
+                        "","Please check the individual alerts and consider action " +
+                           "for those you want investigating.",
+                       "",
+                       "Date of sending this email: " +
+                       f"{datetime.date.today().strftime('%Y%m%d')}",
+                       "",
+                       "Best regards,",
+                       "",
+                       "The pyeo forest alerts team",
+                       "DISCLAIMER: The alerts are providing without any warranty.",
+                       "IMPORTANT: Do not reply to this email."
+                       ]
+    
+                    subject_line = "New pyeo forest alerts are ready for you "+\
+                        f"(Sentinel-2 tile {tile_to_process})"
+                    
+                    email = EmailMessage()
+                    email["From"] = email_sender
+                    email["To"] = recipient_email
+                    email["Subject"] = subject_line
+                    email.set_content("\n".join(message))
                         
-                        # Add attachment.
-                        # Careful: Some mail servers block emails with zip file 
-                        #   attachments
+                    # Add attachments.
+                    # Careful: Some mail servers block emails with zip file 
+                    #   attachments
+                    for f in zipped_vector_files:        
                         with open(f, "rb") as file_to_attach:
                             email.add_attachment(
                                 file_to_attach.read(),
@@ -345,13 +371,12 @@ def send_report(config_path, tile_id="None"):
                                 subtype="zip"
                             )                        
                         
-                        smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
-                        smtp.starttls()
-                        smtp.login(email_sender, email_password)
-                        smtp.sendmail(email_sender, recipient_email, email.as_string())
-                        smtp.quit()
-                tile_log.info(" ")
-                tile_log.info("Info on vectorised reports has been emailed to the contact list.")
+                    smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
+                    smtp.starttls()
+                    smtp.login(email_sender, email_password)
+                    smtp.sendmail(email_sender, recipient_email, email.as_string())
+                    smtp.quit()                        
+
                 tile_log.info(" ")
 
             if whatsapp_alerts and len(vector_files)>0:
