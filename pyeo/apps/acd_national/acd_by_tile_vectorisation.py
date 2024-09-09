@@ -1,12 +1,15 @@
 import os
 import sys
 import glob
-#import logging
 from pyeo import filesystem_utilities
 from pyeo import vectorisation
 
 
-def vector_report_generation(config_path: str, tile: str):
+def vector_report_generation(
+    config_path: str, 
+    tile: str,
+    tile_log = None
+) -> list:
     """
     This function vectorises the Change Report Raster, with the aim of producing 
     shapefiles that can be filtered and summarised spatially, and displayed in a GIS.
@@ -17,6 +20,8 @@ def vector_report_generation(config_path: str, tile: str):
         path to pyeo.ini
     tile : str
         Sentinel-2 tile name to process
+    tile_log : logging.Logger object, default None, in which case a tile log file is
+        automatically identified
 
     Returns
     -------
@@ -40,17 +45,19 @@ def vector_report_generation(config_path: str, tile: str):
 
     ## setting up the per tile logger
     # get path where the tiles are downloaded to
-    tile_directory_path = config_dict["tile_dir"]
     # check for and create the folder structure pyeo expects
+    tile_directory_path = config_dict["tile_dir"]
     individual_tile_directory_path = os.path.join(tile_directory_path, tile)
-    # get the logger for this tile
-    tile_log = filesystem_utilities.init_log_acd(
-        log_path=os.path.join(individual_tile_directory_path, 
-                              "log", 
-                              tile + "_log.txt"),
-        logger_name=f"pyeo_tile_{tile}_log",
-    )
 
+    # get the logger for this tile if not specified by function call
+    if tile_log == None:
+        print("Creating tile_log file")
+        tile_log = filesystem_utilities.init_log_acd(
+            log_path=os.path.join(individual_tile_directory_path, 
+                                  "log", 
+                                  tile + "_log.txt"),
+            logger_name=f"pyeo_tile_{tile}_log",
+        )
 
     # Matt: get the report raster from the previous functions
     # for parallelism reasons, the report path cannot be passed to this function
@@ -65,8 +72,8 @@ def vector_report_generation(config_path: str, tile: str):
         os.path.join(config_dict["tile_dir"], search_pattern)
     )
 
-    # ... and from the report_image_dir subdirectory
-    report_tif_pattern = f"{os.sep}output{os.sep}report_image{os.sep}report*.tif"
+    # ... and from the reports subdirectory
+    report_tif_pattern = f"{os.sep}output{os.sep}reports{os.sep}report*.tif"
     search_pattern = f"{tile}{report_tif_pattern}"
 
     for g in glob.glob(os.path.join(config_dict["tile_dir"], search_pattern)):
@@ -80,6 +87,7 @@ def vector_report_generation(config_path: str, tile: str):
         tile_log.info("Change report image path(s) found:")
         for p in change_report_paths:
             tile_log.info(f"  {p}")
+            
     tile_log.info("--" * 20)
     tile_log.info("Starting Vectorisation of the Change Report Rasters " +
                   f"of Tile: {tile}")
@@ -89,19 +97,17 @@ def vector_report_generation(config_path: str, tile: str):
     output_vector_files = []
     for change_report_path in change_report_paths:
 
-        tile_log.info(f"change_report_path = {change_report_path}")
+        tile_log.info(f"Processing report image file: {change_report_path}")
 
         if os.path.exists(change_report_path[:-4]+".shp"):
             tile_log.info(f"Skipping. Found {change_report_path[:-4]}.shp")
 
         else:
-
             path_vectorised_binary = vectorisation.vectorise_from_band(
                 change_report_path=change_report_path,
-                band=15,
+                band=9, # was 15 before but missed a lot of alerts in the vector file
                 log=tile_log
             )
-            # was band=6
     
             path_vectorised_binary_filtered = vectorisation.clean_zero_nodata_vectorised_band(
                 vectorised_band_path=path_vectorised_binary,
@@ -110,10 +116,8 @@ def vector_report_generation(config_path: str, tile: str):
     
             tile_log.info(f"vectorised_file_path = {path_vectorised_binary_filtered}")
 
-            #TODO: Note: zonal_statistics() returns None if no statistics were computed.
+            # Note: zonal_statistics() returns None if no statistics were computed.
             # In cases where the shapefile is not right, this causes an error.
-            # In the code below, check whether vectorisation returns None and if
-            # so, catch the error.
             
             rb_ndetections_zstats_df = vectorisation.zonal_statistics(
                 raster_path=change_report_path,
@@ -121,24 +125,32 @@ def vector_report_generation(config_path: str, tile: str):
                 report_band=5,
                 log=tile_log
                 )
-            # was band=2
-    
+
+            #TODO: fix this
+            #if rb_ndetections_zstats_df == None:
+            #    tile_log.warning(f"Band 5 of the report file did not return valid zonal statistics.")
+            
             rb_confidence_zstats_df = vectorisation.zonal_statistics(
                 raster_path=change_report_path,
                 shapefile_path=path_vectorised_binary_filtered,
                 report_band=9,
                 log=tile_log
             )
-            # was band=5
-        
+
+            #if rb_confidence_zstats_df == None:
+            #    tile_log.warning(f"Band 9 of the report file did not return valid zonal statistics.")
+
             rb_first_changedate_zstats_df = vectorisation.zonal_statistics(
                 raster_path=change_report_path,
                 shapefile_path=path_vectorised_binary_filtered,
                 report_band=4,
                 log=tile_log
             )
-            # was band=7
-        
+
+            #if rb_first_changedate_zstats_df == None:
+            #    tile_log.warning(f"Band 4 of the report file did not return valid zonal statistics.")
+
+
             # table joins, area, lat lon, county
             output_vector_files.append(
                 vectorisation.merge_and_calculate_spatial(
