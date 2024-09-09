@@ -113,10 +113,10 @@ Function reference
 import sys
 import datetime
 import faulthandler
+import geopandas as gpd
 import glob
 import logging
 import numpy as np
-
 import os
 from osgeo import gdal
 from osgeo import gdalconst
@@ -125,18 +125,13 @@ from osgeo.gdal_array import (
     NumericTypeCodeToGDALTypeCode,
     GDALTypeCodeToNumericTypeCode,
 )
-
-#import pdb
 import re
 import shutil
 import subprocess
 from skimage import morphology as morph
 from tempfile import TemporaryDirectory
 import scipy.ndimage as ndimage
-#import itertools as iterate
-#import matplotlib.pylab as pl
 from matplotlib import cm
-#from lxml import etree
 import warnings
 
 from pyeo.coordinate_manipulation import (
