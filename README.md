@@ -46,12 +46,20 @@ If you do not want to edit `pyeo`, replace `python -m pip install -e .` line wit
 python -m pip install -vv .
 ```
 
+### Google Colab (Linux)
+```# from a Jupyter Notebook in Colab, do this:
+# clone and install a github repo on Colab: https://github.com/clcr/pyeo
+!pwd
+!git clone https://github.com/clcr/pyeo.git
+!pip install git+https://github.com/clcr/pyeo
+```
+
 ### Windows
 ```bash
 conda install -c conda-forge git
 git clone https://github.com/clcr/pyeo.git
 cd pyeo
-conda env create --file environment_windows.yml --name pyeo_env
+conda env create --file environment_windows_w1.yml --name pyeo_env
 conda activate pyeo_env
 python -m pip install -e .
 ```
