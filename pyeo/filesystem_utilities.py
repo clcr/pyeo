@@ -1899,7 +1899,7 @@ def check_file_permissions(file_path):
         print(e.args[0], e.args[1])
         return e.args
     except NameError:
-        print(0, f"No IOError with file {file_path}")
+        #print(0, f"No IOError with file {file_path}")
         return (0, "OK")
             
 def chmodrwx(dir_path):
