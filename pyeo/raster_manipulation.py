@@ -6820,9 +6820,10 @@ def roi_tile_intersection(
 
     try:
         tiles_list_df = pd.DataFrame({"tile": tiles_list})
-        tiles_list_df.to_csv(tilelist_filepath, header=True, index=False)
+	log.info(tiles_list_df)
+        tiles_list_df.to_csv(tilelist_filepath, header=True, index=False, errors='ignore')
+        log.info("Finished ROI / tile intersection")
     except:
         log.error(f"Could not write to {tilelist_filepath}")
-    #log.info("Finished ROI tile intersection")
 
     return tilelist_filepath
