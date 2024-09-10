@@ -1796,3 +1796,133 @@ def unzip_contents(
     else:
         log.error("Unzipping failed")
     return
+
+def move_and_rename_old_file(from_path, to_path):
+    """
+    Moves the from_path file to the to_path file without giving file exists errors.
+    If to_path already exists, it will be renamed by appending "_N" before the "." in front of
+    the file ending. N is 1 or the lowest possible integer if that file name also
+    already exists.
+    This gets round some shutil error messages.
+
+    Parameters
+    ----------
+    from_path : str
+        Path to the file which will be moved.
+    
+    to_path : str
+        Path to which the file will be moved.
+
+    Returns
+    -------
+    archive_path : str
+        File name of the renamed to_path if it already existed or an empty string
+    """
+
+    archive_path = ""
+    if os.path.exists(to_path):
+        # if the destination path already exists, rename it
+        i = 1
+        if len(to_path.split(".")) <= 2:
+            beginning = to_path.split(".")[0]
+        if len(to_path.split(".")) > 2:
+            beginning = ".".join(to_path.split(".")[0:-1])
+        # instead of appending _1 indefinitely, isolate the _N part of the filename and increase it by one
+        archive_path = beginning + f"_{i}." + to_path.split(".")[-1]
+        if os.path.isfile(archive_path):
+            while os.path.isfile(archive_path):
+                i = i + 1
+                archive_path = beginning + f"_{i}." + to_path.split(".")[-1]
+        print(f"{to_path} already exists. Renaming the old file.")
+        print("New file name: " + archive_path)
+        shutil.move(to_path, archive_path)
+        
+    shutil.move(from_path, to_path)
+    
+    return archive_path
+
+    
+def move_file(from_path, to_path):
+    """
+    Moves the from_path file to the to_path file without giving file exists errors.
+    If to_path already exists, it will be overwritten. 
+    This gets round some shutil error messages.
+
+    Parameters
+    ----------
+    from_path : str
+        Path to the file which will be moved.
+    
+    to_path : str
+        Path to which the file will be moved.
+
+    Returns
+    -------
+    None
+    """
+
+    check_file_permissions(from_path)
+    
+    check_file_permissions(to_path)
+    
+    if os.path.isfile(to_path):
+        print(f"{to_path} already exists. Deleting the old file.")
+        os.remove(to_path)
+
+    shutil.move(from_path, to_path)
+    
+    return
+
+def check_file_permissions(file_path):
+    """
+    Checks the file permissions of the specified file.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file which will be checked.
+    
+    Returns
+    -------
+    e.args : list with two elements, an IOError number and an IOError string.
+        Contains (0, "OK") if no IOError happened.
+    """
+    
+    try:
+        open(file_path)
+    except IOError as e:
+        pass
+
+    try:
+        print(e.args[0], e.args[1])
+        return e.args
+    except NameError:
+        print(0, f"No IOError with file {file_path}")
+        return (0, "OK")
+            
+def chmodrwx(dir_path):
+    """
+    Sets all file and directory permissions of the specified file path and its contents to be
+    read, write and execute by the group.
+
+    Parameters
+    ----------
+    dir_path : str
+        Path to the top-level directory.
+    
+    Returns
+    -------
+    e.args : list with two elements, an IOError number and an IOError string.
+        Contains (0, "OK") if no IOError happened.
+    """
+    try:
+        for root, dirs, files in os.walk(dir_path):
+            for d in dirs:  
+                os.chmod(d, stat.S_IRWXG)
+                for f in files:
+                    os.chmod(os.path.join(root, f), stat.S_IRWXG)
+        return (0, "OK")
+    except IOError as e:
+        print(e.args[0], e.args[1])
+        return e.args
+
