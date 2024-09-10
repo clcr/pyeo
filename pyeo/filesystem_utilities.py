@@ -287,10 +287,6 @@ def initialisation(config_path):
             log.error("now exiting the pipeline")
             sys.exit(1)
 
-    log.info("---------------------------------------------------------------")
-    log.info("---                  PROCESSING START                       ---")
-    log.info("---------------------------------------------------------------")
-
     log.info(f"Reading in parameters defined in: {config_path}")
     log.info("---------------------------------------------------------------")
 
