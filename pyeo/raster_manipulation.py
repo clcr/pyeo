@@ -173,7 +173,7 @@ from pyeo.exceptions import (
 
 gdal.UseExceptions()
 
-log = logging.getLogger("pyeo")
+#log = logging.getLogger("pyeo")
 
 import pyeo.windows_compatability
 
