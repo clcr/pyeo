@@ -6198,8 +6198,7 @@ def create_quicklook(
                 <paletteEntry label="12" color="#3cd24b" alpha="255" value="12"/>
                 </colorPalette>
                 """
-
-		if data.max() < 13:
+                if data.max() < 13:
                     log.info("Using custom colour table for up to 12 classes (0..11)")
                     colors.SetColorEntry(0, (0, 0, 0, 0))  # no data
                     colors.SetColorEntry(1, (0, 100, 0, 255))  # Primary Forest
