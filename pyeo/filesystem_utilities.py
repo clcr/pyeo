@@ -983,7 +983,7 @@ def get_raster_paths(
     filepatterns:list, 
     dirpattern:str,
     log: logging.Logger
-) -> pd.dataframe:
+):
     """
     Iterates over get_filenames for different paths and different file patterns and
     returns a dataframe of all directory paths that match the conditions together with
