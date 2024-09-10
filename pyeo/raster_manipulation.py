@@ -3137,7 +3137,12 @@ def apply_scl_cloud_mask(
         # log.info("  File pattern: {}".format(pattern))
 
         # Find existing matching files in the output directory
-        df = get_raster_paths([out_dir], filepatterns=[pattern], dirpattern="")
+        df = get_raster_paths(
+                [out_dir], 
+                filepatterns=[pattern], 
+                dirpattern="", 
+                log=log
+        )
         for i in range(len(df)):
             if df[pattern][i] != "" and skip_existing:
                 log.info("  Skipping band merging for: {}".format(f))
@@ -4343,7 +4348,8 @@ def create_mask_from_scl_layer(
     df = get_raster_paths(
         [l2_safe_path], 
         filepatterns=["SCL"], 
-        dirpattern="R20m"
+        dirpattern="R20m",
+        log=log
     )
     scl_path = df["SCL"][0][0]
     scl_path = glob.glob(os.path.join(l2_safe_path, scl_glob))[0]
