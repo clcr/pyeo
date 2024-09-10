@@ -730,8 +730,7 @@ def trim_image(
         in_raster_array = None
         out_raster = None
         in_raster = None
-	
-	return
+    return
 
 def mosaic_images(
     raster_path, 
