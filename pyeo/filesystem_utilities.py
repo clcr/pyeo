@@ -31,8 +31,14 @@ import zipfile
 from pyeo.exceptions import CreateNewStacksException
 
 # Set up logging on import
-log = logging.getLogger("pyeo")
+logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s")
 formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
+log = logging.getLogger("pyeo")
+log.setLevel(logging.INFO)
+file_handler = logging.FileHandler(os.getcwd())
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+log.addHandler(file_handler)
 
 # def gdal_switch(installation: str,
 #                 config_dict: dict) -> None:
