@@ -1141,7 +1141,7 @@ def composite_images_with_mask(
 def get_stats_from_raster_file(
     in_raster_path, 
     format="GTiff", 
-    missing_data_value=0,
+    missing_data_value=-9999,
     log=logging.getLogger(__name__),
 ):
     """
