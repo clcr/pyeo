@@ -6198,6 +6198,167 @@ def create_quicklook(
                 <paletteEntry label="12" color="#3cd24b" alpha="255" value="12"/>
                 </colorPalette>
                 """
+def create_quicklook(
+    in_raster_path,
+    out_raster_path,
+    width,
+    height,
+    format="PNG",
+    bands=[1, 2, 3],
+    nodata=None,
+    scale_factors=None,
+):
+    """
+    Creates a quicklook image of reduced size from an input GDAL object and saves it to out_raster_path.
+
+    Parameters
+    ----------
+    in_raster_path : string
+        The string containing the full directory path to the input file for the quicklook
+    out_raster_path : string
+        The string containing the full directory path to the output file for the quicklook
+    width : number
+        Width of the output raster in pixels
+    height : number
+        Height of the output raster in pixels
+    format : string, optional
+        GDAL format for the quicklook raster file, default PNG
+    bands : list of numbers
+        List of the band numbers to be displayed as RGB. Will be ignored if only one band is in the image raster.
+    nodata : number (optional)
+        Missing data value.
+
+    Returns
+    -------
+    out_raster_path : string
+        The output path of the generated quicklook raster file
+    """
+    # Useful options:
+    # widthPct --- width of the output raster in percentage (100 = original width)
+    # heightPct --- height of the output raster in percentage (100 = original height)
+    # xRes --- output horizontal resolution
+    # yRes --- output vertical resolution
+    with TemporaryDirectory(dir=os.path.expanduser('~')) as td:
+        try:
+            image = gdal.Open(in_raster_path, gdal.GA_ReadOnly)
+            tmpfile_path = os.path.join(
+                td, os.path.basename(in_raster_path)[:-4] + "_copy.tif"
+            )
+            driver = gdal.GetDriverByName("GTiff")
+            driver.CreateCopy(tmpfile_path, image, 0)
+            image = None
+            image = gdal.Open(tmpfile_path, gdal.GA_Update)
+        except RuntimeError as e:
+            log.error(
+                "Error opening raster file: {}    /   {}".format(in_raster_path, e)
+            )
+            return
+        #TODO: check data type of the in_raster - currently crashes when looking 
+        #       at images from the probabilities folder (wrong data type)
+        if image.RasterCount < 3:
+            # log.info("Raster count is {}. Using band 1.".format(image.RasterCount))
+            bands = [image.RasterCount]
+            alg = "nearest"
+            palette = "rgba"
+            band = image.GetRasterBand(1)
+            data = band.ReadAsArray()
+            scale_factors = None
+            output_type = gdal.GDT_Byte
+        else:
+            alg = None
+            palette = None
+            output_type = gdal.GDT_Byte
+            if scale_factors is None:
+                scale_factors = [[0, 2000, 0, 255]]  # this is specific to Sentinel-2
+            # log.info("Scaling values from {}...{} to {}...{}".format(scale_factors[0][0], scale_factors[0][1], scale_factors[0][2], scale_factors[0][3]))
+
+        # All the options that gdal.Translate() takes are listed here: gdal.org/python/osgeo.gdal-module.html#TranslateOptions
+        kwargs = {
+            "format": format,
+            "outputType": output_type,
+            "bandList": bands,
+            "noData": nodata,
+            "width": width,
+            "height": height,
+            "resampleAlg": alg,
+            "scaleParams": scale_factors,
+            "rgbExpand": palette,
+        }
+
+        if image.RasterCount < 3:
+            try:
+                # histo = np.array(band.GetHistogram())
+                # log.info("Histogram: {}".format(np.where(histo > 0)[0]))
+                # log.info("           {}".format(histo[np.where(histo > 0)]))
+                # log.info("Band data min, max: {}, {}".format(data.min(), data.max()))
+                colors = gdal.ColorTable()
+                #TODO: load a colour table (QGIS style file) from file if 
+                #      specified as an option by the function call
+                """
+                Comment: A *.qml file contains:
+                <colorPalette>
+                <paletteEntry label="0" color="#000000" alpha="255" value="0"/>
+                <paletteEntry label="1" color="#287d28" alpha="255" value="1"/>
+                <paletteEntry label="3" color="#c28540" alpha="255" value="3"/>
+                <paletteEntry label="4" color="#e1de0b" alpha="255" value="4"/>
+                <paletteEntry label="5" color="#bbdc00" alpha="255" value="5"/>
+                <paletteEntry label="11" color="#69de33" alpha="255" value="11"/>
+                <paletteEntry label="12" color="#3cd24b" alpha="255" value="12"/>
+                </colorPalette>
+                """
+
+                if data.max() < 13:
+                    log.info("Using custom colour table for up to 12 classes (0..11)")
+                    colors.SetColorEntry(0, (0, 0, 0, 0))  # no data
+                    colors.SetColorEntry(1, (0, 100, 0, 255))  # Primary Forest
+                    colors.SetColorEntry(2, (154, 205, 50, 255))  # plantation Forest
+                    colors.SetColorEntry(3, (139, 69, 19, 255))  # Bare Soil
+                    colors.SetColorEntry(4, (189, 183, 107, 255))  # Crops
+                    colors.SetColorEntry(5, (240, 230, 140, 255))  # Grassland
+                    colors.SetColorEntry(6, (0, 0, 205, 255))  # Open Water
+                    colors.SetColorEntry(7, (128, 0, 0, 255))  # Burn Scar
+                    colors.SetColorEntry(8, (255, 255, 255, 255))  # cloud
+                    colors.SetColorEntry(9, (60, 60, 60, 255))  # cloud shadow
+                    colors.SetColorEntry(10, (128, 128, 128, 255))  # Haze
+                    colors.SetColorEntry(11, (46, 139, 87, 255))  # Open Woodland
+                    colors.SetColorEntry(12, (92, 145, 92, 255))  # Toby's Woodland
+                else:
+                    # log.info("Using viridis colour table for {} classes".format(data.max()))
+                    viridis = cm.get_cmap("viridis", min(data.max(), 255))
+                    for index, color in enumerate(viridis.colors):
+                        colors.SetColorEntry(
+                            index,
+                            (
+                                int(color[0] * 255),
+                                int(color[1] * 255),
+                                int(color[2] * 255),
+                                int(color[3] * 255),
+                            ),
+                        )
+                band.SetRasterColorTable(colors)
+                band.WriteArray(data)
+                out_image = gdal.Translate(
+                    out_raster_path, image, options=gdal.TranslateOptions(**kwargs)
+                )
+                driver = gdal.GetDriverByName("PNG")
+                driver.CreateCopy(out_raster_path, out_image, 0)
+                data = None
+                out_image = None
+                image = None
+                band = None
+            except Exception as e:
+                log.error("An error occurred: {}".format(e))
+                log.error("  Skipping quicklook for image: {}".format(out_raster_path))
+                image = None
+                return
+        else:
+            out_image = gdal.Translate(
+                out_raster_path, image, options=gdal.TranslateOptions(**kwargs)
+            )
+            out_image = None
+            image = None
+        return out_raster_path
+
 
 def visualise_classification(classified_path: str, labels: list):
     ds = gdal.Open(classified_path)
