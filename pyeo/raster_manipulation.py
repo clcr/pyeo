@@ -6214,8 +6214,8 @@ def create_quicklook(
                     colors.SetColorEntry(11, (46, 139, 87, 255))  # Open Woodland
                     colors.SetColorEntry(12, (92, 145, 92, 255))  # Toby's Woodland
                 else:
-                    # log.info("Using viridis colour table for {} classes".format(data.max()))
-                    viridis = cm.get_cmap("viridis", min(data.max(), 255))
+                    log.info("Using viridis colour table for {} classes".format(data.max()))
+                    viridis = cm.get_cmap("viridis", min(data.max()+1, 255))
                     for index, color in enumerate(viridis.colors):
                         colors.SetColorEntry(
                             index,
@@ -6228,11 +6228,21 @@ def create_quicklook(
                         )
                 band.SetRasterColorTable(colors)
                 band.WriteArray(data)
+
+                log.info("Calling gdal.Translate")
                 out_image = gdal.Translate(
-                    out_raster_path, image, options=gdal.TranslateOptions(**kwargs)
+                    out_raster_path, 
+                    image, 
+                    options=gdal.TranslateOptions(**kwargs)
                 )
-                driver = gdal.GetDriverByName("PNG")
-                driver.CreateCopy(out_raster_path, out_image, 0)
+
+                #log.info("Calling driver.CreateCopy")
+                #driver = gdal.GetDriverByName("PNG")
+                #driver.CreateCopy(
+                #    out_raster_path, 
+                #    out_image, 
+                #    strict=0
+                #)
                 data = None
                 out_image = None
                 image = None
@@ -6241,13 +6251,16 @@ def create_quicklook(
                 log.error("An error occurred: {}".format(e))
                 log.error("  Skipping quicklook for image: {}".format(out_raster_path))
                 image = None
-                return
+                return -1
         else:
             out_image = gdal.Translate(
-                out_raster_path, image, options=gdal.TranslateOptions(**kwargs)
+                out_raster_path, 
+                image, 
+                options=gdal.TranslateOptions(**kwargs)
             )
             out_image = None
             image = None
+            
         return out_raster_path
 
 
@@ -6312,72 +6325,7 @@ def visualise_classification(classified_path: str, labels: list):
     im = ax2.imshow(array, cmap=cmap, aspect="auto", vmin=-0.5, vmax=len(labels)+0.5)
     fig.colorbar(im, ax=ax2) 
     plt.show()
-
-                if data.max() < 13:
-                    log.info("Using custom colour table for up to 12 classes (0..11)")
-                    colors.SetColorEntry(0, (0, 0, 0, 0))  # no data
-                    colors.SetColorEntry(1, (0, 100, 0, 255))  # Primary Forest
-                    colors.SetColorEntry(2, (154, 205, 50, 255))  # plantation Forest
-                    colors.SetColorEntry(3, (139, 69, 19, 255))  # Bare Soil
-                    colors.SetColorEntry(4, (189, 183, 107, 255))  # Crops
-                    colors.SetColorEntry(5, (240, 230, 140, 255))  # Grassland
-                    colors.SetColorEntry(6, (0, 0, 205, 255))  # Open Water
-                    colors.SetColorEntry(7, (128, 0, 0, 255))  # Burn Scar
-                    colors.SetColorEntry(8, (255, 255, 255, 255))  # cloud
-                    colors.SetColorEntry(9, (60, 60, 60, 255))  # cloud shadow
-                    colors.SetColorEntry(10, (128, 128, 128, 255))  # Haze
-                    colors.SetColorEntry(11, (46, 139, 87, 255))  # Open Woodland
-                    colors.SetColorEntry(12, (92, 145, 92, 255))  # Toby's Woodland
-                else:
-                    log.info("Using viridis colour table for {} classes".format(data.max()))
-                    viridis = cm.get_cmap("viridis", min(data.max()+1, 255))
-                    for index, color in enumerate(viridis.colors):
-                        colors.SetColorEntry(
-                            index,
-                            (
-                                int(color[0] * 255),
-                                int(color[1] * 255),
-                                int(color[2] * 255),
-                                int(color[3] * 255),
-                            ),
-                        )
-                band.SetRasterColorTable(colors)
-                band.WriteArray(data)
-
-                log.info("Calling gdal.Translate")
-                out_image = gdal.Translate(
-                    out_raster_path, 
-                    image, 
-                    options=gdal.TranslateOptions(**kwargs)
-                )
-
-                #log.info("Calling driver.CreateCopy")
-                #driver = gdal.GetDriverByName("PNG")
-                #driver.CreateCopy(
-                #    out_raster_path, 
-                #    out_image, 
-                #    strict=0
-                #)
-                data = None
-                out_image = None
-                image = None
-                band = None
-            except Exception as e:
-                log.error("An error occurred: {}".format(e))
-                log.error("  Skipping quicklook for image: {}".format(out_raster_path))
-                image = None
-                return -1
-        else:
-            out_image = gdal.Translate(
-                out_raster_path, 
-                image, 
-                options=gdal.TranslateOptions(**kwargs)
-            )
-            out_image = None
-            image = None
-            
-        return out_raster_path
-
+    return
 
 def __combine_date_maps(
     date_image_paths, 
