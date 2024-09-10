@@ -6820,7 +6820,7 @@ def roi_tile_intersection(
 
     try:
         tiles_list_df = pd.DataFrame({"tile": tiles_list})
-	log.info(tiles_list_df)
+        log.info(tiles_list_df)
         tiles_list_df.to_csv(tilelist_filepath, header=True, index=False, errors='ignore')
         log.info("Finished ROI / tile intersection")
     except:
