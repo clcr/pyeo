@@ -125,6 +125,7 @@ from osgeo.gdal_array import (
     NumericTypeCodeToGDALTypeCode,
     GDALTypeCodeToNumericTypeCode,
 )
+import pandas as pd
 import re
 import shutil
 import subprocess
