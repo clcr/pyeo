@@ -163,6 +163,7 @@ from pyeo.filesystem_utilities import (
     get_raster_paths,
     get_image_acquisition_time,
     serial_date_to_string,
+    move_file,
 )
 from pyeo.exceptions import (
     CreateNewStacksException,
