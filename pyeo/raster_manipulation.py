@@ -6820,10 +6820,13 @@ def roi_tile_intersection(
 
     try:
         tiles_list_df = pd.DataFrame({"tile": tiles_list})
-        log.info(tiles_list_df)
-        tiles_list_df.to_csv(tilelist_filepath, header=True, index=False, errors='ignore')
+        tiles_list_df.to_csv(tilelist_filepath, header=True, index=False)
         log.info("Finished ROI / tile intersection")
-    except:
+        return tilelist_filepath
+    except Exception as inst:
         log.error(f"Could not write to {tilelist_filepath}")
-
-    return tilelist_filepath
+        log.error(type(inst))    # the exception type
+        log.error(inst.args)     # arguments stored in .args
+        log.error(inst)          # __str__ allows args to be printed directly,
+                                 # but may be overridden in exception subclasses
+        return ""
