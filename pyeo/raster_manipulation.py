@@ -2477,7 +2477,6 @@ def resample_image_in_place(
         
     return
 
-
 def align_image_in_place(
     image_path, 
     target_path,
@@ -3677,7 +3676,7 @@ def stack_sentinel_2_bands(
             else:
                 new_band_paths.append(band_path)
 
-        log.info("Calling stack_images")
+        #log.info("Calling stack_images")
         stack_images(
             new_band_paths, 
             out_image_path, 
