@@ -6797,6 +6797,7 @@ def roi_tile_intersection(
 
     # roi_filepath is relative to pyeo_dir supplied in pyeo.ini
     roi_filepath = os.path.join(config_dict["roi_dir"], config_dict["roi_filename"])
+    log.info(roi_filepath)
     roi = gpd.read_file(roi_filepath)
     
     # check if s2_tiles exists (it should, as is provided with git clone pyeo)
@@ -6815,7 +6816,7 @@ def roi_tile_intersection(
         log.info("  {} : {}".format(n + 1, this_tile))
 
     tilelist_filepath = os.path.join(config_dict["roi_dir"], "tilelist.csv")
-    #log.info(f"Writing Sentinel-2 tile list to : {tilelist_filepath}")
+    log.info(f"Writing Sentinel-2 tile list to : {tilelist_filepath}")
 
     try:
         tiles_list_df = pd.DataFrame({"tile": tiles_list})
