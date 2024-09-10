@@ -1868,7 +1868,7 @@ def move_file(from_path, to_path):
     check_file_permissions(to_path)
     
     if os.path.isfile(to_path):
-        print(f"{to_path} already exists. Deleting the old file.")
+        #print(f"{to_path} already exists. Deleting the old file.")
         os.remove(to_path)
 
     shutil.move(from_path, to_path)
