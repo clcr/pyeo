@@ -3439,6 +3439,15 @@ def apply_scl_cloud_mask_to_filelist(
                         out_resolution=out_resolution,
                         log=log
                     )
+
+                    #TODO: remove raster_stats here once it works well
+                    log.info("stacked file stats:")
+                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                        stacked_file,
+                        format="GTiff",
+                        missing_data_value=0,
+                        log=log,
+                        )
                     
                     mask_path = get_mask_path(
                         stacked_file
@@ -3452,13 +3461,31 @@ def apply_scl_cloud_mask_to_filelist(
                         log=log
                     )
 
+                    #TODO: remove raster_stats here once it works well
+                    log.info("mask file stats:")
+                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                        mask_path,
+                        format="GTiff",
+                        missing_data_value=-9999,
+                        log=log,
+                        )
+                    
                     apply_mask_to_image(
                         mask_path, 
                         stacked_file, 
                         masked_file, 
                         log=log
                     )
-                    
+
+                    #TODO: remove raster_stats here once it works well
+                    log.info("masked file stats:")
+                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                        masked_file,
+                        format="GTiff",
+                        missing_data_value=0,
+                        log=log,
+                        )
+
                     if haze is not None:
                         log.info(
                             f"Applying haze mask to pixels where B02 > {haze}. " +
@@ -3496,7 +3523,16 @@ def apply_scl_cloud_mask_to_filelist(
                         out_resolution, 
                         log=log
                     )
-                    
+
+                    #TODO: remove raster_stats here once it works well
+                    log.info("masked file after resampling in place - stats:")
+                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                        masked_file,
+                        format="GTiff",
+                        missing_data_value=0,
+                        log=log,
+                        )
+
                     if epsg is not None:
                         log.info(
                             f"  Reprojecting stacked and masked image to EPSG code {epsg}"
@@ -3511,7 +3547,8 @@ def apply_scl_cloud_mask_to_filelist(
                     else:
                         move_file(masked_file, out_path)
 
-    #TODO: Comment out these lines to make the routine faster once tested
+    #TODO: remove raster_stats here once it works well
+    log.info("output file stats:")
     get_stats_from_raster_file(
         out_path,
         missing_data_value=0,
