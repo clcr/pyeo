@@ -3136,8 +3136,8 @@ def apply_scl_cloud_mask(
             + "_"
             + f.split("_")[5]
         )
-        log.info("TMP:  Granule ID  : {}".format(f))
-        log.info("TMP:  File pattern: {}".format(pattern))
+        #log.info("TMP:  Granule ID  : {}".format(f))
+        #log.info("TMP:  File pattern: {}".format(pattern))
 
         # Find existing matching files in the output directory
         df = get_raster_paths(
@@ -3240,7 +3240,7 @@ def apply_scl_cloud_mask(
                         proj = osr.SpatialReference()
                         proj.ImportFromEPSG(epsg)
                         wkt = proj.ExportToWkt()
-                        log.info(f'TMP:  epsg: {epsg}, wkt: {wkt}')
+                        #log.info(f'TMP:  epsg: {epsg}, wkt: {wkt}')
 
                         reproject_image(masked_file, out_path, wkt, log=log)
                     else:
@@ -3327,8 +3327,8 @@ def apply_scl_cloud_mask_to_filelist(
             + "_"
             + f.split("_")[5]
         )
-        log.info("TMP:  Granule ID  : {}".format(f))
-        log.info("TMP:  File pattern: {}".format(pattern))
+        #log.info("TMP:  Granule ID  : {}".format(f))
+        #log.info("TMP:  File pattern: {}".format(pattern))
 
         # Find existing matching files in the output directory
         df = get_raster_paths(
@@ -3467,7 +3467,7 @@ def apply_scl_cloud_mask_to_filelist(
                         proj = osr.SpatialReference()
                         proj.ImportFromEPSG(epsg)
                         wkt = proj.ExportToWkt()
-                        log.info(f'TMP:  epsg: {epsg}, wkt: {wkt}')
+                        #log.info(f'TMP:  epsg: {epsg}, wkt: {wkt}')
 
                         reproject_image(masked_file, out_path, wkt, log=log)
                     else:
@@ -3933,7 +3933,7 @@ def stack_sentinel_2_bands(
     # Move every image NOT in the requested resolution to resample_dir and resample
 
     with TemporaryDirectory(dir=os.getcwd()) as resample_dir:
-        log.info("TMP:  Making temp dir {}".format(resample_dir))
+        #log.info("TMP:  Making temp dir {}".format(resample_dir))
         new_band_paths = []
         for band_path in band_paths:
             if get_image_resolution(band_path) != out_resolution:
@@ -4643,17 +4643,19 @@ def create_mask_from_scl_layer(
     )
     scl_path = df["SCL"][0][0]
     scl_path = glob.glob(os.path.join(l2_safe_path, scl_glob))[0]
-    log.info("  Opening SCL image file: {}".format(scl_path))
-    log.info(f"TMP:  SCL class values to be masked out: {scl_classes}")
+    log.info("  Opening scene classification layer (SCL) file: {}".format(scl_path))
+    #log.info(f"TMP:  SCL class values to be masked out: {scl_classes}")
     scl_image = gdal.Open(scl_path)
     scl_array = scl_image.GetVirtualMemArray()
-    
-    #TODO: output frequency of class values to log
+
+    '''
+    # output frequency of class values to log
     # Get the unique values and their counts
     unique_values, counts = np.unique(np.array(scl_array), return_counts=True)
     log.info("TMP:  SCL class value histogram:")
     for value, count in zip(unique_values, counts):
         log.info(f"TMP:    {value}: {count} --> {scl_codes[value]}")
+    '''
     
     mask_array = np.logical_not(np.isin(scl_array, (scl_classes)))
     mask_image = create_matching_dataset(
@@ -4664,13 +4666,15 @@ def create_mask_from_scl_layer(
     mask_image_array = mask_image.GetVirtualMemArray(eAccess=gdal.GF_Write)
     np.copyto(mask_image_array, mask_array, casting='same_kind')
 
-    #TODO: output frequency of mask values to log
+    '''
+    # output frequency of mask values to log
     # Get the unique values and their counts
     unique_values, counts = np.unique(np.array(mask_image_array), return_counts=True)
     log.info("TMP:  Mask value histogram:")
     for value, count in zip(unique_values, counts):
         log.info(f"TMP:    {value}: {count}")
-
+    '''
+    
     mask_image_array = None
     mask_array = None
     mask_image = None
