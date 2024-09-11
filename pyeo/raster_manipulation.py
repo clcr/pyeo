@@ -575,14 +575,12 @@ def stack_images_with_gdal(
     
     """
 
-    log.info("Merging band rasters into a single file:")
+    log.info("Merging band rasters into a single file using GDAL:")
     for f in raster_paths:
         log.info(f"  {f}")
     if len(raster_paths) <= 1:
         raise StackImagesException("stack_images_with_gdal requires at least two input images")
 
-    '''
-    OLD:
     rasters = [gdal.Open(raster_path) for raster_path in raster_paths]
     total_layers = sum(raster.RasterCount for raster in rasters)
     projection = rasters[0].GetProjection()
@@ -606,59 +604,21 @@ def stack_images_with_gdal(
         nodata=nodata_value,
         log=log,
     )
+    x_size = out_raster.RasterXSize
+    y_size = out_raster.RasterYSize
 
-    # I've done some magic here. GetVirtualMemArray lets you change a raster directly without copying
-    out_raster_array = out_raster.GetVirtualMemArray(eAccess=gdal.GF_Write)
-    out_raster_array[...] = nodata_value
-    present_layer = 0
-    for i, in_raster in enumerate(rasters):
-        in_raster_array = in_raster.GetVirtualMemArray()
-        out_x_min, out_x_max, out_y_min, out_y_max = pixel_bounds_from_polygon(
-            out_raster, combined_polygons
-        )
-        in_x_min, in_x_max, in_y_min, in_y_max = pixel_bounds_from_polygon(
-            in_raster, combined_polygons
-        )
-        if len(in_raster_array.shape) == 2:
-            in_raster_array = np.expand_dims(in_raster_array, 0)
-        # Gdal does band, y, x
-        out_raster_view = out_raster_array[
-            present_layer : present_layer + in_raster.RasterCount,
-            out_y_min:out_y_max,
-            out_x_min:out_x_max,
-        ]
-        in_raster_view = in_raster_array[
-            0 : in_raster.RasterCount, in_y_min:in_y_max, in_x_min:in_x_max
-        ]
-        out_raster_view[...] = in_raster_view
-        out_raster_view = None
-        in_raster_view = None
-        present_layer += in_raster.RasterCount
-        in_raster_array = None
-        in_raster = None
-    out_raster_array = None
     out_raster = None
 
     for f in rasters:
         f = None
     rasters = None
-
-    return
-    '''
-    
-    # Open the first file to get geospatial info and dimensions
-    src = gdal.Open(raster_paths[0])
-    x_size = src.RasterXSize
-    y_size = src.RasterYSize
-    geotransform = src.GetGeoTransform()
-    projection = src.GetProjection()
-    
+        
     # Create a new output multi-band TIFF file
     driver = gdal.GetDriverByName('GTiff')
     out_dataset = driver.Create(out_raster_path, x_size, y_size, len(raster_paths), datatype)
     
     # Set geospatial information for the output file
-    out_dataset.SetGeoTransform(geotransform)
+    out_dataset.SetGeoTransform(in_gt)
     out_dataset.SetProjection(projection)
     
     # Write each input band to the corresponding band in the output file
@@ -1652,7 +1612,8 @@ def clever_composite_images(
 
         # Aggregating band composites into a single tiff file
         stack_images(tmpfiles, composite_out_path, geometry_mode="intersect", log=log)
-        get_stats_from_raster_file(
+
+	get_stats_from_raster_file(
             in_raster_path = composite_out_path, 
             format = "GTiff", 
             missing_data_value = 0,
@@ -4028,7 +3989,8 @@ def stack_sentinel_2_bands(
             else:
                 new_band_paths.append(band_path)
 
-        stack_images(
+        #stack_images(
+        stack_images_with_gdal(
             new_band_paths, 
             out_image_path, 
             geometry_mode="intersect", 
