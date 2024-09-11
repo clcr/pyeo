@@ -3403,7 +3403,7 @@ def apply_scl_cloud_mask_to_filelist(
     Parameters
     ----------
     safe_file_path_list : list of str
-        The list of .SAFE directories to preprocess
+        The list of .SAFE directories to preprocess. Should be full path names.
     out_dir : str
         The directory to store the preprocessed files
     scl_classes : list of int
