@@ -3799,6 +3799,7 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
             #         out_raster_array[band_index, :, :] = np.clip(in_raster_array[band_index, :,:] , (-1 * BOA_ADD_OFFSET), dtype_max) + BOA_ADD_OFFSET
 
             # Deallocate to force write of generated file to disk by OS
+            out_temporary_raster_ds = None
             out_temporary_raster_array = None
             in_raster_array = None
             out_temporary_raster_ds = None
