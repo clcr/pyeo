@@ -3354,7 +3354,7 @@ def apply_scl_cloud_mask_to_filelist(
 
                     #TODO: remove raster_stats here once it works well
                     log.info("stacked file stats:")
-                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                    raster_stats = get_stats_from_raster_file(
                         stacked_file,
                         format="GTiff",
                         missing_data_value=0,
@@ -3375,7 +3375,7 @@ def apply_scl_cloud_mask_to_filelist(
 
                     #TODO: remove raster_stats here once it works well
                     log.info("mask file stats:")
-                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                    raster_stats = get_stats_from_raster_file(
                         mask_path,
                         format="GTiff",
                         missing_data_value=-9999,
@@ -3391,7 +3391,7 @@ def apply_scl_cloud_mask_to_filelist(
 
                     #TODO: remove raster_stats here once it works well
                     log.info("masked file stats:")
-                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                    raster_stats = get_stats_from_raster_file(
                         masked_file,
                         format="GTiff",
                         missing_data_value=0,
@@ -3438,7 +3438,7 @@ def apply_scl_cloud_mask_to_filelist(
 
                     #TODO: remove raster_stats here once it works well
                     log.info("masked file after resampling in place - stats:")
-                    raster_stats = raster_manipulation.get_stats_from_raster_file(
+                    raster_stats = get_stats_from_raster_file(
                         masked_file,
                         format="GTiff",
                         missing_data_value=0,
@@ -3563,7 +3563,7 @@ def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
             raster_band_count = in_raster_ds.RasterCount
             in_raster_array = in_raster_ds.GetVirtualMemArray()
             out_temporary_raster_ds = (
-                pyeo.raster_manipulation.create_matching_dataset(
+                create_matching_dataset(
                     in_raster_ds, out_temporary_raster_path, bands=raster_band_count
                 )
             )
@@ -3750,7 +3750,7 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
             raster_band_count = in_raster_ds.RasterCount
             in_raster_array = in_raster_ds.GetVirtualMemArray()
             out_temporary_raster_ds = (
-                pyeo.raster_manipulation.create_matching_dataset(
+                create_matching_dataset(
                     in_raster_ds, out_temporary_raster_path, bands=raster_band_count
                 )
             )
