@@ -4673,6 +4673,9 @@ def create_mask_from_scl_layer(
 
     mask_image_array = None
     mask_array = None
+    mask_image = None
+    scl_array = None
+    scl_image = None
 
     resample_image_in_place(
         out_path, 
@@ -4687,10 +4690,6 @@ def create_mask_from_scl_layer(
             cache=None,
             log=log
         )
-
-    mask_image = None
-    scl_array = None
-    scl_image = None
     
     return out_path
 
