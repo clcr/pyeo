@@ -3252,6 +3252,181 @@ def apply_scl_cloud_mask(
 
     return
 
+def apply_scl_cloud_mask_to_filelist(
+    safe_file_path_list,
+    out_dir,
+    scl_classes,
+    buffer_size=0,
+    bands=["B02", "B03", "B04", "B08"],
+    out_resolution=10,
+    haze=None,
+    epsg=None,
+    skip_existing=False,
+    log=logging.getLogger(__name__),
+):
+    """
+    For every .SAFE folder in l2_filelist, creates a cloud-masked raster band for each selected band
+    based on the SCL layer. Applies a rough haze correction based on thresholding the blue band (optional).
+
+    Parameters
+    ----------
+    safe_file_path_list : list of str
+        The list of .SAFE directories to preprocess
+    out_dir : str
+        The directory to store the preprocessed files
+    scl_classes : list of int
+        values of classes to be masked out
+    buffer_size : int, optional
+        The buffer to apply to the sen2cor mask - defaults to 0
+    bands : list of str, optional
+        List of names of bands to include in the final rasters. Defaults to ("B02", "B03", "B04", "B08")
+    out_resolution : number, optional
+        Resolution to resample every image to - units are defined by the image projection. Default is 10.
+    haze : number, optional
+        Threshold if a haze filter is to be applied. If specified, all pixel values where "B02" > haze will be masked out.
+        Defaults to None. If set, recommended thresholds range from 325 to 600 but can vary by scene conditions.
+    epsg : int
+        EPSG code of the map projection / CRS if output rasters shall be reprojected (warped)
+    skip_existing : boolean
+        If True, skip cloud masking if a file already exists. If False, overwrite it.
+    log : logger object
+
+    """
+    for l2_safe_file in safe_file_path_list:
+        log.info("  Applying SCL cloud mask to L2A raster file: {}".format(l2_safe_file))
+        f = get_sen_2_granule_id(l2_safe_file)
+        pattern = (
+            f.split("_")[0]
+            + "_"
+            + f.split("_")[1]
+            + "_"
+            + f.split("_")[2]
+            + "_"
+            + f.split("_")[3]
+            + "_"
+            + f.split("_")[4]
+            + "_"
+            + f.split("_")[5]
+        )
+        log.info("TMP:  Granule ID  : {}".format(f))
+        log.info("TMP:  File pattern: {}".format(pattern))
+
+        # Find existing matching files in the output directory
+        df = get_raster_paths(
+                [out_dir], 
+                filepatterns=[pattern], 
+                dirpattern="", 
+                log=log
+        )
+        for i in range(len(df)):
+            if df[pattern][i] != "" and skip_existing:
+                log.info("  Skipping band merging for: {}".format(f))
+                log.info("  Found stacked file: {}".format(df[pattern][i][0]))
+            else:
+                out_path = os.path.join(
+                    out_dir, 
+                    get_sen_2_granule_id(l2_safe_file) + ".tif"
+                )
+                
+                with TemporaryDirectory(dir=os.getcwd()) as temp_dir:
+                    
+                    stacked_file = os.path.join(
+                        temp_dir, get_sen_2_granule_id(l2_safe_file) + "_stacked.tif"
+                    )
+                    
+                    masked_file = os.path.join(
+                        temp_dir,
+                        get_sen_2_granule_id(l2_safe_file) + "_stacked_masked.tif",
+                    )
+                    
+                    stack_sentinel_2_bands(
+                        l2_safe_file,
+                        stacked_file,
+                        bands=bands,
+                        out_resolution=out_resolution,
+                        log=log
+                    )
+                    
+                    mask_path = get_mask_path(
+                        stacked_file
+                    )
+                    
+                    create_mask_from_scl_layer(
+                        l2_safe_file, 
+                        mask_path, 
+                        scl_classes, 
+                        buffer_size=buffer_size, 
+                        log=log
+                    )
+
+                    apply_mask_to_image(
+                        mask_path, 
+                        stacked_file, 
+                        masked_file, 
+                        log=log
+                    )
+                    
+                    if haze is not None:
+                        log.info(
+                            f"Applying haze mask to pixels where B02 > {haze}. " +
+                            "Assumes B02 is band 1 in the stacked image."
+                        )
+                        
+                        haze_masked_file = os.path.join(
+                            temp_dir,
+                            get_sen_2_granule_id(l2_safe_file)
+                            + "_stacked_masked_haze.tif",
+                        )
+                        
+                        haze_mask_path = get_mask_path(haze_masked_file)
+                        
+                        create_mask_from_band(
+                            masked_file,
+                            haze_mask_path,
+                            band=1,
+                            threshold=haze,
+                            relation="smaller",
+                            buffer_size=buffer_size,
+                        )
+                        
+                        apply_mask_to_image(
+                            haze_mask_path, masked_file, haze_masked_file
+                        )
+                        
+                        move_file(
+                            haze_masked_file, 
+                            masked_file
+                        )
+                        
+                    resample_image_in_place(
+                        masked_file, 
+                        out_resolution, 
+                        log=log
+                    )
+                    
+                    if epsg is not None:
+                        log.info(
+                            f"  Reprojecting stacked and masked image to EPSG code {epsg}"
+                            )
+                        
+                        proj = osr.SpatialReference()
+                        proj.ImportFromEPSG(epsg)
+                        wkt = proj.ExportToWkt()
+                        log.info(f'TMP:  epsg: {epsg}, wkt: {wkt}')
+
+                        reproject_image(masked_file, out_path, wkt, log=log)
+                    else:
+                        move_file(masked_file, out_path)
+
+    #TODO: Comment out these lines to make the routine faster once tested
+    get_stats_from_raster_file(
+        out_path,
+        missing_data_value=0,
+        log=log,
+    )
+
+    return
+
 
 # Added I.R. 20220607 START
 def apply_processing_baseline_0400_offset_correction_to_tiff_file_directory(
