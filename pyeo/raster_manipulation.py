@@ -3278,7 +3278,21 @@ def apply_scl_cloud_mask_to_filelist(
     out_dir : str
         The directory to store the preprocessed files
     scl_classes : list of int
-        values of classes to be masked out
+        values of classes to be masked out:
+                const classes = {
+                  0: [0, 0, 0], // No Data (Missing data) - black  
+                  1: [255, 0, 0], // Saturated or defective pixel - red 
+                  2: [47, 47, 47], // Topographic casted shadows ("Dark features/Shadows" for data before 2022-01-25) - very dark grey
+                  3: [100, 50, 0], // Cloud shadows - dark brown
+                  4: [0, 160, 0], // Vegetation - green
+                  5: [255, 230, 90], // Not-vegetated - dark yellow
+                  6: [0, 0, 255], // Water (dark and bright) - blue
+                  7: [128, 128, 128], // Unclassified - dark grey
+                  8: [192, 192, 192], // Cloud medium probability - grey
+                  9: [255, 255, 255], // Cloud high probability - white
+                  10: [100, 200, 255], // Thin cirrus - very bright blue
+                  11: [255, 150, 255], // Snow or ice - very bright pink
+                }
     buffer_size : int, optional
         The buffer to apply to the sen2cor mask - defaults to 0
     bands : list of str, optional
@@ -4569,7 +4583,7 @@ def create_mask_from_scl_layer(
     Parameters
     ----------
     l2_safe_path : str
-        Path to the L1
+        Path to the L2A SAFE file
     out_path : str
         Path to the new path
     scl_classes: list of int
@@ -4626,6 +4640,7 @@ def create_mask_from_scl_layer(
     mask_image_array = mask_image.GetVirtualMemArray(eAccess=gdal.GF_Write)
     np.copyto(mask_image_array, mask_array, casting='same_kind')
     mask_image_array = None
+    mask_array = None
 
     resample_image_in_place(
         out_path, 
