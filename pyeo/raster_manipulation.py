@@ -3697,7 +3697,7 @@ def stack_sentinel_2_bands(
     band_paths = [get_sen_2_band_path(safe_dir, band, out_resolution) for band in bands]
 
     #for band_path in band_paths:
-    #    log.info(f'Image Resolution: {band_path}')
+    #    log.info(f'  Image Resolution: {band_path}')
 
     # Move every image NOT in the requested resolution to resample_dir and resample
     #TODO: This routine is very slow. Replace it with a GDAL based function, e.g.
@@ -3732,7 +3732,7 @@ def stack_sentinel_2_bands(
     out_dataset = None  # Close the output file
     '''
     with TemporaryDirectory(dir=os.getcwd()) as resample_dir:
-        #log.info("Making temp dir {}".format(resample_dir))
+        log.info("TMP:  Making temp dir {}".format(resample_dir))
         new_band_paths = []
         for band_path in band_paths:
             if get_image_resolution(band_path) != out_resolution:
@@ -3750,7 +3750,7 @@ def stack_sentinel_2_bands(
             else:
                 new_band_paths.append(band_path)
 
-        #log.info("Calling stack_images")
+        log.info("TMP:  Calling stack_images")
         stack_images(
             new_band_paths, 
             out_image_path, 
@@ -3763,6 +3763,7 @@ def stack_sentinel_2_bands(
         for band_index, band_label in enumerate(bands):
             band = new_raster.GetRasterBand(band_index + 1)
             band.SetDescription(band_label)
+        new_raster = None
 
     return out_image_path
 
