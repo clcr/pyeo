@@ -4649,10 +4649,11 @@ def create_mask_from_scl_layer(
     scl_array = scl_image.GetVirtualMemArray()
     
     #TODO: output frequency of class values to log
-    nums = [ (i,list(scl_array.flatten).count(i)) for i in set(scl_array.flatten) ]
+    # Get the unique values and their counts
+    unique_values, counts = np.unique(np.array(scl_array), return_counts=True)
     log.info("TMP:  SCL class value histogram:")
-    for c in range(0,12):
-        log.info(f"TMP:   {c}: {nums[c]}  {scl_codes[c]}")
+    for value, count in zip(unique_values, counts):
+        log.info(f"TMP:    {value}: {count} --> {scl_codes[value]}")
     
     mask_array = np.logical_not(np.isin(scl_array, (scl_classes)))
     mask_image = create_matching_dataset(
@@ -4664,10 +4665,11 @@ def create_mask_from_scl_layer(
     np.copyto(mask_image_array, mask_array, casting='same_kind')
 
     #TODO: output frequency of mask values to log
-    nums = [ (i,list(mask_image_array.flatten).count(i)) for i in set(mask_image_array.flatten) ]
+    # Get the unique values and their counts
+    unique_values, counts = np.unique(np.array(mask_image_array), return_counts=True)
     log.info("TMP:  Mask value histogram:")
-    for c in range(0,len(nums)+1):
-        log.info(f"TMP:   {c}: {nums[c]}")
+    for value, count in zip(unique_values, counts):
+        log.info(f"TMP:    {value}: {count}")
 
     mask_image_array = None
     mask_array = None
