@@ -3692,6 +3692,37 @@ def stack_sentinel_2_bands(
     #    log.info(f'Image Resolution: {band_path}')
 
     # Move every image NOT in the requested resolution to resample_dir and resample
+    #TODO: This routine is very slow. Replace it with a GDAL based function, e.g.
+    '''
+    # List of input band files (e.g., different bands from Sentinel-2)
+    input_files = ['band1.tif', 'band2.tif', 'band3.tif']
+    
+    # Open the first file to get geospatial info and dimensions
+    src = gdal.Open(input_files[0])
+    x_size = src.RasterXSize
+    y_size = src.RasterYSize
+    geotransform = src.GetGeoTransform()
+    projection = src.GetProjection()
+    
+    # Create a new output multi-band TIFF file
+    output_file = 'output_multiband.tif'
+    driver = gdal.GetDriverByName('GTiff')
+    out_dataset = driver.Create(output_file, x_size, y_size, len(input_files), gdal.GDT_Float32)
+    
+    # Set geospatial information for the output file
+    out_dataset.SetGeoTransform(geotransform)
+    out_dataset.SetProjection(projection)
+    
+    # Write each input band to the corresponding band in the output file
+    for i, input_file in enumerate(input_files):
+        in_band = gdal.Open(input_file).GetRasterBand(1)
+        out_band = out_dataset.GetRasterBand(i+1)
+        out_band.WriteArray(in_band.ReadAsArray())
+    
+    # Clean up
+    out_dataset.FlushCache()
+    out_dataset = None  # Close the output file
+    '''
     with TemporaryDirectory(dir=os.getcwd()) as resample_dir:
         #log.info("Making temp dir {}".format(resample_dir))
         new_band_paths = []
