@@ -1023,12 +1023,14 @@ def get_raster_paths(
                     log.info("  {}".format(i))
                 row.append("")
             if len(f) == 0:
+                row.append("")
+                '''
                 log.info(
                     "File pattern {} and dir pattern {} not found in {}".format(
                         filepattern, dirpattern, path
                     )
                 )
-                row.append("")
+                '''
         # log.info("  results = {}".format(results))
         # log.info("  paths   = {}".format(paths))
         # log.info("  row     = {}".format(row))
