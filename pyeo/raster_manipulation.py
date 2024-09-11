@@ -3752,13 +3752,15 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
             int(get_processing_baseline(f)) >= 400): # in ["0400", "0509"]:
             in_raster_path = os.path.join(in_tif_directory, f)
             log.info(f"Offsetting file: {f}")
-            log.info(f'Full file path: {in_raster_path}')
+            #log.info(f'TMP: Full file path: {in_raster_path}')
+
             # Define temporary file destination for output
             out_temporary_raster_path = os.path.join(
                 out_tif_directory,
                 os.path.basename(f).split(".")[0] + "_offset_temp.tif",
             )
-            log.info(f"out_temporary_raster_path: {out_temporary_raster_path}")
+            #log.info(f"TMP: out_temporary_raster_path: {out_temporary_raster_path}")
+
             # Open dataset
             in_raster_ds = gdal.Open(in_raster_path, gdal.GA_Update)
             raster_band_count = in_raster_ds.RasterCount
@@ -3772,9 +3774,9 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
                 eAccess=gdal.GA_Update
             )
 
-            log.info(f"in_raster_array dtype: {in_raster_array.dtype}")
-            dtype_max = 10000  # np.iinfo(in_raster_array.dtype).max # upper bound for range clipping - should be > any likely pixel value
-            log.info(f"in_raster_array clipped to range of min: {-1 * BOA_ADD_OFFSET} and max: {dtype_max} then offset by: {BOA_ADD_OFFSET}")
+            #log.info(f"TMP: in_raster_array dtype: {in_raster_array.dtype}")
+            dtype_max = 10000
+            log.info(f"Pixel values clipped to range of min: {-1 * BOA_ADD_OFFSET} and max: {dtype_max} then offset by: {BOA_ADD_OFFSET}")
 
             # Simple offset of all image bands
             out_temporary_raster_array[...] = (
@@ -3807,24 +3809,23 @@ def apply_processing_baseline_offset_correction_to_tiff_file_directory(
             if backup_flag == True:
                 shutil.move(in_raster_path, in_raster_path.split(".")[0] + ".backup")
             out_raster_path = os.path.join(out_tif_directory, f)
+
             # If in_tif_directory == out_tif_directory then it overwrites the 
             #   original .tif file with offset file so that next stage of the
             #   algorithm can run
-            log.info(f"Moving {out_temporary_raster_path} to {out_raster_path}")
+            #log.info(f"TMP: Moving {out_temporary_raster_path} to {out_raster_path}")
             shutil.move(out_temporary_raster_path, out_raster_path)
+            
             # Rename file with processing baseline code modified from 0XXX to 
             #   AXXX to avoid multiple runs of pipeline leading to multiple offsets being applied
             out_raster_path_rename = os.path.join(
                 out_tif_directory,
                 set_processing_baseline(f, "A" + get_processing_baseline(f)[1:]),
             )
-            log.info(f"Moving {out_raster_path} to {out_raster_path_rename}")
+            #log.info(f"TMP: Moving {out_raster_path} to {out_raster_path_rename}")
             shutil.move(out_raster_path, out_raster_path_rename)
 
-    log.info("Radiometric offsetting of processing baselines > 0400 finished.")
     return out_tif_directory
-
-
 # Added I.R. 20230312 END
 
 
