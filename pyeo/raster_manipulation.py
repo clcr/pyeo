@@ -3436,7 +3436,7 @@ def apply_scl_cloud_mask_to_filelist(
                         get_sen_2_granule_id(l2_safe_file) + "_stacked_masked.tif",
                     )
                     
-                    stack_sentinel_2_bands(
+                    stack_sentinel_2_bands_with_gdal(
                         l2_safe_file,
                         stacked_file,
                         bands=bands,
@@ -4009,7 +4009,6 @@ def stack_sentinel_2_bands(
     #    log.info(f'  Image Resolution: {band_path}')
 
     # Move every image NOT in the requested resolution to resample_dir and resample
-    #TODO: This routine is very slow. Replace it with a GDAL based function, e.g.
 
     with TemporaryDirectory(dir=os.getcwd()) as resample_dir:
         log.info("TMP:  Making temp dir {}".format(resample_dir))
@@ -4030,8 +4029,7 @@ def stack_sentinel_2_bands(
             else:
                 new_band_paths.append(band_path)
 
-        #stack_images(
-        stack_images_with_gdal(
+        stack_images(
             new_band_paths, 
             out_image_path, 
             geometry_mode="intersect", 
@@ -4047,6 +4045,77 @@ def stack_sentinel_2_bands(
 
     return out_image_path
 
+def stack_sentinel_2_bands_with_gdal(
+    safe_dir, 
+    out_image_path, 
+    bands=("B02", "B03", "B04", "B08"), 
+    out_resolution=10,
+    log=logging.getLogger(__name__),
+):
+    """
+    Stacks the specified bands of a .SAFE granule directory into a single geotiff with GDAL
+
+    Parameters
+    ----------
+    safe_dir : str
+        Path to the .SAFE file to stack
+    out_image_path : str
+        Location of the new image
+    bands : list of str, optional
+        The band IDs to be stacked
+    out_resolution
+        The final resolution of the geotif- bands will be resampled if needed.
+    log : logger object
+
+    Returns
+    -------
+    out_image_path : str
+        The path to the new image
+
+    """
+
+    band_paths = [get_sen_2_band_path(safe_dir, band, out_resolution) for band in bands]
+
+    #for band_path in band_paths:
+    #    log.info(f'  Image Resolution: {band_path}')
+
+    # Move every image NOT in the requested resolution to resample_dir and resample
+
+    with TemporaryDirectory(dir=os.getcwd()) as resample_dir:
+        log.info("TMP:  Making temp dir {}".format(resample_dir))
+        new_band_paths = []
+        for band_path in band_paths:
+            if get_image_resolution(band_path) != out_resolution:
+                resample_path = os.path.join(resample_dir, os.path.basename(band_path))
+                shutil.copy(
+                    band_path, 
+                    resample_path
+                )
+                resample_image_in_place(
+                    resample_path, 
+                    out_resolution, 
+                    log=log
+                )
+                new_band_paths.append(resample_path)
+            else:
+                new_band_paths.append(band_path)
+
+        # This call is different from the old version of the function
+        stack_images_with_gdal(
+            new_band_paths, 
+            out_image_path, 
+            geometry_mode="intersect", 
+            log=log
+        )
+
+        # Saving band labels in images
+        new_raster = gdal.Open(out_image_path)
+        for band_index, band_label in enumerate(bands):
+            band = new_raster.GetRasterBand(band_index + 1)
+            band.SetDescription(band_label)
+        new_raster = None
+
+    return out_image_path
 
 def get_sen_2_band_path(
     safe_dir, 
