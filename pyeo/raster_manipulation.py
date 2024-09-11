@@ -4619,6 +4619,21 @@ def create_mask_from_scl_layer(
     log.info(f"Creating scene classification mask for {l2_safe_path}")
     log.info(f"  containing SCL classes: {scl_classes}")
     
+    scl_codes = [
+        'NO_DATA',
+        'SATURATED_OR_DEFECTIVE',
+        'DARK_AREA_PIXELS',
+        'CLOUD_SHADOWS',
+        'VEGETATION',
+        'NOT_VEGETATED',
+        'WATER',
+        'UNCLASSIFIED',
+        'CLOUD_MEDIUM_PROBABILITY',
+        'CLOUD_HIGH_PROBABILITY',
+        'THIN_CIRRUS',
+        'SNOW'
+    ]
+
     scl_glob = "GRANULE/*/IMG_DATA/R20m/*SCL*_20m.jp2"  # This should match both old and new mask formats
     df = get_raster_paths(
         [l2_safe_path], 
@@ -4629,8 +4644,16 @@ def create_mask_from_scl_layer(
     scl_path = df["SCL"][0][0]
     scl_path = glob.glob(os.path.join(l2_safe_path, scl_glob))[0]
     log.info("  Opening SCL image file: {}".format(scl_path))
+    log.info(f"TMP:  SCL class values to be masked out: {scl_classes}")
     scl_image = gdal.Open(scl_path)
     scl_array = scl_image.GetVirtualMemArray()
+    
+    #TODO: output frequency of class values to log
+    nums = [ (i,list(scl_array.flatten).count(i)) for i in set(scl_array.flatten) ]
+    log.info("TMP:  SCL class value histogram:")
+    for c in range(0,12):
+        log.info(f"TMP:   {c}: {nums[c]}  {scl_codes[c]}")
+    
     mask_array = np.logical_not(np.isin(scl_array, (scl_classes)))
     mask_image = create_matching_dataset(
         scl_image, 
@@ -4639,6 +4662,13 @@ def create_mask_from_scl_layer(
     )
     mask_image_array = mask_image.GetVirtualMemArray(eAccess=gdal.GF_Write)
     np.copyto(mask_image_array, mask_array, casting='same_kind')
+
+    #TODO: output frequency of mask values to log
+    nums = [ (i,list(mask_image_array.flatten).count(i)) for i in set(mask_image_array.flatten) ]
+    log.info("TMP:  Mask value histogram:")
+    for c in range(0,len(nums)+1):
+        log.info(f"TMP:   {c}: {nums[c]}")
+
     mask_image_array = None
     mask_array = None
 
