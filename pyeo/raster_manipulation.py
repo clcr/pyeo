@@ -1613,7 +1613,7 @@ def clever_composite_images(
         # Aggregating band composites into a single tiff file
         stack_images(tmpfiles, composite_out_path, geometry_mode="intersect", log=log)
 
-	get_stats_from_raster_file(
+        get_stats_from_raster_file(
             in_raster_path = composite_out_path, 
             format = "GTiff", 
             missing_data_value = 0,
