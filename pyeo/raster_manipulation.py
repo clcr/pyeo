@@ -3210,6 +3210,8 @@ def apply_scl_cloud_mask(
         for safe_file_path in os.listdir(l2_dir)
         if safe_file_path.endswith(".SAFE")
     ]
+    
+    log.info(f"{len(safe_file_path_list)} L2A raster files marked for SCL cloud masking.")
     for l2_safe_file in safe_file_path_list:
         log.info("  Applying SCL cloud mask to L2A raster file: {}".format(l2_safe_file))
         f = get_sen_2_granule_id(l2_safe_file)
@@ -3385,6 +3387,8 @@ def apply_scl_cloud_mask_to_filelist(
     log : logger object
 
     """
+
+    log.info(f"{len(safe_file_path_list)} L2A raster files are in the file list for SCL cloud masking.")
     for l2_safe_file in safe_file_path_list:
         log.info("  Applying SCL cloud mask to L2A raster file: {}".format(l2_safe_file))
         f = get_sen_2_granule_id(l2_safe_file)
