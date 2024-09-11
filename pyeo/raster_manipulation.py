@@ -3133,8 +3133,8 @@ def apply_scl_cloud_mask(
             + "_"
             + f.split("_")[5]
         )
-        # log.info("  Granule ID  : {}".format(f))
-        # log.info("  File pattern: {}".format(pattern))
+        log.info("TMP:  Granule ID  : {}".format(f))
+        log.info("TMP:  File pattern: {}".format(pattern))
 
         # Find existing matching files in the output directory
         df = get_raster_paths(
@@ -3231,17 +3231,25 @@ def apply_scl_cloud_mask(
                     
                     if epsg is not None:
                         log.info(
-                            f"Reprojecting stacked and masked image to EPSG code {epsg}"
+                            f"  Reprojecting stacked and masked image to EPSG code {epsg}"
                             )
                         
                         proj = osr.SpatialReference()
                         proj.ImportFromEPSG(epsg)
                         wkt = proj.ExportToWkt()
-                        #log.info(f'epsg: {epsg}, wkt: {wkt}')
+                        log.info(f'TMP:  epsg: {epsg}, wkt: {wkt}')
 
                         reproject_image(masked_file, out_path, wkt, log=log)
                     else:
                         move_file(masked_file, out_path)
+
+    #TODO: Comment out these lines to make the routine faster once tested
+    get_stats_from_raster_file(
+        out_path,
+        missing_data_value=0,
+        log=log,
+    )
+
     return
 
 
