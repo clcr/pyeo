@@ -53,10 +53,8 @@ from sklearn.model_selection import (
 from sklearn import metrics
 import sys
 
-from pyeo.filesystem_utilities import (
-    get_mask_path,
-    move_file
-)
+from pyeo.filesystem_utilities import move_file
+
 from pyeo.raster_manipulation import (
     stack_images,
     create_matching_dataset,
