@@ -41,7 +41,7 @@ import numpy as np
 import random
 from scipy import sparse as sp
 from sklearn import ensemble as ens
-from sklearn.externals import joblib
+import joblib
 
 from sklearn.model_selection import (
     cross_val_score,
