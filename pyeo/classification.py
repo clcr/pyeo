@@ -36,14 +36,13 @@ from osgeo import gdal
 from osgeo import osr
 from osgeo import ogr
 import pandas as pd
-import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import random
 from scipy import sparse as sp
 from sklearn import ensemble as ens
+from sklearn.externals import joblib
 
-# from sklearn.externals import joblib as sklearn_joblib
 from sklearn.model_selection import (
     cross_val_score,
     train_test_split,
