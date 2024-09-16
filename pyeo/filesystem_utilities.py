@@ -1812,10 +1812,10 @@ def move_and_rename_old_file(from_path, to_path):
     Parameters
     ----------
     from_path : str
-        Path to the file which will be moved.
+        File path to the file which will be moved.
     
     to_path : str
-        Path to which the file will be moved.
+        File path to which the file will be moved. A directory name will give undesired results.
 
     Returns
     -------
@@ -1824,8 +1824,8 @@ def move_and_rename_old_file(from_path, to_path):
     """
 
     archive_path = ""
-    if os.path.exists(to_path):
-        # if the destination path already exists, rename it
+    if os.path.isfile(to_path):
+        # if the destination file path already exists, rename the old file
         i = 1
         if len(to_path.split(".")) <= 2:
             beginning = to_path.split(".")[0]
@@ -1849,16 +1849,16 @@ def move_and_rename_old_file(from_path, to_path):
 def move_file(from_path, to_path):
     """
     Moves the from_path file to the to_path file without giving file exists errors.
-    If to_path already exists, it will be overwritten. 
+    If the file already exists in to_path, it will be overwritten. 
     This gets round some shutil error messages.
 
     Parameters
     ----------
     from_path : str
-        Path to the file which will be moved.
+        File path to the file which will be moved.
     
     to_path : str
-        Path to which the file will be moved.
+        Directory path into which the file will be moved, or full file path if the file is to be renamed.
 
     Returns
     -------
