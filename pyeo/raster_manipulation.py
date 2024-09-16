@@ -6459,25 +6459,8 @@ def create_quicklook(
         
         #TODO: check data type of the in_raster - currently crashes when looking 
         #       at images from the probabilities folder (wrong data type)
-        
-        if image.RasterCount < 3:
-            # log.info("Raster count is {}. Using band 1.".format(image.RasterCount))
-            bands = [image.RasterCount]
-            alg = "nearest"
-            palette = "rgba"
-            band = image.GetRasterBand(1)
-            data = band.ReadAsArray()
-            scale_factors = None
-            output_type = gdal.GDT_Byte
-        else:
-            alg = None
-            palette = None
-            output_type = gdal.GDT_Byte
-            if scale_factors is None:
-                scale_factors = [[0, 2000, 0, 255]]  # this is specific to Sentinel-2
-            # log.info("Scaling values from {}...{} to {}...{}".format(scale_factors[0][0], scale_factors[0][1], scale_factors[0][2], scale_factors[0][3]))
 
-        # All the options that gdal.Translate() takes are listed here: gdal.org/python/osgeo.gdal-module.html#TranslateOptions
+                # All the options that gdal.Translate() takes are listed here: gdal.org/python/osgeo.gdal-module.html#TranslateOptions
         kwargs = {
             "format": format,
             "outputType": output_type,
@@ -6490,14 +6473,72 @@ def create_quicklook(
             "rgbExpand": palette,
         }
 
-        if image.RasterCount < 3:
-            try:
-                histo = np.array(band.GetHistogram())
-                #log.info("Histogram: {}".format(np.where(histo > 0)[0]))
-                #log.info("           {}".format(histo[np.where(histo > 0)]))
-                #log.info("Band data min, max: {}, {}".format(data.min(), data.max()))
-                if bands[0] > 1:
-                    log.info("WARNING: Using only band 1 in the quicklook image.")
+        try:
+            if image.RasterCount < 3:
+                def discrete_cmap(N, base_cmap=None):
+                    """Create an N-bin discrete colormap from the specified input map"""
+                    # this function was taken on 10/03/2023 from https://gist.github.com/jakevdp/91077b0cae40f8f8244a
+                    # author: Jake Vanderplas                
+                    # warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
+                    base = plt.cm.get_cmap(base_cmap)
+                    color_list = base(np.linspace(0, 1, N))
+                    cmap_name = base.name + str(N)
+                    return base.from_list(cmap_name, color_list, N)
+                log.info("Raster count is {}. Using band 1.".format(image.RasterCount))
+                bands = [image.RasterCount]
+                alg = "nearest"
+                palette = "rgba"
+                band = image.GetRasterBand(1)
+                data = band.ReadAsArray()
+                scale_factors = None
+                output_type = gdal.GDT_Byte
+                array = np.array(ds.GetRasterBand(1).ReadAsArray())        
+                unique, _counts = np.unique(array, return_counts=True)
+                counts=list(np.zeros(max(unique)+1,'int'))
+                for i in range(0, len(_counts)):
+                    counts[unique[i]] = _counts[i]    
+                #counts, _ = np.histogram(array, bins = len(labels))
+                log.info(counts)        
+                percent = counts / sum(counts)
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (12, 6))
+                cmap = discrete_cmap(len(labels), base_cmap="coolwarm")
+                colour_list = [mcolors.rgb2hex(cmap(i)) for i in range(cmap.N)]
+                if cmap.N <=14:
+                    log.info("Defining custom colour table for up to 13 classes and a missing data class of 0 (0..13)")
+                    colour_list = [
+                                  [0, 0, 0, 1],  # no data
+                                  [0, 100/255, 0, 1],  # Primary Forest
+                                  [154/255, 205/255, 50/255, 1],  # plantation Forest
+                                  [139/255, 69/255, 19/255, 1],  # Bare Soil
+                                  [189/255, 183/255, 107/255, 1],  # Crops
+                                  [240/255, 230/255, 140/255, 1],  # Grassland
+                                  [0, 0, 205/255, 1],  # Open Water
+                                  [128/255, 0, 0, 1],  # Burn Scar
+                                  [255/255, 255/255, 255/255, 1],  # cloud
+                                  [60/255, 60/255, 60/255, 1],  # cloud shadow
+                                  [128/255, 128/255, 128/255, 1],  # Haze
+                                  [46/255, 139/255, 87/255, 1],  # Open Woodland
+                                  [92/255, 145/255, 92/255, 1],  # Closed Woodland
+                                  [255/255, 30/255, 30/255, 1]  # Artificial
+                                  ]
+                    cmap = LinearSegmentedColormap.from_list("pyeo_class_colors", colour_list, N=cmap.N)
+                
+                x = np.arange(0, len(labels))
+                ax1.bar(x, percent, color=colour_list)
+                ax1.set_title("Classes distribution")
+                ax2.set_title("Classification raster displayed")
+                im = ax2.imshow(array, cmap=cmap, aspect="auto", vmin=-0.5, vmax=len(labels)+0.5)
+                fig.colorbar(im, ax=ax2) 
+                band.SetRasterColorTable(cmap)
+                band.WriteArray(data)
+            else:
+                alg = None
+                palette = None
+                output_type = gdal.GDT_Byte
+                if scale_factors is None:
+                    scale_factors = [[0, 2000, 0, 255]]  # this is specific to Sentinel-2
+                # log.info("Scaling values from {}...{} to {}...{}".format(scale_factors[0][0], scale_factors[0][1], scale_factors[0][2], scale_factors[0][3]))
+        
                 colors = gdal.ColorTable()
                 
                 #TODO: load a colour table (QGIS style file) from file if 
@@ -6514,61 +6555,24 @@ def create_quicklook(
                 <paletteEntry label="12" color="#3cd24b" alpha="255" value="12"/>
                 </colorPalette>
                 """
-                if data.max() < 13:
-                    log.info("Using custom colour table for up to 12 classes (0..11)")
-                    colors.SetColorEntry(0, (0, 0, 0, 0))  # no data
-                    colors.SetColorEntry(1, (0, 100, 0, 255))  # Primary Forest
-                    colors.SetColorEntry(2, (154, 205, 50, 255))  # plantation Forest
-                    colors.SetColorEntry(3, (139, 69, 19, 255))  # Bare Soil
-                    colors.SetColorEntry(4, (189, 183, 107, 255))  # Crops
-                    colors.SetColorEntry(5, (240, 230, 140, 255))  # Grassland
-                    colors.SetColorEntry(6, (0, 0, 205, 255))  # Open Water
-                    colors.SetColorEntry(7, (128, 0, 0, 255))  # Burn Scar
-                    colors.SetColorEntry(8, (255, 255, 255, 255))  # cloud
-                    colors.SetColorEntry(9, (60, 60, 60, 255))  # cloud shadow
-                    colors.SetColorEntry(10, (128, 128, 128, 255))  # Haze
-                    colors.SetColorEntry(11, (46, 139, 87, 255))  # Open Woodland
-                    colors.SetColorEntry(12, (92, 145, 92, 255))  # Toby's Woodland
-                else:
-                    log.info("Using viridis colour table for {} classes".format(data.max()))
-                    viridis = cm.get_cmap("viridis", min(data.max()+1, 255))
-                    for index, color in enumerate(viridis.colors):
-                        colors.SetColorEntry(
-                            index,
-                            (
-                                int(color[0] * 255),
-                                int(color[1] * 255),
-                                int(color[2] * 255),
-                                int(color[3] * 255),
-                            ),
-                        )
+                log.info("Using viridis colour table for {} classes".format(data.max()))
+                viridis = cm.get_cmap("viridis", min(data.max()+1, 255))
+                for index, color in enumerate(viridis.colors):
+                    colors.SetColorEntry(
+                        index,
+                        (
+                            int(color[0] * 255),
+                            int(color[1] * 255),
+                            int(color[2] * 255),
+                            int(color[3] * 255),
+                        ),
+                    )
                 band.SetRasterColorTable(colors)
                 band.WriteArray(data)
-
-                log.info("Calling gdal.Translate")
-                out_image = gdal.Translate(
-                    out_raster_path, 
-                    image, 
-                    options=gdal.TranslateOptions(**kwargs)
-                )
-
-                #log.info("Calling driver.CreateCopy")
-                #driver = gdal.GetDriverByName("PNG")
-                #driver.CreateCopy(
-                #    out_raster_path, 
-                #    out_image, 
-                #    strict=0
-                #)
                 data = None
                 out_image = None
                 image = None
                 band = None
-            except Exception as e:
-                log.error("An error occurred: {}".format(e))
-                log.error("  Skipping quicklook for image: {}".format(out_raster_path))
-                image = None
-                return -1
-        else:
             out_image = gdal.Translate(
                 out_raster_path, 
                 image, 
@@ -6576,8 +6580,13 @@ def create_quicklook(
             )
             out_image = None
             image = None
+        except Exception as e:
+            log.error("An error occurred: {}".format(e))
+            log.error("  Skipping quicklook for image: {}".format(out_raster_path))
+            image = None
+            return -1
             
-        return out_raster_path
+    return out_raster_path
 
 
 def visualise_classification(classified_path: str, labels: list):
