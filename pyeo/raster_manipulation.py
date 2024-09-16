@@ -6460,19 +6460,6 @@ def create_quicklook(
         #TODO: check data type of the in_raster - currently crashes when looking 
         #       at images from the probabilities folder (wrong data type)
 
-                # All the options that gdal.Translate() takes are listed here: gdal.org/python/osgeo.gdal-module.html#TranslateOptions
-        kwargs = {
-            "format": format,
-            "outputType": output_type,
-            "bandList": bands,
-            "noData": nodata,
-            "width": width,
-            "height": height,
-            "resampleAlg": alg,
-            "scaleParams": scale_factors,
-            "rgbExpand": palette,
-        }
-
         try:
             if image.RasterCount < 3:
                 def discrete_cmap(N, base_cmap=None):
@@ -6522,7 +6509,7 @@ def create_quicklook(
                                   [255/255, 30/255, 30/255, 1]  # Artificial
                                   ]
                     cmap = LinearSegmentedColormap.from_list("pyeo_class_colors", colour_list, N=cmap.N)
-                
+
                 x = np.arange(0, len(labels))
                 ax1.bar(x, percent, color=colour_list)
                 ax1.set_title("Classes distribution")
@@ -6569,10 +6556,23 @@ def create_quicklook(
                     )
                 band.SetRasterColorTable(colors)
                 band.WriteArray(data)
-                data = None
                 out_image = None
+                data = None
                 image = None
                 band = None
+
+            # All the options that gdal.Translate() takes are listed here: gdal.org/python/osgeo.gdal-module.html#TranslateOptions
+            kwargs = {
+                "format": format,
+                "outputType": output_type,
+                "bandList": bands,
+                "noData": nodata,
+                "width": width,
+                "height": height,
+                "resampleAlg": alg,
+                "scaleParams": scale_factors,
+                "rgbExpand": palette,
+            }
             out_image = gdal.Translate(
                 out_raster_path, 
                 image, 
