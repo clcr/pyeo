@@ -241,6 +241,7 @@ def init_log_acd(
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+
     logger.info("---------------------------------------------------------------")
     logger.info("---                 PROCESSING START                        ---")
     logger.info("---------------------------------------------------------------")
