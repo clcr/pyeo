@@ -26,7 +26,7 @@ from pyeo.acd_national import (
     acd_config_to_log,
     acd_roi_tile_intersection
 )
-from filesystem_utilities import move_and_rename_old_file
+from pyeo.filesystem_utilities import move_and_rename_old_file
 
 gdal.UseExceptions()
            
@@ -948,7 +948,7 @@ def create_composite(config_path, tile_id="None"):
         tile_log.info("---------------------------------------------------------------")
 
 
-       if config_dict["do_quicklooks"] or config_dict["do_all"]:
+        if config_dict["do_quicklooks"] or config_dict["do_all"]:
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Producing quicklooks.")
             tile_log.info("---------------------------------------------------------------")
