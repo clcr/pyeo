@@ -132,7 +132,7 @@ matplotlib-inline
 shapely
 
 scikit-image==0.21.0
-scikit-learn==1.2.2
+scikit-learn==1.5.0
 scipy==1.10.1
 
 # Current version of GDAL installed in SEPAL
