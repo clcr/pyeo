@@ -6408,6 +6408,7 @@ def create_quicklook(
     bands=[1, 2, 3],
     nodata=None,
     scale_factors=None,
+    log=logging.getLogger(__name__)
 ):
     """
     Creates a quicklook image of reduced size from an input GDAL object and saves it to out_raster_path.
@@ -6428,6 +6429,7 @@ def create_quicklook(
         List of the band numbers to be displayed as RGB. Will be ignored if only one band is in the image raster.
     nodata : number (optional)
         Missing data value.
+    log : logger
 
     Returns
     -------
