@@ -3312,11 +3312,11 @@ def apply_scl_cloud_mask_to_filelist(
 
     nfiles = len(safe_file_path_list)
     log.info(f"{nfiles} L2A raster files are in the file list for SCL cloud masking.")
-    i = 0
+    nfile = 0
     for l2_safe_file in safe_file_path_list:
-        i = i+1
+        nfile = nfile+1
         log.info("---------------------------------------------------")
-        log.info(f"Processing L2A raster file {i} out of {nfiles}")
+        log.info(f"Processing L2A raster file {nfile} out of {nfiles}")
         log.info(f"  Applying SCL cloud mask to: {l2_safe_file}")
         f = get_sen_2_granule_id(l2_safe_file)
         pattern = (
