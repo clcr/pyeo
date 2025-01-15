@@ -6508,21 +6508,22 @@ def create_quicklook(
                 </colorPalette>
                 """
 
-                if data.max() < 13:
-                    log.info("Using custom colour table for up to 12 classes (0..11)")
+                if data.max() < 14:
+                    log.info("Using custom colour table for up to 14 classes (0..13)")
                     colors.SetColorEntry(0, (0, 0, 0, 0))  # no data
                     colors.SetColorEntry(1, (0, 100, 0, 255))  # Primary Forest
-                    colors.SetColorEntry(2, (154, 205, 50, 255))  # plantation Forest
+                    colors.SetColorEntry(2, (154, 205, 50, 255))  # Plantation Forest
                     colors.SetColorEntry(3, (139, 69, 19, 255))  # Bare Soil
-                    colors.SetColorEntry(4, (189, 183, 107, 255))  # Crops
+                    colors.SetColorEntry(4, (189, 183, 107, 255))  # Cropland
                     colors.SetColorEntry(5, (240, 230, 140, 255))  # Grassland
                     colors.SetColorEntry(6, (0, 0, 205, 255))  # Open Water
                     colors.SetColorEntry(7, (128, 0, 0, 255))  # Burn Scar
-                    colors.SetColorEntry(8, (255, 255, 255, 255))  # cloud
-                    colors.SetColorEntry(9, (60, 60, 60, 255))  # cloud shadow
+                    colors.SetColorEntry(8, (255, 255, 255, 255))  # Cloud
+                    colors.SetColorEntry(9, (60, 60, 60, 255))  # Cloud Shadow
                     colors.SetColorEntry(10, (128, 128, 128, 255))  # Haze
                     colors.SetColorEntry(11, (46, 139, 87, 255))  # Open Woodland
-                    colors.SetColorEntry(12, (92, 145, 92, 255))  # Toby's Woodland
+                    colors.SetColorEntry(12, (92, 145, 92, 255))  # Closed Woodland
+                    colors.SetColorEntry(13, (10, 145, 20, 255))  # Artificial Surfaces
                 else:
                     # log.info("Using viridis colour table for {} classes".format(data.max()))
                     viridis = cm.get_cmap("viridis", min(data.max(), 255))
