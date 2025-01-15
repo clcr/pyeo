@@ -674,7 +674,7 @@ def detect_change(config_path, tile_id="None"):
         else:
             sen2cor_found = True
 
-       if l1c_products.shape[0]>0 and sen2cor_found:
+        if l1c_products.shape[0]>0 and sen2cor_found:
             tile_log.info("Downloading Sentinel-2 L1C products from {}".format(download_source))
 
             if download_source == "scihub":
