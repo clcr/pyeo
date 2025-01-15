@@ -10,29 +10,34 @@ It uses some of the ini file parameters but not the do_x flags.
 Shapefiles in the reports_dir will be zipped up to avoid sending the same file twice.
 """
 
-from email.message import EmailMessage
-import smtplib
 import argparse
 import configparser
 import cProfile
 import datetime
+import email
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.message import EmailMessage
 import glob
 import pandas as pd
 import os
 from osgeo import gdal
 import shutil
+import smtplib
+import ssl
 import sys
-import zipfile
-
 from pyeo import filesystem_utilities
 from pyeo.filesystem_utilities import (
     config_to_log,
     move_and_rename_old_file
 )
-
-from pyeo.acd_national import (
-    acd_roi_tile_intersection,
-)
+import warnings
+import zipfile
+from pyeo.acd_national import (acd_initialisation,
+                                 acd_config_to_log,
+                                 acd_roi_tile_intersection)
 
 gdal.UseExceptions()
 
@@ -148,7 +153,7 @@ def send_report(config_path, tile_id="None"):
             if email_alerts:
                 log.info(f"Reading your email credentials from {credentials_path}")
                 email_sender = credentials_conf["email"]["user"]
-                email_password = credentials_conf["email"]["pass"]
+                email_app_password = credentials_conf["email"]["pass"]
             if whatsapp_alerts:
                 log.info(f"Reading your WhatsApp credentials from {credentials_path}")
                 whatsapp_sender = credentials_conf["whatsapp"]["user"]
@@ -226,7 +231,7 @@ def send_report(config_path, tile_id="None"):
             #l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
             #l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
             #categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
-            #probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
+            probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
             reports_dir = os.path.join(individual_tile_directory_path, r"output", r"reports")
             #quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
         except:
@@ -263,7 +268,18 @@ def send_report(config_path, tile_id="None"):
         vector_files = glob.glob(
             os.path.join(reports_dir, search_term)
             )
-        
+
+        tile_log.info(
+            f"Searching for vectorised change report shapefiles in {probability_image_dir}"
+            )
+        tile_log.info(
+            f" containing: {search_term}."
+            )
+
+        vector_files = vector_files + glob.glob(
+            os.path.join(probability_image_dir, search_term)
+            )
+
         # zip up all the shapefiles and ancillary files
         zipped_vector_files = []
         for sf in vector_files:
@@ -299,6 +315,87 @@ def send_report(config_path, tile_id="None"):
             tile_log.info("No new forest alert vector files found.")
             tile_log.info("No message will be sent.")
         else:
+            if email_alerts:
+                elf = open(email_list_file, 'r')
+                recipients = elf.readlines()
+                for line in recipients:
+                    if "," not in line:
+                        log.info(f"Dropping line without comma: {line}")
+                        recipients.remove(line)
+                
+                for r, recipient in enumerate(recipients):
+                    # Remove the newline character
+                    recipient_name = recipient.strip().split(",")[0]
+                    recipient_email = recipient.strip().split(",")[1]
+                    tile_log.info(
+                        f"Sending email from {email_sender} to {recipient_name} " +
+                        f"at {recipient_email}."
+                        )
+                    for f in zipped_vector_files:
+                        file_size_mb = os.stat(f).st_size / (1024 * 1024)
+                        #start_date_dt = datetime.datetime.strptime(start_date, '%y%m%d')
+                        if end_date == 'TODAY':
+                            end_date = datetime.date.today().strftime('%Y%m%d')
+                        #else:
+                        #    end_date_dt = datetime.datetime.strptime(end_date, '%y%m%d')
+                        body =  f"Dear {recipient_name},\n\n"+\
+                           "New pyeo forest alerts have been detected.\n"+\
+                           f"Time period: from {start_date} to {end_date}\n"+\
+                           f"Vector file: {f}\n"+\
+                           f"Zipped vector file size [MB]: {file_size_mb}\n\n"+\
+                           "Please check the individual alerts and consider action "+\
+                           "for those you want investigating.\n\n"+\
+                           "Date of sending this email: "+\
+                           f"{datetime.date.today().strftime('%Y%m%d')}\n\n"+\
+                           "Best regards,\n"+\
+                           "The pyeo forest alerts team\n"+\
+                           "DISCLAIMER: The alerts are providing without any warranty.\n"+\
+                           "IMPORTANT: Do not reply to this email."
+        
+                        subject_line = "New pyeo forest alerts are ready for you "+\
+                            f"(Sentinel-2 tile {tile_to_process})"
+                
+                        # Create a multipart message and set headers
+                        message = MIMEMultipart()
+                        message["From"] = email_sender
+                        message["To"] = recipient_email
+                        message["Subject"] = subject_line
+                        message["Bcc"] = recipient_email  # Recommended for mass emails
+                        
+                        # Add body text to email message
+                        message.attach(MIMEText(body, "plain"))
+
+                        # Add attachment.
+                        # Careful: Some mail servers block emails with zip file 
+                        #   attachments
+                        with open(f, "rb") as attachment:
+                            # Add file as application/octet-stream
+                            # Email client can usually download this automatically as attachment
+                            part = MIMEBase("application", "octet-stream")
+                            part.set_payload(attachment.read())
+
+                        # Encode file in ASCII characters to send by email    
+                        encoders.encode_base64(part)
+
+                        # Add header as key/value pair to attachment part
+                        part.add_header(
+                            "Content-Disposition",
+                            f"attachment; filename= {os.path.basename(f)}",
+                        )
+
+                        # Add attachment to message and convert message to string
+                        message.attach(part)
+                        text = message.as_string()
+
+                        # Log in to server using secure context and send email
+                        context = ssl.create_default_context()
+                        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+                            server.login(email_sender, email_app_password)
+                            server.sendmail(email_sender, recipient_email, text)
+
+        
+            '''
+            # OLD CODE BELOW
             if email_alerts:
                 try:
                     elf = open(email_list_file, 'r')
@@ -373,11 +470,12 @@ def send_report(config_path, tile_id="None"):
                         
                     smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
                     smtp.starttls()
-                    smtp.login(email_sender, email_password)
+                    smtp.login(email_sender, email_app_password)
                     smtp.sendmail(email_sender, recipient_email, email.as_string())
                     smtp.quit()                        
+            '''
 
-                tile_log.info(" ")
+            tile_log.info(" ")
 
             if whatsapp_alerts and len(vector_files)>0:
                 tile_log.error("WhatsApp alerts have not been implemented yet.")

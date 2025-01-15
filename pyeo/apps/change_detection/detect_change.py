@@ -258,7 +258,7 @@ def detect_change(config_path, tile_id="None"):
             l2_image_dir = os.path.join(individual_tile_directory_path, r"images", r"L2A")
             l2_masked_image_dir = os.path.join(individual_tile_directory_path, r"images", r"cloud_masked")
             sieved_image_dir = os.path.join(individual_tile_directory_path, r"output", r"sieved")
-            categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classified")
+            categorised_image_dir = os.path.join(individual_tile_directory_path, r"output", r"classifications")
             probability_image_dir = os.path.join(individual_tile_directory_path, r"output", r"probabilities")
             reports_dir = os.path.join(individual_tile_directory_path, r"output", r"reports")
             quicklook_dir = os.path.join(individual_tile_directory_path, r"output", r"quicklooks")
@@ -963,6 +963,9 @@ def detect_change(config_path, tile_id="None"):
             )
             tile_log.info("---------------------------------------------------------------")
             tile_log.info("Model used: {}".format(model_path))
+            
+            os.chdir(config_dict["pyeo_dir"])
+
             if skip_existing:
                 tile_log.info("Skipping existing classification images if found.")
             
@@ -1367,19 +1370,21 @@ def detect_change(config_path, tile_id="None"):
                 tile_log.info("Starting Vectorisation of the Change Report Rasters " +
                               f"of tile: {tile_to_process}")
                 tile_log.info("---------------------------------------------------------------")
+
                 # get all report tif file names that are within the root_dir with 
                 #   search pattern from the probabilities subdirectory
                 report_tif_pattern = f"{os.path.join(probability_image_dir, 'report*.tif')}"
                 tile_log.info(f"Searching for {report_tif_pattern}...")
                 change_report_paths = glob.glob(report_tif_pattern)
                 #tile_log.info(f"change report paths from first search: {change_report_paths}")
-                '''                
-                # ... and from the reports subdirectory
+                
+                # get all report tif file names that are within the root_dir with 
+                #   search pattern from the reports subdirectory
                 report_tif_pattern = f"{os.path.join(reports_dir, 'report*.tif')}"
                 tile_log.info(f"Searching for {report_tif_pattern}...")
                 for g in glob.glob(report_tif_pattern):
                     change_report_paths.append(g)
-                '''                
+
                 if len(change_report_paths) == 0:
                     tile_log.error("No change report image path(s) found.")
                     tile_log.error("They may have been zipped.")
@@ -1457,10 +1462,9 @@ def detect_change(config_path, tile_id="None"):
                             empty_zonal_stats = True
 
                         if empty_zonal_stats:
-                            pass
+                            output_vector_products = [] # create an empty list
                         else:
                             # table joins, area, lat lon, county
-                            #tile_log.info("calling merge_and_calculate_spatial")
                             output_vector_products = merge_and_calculate_spatial(
                                     rb_ndetections_zstats_df=rb_ndetections_zstats_df,
                                     rb_confidence_zstats_df=rb_confidence_zstats_df,
