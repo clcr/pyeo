@@ -7,6 +7,7 @@
 log/national_vector_test.txt
 credentials/credentials.ini
 credentials/credentials_ir.ini
+pyeo.ini
 tmp*
 
 # Byte-compiled / optimized / DLL files
