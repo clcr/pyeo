@@ -202,6 +202,8 @@ def acd_by_tile_raster(config_path: str,
             date_object = datetime.strptime(composite_end_date, "%Y%m%d")
             dataspace_composite_end = date_object.strftime("%Y-%m-%d")
 
+            print(f"\nthis is the variable geometry: {geometry}\n")
+
             try:
                 dataspace_composite_products_all = queries_and_downloads.query_dataspace_by_polygon(
                     max_cloud_cover=cloud_cover,
