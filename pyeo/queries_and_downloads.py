@@ -183,7 +183,7 @@ def query_dataspace_by_polygon(
     response_dataframe : Pandas dataframe with query results if successful
     None : if query was unsuccessful
     """
-    print(f"\nbefore request string\n")
+    # print(f"\nbefore request string\n")
     request_string = build_dataspace_request_string(
         max_cloud_cover=max_cloud_cover,
         start_date=start_date,
@@ -191,7 +191,7 @@ def query_dataspace_by_polygon(
         area_of_interest=area_of_interest,
         max_records=max_records,
     )
-    print(f"\nafter request string\n")
+    # print(f"\nafter request string\n")
     response = requests.get(request_string)
     if response.status_code == 200:
         response = response.json()["features"]
@@ -327,14 +327,14 @@ def build_dataspace_request_string(
     if len(tile_id) > 0:
         request_string = f"{DATASPACE_API_ROOT}?{cloud_cover_props}&{start_date_props}&{end_date_props}&{tile_id_props}&{max_records_props}"
 
-    print("does len(tile_id) succeed")
-    print(f"area_of_interest variable: {area_of_interest}")
-    print(f"area_of_interest type : {type(area_of_interest)}")
-    # if len(area_of_interest) > 0: # area_of_interest.__len__
+    # print("does len(tile_id) succeed")
+    # print(f"area_of_interest variable: {area_of_interest}")
+    # print(f"area_of_interest type : {type(area_of_interest)}")
+    if len(area_of_interest) > 0: # area_of_interest.__len__
         # print("is this if block triggered")
-    request_string = f"{DATASPACE_API_ROOT}?{cloud_cover_props}&{start_date_props}&{end_date_props}&{geometry_props}&{max_records_props}"            
+        request_string = f"{DATASPACE_API_ROOT}?{cloud_cover_props}&{start_date_props}&{end_date_props}&{geometry_props}&{max_records_props}"            
 
-    print(f"\n{request_string}\n")
+    # print(f"\n{request_string}\n")
 
     return request_string
 
