@@ -361,6 +361,7 @@ def classify_image(
             class_out_array, image.RasterXSize, image.RasterYSize
         )
         if prob_out_path:
+            #log.info(f"prob_out_view : {prob_view}")
             prob_out_array = np.full((n_samples, model.n_classes_), nodata)
             
             for i, prob_val in zip(good_indices, probs):
