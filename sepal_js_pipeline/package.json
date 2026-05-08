@@ -1,0 +1,17 @@
+{
+  "name": "sepal_js_pipeline",
+  "version": "1.0.0",
+  "description": "This directory hosts the JavaScript pipeline for working with SEPAL, which works with the Google Earth Engine JavaScript API for processing on their servers, but without the use of visual aspects as this is not available without the in-browser code editor.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/earthengine": "^1.7.25",
+    "dotenv": "^17.4.2"
+  }
+}
