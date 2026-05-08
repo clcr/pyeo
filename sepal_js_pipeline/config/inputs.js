@@ -3,7 +3,7 @@ const ee = require('@google/earthengine');
 
 // define a constant to export
 const getParameters = () => {
-    const shimbaHills = ee.FeatureCollection("projects/ee-matthewjpayne/assets/A4F/shimba_hills");
+    const shimbaHills = ee.FeatureCollection("projects/ee-matthewpayne/assets/A4F/shimba_hills");
 
     return {
         // define nested objects for cleaner reading
