@@ -33,18 +33,18 @@ const getParameters = () => {
 
         classLabels: {
             "forest": 0,
-            "bareSoil": 1,
-            "agriculture": 2,
-            "grassland": 3,
-            "urban": 4,
-            "water": 5
+            "grassland": 1,
+            "bareSoil": 2,
+            //"agriculture": 2,
+            "urban": 3,
+            "water": 4
         },
 
         classColours: {
             "forest": "006400",      // darker green
-            "bareSoil": "8B4513",    // muddy brown
-            "agriculture": "FFFF00", // yellow
             "grassland": "7CFC00",   // lighter green
+            "bareSoil": "8B4513",    // muddy brown
+            //"agriculture": "FFFF00", // yellow
             "urban": "808080",       // grey
             "water": "0000FF"        // blue
         }
