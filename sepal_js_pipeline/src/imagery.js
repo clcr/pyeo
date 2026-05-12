@@ -19,12 +19,13 @@ function maskS2clouds(image) {
 }
 
 // generates a cloud free composite for a given time period and Region of Interest (ROI)
-function getBaselineMosaic(roi, startDate, endDate, cloudCoverThreshold) {
+function getBaselineMosaic(roi, startDate, endDate, cloudCoverThreshold, bandsOfInterest) {
     const collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
         .filterBounds(roi)
         .filterDate(startDate, endDate)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', cloudCoverThreshold)) // filter very cloudy scenes
-        .map(maskS2clouds);
+        .map(maskS2clouds)
+        .select(bandsOfInterest);
     
     // report mosaic metadata
     const count = collection.size();
