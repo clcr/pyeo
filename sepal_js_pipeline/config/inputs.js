@@ -27,17 +27,26 @@ const getParameters = () => {
 
         cloudCoverThreshold: 25,
 
-        changeFromClass: 1,
+        changeFromClass: 0,
 
-        changeToClass: 3,
+        changeToClass: 1,
 
         classLabels: {
-            "forest": 1,
-            "bareSoil": 2,
-            "agriculture": 3,
-            "grassland": 4,
-            "urban": 5,
-            "water": 6
+            "forest": 0,
+            "bareSoil": 1,
+            "agriculture": 2,
+            "grassland": 3,
+            "urban": 4,
+            "water": 5
+        },
+
+        classColours: {
+            "forest": "006400",      // darker green
+            "bareSoil": "8B4513",    // muddy brown
+            "agriculture": "FFFF00", // yellow
+            "grassland": "7CFC00",   // lighter green
+            "urban": "808080",       // grey
+            "water": "0000FF"        // blue
         }
     };
 }
