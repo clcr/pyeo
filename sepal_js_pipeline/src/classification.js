@@ -20,39 +20,8 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
         return feature.set(classProperty, currentClass.subtract(1));
     };
 
-    trainingPoints.first().toDictionary().evaluate((result, error) => {
-        if (error) {
-            console.error('Error fetching point properties:', error);
-        } else {
-            console.log('Training point properties:', result);
-        }
-    });
-
     // ensure zero-indexing for gradientBoosted
-    // zeroIndexedPoints = trainingPoints.map(remapForZeroIndexed);
-
-    const unmaskedSample = baselineImage.unmask(-777).sampleRegions({
-        collection: trainingPoints,
-        properties: [classProperty],
-        scale: 10,
-        tileScale: 4
-    });
-
-    // Safely fetch the first 3 features from the server
-    unmaskedSample.limit(3).evaluate((data, error) => {
-        if (error) {
-            console.error("Error fetching training features:", error);
-        } else {
-            console.log("--- First 3 unmaskedSample ---");
-            // Using console.dir to ensure nested objects (like properties and geometry) are fully expanded
-            console.dir(data.features, { depth: null }); 
-        }
-    });
-
-    unmaskedSample.size().evaluate((size, error) => {
-        if (error) console.error('Unmask test error:', error);
-        else console.log(`Unmasked sample size: ${size}`);
-    });
+    zeroIndexedPoints = trainingPoints.map(remapForZeroIndexed);
 
     // sample the provided image at the coordinates specified by trainingPoints
     const sampleFeatures = baselineImage.sampleRegions({
@@ -63,18 +32,8 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
         tileScale: 4
     });
 
-    sampleFeatures.limit(3).evaluate((data, error) => {
-        if (error) {
-            console.error("Error fetching training features:", error);
-        } else {
-            console.log("--- First 3 sampleFeatures ---");
-            // Using console.dir to ensure nested objects (like properties and geometry) are fully expanded
-            console.dir(data.features, { depth: null }); 
-        }
-    });
-
     // add a random column and use this to split 75% for training, 25% for validation
-    const withRandom = unmaskedSample.randomColumn("random");
+    const withRandom = sampleFeatures.randomColumn("random");
     const trainingSample = withRandom.filter(ee.Filter.lte("random", 0.75));
     const validationSample = withRandom.filter(ee.Filter.gt("random", 0.75));
 
@@ -82,7 +41,10 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
     trainingSample.aggregate_histogram(classProperty).evaluate((hist => {console.log(`Training class distribution : ${hist}`)}));
 
     // train the classifier
-    const trainedClassifier = ee.Classifier.smileGradientTreeBoost(50).train({
+    const trainedClassifier = ee.Classifier.smileGradientTreeBoost({
+        numberOfTrees: 50,
+        seed: 42
+    }).train({
         // https://developers.google.com/earth-engine/apidocs/ee-classifier-smilegradienttreeboost
         features: trainingSample,
         classProperty: classProperty,
@@ -94,6 +56,7 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
 
     // evaluate performance on unseen validation data
     const validatedSample = validationSample.classify(trainedClassifier);
+    
     const validationAccuracy = validatedSample.errorMatrix(classProperty, "classification").accuracy();
 
     // return
