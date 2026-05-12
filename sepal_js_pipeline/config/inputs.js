@@ -3,11 +3,15 @@ const ee = require('@google/earthengine');
 
 // define a constant to export
 const getParameters = () => {
+    // declare asset paths
     const shimbaHills = ee.FeatureCollection("projects/ee-matthewpayne/assets/A4F/shimba_hills");
+    const trainingFeatures = ee.FeatureCollection("projects/ee-matthewpayne/assets/A4F/shimba_hills_20250119_trainingFeatures");
 
     return {
         // define nested objects for cleaner reading
         roi: shimbaHills.geometry(),
+
+        trainingFeatures: trainingFeatures,
 
         baseline: {
             start: "2025-01-01",
