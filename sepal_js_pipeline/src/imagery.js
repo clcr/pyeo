@@ -24,8 +24,19 @@ function getBaselineMosaic(roi, startDate, endDate, cloudCoverThreshold) {
         .filterBounds(roi)
         .filterDate(startDate, endDate)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', cloudCoverThreshold)) // filter very cloudy scenes
-        .map(maskS2clouds)
-    return collection.median().clip(roi)
+        .map(maskS2clouds);
+    
+    // report mosaic metadata
+    const count = collection.size();
+    const dates = collection.aggregate_array("system:time_start").map(function(time) {
+        return ee.Date(time).format("YYYY-MM-dd");
+    });
+
+    // evaluate fetches information from GEE servers without preventing the rest of the pipeline from computing, which getInfo() would do
+    count.evaluate((n) => console.log(`\tMosaic consists of ${n} images.`));
+    dates.evaluate((dates) => console.log(`\tImage dates: ${dates.join(', ')}`));
+
+    return collection.median().clip(roi)//.select({"bands": "B4"})
 }
 
 // export the function to be required by main.js
