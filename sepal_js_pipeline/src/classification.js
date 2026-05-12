@@ -26,10 +26,9 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
     // sample the provided image at the coordinates specified by trainingPoints
     const sampleFeatures = baselineImage.sampleRegions({
         // https://developers.google.com/earth-engine/apidocs/ee-image-sampleregions
-        collection: trainingPoints,
+        collection: zeroIndexedPoints,
         properties: [classProperty],
-        scale: 10,
-        tileScale: 4
+        scale: 10
     });
 
     // add a random column and use this to split 75% for training, 25% for validation
@@ -38,7 +37,10 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
     const validationSample = withRandom.filter(ee.Filter.gt("random", 0.75));
 
     // report if any classes are not represented
-    trainingSample.aggregate_histogram(classProperty).evaluate((hist => {console.log(`Training class distribution : ${hist}`)}));
+    trainingSample.aggregate_histogram(classProperty).evaluate((hist, error) => {
+        if (error) console.error("Error getting the histogram: ", error);
+        else console.log("Training class distribution:", hist)
+    });
 
     // train the classifier
     const trainedClassifier = ee.Classifier.smileGradientTreeBoost({
@@ -56,7 +58,7 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
 
     // evaluate performance on unseen validation data
     const validatedSample = validationSample.classify(trainedClassifier);
-    
+
     const validationAccuracy = validatedSample.errorMatrix(classProperty, "classification").accuracy();
 
     // return
@@ -65,10 +67,34 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
         trainingAccuracy: trainingAccuracy,
         validationAccuracy: validationAccuracy
     };
+};
+
+/**
+ * Applies a trained classifier to a single image.
+ * * @param {ee.Image} image - The image to classify.
+ * @param {ee.Classifier} trainedClassifier - The previously trained classifier object.
+ * @returns {ee.Image} The classified image with a single 'classification' band.
+ */
+function classifyImage({
+    image, trainedClassifier
+}) {
+    return image.classify(trainedClassifier)
+};
+
+/**
+ * Applies a trained classifier to an entire ImageCollection (timeseries).
+ * * @param {ee.ImageCollection} collection - The timeseries of images to classify.
+ * @param {ee.Classifier} trainedClassifier - The previously trained classifier object.
+ * @returns {ee.ImageCollection} A collection of classified images.
+ */
+function classifyTimeseries({collection, trainedClassifier}) {
+    return collection.map(function(image) {
+        return image.classify(trainedClassifier)
+    })
 }
 
 module.exports = {
-    trainGBClassifier//,
-    // classifyImage,
-    // classifyTimeseries
+    trainGBClassifier,
+    classifyImage,
+    classifyTimeseries
 };
