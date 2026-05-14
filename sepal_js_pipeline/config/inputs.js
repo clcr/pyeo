@@ -27,11 +27,13 @@ const getParameters = () => {
 
         cloudCoverThreshold: 30,
 
-        deltaNDVI: 0.3,
+        deltaNDVI: 0.2, // default in pyeo
 
         changeFromClass: 0,
 
         changeToClass: 1,
+
+        minConsecutiveChanges: 2, // or 5
 
         classLabels: {
             "forest": 0,
