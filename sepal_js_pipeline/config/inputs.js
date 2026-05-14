@@ -27,7 +27,7 @@ const getParameters = () => {
 
         cloudCoverThreshold: 30,
 
-        deltaNDVIThreshold: 0.3,
+        deltaNDVI: 0.3,
 
         changeFromClass: 0,
 
