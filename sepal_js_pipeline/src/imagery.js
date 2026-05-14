@@ -78,8 +78,8 @@ function getChangeTimeSeries({roi, startDate, endDate, cloudCoverThreshold, band
     });
 
     // evaluate fetches information from GEE servers without preventing the rest of the pipeline from computing, which getInfo() would do
-    count.evaluate((n) => console.log(`Change Timeseries consists of ${n} images.`));
-    dates.evaluate((dates) => console.log(`Change Timeseries image dates: ${dates.join(', ')}`));
+    count.evaluate((n) => console.log(`\nChange Timeseries consists of ${n} images.`));
+    dates.evaluate((dates) => console.log(`\nChange Timeseries image dates: ${dates.join(', ')}`));
 
     return collection.map((image) => {
         return image.clip(roi)
