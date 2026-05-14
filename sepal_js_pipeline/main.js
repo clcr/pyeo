@@ -7,7 +7,7 @@ const ee = require("@google/earthengine");
 const inputs = require("./config/inputs");
 const imagery = require("./src/imagery");
 const classification = require("./src/classification");
-// change detection module require goes here
+const changeDetection = require("./src/changeDetection");
 
 // auth
 const keyPath = process.env.EE_PRIVATE_KEY_PATH;
@@ -16,7 +16,7 @@ const privateKey = JSON.parse(fs.readFileSync(keyPath, "utf8"));
 // run main, wrapped within an authentication call
 ee.data.authenticateViaPrivateKey(privateKey, () => {
     ee.initialize(null, null, () => {
-        console.log("1. Earth Engine initialised. Starting pipeline...");
+        console.log("Earth Engine initialised. Starting pipeline...");
 
         // load user-inputs
         const params = inputs.getParameters();
@@ -24,7 +24,6 @@ ee.data.authenticateViaPrivateKey(privateKey, () => {
         /////////
         // get baseline mosaic
         /////////
-        console.log("2. Generating baseline mosaic...")
         const baseline = imagery.getBaselineMosaic(
             params.roi,
             params.baseline.start,
@@ -35,7 +34,7 @@ ee.data.authenticateViaPrivateKey(privateKey, () => {
 
         baseline.bandNames().evaluate((bands, error) => {
             if (error) console.error('Band error:', error);
-            else console.log('Baseline image bands:', bands);
+            else console.log('\nBaseline image bands:', bands);
         });
 
         // quicklook of the baseline
@@ -47,13 +46,12 @@ ee.data.authenticateViaPrivateKey(privateKey, () => {
             dimensions: 800
         };
         baseline.getThumbURL(visParams, (url) => {
-            console.log("\n Baseline Mosaic Quicklook:", url);
+            console.log("\nBaseline Mosaic Quicklook:", url);
         });
 
         /////////
         // create a classifier on the baseline
         /////////
-        console.log("3. Training a Classifier...");
         const modelResults = classification.trainGBClassifier({
             baselineImage: baseline,
             trainingPoints: params.trainingFeatures,
@@ -62,16 +60,15 @@ ee.data.authenticateViaPrivateKey(privateKey, () => {
 
         // use evaluate to get model performance information
         modelResults.trainingAccuracy.evaluate((acc) => {
-            console.log(`Training accuracy: ${(acc * 100).toFixed(2)}%`);
+            console.log(`\nTraining accuracy: ${(acc * 100).toFixed(2)}%`);
         });
         modelResults.validationAccuracy.evaluate((acc) => {
-            console.log(`Validation accuracy: ${(acc * 100).toFixed(2)}%`);
+            console.log(`\nValidation accuracy: ${(acc * 100).toFixed(2)}%`);
         });
 
         /////////
         // apply the classifier on the baseline
         /////////
-        console.log("4. Applying the Classifier on the baseline...");
         const classifiedBaseline = classification.classifyImage({
             image: baseline,
             trainedClassifier: modelResults.classifier
@@ -93,13 +90,12 @@ ee.data.authenticateViaPrivateKey(privateKey, () => {
             dimensions: 800
         };
         classifiedBaseline.getThumbURL(classifiedVisParams, (url) => {
-            console.log("\n Classified Baseline Quicklook:", url);
+            console.log("\nClassified Baseline Quicklook:", url);
         });
 
         /////////
         // get a cloud masked change timeseries
         /////////
-        console.log("5. Getting a Timeseries of Change Images...");
         const timeSeries = imagery.getChangeTimeSeries({
             roi: params.roi,
             startDate: params.change.start,
@@ -108,11 +104,47 @@ ee.data.authenticateViaPrivateKey(privateKey, () => {
             bandsOfInterest: params.bandsOfInterest
         })
 
+        const logFirstImageMetadata = (collection) => {
+        const firstImage = collection.first();
+        
+        firstImage.toDictionary().evaluate((props, error) => {
+            if (error) {
+                console.error("Error fetching image properties:", error);
+            } else {
+                console.log("\n--- First Image Metadata ---");
+                console.log(`ID: ${props['PRODUCT_ID']}`);
+                console.log(`Cloud Cover (Entire Tile): ${props['CLOUDY_PIXEL_PERCENTAGE'].toFixed(2)}%`);
+                console.log(`Processing Baseline: ${props['PROCESSING_BASELINE']}`);
+            }
+        });
+
+        //////
+        // get all of image metadata if further debugging needed
+        //
+
+        // firstImage.propertyNames().evaluate((properties, error) => {
+        //     if (error) {
+        //         console.error("error", error);
+        //     } else {
+        //         console.log(`${properties}`)
+        //     }
+        // })
+        };
+
+        logFirstImageMetadata(timeSeries);
+
         /////////
         // apply the classifier on the change timeseries
         /////////
-        // console.log("6. Applying the Classifier on the Timeseries...");
-        // const classifiedTimeseries = classification
+        const classifiedTimeseries = classification.classifyTimeseries({
+            collection: timeSeries,
+            trainedClassifier: modelResults.classifier
+        })
+
+        classifiedTimeseries.first().getThumbURL(classifiedVisParams, (url) => {
+            console.log("\nClassified Timeseries 1st image Quicklook:", url);
+        });
+
         
     }, (e) => console.error("Initialisation error: ", e));
 }, (e) => console.error("Authentication error: ", e));
