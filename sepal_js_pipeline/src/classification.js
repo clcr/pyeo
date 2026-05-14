@@ -44,7 +44,7 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
 
     // train the classifier
     const trainedClassifier = ee.Classifier.smileGradientTreeBoost({
-        numberOfTrees: 50,
+        numberOfTrees: 30,
         seed: 42
     }).train({
         // https://developers.google.com/earth-engine/apidocs/ee-classifier-smilegradienttreeboost
