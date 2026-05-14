@@ -20,12 +20,14 @@ const getParameters = () => {
 
         change: {
             start: "2026-01-01",
-            end: "2026-05-08"
+            end: "2026-05-14"
         },
 
-        bandsOfInterest: ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12'],
+        bandsOfInterest: ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12', 'NDVI'],
 
         cloudCoverThreshold: 30,
+
+        deltaNDVIThreshold: 0.3,
 
         changeFromClass: 0,
 
