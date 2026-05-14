@@ -3,23 +3,29 @@ const ee = require('@google/earthengine');
 
 // cloud-masking function
 function maskS2clouds(image) {
-  var qa = image.select('QA60');
+    const qa = image.select('QA60');
   
-  // Bits 10 and 11 are clouds and cirrus, respectively.
-  var cloudBitMask = 1 << 10;
-  var cirrusBitMask = 1 << 11;
-  
-  // Both flags should be set to zero, indicating clear conditions.
-  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
-    .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+    // bits 10 and 11 are clouds and cirrus, respectively.
+    const cloudBitMask = 1 << 10;
+    const cirrusBitMask = 1 << 11;
     
-  // Apply the mask and scale the reflectance values to standard 0-1 range
-  return image.updateMask(mask).divide(10000)
-      .copyProperties(image) // copies all non-system properties
-      .copyProperties(image, ["system:time_start",
-        "system:index"
-      ]);
-}
+    // both flags should be set to zero, indicating clear conditions.
+    const mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+        .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+        
+    // apply the mask and scale the reflectance values to standard 0-1 range
+    return image.updateMask(mask).divide(10000)
+        .copyProperties(image) // copies all non-system properties
+        .copyProperties(image, ["system:time_start",
+            "system:index"]
+    )
+};
+
+// calculating NDVI
+function addNDVI(image) {
+    const ndvi = image.normalizedDifference(["B5", "B4"]).rename("NDVI");
+    return image.addBands(ndvi);
+};
 
 // generates a cloud free composite for a given time period and Region of Interest (ROI)
 function getBaselineMosaic(roi, startDate, endDate, cloudCoverThreshold, bandsOfInterest) {
@@ -28,13 +34,15 @@ function getBaselineMosaic(roi, startDate, endDate, cloudCoverThreshold, bandsOf
         .filterDate(startDate, endDate)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', cloudCoverThreshold)) // filter very cloudy scenes
         .map(maskS2clouds)
-        .map((image) => {
+        .map(addNDVI)
+        .map((image) => { // get metadata for every image for date reporting
             return image.select(bandsOfInterest)
                 .copyProperties(image)
                 .copyProperties(image, ["system:time_start",
                     "system:index"
                 ])
-            });
+            })
+        ;
 
     // report mosaic metadata
     const count = collection.size();
@@ -55,6 +63,7 @@ function getChangeTimeSeries({roi, startDate, endDate, cloudCoverThreshold, band
         .filterDate(startDate, endDate)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', cloudCoverThreshold)) // filter very cloudy scenes
         .map(maskS2clouds)
+        .map(addNDVI)
         .map((image) => {
             return image.select(bandsOfInterest)
                 .copyProperties(image)
