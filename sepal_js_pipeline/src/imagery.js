@@ -15,7 +15,10 @@ function maskS2clouds(image) {
     
   // Apply the mask and scale the reflectance values to standard 0-1 range
   return image.updateMask(mask).divide(10000)
-      .copyProperties(image, ["system:time_start"]);
+      .copyProperties(image) // copies all non-system properties
+      .copyProperties(image, ["system:time_start",
+        "system:index"
+      ]);
 }
 
 // generates a cloud free composite for a given time period and Region of Interest (ROI)
@@ -25,8 +28,14 @@ function getBaselineMosaic(roi, startDate, endDate, cloudCoverThreshold, bandsOf
         .filterDate(startDate, endDate)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', cloudCoverThreshold)) // filter very cloudy scenes
         .map(maskS2clouds)
-        .select(bandsOfInterest);
-    
+        .map((image) => {
+            return image.select(bandsOfInterest)
+                .copyProperties(image)
+                .copyProperties(image, ["system:time_start",
+                    "system:index"
+                ])
+            });
+
     // report mosaic metadata
     const count = collection.size();
     const dates = collection.aggregate_array("system:time_start").map(function(time) {
@@ -34,8 +43,8 @@ function getBaselineMosaic(roi, startDate, endDate, cloudCoverThreshold, bandsOf
     });
 
     // evaluate fetches information from GEE servers without preventing the rest of the pipeline from computing, which getInfo() would do
-    count.evaluate((n) => console.log(`\tMosaic consists of ${n} images.`));
-    dates.evaluate((dates) => console.log(`\tImage dates: ${dates.join(', ')}`));
+    count.evaluate((n) => console.log(`Mosaic consists of ${n} images.`));
+    dates.evaluate((dates) => console.log(`Image dates: ${dates.join(', ')}`));
 
     return collection.median().clip(roi)
 }
@@ -46,7 +55,12 @@ function getChangeTimeSeries({roi, startDate, endDate, cloudCoverThreshold, band
         .filterDate(startDate, endDate)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', cloudCoverThreshold)) // filter very cloudy scenes
         .map(maskS2clouds)
-        .select(bandsOfInterest);
+        .map((image) => {
+            return image.select(bandsOfInterest)
+                .copyProperties(image)
+                .copyProperties(image, ["system:time_start",
+                    "system:index"])
+                });
     
     // report timeseries metadata
     const count = collection.size();
@@ -55,12 +69,15 @@ function getChangeTimeSeries({roi, startDate, endDate, cloudCoverThreshold, band
     });
 
     // evaluate fetches information from GEE servers without preventing the rest of the pipeline from computing, which getInfo() would do
-    count.evaluate((n) => console.log(`\tChange Timeseries consists of ${n} images.`));
-    dates.evaluate((dates) => console.log(`\tChange Timeseries image dates: ${dates.join(', ')}`));
+    count.evaluate((n) => console.log(`Change Timeseries consists of ${n} images.`));
+    dates.evaluate((dates) => console.log(`Change Timeseries image dates: ${dates.join(', ')}`));
 
     return collection.map((image) => {
         return image.clip(roi)
-    });
+            .copyProperties(image)
+            .copyProperties(image, ["system:time_start",
+                "system:index"])
+            });
 }
 
 // export the function to be required by main.js
