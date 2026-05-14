@@ -25,7 +25,7 @@ const getParameters = () => {
 
         bandsOfInterest: ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12'],
 
-        cloudCoverThreshold: 25,
+        cloudCoverThreshold: 30,
 
         changeFromClass: 0,
 
