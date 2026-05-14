@@ -23,7 +23,7 @@ function maskS2clouds(image) {
 
 // calculating NDVI
 function addNDVI(image) {
-    const ndvi = image.normalizedDifference(["B5", "B4"]).rename("NDVI");
+    const ndvi = image.normalizedDifference(["B8", "B4"]).rename("NDVI");
     return image.addBands(ndvi);
 };
 
