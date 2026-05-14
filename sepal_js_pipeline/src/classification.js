@@ -32,7 +32,7 @@ function trainGBClassifier({baselineImage, trainingPoints, classProperty}) {
     });
 
     // add a random column and use this to split 75% for training, 25% for validation
-    const withRandom = sampleFeatures.randomColumn("random");
+    const withRandom = sampleFeatures.randomColumn("random", 42);
     const trainingSample = withRandom.filter(ee.Filter.lte("random", 0.75));
     const validationSample = withRandom.filter(ee.Filter.gt("random", 0.75));
 
