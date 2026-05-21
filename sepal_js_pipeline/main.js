@@ -145,6 +145,20 @@ ee.data.authenticateViaPrivateKey(privateKey, () => {
             console.log("\nClassified Timeseries 1st image Quicklook:", url);
         });
 
+        ////////
+        // do change detection
+        ////////
+
+        const changeReport = changeDetection.run_change_detection({
+            classifiedBaseline: classifiedBaseline,
+            classifiedTimeseries: classifiedTimeseries,
+            changeFromClass: params.changeFromClass,
+            changeToClass: params.changeToClass,
+            deltaNDVI: params.deltaNDVI,
+            minConsecutiveChanges: params.minConsecutiveChanges
+        })
+
+        // then a quicklook or something better to assess how many changes
         
     }, (e) => console.error("Initialisation error: ", e));
 }, (e) => console.error("Authentication error: ", e));
