@@ -50,6 +50,12 @@ var toClassParams = {
   max: Math.max.apply(null, changeToClasses),
   palette: dynamicToPalette 
 };
+
+var ndviParams = {
+  min: -0.2,
+  max: 1,
+  palette: ["white", "green"] // specifies the upper and lower range
+}
 // **********
 
 /**
@@ -207,11 +213,6 @@ var occludivityVis = {
     '#d7191c'  // Red: Highly occluded (Persistent clouds)
   ]
 };
-// var visClassParams = {min: 1, max: 3, palette: ['green', 'yellow', 'pink']}
-// var FOREST = 1
-// var SOIL = 2
-// var CROPS = 3
-
 
 Map.addLayer(
   alerts.fromClassCollection.first(),
@@ -225,6 +226,17 @@ Map.addLayer(
   "First image of the toClassCollection"
 )
 
+Map.addLayer(
+  alerts.changeEvents.first().select("delta_ndvi"),
+  ndviParams,
+  "Delta NDVI of the first monitoring image"
+)
+
+Map.addLayer(
+  alerts.changeEvents.first().select("delta_ndvi_thresholded"),
+  ndviParams,
+  "Delta NDVI thresholded >=0.2 of the first monitoring image"
+)
 
 // Map.addLayer(
 //   alerts.changeReport.select('valid_image_count'),
@@ -238,14 +250,6 @@ Map.addLayer(
 //   'Occluded Pixel Count', false
 // );
 
-// Map.addLayer(aoi, {color: 'white'}, 'AOI', false)
-
-// Map.addLayer(
-//     baselineImage,
-//     {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.3, gamma: 1.4},
-//     'Baseline composite (RGB)'
-// )
-
 Map.addLayer(
   classifiedMonitoringCollection.first().select("classification"),
   visClassParams,
@@ -257,21 +261,6 @@ Map.addLayer(
   visClassParams,
   'Baseline class map'
 )
-
-print(visClassParams)
-
-// Map.addLayer(
-//   alerts.changeReport.select("first_date"),
-//   {palette: ["yellow", "orange", "red"]},
-//   "Change Report: First Change Date", false
-//   );
-  
-
-// Map.addLayer(
-//   alerts.changeReport.select("last_date"),
-//   {palette: ["yellow", "orange", "red"]},
-//   "Change Report: Last Change Date", false
-//   );
 
 // var point = ee.Geometry.Point([-55.1514, -11.5683]);
 // var changeReportAtPoint = alerts.changeReport.reduceRegion({
