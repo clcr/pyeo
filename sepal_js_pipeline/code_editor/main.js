@@ -8,11 +8,49 @@ Map.centerObject(aoi, 12)
 // over Apr-Dec 2022 (no compositing — preserves temporal granularity).
 var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12']
 var cloudThreshold = 50
-var visClassParams = {min: 1, max: 3, palette: ['green', 'yellow', 'pink']}
 var FOREST = 1
 var SOIL = 2
 var CROPS = 3
+var changeFromClasses = [FOREST]
+var changeToClasses = [SOIL, CROPS]
+var allClasses = [FOREST, SOIL, CROPS]
 
+// **********
+// visualisation parameters
+var classColourMap = {
+  1: "green", // forest
+  2: "yellow", // soil
+  3: "pink" // crops
+}
+// dynamic from and to palettes
+var dynamicFromPalette = changeFromClasses.map(function(classId) {
+  return classColourMap[classId];
+})
+var dynamicToPalette = changeToClasses.map(function(classId) {
+  return classColourMap[classId];
+})
+var dynamicFullPalette = allClasses.map(function(classId) {
+  return classColourMap[classId];
+})
+
+var visClassParams = {
+  min: Math.min.apply(null, allClasses),
+  max: Math.max.apply(null, allClasses),
+  palette: dynamicFullPalette
+};
+
+var fromClassParams = {
+  min: Math.min.apply(null, changeFromClasses),
+  max: Math.max.apply(null, changeFromClasses),
+  palette: dynamicFromPalette 
+};
+
+var toClassParams = {
+  min: Math.min.apply(null, changeToClasses),
+  max: Math.max.apply(null, changeToClasses),
+  palette: dynamicToPalette 
+};
+// **********
 
 /**
  * Joins the S2 cloud probability collection to a given S2 SR collection and masks clouds.
@@ -85,12 +123,6 @@ var monitoringImages = prep(
 var imageList = monitoringImages.toList(38)
 var secondImage = ee.Image(imageList.get(1))
 
-Map.addLayer(
-  monitoringImages.first().mask().select('B3'), 
-  {min: 0, max: 1, palette: ['red', 'green']}, 
-  'Internal Mask (Green=Valid, Red=Masked)', false
-)
-
 // Map.addLayer(
 //   monitoringImages.first(),
 //   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
@@ -135,22 +167,19 @@ var classifiedBaselineImage = baselineImage
     .addBands(baselineImage.select('NDVI'))
     .clip(aoi)
 
-print("classified baseline image", classifiedBaselineImage)
-
 var classifiedMonitoringCollection = monitoringImages.map(function (img) {
     return img.classify(classifier).rename('classification')
         .addBands(img.select('NDVI'))
         .copyProperties(img, ['system:time_start'])
 })
 
-print("classified monitoring collection before alerts", classifiedMonitoringCollection)
 
 var alerts = pyeo.run_change_detection({
     aoi: aoi,
     classifiedBaseline: classifiedBaselineImage,
     classifiedMonitoringCollection: classifiedMonitoringCollection,
-    changeFromClasses: [FOREST],
-    changeToClasses: [SOIL, CROPS],
+    changeFromClasses: changeFromClasses,
+    changeToClasses: changeToClasses,
     minConsecutiveDetections: 2,
     dNdviGate: {band: 'NDVI', threshold: 0.20}
 })
@@ -178,20 +207,38 @@ var occludivityVis = {
     '#d7191c'  // Red: Highly occluded (Persistent clouds)
   ]
 };
+// var visClassParams = {min: 1, max: 3, palette: ['green', 'yellow', 'pink']}
+// var FOREST = 1
+// var SOIL = 2
+// var CROPS = 3
+
 
 Map.addLayer(
-  alerts.changeReport.select('valid_image_count'),
-  imageCountVis,
-  'Available Image Count', false
-);
+  alerts.fromClassCollection.first(),
+  fromClassParams,
+  "First image of the fromClassCollection"
+)
 
 Map.addLayer(
-  alerts.changeReport.select('occluded_count'),
-  occludivityVis,
-  'Occluded Pixel Count', false
-);
+  alerts.toClassCollection.first(),
+  toClassParams,
+  "First image of the toClassCollection"
+)
 
-Map.addLayer(aoi, {color: 'white'}, 'AOI', false)
+
+// Map.addLayer(
+//   alerts.changeReport.select('valid_image_count'),
+//   imageCountVis,
+//   'Available Image Count', false
+// );
+
+// Map.addLayer(
+//   alerts.changeReport.select('occluded_count'),
+//   occludivityVis,
+//   'Occluded Pixel Count', false
+// );
+
+// Map.addLayer(aoi, {color: 'white'}, 'AOI', false)
 
 // Map.addLayer(
 //     baselineImage,
@@ -211,39 +258,41 @@ Map.addLayer(
   'Baseline class map'
 )
 
-Map.addLayer(
-  alerts.changeReport.select("first_date"),
-  {palette: ["yellow", "orange", "red"]},
-  "Change Report: First Change Date", false
-  );
+print(visClassParams)
+
+// Map.addLayer(
+//   alerts.changeReport.select("first_date"),
+//   {palette: ["yellow", "orange", "red"]},
+//   "Change Report: First Change Date", false
+//   );
   
 
-Map.addLayer(
-  alerts.changeReport.select("last_date"),
-  {palette: ["yellow", "orange", "red"]},
-  "Change Report: Last Change Date", false
-  );
+// Map.addLayer(
+//   alerts.changeReport.select("last_date"),
+//   {palette: ["yellow", "orange", "red"]},
+//   "Change Report: Last Change Date", false
+//   );
 
-var point = ee.Geometry.Point([-55.1514, -11.5683]);
-var changeReportAtPoint = alerts.changeReport.reduceRegion({
-  reducer: ee.Reducer.first(),
-  geometry: point,
-  scale: 10
-})
+// var point = ee.Geometry.Point([-55.1514, -11.5683]);
+// var changeReportAtPoint = alerts.changeReport.reduceRegion({
+//   reducer: ee.Reducer.first(),
+//   geometry: point,
+//   scale: 10
+// })
 
-print(changeReportAtPoint)
+// print(changeReportAtPoint)
 
-changeReportAtPoint.evaluate(function(result) {
-  if (result.first_date > 0) {
-    // use JS to create a Date object, which has .toUTCString()
-    // Date is an EE function that returns a string, strings don't have .toUTCString()
-    var readableFirstChange = new Date(result.first_date).toUTCString();
-    var readableLastChange = new Date(result.last_date).toUTCString();
+// changeReportAtPoint.evaluate(function(result) {
+//   if (result.first_date > 0) {
+//     // use JS to create a Date object, which has .toUTCString()
+//     // Date is an EE function that returns a string, strings don't have .toUTCString()
+//     var readableFirstChange = new Date(result.first_date).toUTCString();
+//     var readableLastChange = new Date(result.last_date).toUTCString();
     
-    print("First change was on: ", readableFirstChange);
-    print("Most recent change on: ", readableLastChange);
-  }
-  else {
-    print("No change at this location")
-  }
-})
+//     print("First change was on: ", readableFirstChange);
+//     print("Most recent change on: ", readableLastChange);
+//   }
+//   else {
+//     print("No change at this location")
+//   }
+// })
