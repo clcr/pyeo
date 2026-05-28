@@ -238,6 +238,18 @@ Map.addLayer(
   "Delta NDVI thresholded >=0.2 of the first monitoring image"
 )
 
+Map.addLayer(
+  alerts.changeReport.select("from_class_count"),
+  imageCountVis,
+  "L15 - From Class Count"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("to_class_count"),
+  imageCountVis,
+  "L16 - To Class Count"
+)
+
 // Map.addLayer(
 //   alerts.changeReport.select('valid_image_count'),
 //   imageCountVis,
