@@ -50,6 +50,7 @@
  // potential inputs: dNDVI_boolean (on/off), dNDVI threshold
  //
 var run_change_detection = function (params) {
+  // input parameters
   var aoi = params.aoi
   var classifiedBaseline = params.classifiedBaseline
   var classifiedMonitoringCollection = params.classifiedMonitoringCollection
@@ -59,8 +60,11 @@ var run_change_detection = function (params) {
   var dNdviGate = params.dNdviGate || null
   var PercentageProbabilityThreshold = params.PercentageProbabilityThreshold || 50
   
+  // start of run_change_detection function
+
   var baselineClassification = classifiedBaseline.select("classification");
   var baselineNDVI = classifiedBaseline.select("NDVI");
+  
   // create a fromMask that works for multiple classes
   var fromMask = ee.ImageCollection(
     changeFromClasses.map(function(classId) {
@@ -74,95 +78,118 @@ var run_change_detection = function (params) {
   // to locate the valid change event pixels per image
   // concats 3 bands to each image of the monitoring collection
   // e.g. 38 images with 2 bands each, becomes 38 images with 5 bands each
+  
   var changeEvents = classifiedMonitoringCollection.map(function(image) {
     var currentClass = image.select("classification");
     var currentNDVI = image.select("NDVI");
-      
-    // identify which pixels have changed to ChangeToClasses
-    // creates a mask that is 1 if the pixel matches ANY of the 'to' classes
+
+    // ************
+    // create the FROM class mask for the fromClassCollection
+    // where each image contains only pixels that are a FROM class in the monitoring collection
+    // this describes the consistency of each pixel as a FROM class
+    var fromMask = ee.ImageCollection(
+      changeFromClasses.map(function(classId) {
+        return currentClass.eq(classId);
+      })
+    ).max();
+    // ************
+
+    // ************
+    // create the TO class mask for the toClassCollection
+    // where each image contains only pixels that are a TO class in the monitoring collection
+    // this describes the consistency of each pixel as a TO class
     var toMask = ee.ImageCollection(
       changeToClasses.map(function(classId) {
         return currentClass.eq(classId);
       })
     ).max();
+    // ************
+
+    // ************
+    // mask the current image in the monitoring stack for the FROM and TO classes
+    var maskedFromClass = currentClass.updateMask(fromMask).rename("from_classes_masked");
+    var maskedToClass = currentClass.updateMask(toMask).rename("to_classes_masked");
+    // ************
+
+    // identify which pixels have changed to ChangeToClasses
     var transitionMask = fromMask.and(toMask);
       
     // calculate whether the NDVI is greater than the delta NDVI
-    var ndviChange = baselineNDVI.subtract(currentNDVI).rename("delta_ndvi");
-    var ndviMask = ndviChange.gt(dNdviGate.threshold);
+    var deltaNDVI = baselineNDVI.subtract(currentNDVI).rename("delta_ndvi");
+    var ndviMask = deltaNDVI.gt(dNdviGate.threshold);
       
     // flag where both conditions (class and NDVI change) are met
     var isChangeMask = transitionMask.and(ndviMask).rename("is_change");
       
-    // can separate/isolate the ndviMask so delta ndvi is not used, to understand how important this is
-      
     // store the image_date as a band to be accessed later for change reporting
     var dateMillis = ee.Image.constant(
-      image.date().millis())
-      .rename("image_date");
+      image.getNumber("system:time_start"))
+      .rename("change_date");
         
-    return image.addBands([isChangeMask, dateMillis, ndviChange]);
+    return image.addBands([isChangeMask, dateMillis, deltaNDVI, maskedFromClass, maskedToClass]);
   }); // end of changeEvents function
-
-  // print("classifiedMonitoringCollection from within alerts", classifiedMonitoringCollection)
   
-  print("changeEvents", changeEvents);
+  // ************
+  // extract the FROM and TO class images from changeEvents
+  var fromClassCollection = changeEvents.select("from_classes_masked");
+  var toClassCollection = changeEvents.select("to_classes_masked");
+  // ************
 
   // set up an image that tracks change persistency
-  var initialState = ee.Image([
-    ee.Image.constant(0).rename("streak"),
-    ee.Image.constant(0).rename("max_streak"),
-    ee.Image.constant(0).rename("first_date"),
-    ee.Image.constant(0).rename("last_date")
-  ]); 
+  // var initialState = ee.Image([
+  //   ee.Image.constant(0).rename("streak"),
+  //   ee.Image.constant(0).rename("max_streak"),
+  //   ee.Image.constant(0).rename("first_date"),
+  //   ee.Image.constant(0).rename("last_date")
+  // ]); 
   
   // track the change streaks across the timeseries
-  var calculateStreaks = function(image, state) {
-    state = ee.Image(state);
-    var isChange = image.select("is_change");
-    var currentDate = image.select("image_date");
+  // var calculateStreaks = function(image, state) {
+  //   state = ee.Image(state);
+  //   var isChange = image.select("is_change");
+  //   var currentDate = image.select("image_date");
     
-    // create a mask of valid (unclouded) pixels in the image to ensure this does not break a valid streak
-    var isValid = isChange.mask();
+  //   // create a mask of valid (unclouded) pixels in the image to ensure this does not break a valid streak
+  //   var isValid = isChange.mask();
     
-    // get the current streak, append + 1 if there is a change
-    var currentStreak = state.select("streak");
-    var newStreak = currentStreak.add(1).multiply(isChange.unmask(0));
+  //   // get the current streak, append + 1 if there is a change
+  //   var currentStreak = state.select("streak");
+  //   var newStreak = currentStreak.add(1).multiply(isChange.unmask(0));
 
-    // if pixel is cloud masked, keep the old streak
-    // https://developers.google.com/earth-engine/apidocs/ee-image-where
-    // "For each pixel in 'currentStreak', if the corresponding pixel in 'isValid' is 1, 
-    //    output the corresponding pixel in newStreak, otherwise output the input pixel."
-    var updatedStreak = currentStreak.where(isValid, newStreak);
+  //   // if pixel is cloud masked, keep the old streak
+  //   // https://developers.google.com/earth-engine/apidocs/ee-image-where
+  //   // "For each pixel in 'currentStreak', if the corresponding pixel in 'isValid' is 1, 
+  //   //    output the corresponding pixel in newStreak, otherwise output the input pixel."
+  //   var updatedStreak = currentStreak.where(isValid, newStreak);
 
-    var maxStreak = state.select("max_streak");
-    var updatedMaxSteak = maxStreak.max(updatedStreak);
+  //   var maxStreak = state.select("max_streak");
+  //   var updatedMaxSteak = maxStreak.max(updatedStreak);
 
-    // 6: if streak progresses from 0 to 1 (a change), get image_date
-    var firstDate = state.select("first_date");
-    var isFirstChange = currentStreak.eq(0).and(updatedStreak.eq(1));
-    var updatedFirstDate = firstDate.where(isFirstChange.and(isValid), currentDate);
+  //   // 6: if streak progresses from 0 to 1 (a change), get image_date
+  //   var firstDate = state.select("first_date");
+  //   var isFirstChange = currentStreak.eq(0).and(updatedStreak.eq(1));
+  //   var updatedFirstDate = firstDate.where(isFirstChange.and(isValid), currentDate);
 
-    // 7: update last_date every time a valid change occurs
-    var lastDate = state.select("last_date");
-    var updatedLastDate = lastDate.where(isChange.unmask(0).eq(1).and(isValid), currentDate);
+  //   // 7: update last_date every time a valid change occurs
+  //   var lastDate = state.select("last_date");
+  //   var updatedLastDate = lastDate.where(isChange.unmask(0).eq(1).and(isValid), currentDate);
 
-    return ee.Image([
-        updatedStreak,
-        updatedMaxSteak,
-        updatedFirstDate,
-        updatedLastDate
-    ]);
-  }; // end of calculateStreaks function
+  //   return ee.Image([
+  //       updatedStreak,
+  //       updatedMaxSteak,
+  //       updatedFirstDate,
+  //       updatedLastDate
+  //   ]);
+  // }; // end of calculateStreaks function
 
-  // run calculateStreaks across the monitoringCollection
-  var finalState = ee.Image(changeEvents.iterate(calculateStreaks, initialState));
+  // // run calculateStreaks across the monitoringCollection
+  // var finalState = ee.Image(changeEvents.iterate(calculateStreaks, initialState));
 
-  // filter the final output to only include pixels that met the consecutive threshold
-  var validPixels = finalState.select("max_streak").gte(minRequiredValidatedDetectionsThreshold);
+  // // filter the final output to only include pixels that met the consecutive threshold
+  // var validPixels = finalState.select("max_streak").gte(minRequiredValidatedDetectionsThreshold);
   
-  // update finalState with the pixels that met the minConsecutiveDetections threshold
-  finalState = finalState.updateMask(validPixels);
+  // // update finalState with the pixels that met the minConsecutiveDetections threshold
+  // finalState = finalState.updateMask(validPixels);
   
   //
   // calculate additional change report metrics AFTER valid pixel updating, so we don;t lose
@@ -186,31 +213,33 @@ var run_change_detection = function (params) {
   }).sum();
   
   // concat all additional bands together
-  var finalOutput = finalState.addBands([
-    validImageCount,
-    occludedCount
-    ]);
-  
+  // var finalOutput = finalState.addBands([
+  //   validImageCount,
+  //   occludedCount
+  //   ]);
   return {
-    changeReport: finalOutput.select([
-      // available image count // is a constant, doesn't vary per pixel
-      "valid_image_count",
-      "occluded_count", // - directly from Daniel/SEPAL
-      "first_date",
-      "last_date",
-      // "alert_count" number of alerts since first alert
-      // "not-alert_count" number of not alerts since first alert
-      // "from_counts" number of from counts
-      // "to_counts": number of to counts
-      // "alert_proportion", proportion of alert / alert + non-alert = 6 / 6 + 12
-      // 30 images looking at
-      // 6 cloudy, leaving 24
-      // of the 24, how many from/tos are there?
-      // "streakiness" - consecutive changes, from streak_count
-      // "confidence" // potential output for user to determine if a change is low probability
-      // inter-class relative confidence?
-      ]),
-      changeEvents: changeEvents
+    // changeReport: finalOutput.select([
+
+    //   // available image count // is a constant, doesn't vary per pixel
+    //   // "valid_image_count",
+    //   // "occluded_count", // - directly from Daniel/SEPAL
+    //   // "first_date",
+    //   // "last_date",
+    //   // "alert_count" number of alerts since first alert
+    //   // "not-alert_count" number of not alerts since first alert
+    //   // "from_counts" number of from counts
+    //   // "to_counts": number of to counts
+    //   // "alert_proportion", proportion of alert / alert + non-alert = 6 / 6 + 12
+    //   // 30 images looking at
+    //   // 6 cloudy, leaving 24
+    //   // of the 24, how many from/tos are there?
+    //   // "streakiness" - consecutive changes, from streak_count
+    //   // "confidence" // potential output for user to determine if a change is low probability
+    //   // inter-class relative confidence?
+    //   ]),
+      changeEvents: changeEvents,
+      fromClassCollection: fromClassCollection,
+      toClassCollection: toClassCollection
   };
 
 }
