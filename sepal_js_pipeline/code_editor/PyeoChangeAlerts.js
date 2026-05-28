@@ -116,8 +116,9 @@ var run_change_detection = function (params) {
       
     // calculate whether the NDVI is greater than the delta NDVI
     var deltaNDVI = baselineNDVI.subtract(currentNDVI).rename("delta_ndvi");
-    var ndviMask = deltaNDVI.gt(dNdviGate.threshold);
-      
+    var ndviMask = deltaNDVI.gte(dNdviGate.threshold);
+    var deltaNDVIthresholded = deltaNDVI.updateMask(ndviMask).rename("delta_ndvi_thresholded");
+
     // flag where both conditions (class and NDVI change) are met
     var isChangeMask = transitionMask.and(ndviMask).rename("is_change");
       
@@ -126,8 +127,9 @@ var run_change_detection = function (params) {
       image.getNumber("system:time_start"))
       .rename("change_date");
         
-    return image.addBands([isChangeMask, dateMillis, deltaNDVI, maskedFromClass, maskedToClass]);
+    return image.addBands([isChangeMask, dateMillis, deltaNDVI, deltaNDVIthresholded, maskedFromClass, maskedToClass]);
   }); // end of changeEvents function
+  // an imagecollection, each image has the six bands above
   
   // ************
   // extract the FROM and TO class images from changeEvents
@@ -237,9 +239,9 @@ var run_change_detection = function (params) {
     //   // "confidence" // potential output for user to determine if a change is low probability
     //   // inter-class relative confidence?
     //   ]),
-      changeEvents: changeEvents,
-      fromClassCollection: fromClassCollection,
-      toClassCollection: toClassCollection
+      changeEvents: changeEvents, // an imagecollection
+      fromClassCollection: fromClassCollection, // an imagecollection
+      toClassCollection: toClassCollection // an imagecollection
   };
 
 }
