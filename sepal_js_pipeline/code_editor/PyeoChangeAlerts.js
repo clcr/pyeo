@@ -137,6 +137,8 @@ var run_change_detection = function (params) {
   var toClassCollection = changeEvents.select("to_classes_masked");
   // ************
 
+
+
   // set up an image that tracks change persistency
   // var initialState = ee.Image([
   //   ee.Image.constant(0).rename("streak"),
@@ -213,15 +215,21 @@ var run_change_detection = function (params) {
     // .eq(0) turns the 0s (clouds) into 1s so these can be summed and counted
     return isOccluded.rename("occluded_count");
   }).sum();
+
+  // LAYER 15: count the number of pixels that were a FROM class
+  var fromClassCount = fromClassCollection.count().rename("from_class_count");
   
+  // LAYER 16: count the number of pixels that were a TO class
+  var toClassCount = toClassCollection.count().rename("to_class_count");
+
   // concat all additional bands together
   // var finalOutput = finalState.addBands([
-  //   validImageCount,
-  //   occludedCount
-  //   ]);
-  return {
-    // changeReport: finalOutput.select([
+  //   fromClassCount
+  // ]);
 
+  return {
+    changeReport: ee.Image(
+      [fromClassCount, toClassCount]),
     //   // available image count // is a constant, doesn't vary per pixel
     //   // "valid_image_count",
     //   // "occluded_count", // - directly from Daniel/SEPAL
@@ -239,9 +247,9 @@ var run_change_detection = function (params) {
     //   // "confidence" // potential output for user to determine if a change is low probability
     //   // inter-class relative confidence?
     //   ]),
-      changeEvents: changeEvents, // an imagecollection
-      fromClassCollection: fromClassCollection, // an imagecollection
-      toClassCollection: toClassCollection // an imagecollection
+    changeEvents: changeEvents, // an imagecollection
+    fromClassCollection: fromClassCollection, // an imagecollection
+    toClassCollection: toClassCollection // an imagecollection
   };
 
 }
