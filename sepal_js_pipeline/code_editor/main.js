@@ -1,22 +1,35 @@
 var pyeo = require('users/matthewjpayne1/a4f:pyeoChangeAlerts')
 
-// AOI: ~15 km box over Mato Grosso, Brazil.
-var aoi = ee.Geometry.Rectangle([-55.30, -11.65, -55.15, -11.50])//.buffer(5000)
-Map.centerObject(aoi, 12)
+// ==============================================================================
+// 1. PARAMETERS & CONSTANTS
+// ==============================================================================
 
-// Baseline = median over Jan-Mar 2022. Monitoring = individual S2 acquisitions
+// baseline = median over Jan-Mar 2022. Monitoring = individual S2 acquisitions
 // over Apr-Dec 2022 (no compositing — preserves temporal granularity).
-var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12']
-var cloudThreshold = 50
-var FOREST = 1
-var SOIL = 2
-var CROPS = 3
-var changeFromClasses = [FOREST]
-var changeToClasses = [SOIL, CROPS]
-var allClasses = [FOREST, SOIL, CROPS]
+// AOI: ~15 km box over Mato Grosso, Brazil.
+var aoi = ee.Geometry.Rectangle([-55.30, -11.65, -55.15, -11.50]);
 
-// **********
-// visualisation parameters
+var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
+var MAX_CLOUDY_PIXELS = 30;
+var CLOUD_THRESHOLD = 50;
+
+var FOREST = 1;
+var SOIL = 2;
+var CROPS = 3;
+var changeFromClasses = [FOREST];
+var changeToClasses = [SOIL, CROPS];
+var allClasses = [FOREST, SOIL, CROPS];
+
+// ==============================================================================
+// 2. MAP INITIALISATION
+// ==============================================================================
+Map.centerObject(aoi, 12)
+Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
+
+// ==============================================================================
+// 3. VISUALISATION PARAMETERS
+// ==============================================================================
+
 var classColourMap = {
   1: "green", // forest
   2: "yellow", // soil
@@ -56,7 +69,10 @@ var ndviParams = {
   max: 1,
   palette: ["white", "green"] // specifies the upper and lower range
 }
-// **********
+
+// ==============================================================================
+// 4. HELPER FUNCTIONS
+// ==============================================================================
 
 /**
  * Joins the S2 cloud probability collection to a given S2 SR collection and masks clouds.
@@ -64,18 +80,8 @@ var ndviParams = {
  * @param {ee.ImageCollection} srCol - The input Sentinel-2 Surface Reflectance collection.
  * @return {ee.ImageCollection} The cloud-masked and scaled Sentinel-2 collection.
  */
-
-// var maskS2clouds = function (img) {
-//     var qa = img.select('QA60')
-//     var mask = qa.bitwiseAnd(1 << 10).eq(0) // 0 = no clouds
-//         .and(qa.bitwiseAnd(1 << 11).eq(0)) // 0 = no cirrus
-//     return img.updateMask(mask)
-//         .divide(10000)
-//         .copyProperties(img).copyProperties(img, ['system:time_start'])
-// }
-
 var applyS2Cloudless = function(srCol, cloudThreshold) {
-    // Load the s2cloudless collection, filtering to your AOI
+    // Load the s2cloudless collection, filtering to AOI
     var s2Clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY')
         .filterBounds(aoi);
     
@@ -94,7 +100,7 @@ var applyS2Cloudless = function(srCol, cloudThreshold) {
         // Extract the probability image from the joined property
         var prob = ee.Image(img.get('s2cloudless')).select('probability');
         
-        // Create a mask where cloud probability is below a threshold (50% is a good baseline)
+        // Create a mask where cloud probability is below a threshold
         var isNotCloud = prob.lt(cloudThreshold); 
         
         // Apply the mask, scale the optical bands, and preserve the time property
@@ -104,18 +110,28 @@ var applyS2Cloudless = function(srCol, cloudThreshold) {
     });
 };
 
-var addNdvi = function (img) {
-    return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('NDVI'))
-}
+// NDVI calculation
+var addNDVI = function (img) {
+    return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('NDVI'));
+};
 
+// prepare a base collection for baseline and monitoring images
 var prep = function (col) {
-    //return col.map(maskS2clouds).map(addNdvi).select(BANDS.concat(['NDVI']))
-    return applyS2Cloudless(col, cloudThreshold).map(addNdvi).select(BANDS.concat(['NDVI']))
-}
+    return applyS2Cloudless(col, CLOUD_THRESHOLD)
+      .map(addNDVI)
+      .select(BANDS.concat(['NDVI']));
+};
+
+// group images by date and mosaics overlapping tiles from the same orbit pass
+
+
+// ==============================================================================
+// 4. PIPELINE
+// ==============================================================================
 
 var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
     .filterBounds(aoi)
-    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', MAX_CLOUDY_PIXELS))
 
 var baselineImage = prep(
     s2.filterDate('2022-01-01', '2022-06-01') // change from 2022-04-01
@@ -126,13 +142,33 @@ var monitoringImages = prep(
 ).sort('system:time_start')
     .map(function (img) { return img.clip(aoi) })
 
+
 var imageList = monitoringImages.toList(38)
 var secondImage = ee.Image(imageList.get(1))
+var thirdImage = ee.Image(imageList.get(2))
+
+Map.addLayer(
+  monitoringImages.first(),
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  'First monitoring acquisition'
+)
+
+Map.addLayer(
+  secondImage,
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  'Second monitoring acquisition'
+)
+
+Map.addLayer(
+  thirdImage,
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  'Third monitoring acquisition'
+)
 
 // Map.addLayer(
-//   monitoringImages.first(),
-//   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
-//   'First monitoring acquisition'
+//   thirdImage.mask().select('B3'), 
+//   {min: 0, max: 1, palette: ['red', 'green']}, 
+//   'Internal Mask (Green=Valid, Red=Masked)'
 // )
 
 // Inline training: forest / non-forest points within the AOI. Test fixture
