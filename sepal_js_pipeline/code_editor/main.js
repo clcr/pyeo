@@ -9,6 +9,11 @@ var pyeo = require('users/matthewjpayne1/a4f:pyeoChangeAlerts')
 // AOI: ~15 km box over Mato Grosso, Brazil.
 var aoi = ee.Geometry.Rectangle([-55.30, -11.65, -55.15, -11.50]);
 
+var BASELINE_START = '2022-01-01';
+var BASELINE_END = '2022-06-01';
+var MONITORING_START = '2022-06-01';
+var MONITORING_END = '2023-01-01';
+
 var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
 var MAX_CLOUDY_PIXELS = 30;
 var CLOUD_THRESHOLD = 50;
@@ -123,7 +128,36 @@ var prep = function (col) {
 };
 
 // group images by date and mosaics overlapping tiles from the same orbit pass
+var dailyMosaic = function(col) {
+  // add a date string to each image
+  var colWithDate = col.map(function(image) {
+    var date = image.date().format("YYYY-MM-dd");
+    return image.set("date_str", date);
+  })
+  // get a list of the unique dates in a collection
+  var distinctDates = colWithDate.distinct("date_str").aggregate_array("date_str");
 
+  // map over the distinct dates to create a mosaic per day
+  var mosaicedImages = distinctDates.map(function(date) {
+    var dailyCol = colWithDate.filter(ee.Filter.equals("date_str", date));
+
+    // get the first image to keep metadata
+    var firstImage = dailyCol.first();
+
+    // mosaic out the tile overlap https://developers.google.com/earth-engine/apidocs/ee-imagecollection-mosaic
+    // ee.ImageCollection.mosaic composites images according to their position in
+    // the collection (priority is last to first) and pixel mask status, where
+    // invalid (mask value 0) pixels are filled by preceding valid (mask value >0)
+    // pixels.
+    return dailyCol.mosaic() 
+      .clip(aoi)
+      .copyProperties(firstImage, ["system:time_start", "system:index"])
+      .set("date_str", date);
+  });
+
+  return ee.ImageCollection.fromImages(mosaicedImages);
+  // https://developers.google.com/earth-engine/apidocs/ee-imagecollection-fromimages
+};
 
 // ==============================================================================
 // 4. PIPELINE
@@ -133,37 +167,68 @@ var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
     .filterBounds(aoi)
     .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', MAX_CLOUDY_PIXELS))
 
-var baselineImage = prep(
-    s2.filterDate('2022-01-01', '2022-06-01') // change from 2022-04-01
-).median().clip(aoi)
+var baselineImage = prep(s2.filterDate(BASELINE_START, BASELINE_END))
+  .median()
+  .clip(aoi);
 
-var monitoringImages = prep(
-    s2.filterDate('2022-06-01', '2023-01-01') // change from 2022-04-01
-).sort('system:time_start')
-    .map(function (img) { return img.clip(aoi) })
+var monitoringImagesRaw = prep(s2.filterDate(MONITORING_START, MONITORING_END));
+var monitoringImages = dailyMosaic(monitoringImagesRaw).sort('system:time_start');
 
+print("number of images within dailyMosaiced monitoring collection:", monitoringImages.size()) // compared to 38 before
 
-var imageList = monitoringImages.toList(38)
+var imageList = monitoringImages.toList(21) // 38
 var secondImage = ee.Image(imageList.get(1))
 var thirdImage = ee.Image(imageList.get(2))
 
 Map.addLayer(
   monitoringImages.first(),
   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
-  'First monitoring acquisition'
+  'dailyMosaic : First monitoring acquisition', false
 )
 
 Map.addLayer(
   secondImage,
   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
-  'Second monitoring acquisition'
+  'dailyMosaic: Second monitoring acquisition', false
 )
 
 Map.addLayer(
   thirdImage,
   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
-  'Third monitoring acquisition'
+  'dailyMosaic: Third monitoring acquisition'
 )
+
+// old collection
+
+var monitoringImagesOld = prep(s2.filterDate(MONITORING_START, MONITORING_END))
+  .sort('system:time_start')
+  .map(function (img) { return img.clip(aoi) });
+
+print("number of images within previous monitoring collection:", monitoringImagesOld.size()) // compared to 38 before
+
+var imageListOld = monitoringImagesOld.toList(38)
+var secondImageOld = ee.Image(imageListOld.get(1))
+var thirdImageOld = ee.Image(imageListOld.get(2))
+
+Map.addLayer(
+  monitoringImagesOld.first(),
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  'previous : First monitoring acquisition', false
+)
+
+Map.addLayer(
+  secondImageOld,
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  'previous: Second monitoring acquisition', false
+)
+
+Map.addLayer(
+  thirdImageOld,
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  'previous: Third monitoring acquisition'
+)
+
+stop
 
 // Map.addLayer(
 //   thirdImage.mask().select('B3'), 
