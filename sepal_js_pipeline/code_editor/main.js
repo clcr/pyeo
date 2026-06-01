@@ -15,8 +15,8 @@ var MONITORING_START = '2022-06-01';
 var MONITORING_END = '2023-01-01';
 
 var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
-var MAX_CLOUDY_PIXELS = 30;
-var CLOUD_THRESHOLD = 50;
+var MAX_CLOUD_PERCENTAGE = 30;
+var MAX_CLOUD_THRESHOLD_PER_PIXEL = 50;
 
 var FOREST = 1;
 var SOIL = 2;
@@ -122,7 +122,7 @@ var addNDVI = function (img) {
 
 // prepare a base collection for baseline and monitoring images
 var prep = function (col) {
-    return applyS2Cloudless(col, CLOUD_THRESHOLD)
+    return applyS2Cloudless(col, MAX_CLOUD_THRESHOLD_PER_PIXEL)
       .map(addNDVI)
       .select(BANDS.concat(['NDVI']));
 };
@@ -165,7 +165,7 @@ var dailyMosaic = function(col) {
 
 var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
     .filterBounds(aoi)
-    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', MAX_CLOUDY_PIXELS))
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', MAX_CLOUD_PERCENTAGE))
 
 var baselineImage = prep(s2.filterDate(BASELINE_START, BASELINE_END))
   .median()
@@ -182,53 +182,56 @@ var thirdImage = ee.Image(imageList.get(2))
 
 Map.addLayer(
   monitoringImages.first(),
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
   'dailyMosaic : First monitoring acquisition', false
 )
 
 Map.addLayer(
   secondImage,
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
   'dailyMosaic: Second monitoring acquisition', false
 )
 
 Map.addLayer(
   thirdImage,
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
   'dailyMosaic: Third monitoring acquisition'
 )
 
+Map.addLayer(
+  baselineImage,
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
+  'Baseline RGB'
+  )
+
 // old collection
 
-var monitoringImagesOld = prep(s2.filterDate(MONITORING_START, MONITORING_END))
-  .sort('system:time_start')
-  .map(function (img) { return img.clip(aoi) });
+// var monitoringImagesOld = prep(s2.filterDate(MONITORING_START, MONITORING_END))
+//   .sort('system:time_start')
+//   .map(function (img) { return img.clip(aoi) });
 
-print("number of images within previous monitoring collection:", monitoringImagesOld.size()) // compared to 38 before
+// var imageListOld = monitoringImagesOld.toList(38)
+// var secondImageOld = ee.Image(imageListOld.get(1))
+// var thirdImageOld = ee.Image(imageListOld.get(2))
 
-var imageListOld = monitoringImagesOld.toList(38)
-var secondImageOld = ee.Image(imageListOld.get(1))
-var thirdImageOld = ee.Image(imageListOld.get(2))
+// Map.addLayer(
+//   monitoringImagesOld.first(),
+//   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
+//   'previous : First monitoring acquisition', false
+// )
 
-Map.addLayer(
-  monitoringImagesOld.first(),
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
-  'previous : First monitoring acquisition', false
-)
+// Map.addLayer(
+//   secondImageOld,
+//   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
+//   'previous: Second monitoring acquisition', false
+// )
 
-Map.addLayer(
-  secondImageOld,
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
-  'previous: Second monitoring acquisition', false
-)
+// Map.addLayer(
+//   thirdImageOld,
+//   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
+//   'previous: Third monitoring acquisition'
+// )
 
-Map.addLayer(
-  thirdImageOld,
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.5, gamma: 1.4},
-  'previous: Third monitoring acquisition'
-)
-
-stop
 
 // Map.addLayer(
 //   thirdImage.mask().select('B3'), 
@@ -293,7 +296,7 @@ var alerts = pyeo.run_change_detection({
 
 var imageCountVis = {
   min: 0,
-  max: 38,
+  max: 21,
   palette: [
     '#d7191c', // Red: Very few valid images
     '#fdae61', // Orange
@@ -305,13 +308,11 @@ var imageCountVis = {
 
 var occludivityVis = {
   min: 0,
-  max: 38,
+  max: 21, // can be made dynamic if so wished
   palette: [
-    '#1a9641', // Dark Green: Rarely occluded (Clear skies)
-    '#a6d96a', // Light Green
-    '#ffffbf', // Yellow: Moderately occluded
-    '#fdae61', // Orange
-    '#d7191c'  // Red: Highly occluded (Persistent clouds)
+    //'#ffffbf', // Yellow: Moderately occluded
+    'black', // low cloud occurrence
+    'white'  // high cloud occurrence
   ]
 };
 
@@ -327,16 +328,22 @@ Map.addLayer(
   "First image of the toClassCollection"
 )
 
-Map.addLayer(
-  alerts.changeEvents.first().select("delta_ndvi"),
-  ndviParams,
-  "Delta NDVI of the first monitoring image"
-)
+// Map.addLayer(
+//   alerts.changeEvents.first().select("delta_ndvi"),
+//   ndviParams,
+//   "Delta NDVI of the first monitoring image"
+// )
+
+// Map.addLayer(
+//   alerts.changeEvents.first().select("delta_ndvi_thresholded"),
+//   ndviParams,
+//   "Delta NDVI thresholded >=0.2 of the first monitoring image"
+// )
 
 Map.addLayer(
-  alerts.changeEvents.first().select("delta_ndvi_thresholded"),
-  ndviParams,
-  "Delta NDVI thresholded >=0.2 of the first monitoring image"
+  alerts.changeReport.select("to_class_count"),
+  imageCountVis,
+  "L16 - To Class Count"
 )
 
 Map.addLayer(
@@ -346,9 +353,13 @@ Map.addLayer(
 )
 
 Map.addLayer(
-  alerts.changeReport.select("to_class_count"),
-  imageCountVis,
-  "L16 - To Class Count"
+  alerts.changeReport.select('occluded_count'),
+  occludivityVis,
+  'L02 - Occluded Pixel Count', false
+);
+
+Map.addLayer(
+  alerts.changeReport.select("available_image_count")  
 )
 
 // Map.addLayer(
@@ -357,22 +368,17 @@ Map.addLayer(
 //   'Available Image Count', false
 // );
 
-// Map.addLayer(
-//   alerts.changeReport.select('occluded_count'),
-//   occludivityVis,
-//   'Occluded Pixel Count', false
-// );
 
 Map.addLayer(
   classifiedMonitoringCollection.first().select("classification"),
   visClassParams,
-  'First monitoring acquisition - CLASSIFIED'
+  'First monitoring acquisition - CLASSIFIED', false
 )
 
 Map.addLayer(
   classifiedBaselineImage.select('classification'),
   visClassParams,
-  'Baseline class map'
+  'Baseline class map', true
 )
 
 // var point = ee.Geometry.Point([-55.1514, -11.5683]);
