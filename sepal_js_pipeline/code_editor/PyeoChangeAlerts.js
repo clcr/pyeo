@@ -84,35 +84,27 @@ var run_change_detection = function (params) {
     var currentNDVI = image.select("NDVI");
 
     // ************
-    // create the FROM class mask for the fromClassCollection
-    // where each image contains only pixels that are a FROM class in the monitoring collection
+    // for each image, identify where pixels are a FROM class in the monitoring collection
     // this describes the consistency of each pixel as a FROM class
-    var fromMask = ee.ImageCollection(
+    var isFromClass = ee.ImageCollection(
       changeFromClasses.map(function(classId) {
         return currentClass.eq(classId);
       })
-    ).max();
+    ).max().rename("is_from_class");
     // ************
 
     // ************
-    // create the TO class mask for the toClassCollection
-    // where each image contains only pixels that are a TO class in the monitoring collection
+    // for each image, identify where pixels are a TO class in the monitoring collection
     // this describes the consistency of each pixel as a TO class
-    var toMask = ee.ImageCollection(
+    var isToClass = ee.ImageCollection(
       changeToClasses.map(function(classId) {
         return currentClass.eq(classId);
       })
-    ).max();
-    // ************
-
-    // ************
-    // mask the current image in the monitoring stack for the FROM and TO classes
-    var maskedFromClass = currentClass.updateMask(fromMask).rename("from_classes_masked");
-    var maskedToClass = currentClass.updateMask(toMask).rename("to_classes_masked");
+    ).max().rename("is_to_class");
     // ************
 
     // identify which pixels have changed to ChangeToClasses
-    var transitionMask = fromMask.and(toMask);
+    var fromAndToClasses = isFromClass.and(isToClass);
       
     // calculate whether the NDVI is greater than the delta NDVI
     var deltaNDVI = baselineNDVI.subtract(currentNDVI).rename("delta_ndvi");
@@ -120,25 +112,17 @@ var run_change_detection = function (params) {
     var deltaNDVIthresholded = deltaNDVI.updateMask(ndviMask).rename("delta_ndvi_thresholded");
 
     // flag where both conditions (class and NDVI change) are met
-    var isChangeMask = transitionMask.and(ndviMask).rename("is_change");
+    var isChangeMask = fromAndToClasses.and(ndviMask).rename("is_change");
       
     // store the image_date as a band to be accessed later for change reporting
     var dateMillis = ee.Image.constant(
       image.getNumber("system:time_start"))
       .rename("change_date");
         
-    return image.addBands([isChangeMask, dateMillis, deltaNDVI, deltaNDVIthresholded, maskedFromClass, maskedToClass]);
+    return image.addBands([isChangeMask, dateMillis, deltaNDVI, deltaNDVIthresholded, isFromClass, isToClass]);
   }); // end of changeEvents function
   // an imagecollection, each image has the six bands above
   
-  // ************
-  // extract the FROM and TO class images from changeEvents
-  var fromClassCollection = changeEvents.select("from_classes_masked");
-  var toClassCollection = changeEvents.select("to_classes_masked");
-  // ************
-
-
-
   // set up an image that tracks change persistency
   // var initialState = ee.Image([
   //   ee.Image.constant(0).rename("streak"),
@@ -196,17 +180,15 @@ var run_change_detection = function (params) {
   // finalState = finalState.updateMask(validPixels);
   
   //
-  // calculate additional change report metrics AFTER valid pixel updating, so we don;t lose
-  // such information
+  // calculate additional change report metrics AFTER valid pixel updating, so we don't lose such information
+
   // LAYER 0: count the number of images within the collection
-  
-  // LAYER 1: count the number of valid, UNMASKED observations per pixel
-  var validImageCount = classifiedMonitoringCollection
-    .select("classification")
-    .count() // only counts pixels with a valid mask - https://developers.google.com/earth-engine/apidocs/ee-imagecollection-count
-    .rename("valid_image_count");
+  var availableImageCount = ee.Image(
+    ee.Image.constant(classifiedMonitoringCollection.size()))
+    .clip(aoi)
+    .rename("available_image_count");
     
-  // LAYER 2: count the number of occluded images per pixel
+  // LAYER 1: count the number of occluded images per pixel
   var occludedCount = classifiedMonitoringCollection.map(function(image) {
     var isOccluded = image.select("classification").mask().unmask(0).eq(0);
     // .mask() returns a 1 for valid pixels and is masked for cloudy pixels
@@ -217,10 +199,12 @@ var run_change_detection = function (params) {
   }).sum();
 
   // LAYER 15: count the number of pixels that were a FROM class
-  var fromClassCount = fromClassCollection.count().rename("from_class_count");
-  
+  // "counts" by summing across the collection https://developers.google.com/earth-engine/apidocs/ee-imagecollection-sum
+  var fromClassCount = changeEvents.select("is_from_class").sum().rename("from_class_count");
+  // ************
+
   // LAYER 16: count the number of pixels that were a TO class
-  var toClassCount = toClassCollection.count().rename("to_class_count");
+  var toClassCount = changeEvents.select("is_to_class").sum().rename("to_class_count");
 
   // concat all additional bands together
   // var finalOutput = finalState.addBands([
@@ -228,28 +212,15 @@ var run_change_detection = function (params) {
   // ]);
 
   return {
-    changeReport: ee.Image(
-      [fromClassCount, toClassCount]),
-    //   // available image count // is a constant, doesn't vary per pixel
-    //   // "valid_image_count",
-    //   // "occluded_count", // - directly from Daniel/SEPAL
-    //   // "first_date",
-    //   // "last_date",
-    //   // "alert_count" number of alerts since first alert
-    //   // "not-alert_count" number of not alerts since first alert
-    //   // "from_counts" number of from counts
-    //   // "to_counts": number of to counts
-    //   // "alert_proportion", proportion of alert / alert + non-alert = 6 / 6 + 12
-    //   // 30 images looking at
-    //   // 6 cloudy, leaving 24
-    //   // of the 24, how many from/tos are there?
-    //   // "streakiness" - consecutive changes, from streak_count
-    //   // "confidence" // potential output for user to determine if a change is low probability
-    //   // inter-class relative confidence?
-    //   ]),
+    changeReport: ee.Image([
+      availableImageCount,
+      occludedCount,
+      fromClassCount,
+      toClassCount]
+    ),
     changeEvents: changeEvents, // an imagecollection
-    fromClassCollection: fromClassCollection, // an imagecollection
-    toClassCollection: toClassCollection // an imagecollection
+    fromClassCollection: changeEvents.select("is_from_class"), // an imagecollection
+    toClassCollection: changeEvents.select("is_to_class") // an imagecollection
   };
 
 }
