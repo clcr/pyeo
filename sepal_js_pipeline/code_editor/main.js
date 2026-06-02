@@ -1,5 +1,5 @@
 var pyeo = require('users/matthewjpayne1/a4f:pyeoChangeAlerts')
-
+var cloudMasking = require('users/matthewjpayne1/a4f:cloudMasking');
 // ==============================================================================
 // 1. PARAMETERS & CONSTANTS
 // ==============================================================================
@@ -24,6 +24,25 @@ var CROPS = 3;
 var changeFromClasses = [FOREST];
 var changeToClasses = [SOIL, CROPS];
 var allClasses = [FOREST, SOIL, CROPS];
+
+// parameter objects for imagery acquisition and cloud masking
+var baselineParams = {
+  aoi: aoi,
+  startDate: BASELINE_START,
+  endDate: BASELINE_END,
+  useSR: true,
+  maxCloudProbability: MAX_CLOUD_THRESHOLD_PER_PIXEL,
+  method: "BOTH"
+}
+
+var monitoringParams = {
+  aoi: aoi,
+  startDate:  MONITORING_START,
+  endDate: MONITORING_END,
+  useSR: true,
+  maxCloudProbability: MAX_CLOUD_THRESHOLD_PER_PIXEL,
+  method: "BOTH"
+}
 
 // ==============================================================================
 // 2. MAP INITIALISATION
@@ -115,6 +134,7 @@ var applyS2Cloudless = function(srCol, cloudThreshold) {
     });
 };
 
+
 // NDVI calculation
 var addNDVI = function (img) {
     return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('NDVI'));
@@ -160,79 +180,75 @@ var dailyMosaic = function(col) {
 };
 
 // ==============================================================================
-// 4. PIPELINE
+// 4A. OLD PIPELINE
 // ==============================================================================
 
 var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
     .filterBounds(aoi)
     .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', MAX_CLOUD_PERCENTAGE))
 
-var baselineImage = prep(s2.filterDate(BASELINE_START, BASELINE_END))
+var baselineImageOld = prep(s2.filterDate(BASELINE_START, BASELINE_END))
   .median()
   .clip(aoi);
 
-var monitoringImagesRaw = prep(s2.filterDate(MONITORING_START, MONITORING_END));
-var monitoringImages = dailyMosaic(monitoringImagesRaw).sort('system:time_start');
+var monitoringImagesRawOld = prep(s2.filterDate(MONITORING_START, MONITORING_END));
+var monitoringImagesOld = dailyMosaic(monitoringImagesRawOld).sort('system:time_start');
 
-print("number of images within dailyMosaiced monitoring collection:", monitoringImages.size()) // compared to 38 before
-
-var imageList = monitoringImages.toList(21) // 38
-var secondImage = ee.Image(imageList.get(1))
-var thirdImage = ee.Image(imageList.get(2))
+var imageListOld = monitoringImagesOld.toList(21)
+var secondImage = ee.Image(imageListOld.get(1))
+var thirdImage = ee.Image(imageListOld.get(2))
 
 Map.addLayer(
-  monitoringImages.first(),
+  monitoringImagesOld.first(),
   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-  'dailyMosaic : First monitoring acquisition', false
+  'Old Cloud Masking: First monitoring acquisition', false
 )
 
 Map.addLayer(
   secondImage,
   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-  'dailyMosaic: Second monitoring acquisition', false
+  'Second monitoring acquisition', false
 )
 
 Map.addLayer(
   thirdImage,
   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-  'dailyMosaic: Third monitoring acquisition'
+  'Third monitoring acquisition'
 )
 
 Map.addLayer(
-  baselineImage,
+  baselineImageOld,
   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
   'Baseline RGB'
   )
 
-// old collection
+//==============================================================================
+// 4B. NEW PIPELINE
+// ==============================================================================
 
-// var monitoringImagesOld = prep(s2.filterDate(MONITORING_START, MONITORING_END))
-//   .sort('system:time_start')
-//   .map(function (img) { return img.clip(aoi) });
+var maskedBaselineCollection = cloudMasking.build(baselineParams);
+var maskedMonitoringCollection = cloudMasking.build(monitoringParams);
 
-// var imageListOld = monitoringImagesOld.toList(38)
-// var secondImageOld = ee.Image(imageListOld.get(1))
-// var thirdImageOld = ee.Image(imageListOld.get(2))
+var baselineImage = maskedBaselineCollection
+  .map(addNDVI)
+  .select(BANDS.concat("NDVI"))
+  .median()
+  .clip(aoi);
 
-// Map.addLayer(
-//   monitoringImagesOld.first(),
-//   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-//   'previous : First monitoring acquisition', false
-// )
+var monitoringImagesRaw = maskedMonitoringCollection
+  .map(addNDVI)
+  .select(BANDS.concat("NDVI"))
 
-// Map.addLayer(
-//   secondImageOld,
-//   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-//   'previous: Second monitoring acquisition', false
-// )
+var monitoringImages = dailyMosaic(monitoringImagesRaw).sort("system:time_start");
 
-// Map.addLayer(
-//   thirdImageOld,
-//   {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-//   'previous: Third monitoring acquisition'
-// )
+Map.addLayer(
+  monitoringImages.first(),
+  {bands: ['B4', 'B3', 'B2'], min: 0, max: 600, gamma: 1},
+  'New Cloud Masking : First monitoring acquisition'
+)
 
-
+stop
+  
 // Map.addLayer(
 //   thirdImage.mask().select('B3'), 
 //   {min: 0, max: 1, palette: ['red', 'green']}, 
@@ -322,11 +338,11 @@ Map.addLayer(
   "First image of the fromClassCollection"
 )
 
-Map.addLayer(
-  alerts.toClassCollection.first(),
-  toClassParams,
-  "First image of the toClassCollection"
-)
+// Map.addLayer(
+//   alerts.toClassCollection.first(),
+//   toClassParams,
+//   "First image of the toClassCollection"
+// )
 
 // Map.addLayer(
 //   alerts.changeEvents.first().select("delta_ndvi"),
@@ -355,19 +371,13 @@ Map.addLayer(
 Map.addLayer(
   alerts.changeReport.select('occluded_count'),
   occludivityVis,
-  'L02 - Occluded Pixel Count', false
+  'L01 - Occluded Pixel Count', false
 );
 
 Map.addLayer(
-  alerts.changeReport.select("available_image_count")  
+  alerts.changeReport.select("available_image_count"),
+  {palette: "red"}, "L0 - Available Image Count", false
 )
-
-// Map.addLayer(
-//   alerts.changeReport.select('valid_image_count'),
-//   imageCountVis,
-//   'Available Image Count', false
-// );
-
 
 Map.addLayer(
   classifiedMonitoringCollection.first().select("classification"),
