@@ -22,14 +22,18 @@ exports.build = function (params) {
     var s2 = ee.ImageCollection(s2Id)
         .filterBounds(aoi)
         .filterDate(startDate, endDate)
+        .sort("system:time_start", true) // whether to sort ascending
 
     var s2clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY')
         .filterBounds(aoi)
         .filterDate(startDate, endDate)
+        .sort("system:time_start", true)
 
     var csPlus = ee.ImageCollection('GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED')
         .filterBounds(aoi)
         .filterDate(startDate, endDate)
+        .sort("system:time_start", true)
+
 
     // linkCollection joins by system:index 
     var linked = s2
