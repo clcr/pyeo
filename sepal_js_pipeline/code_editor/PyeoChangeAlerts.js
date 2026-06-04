@@ -57,15 +57,19 @@ var run_change_detection = function (params) {
   var changeFromClasses = params.changeFromClasses
   var changeToClasses = params.changeToClasses
   var minRequiredValidatedDetectionsThreshold = params.minRequiredValidatedDetectionsThreshold || 2
-  var dNdviGate = params.dNdviGate || null
+  var dNdviGate = params.dNdviGate || {use_ndvi: false,  band: 'NDVI', threshold: -2.0}
   var PercentageProbabilityThreshold = params.PercentageProbabilityThreshold || 50
   
-  // start of run_change_detection function
+  if (!(dNdviGate.use_ndvi)) {
+    dNdviGate.threshold = -2.0
+  }
 
+  // start of run_change_detection function
   var baselineClassification = classifiedBaseline.select("classification");
   var baselineNDVI = classifiedBaseline.select("NDVI");
   
   // create a fromMask that works for multiple classes
+  // this mask is used to count changes for pixels from a FROM class to a TO class
   var fromMask = ee.ImageCollection(
     changeFromClasses.map(function(classId) {
       return baselineClassification.eq(classId)
@@ -104,7 +108,7 @@ var run_change_detection = function (params) {
     // ************
 
     // identify which pixels have changed to ChangeToClasses
-    var fromAndToClasses = isFromClass.and(isToClass);
+    var transitionMask = fromMask.and(isToClass); // using a mask allows for .and to work
       
     // calculate whether the NDVI is greater than the delta NDVI
     var deltaNDVI = baselineNDVI.subtract(currentNDVI).rename("delta_ndvi");
@@ -112,14 +116,16 @@ var run_change_detection = function (params) {
     var deltaNDVIthresholded = deltaNDVI.updateMask(ndviMask).rename("delta_ndvi_thresholded");
 
     // flag where both conditions (class and NDVI change) are met
-    var isChangeMask = fromAndToClasses.and(ndviMask).rename("is_change");
+    var isChangeMask = transitionMask.and(ndviMask).rename("is_change");
       
-    // store the image_date as a band to be accessed later for change reporting
-    var dateMillis = ee.Image.constant(
-      image.getNumber("system:time_start"))
-      .rename("change_date");
-        
-    return image.addBands([isChangeMask, dateMillis, deltaNDVI, deltaNDVIthresholded, isFromClass, isToClass]);
+    // store the image_date as a band for change reporting
+    var imgMillis = ee.Image.constant(image.getNumber("system:time_start"));
+    var imgMillisGeneric = imgMillis.double();
+    
+    // build dates of all changes above the NDVI threshold
+    var changeDateAboveThreshold = imgMillisGeneric.updateMask(isChangeMask).rename("change_date_above_threshold")
+
+    return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNDVI, deltaNDVIthresholded, isFromClass, isToClass]);
   }); // end of changeEvents function
   // an imagecollection, each image has the six bands above
   
@@ -179,9 +185,6 @@ var run_change_detection = function (params) {
   // // update finalState with the pixels that met the minConsecutiveDetections threshold
   // finalState = finalState.updateMask(validPixels);
   
-  //
-  // calculate additional change report metrics AFTER valid pixel updating, so we don't lose such information
-
   // LAYER 0: count the number of images within the collection
   var availableImageCount = ee.Image(
     ee.Image.constant(classifiedMonitoringCollection.size()))
@@ -197,6 +200,12 @@ var run_change_detection = function (params) {
     // .eq(0) turns the 0s (clouds) into 1s so these can be summed and counted
     return isOccluded.rename("occluded_count");
   }).sum();
+
+  // LAYER 2: class change detection count - how many times a pixel changed from a FROM class to a TO class
+  var classChangeDetectionCount = changeEvents.select("is_change").sum().rename("total_changes")
+
+  // LAYER 3: firstChangeDate (FCD) that passes the dNDVI threshold if present
+  var firstChangeDateAboveThreshold = changeEvents.select("change_date_above_threshold").min().rename("first_change_date_above_threshold");
 
   // LAYER 15: count the number of pixels that were a FROM class
   // "counts" by summing across the collection https://developers.google.com/earth-engine/apidocs/ee-imagecollection-sum
@@ -215,6 +224,8 @@ var run_change_detection = function (params) {
     changeReport: ee.Image([
       availableImageCount,
       occludedCount,
+      classChangeDetectionCount,
+      firstChangeDateAboveThreshold,
       fromClassCount,
       toClassCount]
     ),
