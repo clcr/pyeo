@@ -15,8 +15,9 @@ var MONITORING_START = '2022-06-01';
 var MONITORING_END = '2023-01-01';
 
 var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
-var MAX_CLOUD_PERCENTAGE = 30;
-var MAX_CLOUD_THRESHOLD_PER_PIXEL = 50;
+//var MAX_CLOUD_PERCENTAGE = 10; // redundant as per image property, per pixel cloud probability is used
+var MAX_CLOUD_PROBABILITY_PER_PIXEL = 50; // 100 = minimal discrimination
+var MAX_CLOUD_SCORE_PER_PIXEL = 50; // 100 = no discrimination 
 
 var FOREST = 1;
 var SOIL = 2;
@@ -31,7 +32,8 @@ var baselineParams = {
   startDate: BASELINE_START,
   endDate: BASELINE_END,
   useSR: true,
-  maxCloudProbability: MAX_CLOUD_THRESHOLD_PER_PIXEL,
+  maxCloudProbability: MAX_CLOUD_PROBABILITY_PER_PIXEL,
+  maxCsProbability: MAX_CLOUD_SCORE_PER_PIXEL,
   method: "BOTH"
 }
 
@@ -40,7 +42,8 @@ var monitoringParams = {
   startDate:  MONITORING_START,
   endDate: MONITORING_END,
   useSR: true,
-  maxCloudProbability: MAX_CLOUD_THRESHOLD_PER_PIXEL,
+  maxCloudProbability: MAX_CLOUD_PROBABILITY_PER_PIXEL,
+  maxCsProbability: MAX_CLOUD_SCORE_PER_PIXEL,
   method: "BOTH"
 }
 
@@ -88,63 +91,61 @@ var toClassParams = {
   palette: dynamicToPalette 
 };
 
-var ndviParams = {
+var imageCountVisParams = {
+  min: 0,
+  max: 21,
+  palette: [
+    '#d7191c', // Red: Very few valid images
+    '#fdae61', // Orange
+    '#ffffbf', // Yellow: Moderate availability
+    '#a6d96a', // Light Green
+    '#1a9641'  // Dark Green: Excellent availability
+  ] 
+};
+
+var changeDetectionCountVisParams = {
+  min: 0,
+  max: 5,
+  palette: [
+    '#d7191c', // Red: Very few changes
+    '#fdae61', // Orange
+    '#ffffbf', // Yellow: some changes
+    '#a6d96a', // Light Green
+    '#1a9641'  // Dark Green: lots of changes
+    ]
+};
+
+var occludivityVisParams = {
+  min: 0,
+  max: 21, // can be made dynamic if so wished
+  palette: [
+    //'#ffffbf', // Yellow: Moderately occluded
+    'black', // low cloud occurrence
+    'white'  // high cloud occurrence
+  ]
+};
+
+
+var visParamsNDVI = {
   min: -0.2,
   max: 1,
   palette: ["white", "green"] // specifies the upper and lower range
+}
+
+var visParamsRGB = {
+  min: 0,
+  max: 7000,
+  gamma: 1.4,
+  bands: ["B4", "B3", "B2"]
 }
 
 // ==============================================================================
 // 4. HELPER FUNCTIONS
 // ==============================================================================
 
-/**
- * Joins the S2 cloud probability collection to a given S2 SR collection and masks clouds.
- *
- * @param {ee.ImageCollection} srCol - The input Sentinel-2 Surface Reflectance collection.
- * @return {ee.ImageCollection} The cloud-masked and scaled Sentinel-2 collection.
- */
-var applyS2Cloudless = function(srCol, cloudThreshold) {
-    // Load the s2cloudless collection, filtering to AOI
-    var s2Clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY')
-        .filterBounds(aoi);
-    
-    // Define an Inner Join to match the SR images with their cloud probability counterparts
-    var join = ee.Join.saveFirst('s2cloudless');
-    var condition = ee.Filter.equals({
-        leftField: 'system:index',
-        rightField: 'system:index'
-    });
-    
-    // Apply the join
-    var joinedCol = ee.ImageCollection(join.apply(srCol, s2Clouds, condition));
-    
-    // Map over the joined collection to apply the mask
-    return joinedCol.map(function(img) {
-        // Extract the probability image from the joined property
-        var prob = ee.Image(img.get('s2cloudless')).select('probability');
-        
-        // Create a mask where cloud probability is below a threshold
-        var isNotCloud = prob.lt(cloudThreshold); 
-        
-        // Apply the mask, scale the optical bands, and preserve the time property
-        return img.updateMask(isNotCloud)
-            .divide(10000)
-            .copyProperties(img, ['system:time_start']);
-    });
-};
-
-
 // NDVI calculation
 var addNDVI = function (img) {
     return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('NDVI'));
-};
-
-// prepare a base collection for baseline and monitoring images
-var prep = function (col) {
-    return applyS2Cloudless(col, MAX_CLOUD_THRESHOLD_PER_PIXEL)
-      .map(addNDVI)
-      .select(BANDS.concat(['NDVI']));
 };
 
 // group images by date and mosaics overlapping tiles from the same orbit pass
@@ -179,51 +180,8 @@ var dailyMosaic = function(col) {
   // https://developers.google.com/earth-engine/apidocs/ee-imagecollection-fromimages
 };
 
-// ==============================================================================
-// 4A. OLD PIPELINE
-// ==============================================================================
-
-var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-    .filterBounds(aoi)
-    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', MAX_CLOUD_PERCENTAGE))
-
-var baselineImageOld = prep(s2.filterDate(BASELINE_START, BASELINE_END))
-  .median()
-  .clip(aoi);
-
-var monitoringImagesRawOld = prep(s2.filterDate(MONITORING_START, MONITORING_END));
-var monitoringImagesOld = dailyMosaic(monitoringImagesRawOld).sort('system:time_start');
-
-var imageListOld = monitoringImagesOld.toList(21)
-var secondImage = ee.Image(imageListOld.get(1))
-var thirdImage = ee.Image(imageListOld.get(2))
-
-Map.addLayer(
-  monitoringImagesOld.first(),
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-  'Old Cloud Masking: First monitoring acquisition', false
-)
-
-Map.addLayer(
-  secondImage,
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-  'Second monitoring acquisition', false
-)
-
-Map.addLayer(
-  thirdImage,
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-  'Third monitoring acquisition'
-)
-
-Map.addLayer(
-  baselineImageOld,
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.1, gamma: 1.4},
-  'Baseline RGB'
-  )
-
 //==============================================================================
-// 4B. NEW PIPELINE
+// 5. PIPELINE
 // ==============================================================================
 
 var maskedBaselineCollection = cloudMasking.build(baselineParams);
@@ -238,17 +196,13 @@ var baselineImage = maskedBaselineCollection
 var monitoringImagesRaw = maskedMonitoringCollection
   .map(addNDVI)
   .select(BANDS.concat("NDVI"))
-
-var monitoringImages = dailyMosaic(monitoringImagesRaw).sort("system:time_start");
-
-Map.addLayer(
-  monitoringImages.first(),
-  {bands: ['B4', 'B3', 'B2'], min: 0, max: 600, gamma: 1},
-  'New Cloud Masking : First monitoring acquisition'
-)
-
-stop
   
+var monitoringImages = dailyMosaic(monitoringImagesRaw)
+
+var imageList = monitoringImages.toList(40)
+var secondImage = ee.Image(imageList.get(1))
+var thirdImage = ee.Image(imageList.get(2))
+
 // Map.addLayer(
 //   thirdImage.mask().select('B3'), 
 //   {min: 0, max: 1, palette: ['red', 'green']}, 
@@ -307,36 +261,14 @@ var alerts = pyeo.run_change_detection({
     changeFromClasses: changeFromClasses,
     changeToClasses: changeToClasses,
     minConsecutiveDetections: 2,
-    dNdviGate: {band: 'NDVI', threshold: 0.20}
+    dNdviGate: {use_ndvi: false,  band: 'NDVI', threshold: 0.3} // -2.0 switches off delta ndvi threshold
 })
 
-var imageCountVis = {
-  min: 0,
-  max: 21,
-  palette: [
-    '#d7191c', // Red: Very few valid images
-    '#fdae61', // Orange
-    '#ffffbf', // Yellow: Moderate availability
-    '#a6d96a', // Light Green
-    '#1a9641'  // Dark Green: Excellent availability
-  ] 
-};
-
-var occludivityVis = {
-  min: 0,
-  max: 21, // can be made dynamic if so wished
-  palette: [
-    //'#ffffbf', // Yellow: Moderately occluded
-    'black', // low cloud occurrence
-    'white'  // high cloud occurrence
-  ]
-};
-
-Map.addLayer(
-  alerts.fromClassCollection.first(),
-  fromClassParams,
-  "First image of the fromClassCollection"
-)
+// Map.addLayer(
+//   alerts.fromClassCollection.first(),
+//   fromClassParams,
+//   "First image of the fromClassCollection", false
+// )
 
 // Map.addLayer(
 //   alerts.toClassCollection.first(),
@@ -346,71 +278,104 @@ Map.addLayer(
 
 // Map.addLayer(
 //   alerts.changeEvents.first().select("delta_ndvi"),
-//   ndviParams,
+//   visParamsNDVI,
 //   "Delta NDVI of the first monitoring image"
 // )
 
 // Map.addLayer(
 //   alerts.changeEvents.first().select("delta_ndvi_thresholded"),
-//   ndviParams,
+//   visParamsNDVI,
 //   "Delta NDVI thresholded >=0.2 of the first monitoring image"
+// )
+
+// Map.addLayer(
+//   monitoringImages.first(),
+//   visParamsRGB,
+//   'First monitoring acquisition', false
+// )
+
+// Map.addLayer(
+//   secondImage,
+//   visParamsRGB,
+//   'Second monitoring acquisition', false
+// )
+
+// Map.addLayer(
+//   thirdImage,
+//   visParamsRGB,
+//   'Third monitoring acquisition', false
 // )
 
 Map.addLayer(
   alerts.changeReport.select("to_class_count"),
-  imageCountVis,
+  imageCountVisParams,
   "L16 - To Class Count"
 )
 
 Map.addLayer(
   alerts.changeReport.select("from_class_count"),
-  imageCountVis,
+  imageCountVisParams,
   "L15 - From Class Count"
 )
 
 Map.addLayer(
+  alerts.changeReport.select("first_change_date_above_threshold")  
+)
+
+Map.addLayer(
+  alerts.changeReport.select("total_changes"),
+  changeDetectionCountVisParams,
+  "L02 - Class Change Detection Count"
+)
+
+Map.addLayer(
   alerts.changeReport.select('occluded_count'),
-  occludivityVis,
+  occludivityVisParams,
   'L01 - Occluded Pixel Count', false
 );
 
 Map.addLayer(
   alerts.changeReport.select("available_image_count"),
-  {palette: "red"}, "L0 - Available Image Count", false
+  {palette: "red"}, "L00 - Available Image Count", false
 )
 
-Map.addLayer(
-  classifiedMonitoringCollection.first().select("classification"),
-  visClassParams,
-  'First monitoring acquisition - CLASSIFIED', false
-)
+// Map.addLayer(
+//   classifiedMonitoringCollection.first().select("classification"),
+//   visClassParams,
+//   'First monitoring acquisition - CLASSIFIED', false
+// )
 
-Map.addLayer(
-  classifiedBaselineImage.select('classification'),
-  visClassParams,
-  'Baseline class map', true
-)
+// Map.addLayer(
+//   classifiedBaselineImage.select('classification'),
+//   visClassParams,
+//   'Baseline class map', true
+// )
 
-// var point = ee.Geometry.Point([-55.1514, -11.5683]);
-// var changeReportAtPoint = alerts.changeReport.reduceRegion({
-//   reducer: ee.Reducer.first(),
-//   geometry: point,
-//   scale: 10
-// })
+print(alerts.changeReport.select("first_change_date_above_threshold"))
 
-// print(changeReportAtPoint)
+// var date = ee.Date(alerts.changeReport.select("first_change_date_above_threshold"))
+// print(date)
 
-// changeReportAtPoint.evaluate(function(result) {
-//   if (result.first_date > 0) {
-//     // use JS to create a Date object, which has .toUTCString()
-//     // Date is an EE function that returns a string, strings don't have .toUTCString()
-//     var readableFirstChange = new Date(result.first_date).toUTCString();
-//     var readableLastChange = new Date(result.last_date).toUTCString();
-    
-//     print("First change was on: ", readableFirstChange);
-//     print("Most recent change on: ", readableLastChange);
-//   }
-//   else {
-//     print("No change at this location")
-//   }
-// })
+// create a client-side object of the point inspector, so the date string can be formatted
+//    into a readable human date
+var point = ee.Geometry.Point([-55.2465, -11.5455]);
+var changeReportAtPoint = alerts.changeReport.reduceRegion({
+  reducer: ee.Reducer.first(),
+  geometry: point,
+  scale: 10
+})
+
+print(changeReportAtPoint)
+
+changeReportAtPoint.evaluate(function(result) {
+  if (result.first_change_date_above_threshold > 0) {
+    // use JS to create a Date object, which has .toUTCString()
+    // Date is an EE function that returns a string, strings don't have .toUTCString()
+    var readableFirstChange = new Date(result.first_change_date_above_threshold).toUTCString();
+
+    print("First change was on: ", readableFirstChange);
+  }
+  else {
+    print("No change at this location")
+  }
+})
