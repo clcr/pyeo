@@ -138,11 +138,28 @@ var visParamsRGB = {
   bands: ["B4", "B3", "B2"]
 }
 
+// first and last change date visual parameters
+// hardcoded, only works for the aoi, classifier and time range of this test
 var dateVisParams = {
   min: 1654437939196,
   max: 1671285937659, // Milliseconds
   palette: ['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'] // pale yellow to orange to maroon
 }
+
+// visual parameters for min and max counts of post-fcd changes
+// hardcoded, only works for the aoi, classifier and time range of this test
+var postFCDChangeCountVisParams = {
+  min: 1,
+  max: 26,
+  palette: ["yellow", "red"]
+};
+
+var postFCDNoChangeCountVisParams = {
+  min: 0,
+  max: 24,
+  palette: ["blue", "purple"]
+}
+
 
 // ==============================================================================
 // 4. HELPER FUNCTIONS
@@ -269,14 +286,29 @@ var alerts = pyeo.run_change_detection({
     dNdviGate: {use_ndvi: false,  band: 'NDVI', threshold: 0.3} // -2.0 switches off delta ndvi threshold
 });
 
-// get min and max change dates from the test area, then hardcode earlier for vis
+// // get min and max change dates from the test area, then hardcode earlier for vis
 // var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
 //     reducer: ee.Reducer.minMax(),
 //     geometry: aoi,
 //     scale: 10
 // });
-
 // print("Change Date Min/Max (Milliseconds):", dateStats);
+
+// // get min and max change counts from the test area, then hardcode earlier for vis
+// var changeStats = alerts.changeReport.select("post_fcd_change_count").reduceRegion({
+//     reducer: ee.Reducer.minMax(),
+//     geometry: aoi,
+//     scale: 10
+// });
+// print("min and max count of post-fcd changes", changeStats)
+
+// // get min and max no-change counts from the test area, then hardcode earlier for vis
+// var noChangeStats = alerts.changeReport.select("post_fcd_nochange_count").reduceRegion({
+//     reducer: ee.Reducer.minMax(),
+//     geometry: aoi,
+//     scale: 10
+// });
+// print("min and max count of post-fcd no-changes", noChangeStats)
 
 // Map.addLayer(
 //   alerts.fromClassCollection.first(),
@@ -333,6 +365,18 @@ Map.addLayer(
 )
 
 Map.addLayer(
+  alerts.changeReport.select("post_fcd_nochange_count"),
+  postFCDNoChangeCountVisParams,
+  "L05 - Post-FCD Combined Non-Alert Count"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("post_fcd_change_count"),
+  postFCDChangeCountVisParams,
+  "L04 - Post-FCD Combined Alert Count"
+)
+
+Map.addLayer(
   alerts.changeReport.select("first_change_date_above_threshold"),
   dateVisParams,
   "L03 - FCD & Combined Alert Detection"
@@ -352,7 +396,8 @@ Map.addLayer(
 
 Map.addLayer(
   alerts.changeReport.select("available_image_count"),
-  {palette: "red"}, "L00 - Available Image Count", false
+  {palette: "red"},
+  "L00 - Available Image Count", false
 )
 
 
@@ -371,24 +416,23 @@ Map.addLayer(
 
 // create a client-side object of the point inspector, so the date string can be formatted
 //    into a readable human date
-var point = ee.Geometry.Point([-55.2465, -11.5455]);
 var changeReportAtPoint = alerts.changeReport.reduceRegion({
   reducer: ee.Reducer.first(),
-  geometry: point,
+  geometry: inspection_marker,
   scale: 10
 })
 
 print(changeReportAtPoint)
 
-changeReportAtPoint.evaluate(function(result) {
-  if (result.first_change_date_above_threshold > 0) {
-    // use JS to create a Date object, which has .toUTCString()
-    // Date is an EE function that returns a string, strings don't have .toUTCString()
-    var readableFirstChange = new Date(result.first_change_date_above_threshold).toUTCString();
+// changeReportAtPoint.evaluate(function(result) {
+//   if (result.first_change_date_above_threshold > 0) {
+//     // use JS to create a Date object, which has .toUTCString()
+//     // Date is an EE function that returns a string, strings don't have .toUTCString()
+//     var readableFirstChange = new Date(result.first_change_date_above_threshold).toUTCString();
 
-    print("First change was on: ", readableFirstChange);
-  }
-  else {
-    print("No change at this location")
-  }
-})
+//     print("First change was on: ", readableFirstChange);
+//   }
+//   else {
+//     print("No change at this location")
+//   }
+// })
