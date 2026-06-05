@@ -50,7 +50,9 @@
  // potential inputs: dNDVI_boolean (on/off), dNDVI threshold
  //
 var run_change_detection = function (params) {
-  // input parameters
+  // ==============================================================================
+  // 1. INPUT PARAMETERS
+  // ==============================================================================
   var aoi = params.aoi
   var classifiedBaseline = params.classifiedBaseline
   var classifiedMonitoringCollection = params.classifiedMonitoringCollection
@@ -60,11 +62,15 @@ var run_change_detection = function (params) {
   var dNdviGate = params.dNdviGate || {use_ndvi: false,  band: 'NDVI', threshold: -2.0}
   var PercentageProbabilityThreshold = params.PercentageProbabilityThreshold || 50
   
+  // if user has opted to not use NDVI (as a threshold), then set threshold to let all detections through
   if (!(dNdviGate.use_ndvi)) {
     dNdviGate.threshold = -2.0
   }
 
-  // start of run_change_detection function
+  // ==============================================================================
+  // 2. CHANGE DETECTION LOGIC
+  // ==============================================================================
+
   var baselineClassification = classifiedBaseline.select("classification");
   var baselineNDVI = classifiedBaseline.select("NDVI");
   
@@ -82,7 +88,11 @@ var run_change_detection = function (params) {
   // to locate the valid change event pixels per image
   // concats 3 bands to each image of the monitoring collection
   // e.g. 38 images with 2 bands each, becomes 38 images with 5 bands each
-  
+
+  // ==============================================================================
+  // 2A. changeEvents LOGIC
+  // ==============================================================================
+
   var changeEvents = classifiedMonitoringCollection.map(function(image) {
     var currentClass = image.select("classification");
     var currentNDVI = image.select("NDVI");
@@ -128,7 +138,36 @@ var run_change_detection = function (params) {
     return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNDVI, deltaNDVIthresholded, isFromClass, isToClass]);
   }); // end of changeEvents function
   // an imagecollection, each image has the six bands above
-  
+
+  // ==============================================================================
+  // 2B. postChangeEvaluation LOGIC
+  // ==============================================================================
+
+  // get the first change date per pixel
+  var firstChangeDateAboveThreshold = changeEvents.select("change_date_above_threshold").min().rename("first_change_date_above_threshold");
+
+  // map over the change images in changeEvents a second time, to evaluate temporal consistency of the first changes
+  var postChangeEvaluation = changeEvents.map(function(image) {
+    // get the timestamp, cast to double to ensure homogeneity of types
+    var currentMillis = ee.Image.constant(image.getNumber("system:time_start")).double();
+
+    // create a temporal window mask
+    // pixel has a value of 1 if it has a change that is the first change or is afterwards
+    var isAfterFirstChange = currentMillis.gte(firstChangeDateAboveThreshold);
+    var isChange = image.select("is_change") // 1 for change, 0 for no change
+
+    // a pixel had a change after after FCD
+    var subsequentChange = isChange.and(isAfterFirstChange).rename("post_fcd_change")
+
+    // a pixel did not have a new change after a FCD
+    var isNotChange = isChange.not(); // turns 0s (no change) to 1s and vice versa - 1s (change) to 0s
+    var subsequentNonChange = isNotChange.and(isAfterFirstChange).rename("post_fcd_nochange");
+
+    // return an imagecollection of images with two bands each, of subsquent change and non-change
+    return image.addBands([subsequentChange, subsequentNonChange]);
+  });
+
+
   // set up an image that tracks change persistency
   // var initialState = ee.Image([
   //   ee.Image.constant(0).rename("streak"),
@@ -204,8 +243,16 @@ var run_change_detection = function (params) {
   // LAYER 2: class change detection count - how many times a pixel changed from a FROM class to a TO class
   var classChangeDetectionCount = changeEvents.select("is_change").sum().rename("total_changes")
 
-  // LAYER 3: firstChangeDate (FCD) that passes the dNDVI threshold if present
-  var firstChangeDateAboveThreshold = changeEvents.select("change_date_above_threshold").min().rename("first_change_date_above_threshold");
+  // LAYER 3: firstChangeDate (FCD) and Combined Alert Detection (changes that pass the dNDVI threshold)
+  // firstChangeDateAboveThreshold computed above
+
+  // LAYER 4: Post-FCD Combined Alert Count (count of changes that pass the dNDVI threshold since the first change date)
+  // get the counts by summing the post-FCD change
+  var postFCDChangeCount = postChangeEvaluation.select("post_fcd_change").sum().rename("post_fcd_change_count");
+
+  // LAYER 5: Post-FCD Combined Non-Alert Count (count of no changes since the first change date)
+  // get the counts by summing the post-FCD no changes
+  var postFCDNoChangeCount = postChangeEvaluation.select("post_fcd_nochange").sum().rename("post_fcd_nochange_count");
 
   // LAYER 15: count the number of pixels that were a FROM class
   // "counts" by summing across the collection https://developers.google.com/earth-engine/apidocs/ee-imagecollection-sum
@@ -226,6 +273,8 @@ var run_change_detection = function (params) {
       occludedCount,
       classChangeDetectionCount,
       firstChangeDateAboveThreshold,
+      postFCDChangeCount,
+      postFCDNoChangeCount,
       fromClassCount,
       toClassCount]
     ),
