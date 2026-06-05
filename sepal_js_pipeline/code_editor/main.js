@@ -125,7 +125,6 @@ var occludivityVisParams = {
   ]
 };
 
-
 var visParamsNDVI = {
   min: -0.2,
   max: 1,
@@ -137,6 +136,12 @@ var visParamsRGB = {
   max: 7000,
   gamma: 1.4,
   bands: ["B4", "B3", "B2"]
+}
+
+var dateVisParams = {
+  min: 1654437939196,
+  max: 1671285937659, // Milliseconds
+  palette: ['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'] // pale yellow to orange to maroon
 }
 
 // ==============================================================================
@@ -262,7 +267,16 @@ var alerts = pyeo.run_change_detection({
     changeToClasses: changeToClasses,
     minConsecutiveDetections: 2,
     dNdviGate: {use_ndvi: false,  band: 'NDVI', threshold: 0.3} // -2.0 switches off delta ndvi threshold
-})
+});
+
+// get min and max change dates from the test area, then hardcode earlier for vis
+// var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
+//     reducer: ee.Reducer.minMax(),
+//     geometry: aoi,
+//     scale: 10
+// });
+
+// print("Change Date Min/Max (Milliseconds):", dateStats);
 
 // Map.addLayer(
 //   alerts.fromClassCollection.first(),
@@ -319,7 +333,9 @@ Map.addLayer(
 )
 
 Map.addLayer(
-  alerts.changeReport.select("first_change_date_above_threshold")  
+  alerts.changeReport.select("first_change_date_above_threshold"),
+  dateVisParams,
+  "L03 - FCD & Combined Alert Detection"
 )
 
 Map.addLayer(
@@ -339,6 +355,8 @@ Map.addLayer(
   {palette: "red"}, "L00 - Available Image Count", false
 )
 
+
+
 // Map.addLayer(
 //   classifiedMonitoringCollection.first().select("classification"),
 //   visClassParams,
@@ -350,11 +368,6 @@ Map.addLayer(
 //   visClassParams,
 //   'Baseline class map', true
 // )
-
-print(alerts.changeReport.select("first_change_date_above_threshold"))
-
-// var date = ee.Date(alerts.changeReport.select("first_change_date_above_threshold"))
-// print(date)
 
 // create a client-side object of the point inspector, so the date string can be formatted
 //    into a readable human date
