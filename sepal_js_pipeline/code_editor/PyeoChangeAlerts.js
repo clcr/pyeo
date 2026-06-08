@@ -135,7 +135,7 @@ var run_change_detection = function (params) {
     // build dates of all changes above the NDVI threshold
     var changeDateAboveThreshold = imgMillisGeneric.updateMask(isChangeMask).rename("change_date_above_threshold")
 
-    return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNDVI, deltaNDVIthresholded, isFromClass, isToClass]);
+    return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNDVI, deltaNDVIthresholded, isFromClass, isToClass, currentClass]);
   }); // end of changeEvents function
   // an imagecollection, each image has the six bands above
 
@@ -154,7 +154,25 @@ var run_change_detection = function (params) {
     // create a temporal window mask
     // pixel has a value of 1 if it has a change that is the first change or is afterwards
     var isAfterFirstChange = currentMillis.gte(firstChangeDateAboveThreshold);
+    var isPostFCD = isAfterFirstChange.rename("post_fcd"); // boolean (1, 0) indicating whether the pixel is post-FCD
     var isChange = image.select("is_change") // 1 for change, 0 for no change
+    // here find out if masked, then unmasked and eq
+    // var isPostFCDOccluded = isPostFCD.mask().unmask(0).eq(0).rename("post_fcd_occluded") 
+
+
+    var isOccluded = image.select("classification").mask().not();
+
+    // 3. Combine them: It is a post-FCD occlusion if it is occluded AND inside the temporal window.
+    // CRITICAL: We unmask isAfterFirstChange to 0. If a pixel never had a first change, 
+    // it cannot have post-FCD occlusions, so we force it to 0 instead of leaving it mask
+
+    var isPostFCDOccluded = isOccluded.and(isAfterFirstChange.unmask(0)).rename("post_fcd_occluded");
+    
+    //var isOccluded = image.select("classification").mask().unmask(0).eq(0);
+    // .mask() returns a 1 for valid pixels and is masked for cloudy pixels
+    // unmask(0) converts these cloudy pixels to 0, but it also respects the image footprint
+    // and leaves pixels outside of the image boundary fully masked
+    // .eq(0) turns the 0s (clouds) into 1s so these can be summed and counted
 
     // a pixel had a change after after FCD
     var subsequentChange = isChange.and(isAfterFirstChange).rename("post_fcd_change")
@@ -164,9 +182,10 @@ var run_change_detection = function (params) {
     var subsequentNonChange = isNotChange.and(isAfterFirstChange).rename("post_fcd_nochange");
 
     // return an imagecollection of images with two bands each, of subsquent change and non-change
-    return image.addBands([subsequentChange, subsequentNonChange]);
+    return image.addBands([subsequentChange, subsequentNonChange, isPostFCD, isPostFCDOccluded]);
   });
 
+  // isPostFCD summed = total number of available images post-FCD (not occluded)
 
   // set up an image that tracks change persistency
   // var initialState = ee.Image([
@@ -254,6 +273,9 @@ var run_change_detection = function (params) {
   // get the counts by summing the post-FCD no changes
   var postFCDNoChangeCount = postChangeEvaluation.select("post_fcd_nochange").sum().rename("post_fcd_nochange_count");
 
+  // LAYER 6: Post-FCD Occluded Image Count
+  var postFCDOccludedCount = postChangeEvaluation.select("post_fcd_occluded").sum().rename("post_fcd_occluded_count");
+
   // LAYER 15: count the number of pixels that were a FROM class
   // "counts" by summing across the collection https://developers.google.com/earth-engine/apidocs/ee-imagecollection-sum
   var fromClassCount = changeEvents.select("is_from_class").sum().rename("from_class_count");
@@ -275,6 +297,7 @@ var run_change_detection = function (params) {
       firstChangeDateAboveThreshold,
       postFCDChangeCount,
       postFCDNoChangeCount,
+      postFCDOccludedCount,
       fromClassCount,
       toClassCount]
     ),
