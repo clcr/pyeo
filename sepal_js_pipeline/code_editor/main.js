@@ -3,28 +3,27 @@ var cloudMasking = require('users/matthewjpayne1/a4f:cloudMasking');
 // ==============================================================================
 // 1. PARAMETERS & CONSTANTS
 // ==============================================================================
+ 
+// Near Achiase, Ghana -0.9083, 5.8089 deforestation reported by GFW 2024 -> 2025
 
-// baseline = median over Jan-Mar 2022. Monitoring = individual S2 acquisitions
-// over Apr-Dec 2022 (no compositing — preserves temporal granularity).
-// AOI: ~15 km box over Mato Grosso, Brazil.
-var aoi = ee.Geometry.Rectangle([-55.30, -11.65, -55.15, -11.50]);
+var aoi = ee.Geometry.Rectangle([-0.91729, 5.78453, -0.86408, 5.82671])
 
-var BASELINE_START = '2022-01-01';
-var BASELINE_END = '2022-06-01';
-var MONITORING_START = '2022-06-01';
-var MONITORING_END = '2023-01-01';
+var BASELINE_START = '2020-01-01';
+var BASELINE_END = '2020-12-31';
+var MONITORING_START = '2024-01-01';
+var MONITORING_END = '2024-06-30';
 
 var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
 //var MAX_CLOUD_PERCENTAGE = 10; // redundant as per image property, per pixel cloud probability is used
-var MAX_CLOUD_PROBABILITY_PER_PIXEL = 50; // 100 = minimal discrimination
-var MAX_CLOUD_SCORE_PER_PIXEL = 50; // 100 = no discrimination 
+var MAX_CLOUD_PROBABILITY_PER_PIXEL = 30; // 100 = minimal discrimination
+var MAX_CLOUD_SCORE_PER_PIXEL = 30; // 100 = no discrimination 
 
 var FOREST = 1;
 var SOIL = 2;
-var CROPS = 3;
+var GRASSLAND = 3;
 var changeFromClasses = [FOREST];
-var changeToClasses = [SOIL, CROPS];
-var allClasses = [FOREST, SOIL, CROPS];
+var changeToClasses = [SOIL, GRASSLAND];
+var allClasses = [FOREST, SOIL, GRASSLAND];
 
 // parameter objects for imagery acquisition and cloud masking
 var baselineParams = {
@@ -50,7 +49,7 @@ var monitoringParams = {
 // ==============================================================================
 // 2. MAP INITIALISATION
 // ==============================================================================
-Map.centerObject(aoi, 12)
+Map.centerObject(aoi, 14)
 Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
 
 // ==============================================================================
@@ -133,7 +132,7 @@ var visParamsNDVI = {
 
 var visParamsRGB = {
   min: 0,
-  max: 7000,
+  max: 2500,
   gamma: 1.4,
   bands: ["B4", "B3", "B2"]
 }
@@ -141,23 +140,23 @@ var visParamsRGB = {
 // first and last change date visual parameters
 // hardcoded, only works for the aoi, classifier and time range of this test
 var dateVisParams = {
-  min: 1654437939196,
-  max: 1671285937659, // Milliseconds
-  palette: ['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'] // pale yellow to orange to maroon
+  min: 1719225569038,
+  max: 1704105562859, // Milliseconds
+  palette: ['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#F527E4'] // pale yellow to orange to pink
 }
 
 // visual parameters for min and max counts of post-fcd changes
 // hardcoded, only works for the aoi, classifier and time range of this test
 var postFCDChangeCountVisParams = {
   min: 1,
-  max: 26,
-  palette: ["yellow", "red"]
+  max: 15,
+  palette: ["#FA8FF1", "#700567"] // light pink, dark pink
 };
 
 var postFCDNoChangeCountVisParams = {
   min: 0,
-  max: 24,
-  palette: ["blue", "purple"]
+  max: 11,
+  palette: ["#8FCBFA", "#054270"] // light blue, dark blue
 }
 
 
@@ -231,25 +230,58 @@ var thirdImage = ee.Image(imageList.get(2))
 //   'Internal Mask (Green=Valid, Red=Masked)'
 // )
 
+// 0 = masked and 1 = valid
+
 // Inline training: forest / non-forest points within the AOI. Test fixture
 // only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
 var trainingPoints = ee.FeatureCollection([
-    ee.Feature(ee.Geometry.Point([-55.283, -11.560]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.270, -11.585]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.255, -11.610]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.230, -11.555]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.270, -11.620]), {'class': FOREST}), 
-    ee.Feature(ee.Geometry.Point([-55.213, -11.550]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.175, -11.580]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.264, -11.504]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.184, -11.587]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.185, -11.588]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.161, -11.625]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.215, -11.530]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.283, -11.632]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.165, -11.644]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.169, -11.585]), {'class': CROPS})
+    ee.Feature(ee.Geometry.Point([-0.905047, 5.824373]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.894597, 5.825163]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.888352, 5.824779]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.909681, 5.814494]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.896914, 5.81078]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.890026, 5.809264]), {'class': FOREST}),  
+    ee.Feature(ee.Geometry.Point([-0.886399, 5.810688]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.904767, 5.802277]), {'class': FOREST}),  
+    ee.Feature(ee.Geometry.Point([-0.914079, 5.801103]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.905362, 5.79244]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-0.913345, 5.824589]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.904355, 5.818847]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.88708, 5.824837]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.88487, 5.823044]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.880707, 5.818881]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.880376, 5.810586]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.879946, 5.807576]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.866713, 5.806738]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.872489, 5.788479]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.867168, 5.788799]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-0.88658, 5.812399]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.898434, 5.81413]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.90249, 5.815825]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.91238, 5.816756]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.903743, 5.824949]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.910352, 5.826561]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.89854, 5.824276]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.912551, 5.820658]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.915854, 5.818673]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-0.906151, 5.809517]), {'class': GRASSLAND})
 ])
+
+Map.addLayer(
+  baselineImage,
+  visParamsRGB,
+  'Baseline Image'
+)
+
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
+//     {color: '#0D5E39'}, 'Training: forest')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
+//     {color: '#C49852'}, 'Training: non-forest')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
+//     {color: '#27F584'}, 'Training: non-forest')
 
 var trainingSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
@@ -274,7 +306,6 @@ var classifiedMonitoringCollection = monitoringImages.map(function (img) {
         .addBands(img.select('NDVI'))
         .copyProperties(img, ['system:time_start'])
 })
-
 
 var alerts = pyeo.run_change_detection({
     aoi: aoi,
@@ -310,6 +341,13 @@ var alerts = pyeo.run_change_detection({
 // });
 // print("min and max count of post-fcd no-changes", noChangeStats)
 
+// var postFCDOccludedStats = alerts.changeReport.select("post_fcd_occluded_count").reduceRegion({
+//     reducer: ee.Reducer.minMax(),
+//     geometry: aoi,
+//     scale: 10
+// });
+// print("min and max count of post-fcd occluded", postFCDOccludedStats)
+
 // Map.addLayer(
 //   alerts.fromClassCollection.first(),
 //   fromClassParams,
@@ -334,11 +372,11 @@ var alerts = pyeo.run_change_detection({
 //   "Delta NDVI thresholded >=0.2 of the first monitoring image"
 // )
 
-// Map.addLayer(
-//   monitoringImages.first(),
-//   visParamsRGB,
-//   'First monitoring acquisition', false
-// )
+Map.addLayer(
+  monitoringImages.first(),
+  visParamsRGB,
+  'First monitoring acquisition'
+)
 
 // Map.addLayer(
 //   secondImage,
@@ -362,6 +400,12 @@ Map.addLayer(
   alerts.changeReport.select("from_class_count"),
   imageCountVisParams,
   "L15 - From Class Count"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("post_fcd_occluded_count"),
+  {min: 0, max: 40, palette: ["black", "white"]},
+  "L06 - Post-FCD Occluded Count"
 )
 
 Map.addLayer(
@@ -401,7 +445,6 @@ Map.addLayer(
 )
 
 
-
 // Map.addLayer(
 //   classifiedMonitoringCollection.first().select("classification"),
 //   visClassParams,
@@ -422,7 +465,7 @@ var changeReportAtPoint = alerts.changeReport.reduceRegion({
   scale: 10
 })
 
-print(changeReportAtPoint)
+print("pixel properties at the inspection marker:", changeReportAtPoint)
 
 // changeReportAtPoint.evaluate(function(result) {
 //   if (result.first_change_date_above_threshold > 0) {
