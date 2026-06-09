@@ -60,7 +60,7 @@ var run_change_detection = function (params) {
   var changeToClasses = params.changeToClasses
   var minRequiredValidatedDetectionsThreshold = params.minRequiredValidatedDetectionsThreshold || 2
   var dNdviGate = params.dNdviGate || {use_ndvi: false,  band: 'NDVI', threshold: -2.0}
-  var PercentageProbabilityThreshold = params.PercentageProbabilityThreshold || 50
+  var percentageProbabilityThreshold = params.percentageProbabilityThreshold || 50
   
   // if user has opted to not use NDVI (as a threshold), then set threshold to let all detections through
   if (!(dNdviGate.use_ndvi)) {
@@ -122,11 +122,10 @@ var run_change_detection = function (params) {
       
     // calculate whether the NDVI is greater than the delta NDVI
     var deltaNDVI = baselineNDVI.subtract(currentNDVI).rename("delta_ndvi");
-    var ndviMask = deltaNDVI.gte(dNdviGate.threshold);
-    var deltaNDVIthresholded = deltaNDVI.updateMask(ndviMask).rename("delta_ndvi_thresholded");
+    var deltaNdviThresholdedMask = deltaNDVI.gte(dNdviGate.threshold).rename("delta_ndvi_thresholded_mask"); // boolean of whether a pixel passed the evaluation
 
     // flag where both conditions (class and NDVI change) are met
-    var isChangeMask = transitionMask.and(ndviMask).rename("is_change");
+    var isChangeMask = transitionMask.and(deltaNdviThresholdedMask).rename("is_change");
       
     // store the image_date as a band for change reporting
     var imgMillis = ee.Image.constant(image.getNumber("system:time_start"));
@@ -135,7 +134,7 @@ var run_change_detection = function (params) {
     // build dates of all changes above the NDVI threshold
     var changeDateAboveThreshold = imgMillisGeneric.updateMask(isChangeMask).rename("change_date_above_threshold")
 
-    return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNDVI, deltaNDVIthresholded, isFromClass, isToClass, currentClass]);
+    return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNdviThresholdedMask, deltaNDVI, isFromClass, isToClass, currentClass]);
   }); // end of changeEvents function
   // an imagecollection, each image has the six bands above
 
@@ -159,20 +158,12 @@ var run_change_detection = function (params) {
     // here find out if masked, then unmasked and eq
     // var isPostFCDOccluded = isPostFCD.mask().unmask(0).eq(0).rename("post_fcd_occluded") 
 
-
     var isOccluded = image.select("classification").mask().not();
-
-    // 3. Combine them: It is a post-FCD occlusion if it is occluded AND inside the temporal window.
-    // CRITICAL: We unmask isAfterFirstChange to 0. If a pixel never had a first change, 
-    // it cannot have post-FCD occlusions, so we force it to 0 instead of leaving it mask
-
-    var isPostFCDOccluded = isOccluded.and(isAfterFirstChange.unmask(0)).rename("post_fcd_occluded");
     
-    //var isOccluded = image.select("classification").mask().unmask(0).eq(0);
-    // .mask() returns a 1 for valid pixels and is masked for cloudy pixels
-    // unmask(0) converts these cloudy pixels to 0, but it also respects the image footprint
-    // and leaves pixels outside of the image boundary fully masked
-    // .eq(0) turns the 0s (clouds) into 1s so these can be summed and counted
+    // combine first change date with whether was occluded
+    // we unmask isAfterFirstChange to 0. If a pixel never had a first change, 
+    // it cannot have post-FCD occlusions, so we force it to 0 instead of leaving it masked
+    var isPostFCDOccluded = isOccluded.and(isAfterFirstChange.unmask(0)).rename("post_fcd_occluded");
 
     // a pixel had a change after after FCD
     var subsequentChange = isChange.and(isAfterFirstChange).rename("post_fcd_change")
@@ -186,62 +177,6 @@ var run_change_detection = function (params) {
   });
 
   // isPostFCD summed = total number of available images post-FCD (not occluded)
-
-  // set up an image that tracks change persistency
-  // var initialState = ee.Image([
-  //   ee.Image.constant(0).rename("streak"),
-  //   ee.Image.constant(0).rename("max_streak"),
-  //   ee.Image.constant(0).rename("first_date"),
-  //   ee.Image.constant(0).rename("last_date")
-  // ]); 
-  
-  // track the change streaks across the timeseries
-  // var calculateStreaks = function(image, state) {
-  //   state = ee.Image(state);
-  //   var isChange = image.select("is_change");
-  //   var currentDate = image.select("image_date");
-    
-  //   // create a mask of valid (unclouded) pixels in the image to ensure this does not break a valid streak
-  //   var isValid = isChange.mask();
-    
-  //   // get the current streak, append + 1 if there is a change
-  //   var currentStreak = state.select("streak");
-  //   var newStreak = currentStreak.add(1).multiply(isChange.unmask(0));
-
-  //   // if pixel is cloud masked, keep the old streak
-  //   // https://developers.google.com/earth-engine/apidocs/ee-image-where
-  //   // "For each pixel in 'currentStreak', if the corresponding pixel in 'isValid' is 1, 
-  //   //    output the corresponding pixel in newStreak, otherwise output the input pixel."
-  //   var updatedStreak = currentStreak.where(isValid, newStreak);
-
-  //   var maxStreak = state.select("max_streak");
-  //   var updatedMaxSteak = maxStreak.max(updatedStreak);
-
-  //   // 6: if streak progresses from 0 to 1 (a change), get image_date
-  //   var firstDate = state.select("first_date");
-  //   var isFirstChange = currentStreak.eq(0).and(updatedStreak.eq(1));
-  //   var updatedFirstDate = firstDate.where(isFirstChange.and(isValid), currentDate);
-
-  //   // 7: update last_date every time a valid change occurs
-  //   var lastDate = state.select("last_date");
-  //   var updatedLastDate = lastDate.where(isChange.unmask(0).eq(1).and(isValid), currentDate);
-
-  //   return ee.Image([
-  //       updatedStreak,
-  //       updatedMaxSteak,
-  //       updatedFirstDate,
-  //       updatedLastDate
-  //   ]);
-  // }; // end of calculateStreaks function
-
-  // // run calculateStreaks across the monitoringCollection
-  // var finalState = ee.Image(changeEvents.iterate(calculateStreaks, initialState));
-
-  // // filter the final output to only include pixels that met the consecutive threshold
-  // var validPixels = finalState.select("max_streak").gte(minRequiredValidatedDetectionsThreshold);
-  
-  // // update finalState with the pixels that met the minConsecutiveDetections threshold
-  // finalState = finalState.updateMask(validPixels);
   
   // LAYER 0: count the number of images within the collection
   var availableImageCount = ee.Image(
@@ -276,6 +211,31 @@ var run_change_detection = function (params) {
   // LAYER 6: Post-FCD Occluded Image Count
   var postFCDOccludedCount = postChangeEvaluation.select("post_fcd_occluded").sum().rename("post_fcd_occluded_count");
 
+  // LAYER 7: Post-FCD Valid Image Count
+  var postFCDValidImageCount = postFCDChangeCount.add(postFCDNoChangeCount).rename("post_fcd_valid_image_count");
+
+  // LAYER 8: Post-FCD Change Detection Repeatability
+  var postFCDChangeDetectionRepeatability = postFCDChangeCount
+    .divide(postFCDValidImageCount)
+    .multiply(100)
+    .rename("post_fcd_change_repeatability_pct");
+
+  // LAYER 9: Binary time-series decision
+  var binaryTimeSeriesDecision = postFCDChangeDetectionRepeatability.gte(percentageProbabilityThreshold)
+    .and(postFCDChangeCount.gte(minRequiredValidatedDetectionsThreshold))
+    .rename("binary_timeseries_decision")
+
+  // LAYER 10: FCD Decision Map
+  var FCDDecisionMap = firstChangeDateAboveThreshold
+    .updateMask(binaryTimeSeriesDecision)
+    .rename("fcd_decision_map")
+
+  // LAYER 11: dNDVI only change detection count
+  var deltaNDVIChangeDetectionCount = changeEvents
+    .select("delta_ndvi_thresholded_mask")
+    .sum()
+    .rename("deltaNDVI_change_count");
+
   // LAYER 15: count the number of pixels that were a FROM class
   // "counts" by summing across the collection https://developers.google.com/earth-engine/apidocs/ee-imagecollection-sum
   var fromClassCount = changeEvents.select("is_from_class").sum().rename("from_class_count");
@@ -298,6 +258,11 @@ var run_change_detection = function (params) {
       postFCDChangeCount,
       postFCDNoChangeCount,
       postFCDOccludedCount,
+      postFCDValidImageCount,
+      postFCDChangeDetectionRepeatability,
+      binaryTimeSeriesDecision,
+      FCDDecisionMap,
+      deltaNDVIChangeDetectionCount,
       fromClassCount,
       toClassCount]
     ),
