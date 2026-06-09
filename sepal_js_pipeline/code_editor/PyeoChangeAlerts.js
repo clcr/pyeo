@@ -59,12 +59,19 @@ var run_change_detection = function (params) {
   var changeFromClasses = params.changeFromClasses
   var changeToClasses = params.changeToClasses
   var minRequiredValidatedDetectionsThreshold = params.minRequiredValidatedDetectionsThreshold || 2
-  var dNdviGate = params.dNdviGate || {use_ndvi: false,  band: 'NDVI', threshold: -2.0}
+  var minRequiredClassifierDetectionsThreshold = params.minRequiredClassifierDetectionsThreshold || 5
   var percentageProbabilityThreshold = params.percentageProbabilityThreshold || 50
+  var minRequiredFromDetectionsThreshold = params.minRequiredFromDetectionsThreshold || 2
+  var minRequiredToDetectionsThreshold = params.minRequiredToDetectionsThreshold || 2
+  var dNdviGate = params.dNdviGate || {use_ndvi: false,  band: 'NDVI', threshold: 0.3, minRequiredDeltaNDVIDetectionsThreshold: 5}
   
   // if user has opted to not use NDVI (as a threshold), then set threshold to let all detections through
-  if (!(dNdviGate.use_ndvi)) {
-    dNdviGate.threshold = -2.0
+  // if (!(dNdviGate.use_ndvi)) {
+  //   dNdviGate.threshold = -2.0
+  // }
+  // if no minimum ndvi detections past the threshold argument is supplied, this is the default
+  if (!(dNdviGate.minRequiredDeltaNDVIDetectionsThreshold)) {
+    dNdviGate.minRequiredDeltaNDVIDetectionsThreshold = 5
   }
 
   // ==============================================================================
@@ -118,7 +125,7 @@ var run_change_detection = function (params) {
     // ************
 
     // identify which pixels have changed to ChangeToClasses
-    var transitionMask = fromMask.and(isToClass); // using a mask allows for .and to work
+    var transitionMask = fromMask.and(isToClass).rename("transition_mask"); // using a mask allows for .and to work
       
     // calculate whether the NDVI is greater than the delta NDVI
     var deltaNDVI = baselineNDVI.subtract(currentNDVI).rename("delta_ndvi");
@@ -134,7 +141,7 @@ var run_change_detection = function (params) {
     // build dates of all changes above the NDVI threshold
     var changeDateAboveThreshold = imgMillisGeneric.updateMask(isChangeMask).rename("change_date_above_threshold")
 
-    return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNdviThresholdedMask, deltaNDVI, isFromClass, isToClass, currentClass]);
+    return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNdviThresholdedMask, deltaNDVI, isFromClass, isToClass, currentClass, transitionMask]);
   }); // end of changeEvents function
   // an imagecollection, each image has the six bands above
 
@@ -175,9 +182,11 @@ var run_change_detection = function (params) {
     // return an imagecollection of images with two bands each, of subsquent change and non-change
     return image.addBands([subsequentChange, subsequentNonChange, isPostFCD, isPostFCDOccluded]);
   });
-
-  // isPostFCD summed = total number of available images post-FCD (not occluded)
   
+  // ==============================================================================
+  // 3. COMPILING CHANGE REPORT LAYERS
+  // ==============================================================================
+
   // LAYER 0: count the number of images within the collection
   var availableImageCount = ee.Image(
     ee.Image.constant(classifiedMonitoringCollection.size()))
@@ -223,18 +232,32 @@ var run_change_detection = function (params) {
   // LAYER 9: Binary time-series decision
   var binaryTimeSeriesDecision = postFCDChangeDetectionRepeatability.gte(percentageProbabilityThreshold)
     .and(postFCDChangeCount.gte(minRequiredValidatedDetectionsThreshold))
-    .rename("binary_timeseries_decision")
+    .rename("binary_timeseries_decision");
 
   // LAYER 10: FCD Decision Map
   var FCDDecisionMap = firstChangeDateAboveThreshold
     .updateMask(binaryTimeSeriesDecision)
-    .rename("fcd_decision_map")
+    .rename("fcd_decision_map");
 
   // LAYER 11: dNDVI only change detection count
   var deltaNDVIChangeDetectionCount = changeEvents
     .select("delta_ndvi_thresholded_mask")
     .sum()
     .rename("deltaNDVI_change_count");
+
+  // LAYER 12: Binary dNDVI Alert Decision Map
+  var binaryDeltaNdviDecisionMap = deltaNDVIChangeDetectionCount.gte(dNdviGate.minRequiredDeltaNDVIDetectionsThreshold)
+    .rename("binary_delta_ndvi_decision_map");
+
+  // LAYER 13: Binary dClass Alert Decision Map // includes passing delta ndvi threshold
+  var classChangeDetectionCountNoNDVI = changeEvents.select("transition_mask").sum().rename("total_class_changes_noNDVI")
+
+  var binaryDeltaClassDecisionMap = classChangeDetectionCountNoNDVI.gte(minRequiredClassifierDetectionsThreshold)
+    .rename("binary_delta_class_decision_map");
+
+  // LAYER 14: Combined dNDVI & dClass Decision Map
+  var binaryCombinedDeltaDecisionMap = binaryDeltaClassDecisionMap.and(binaryDeltaNdviDecisionMap)
+    .rename("binary_combined_delta_decision_map");
 
   // LAYER 15: count the number of pixels that were a FROM class
   // "counts" by summing across the collection https://developers.google.com/earth-engine/apidocs/ee-imagecollection-sum
@@ -244,10 +267,10 @@ var run_change_detection = function (params) {
   // LAYER 16: count the number of pixels that were a TO class
   var toClassCount = changeEvents.select("is_to_class").sum().rename("to_class_count");
 
-  // concat all additional bands together
-  // var finalOutput = finalState.addBands([
-  //   fromClassCount
-  // ]);
+  // LAYER 17: L15.and(L16) Binary Decision Thresholds on FROM and TO classification counts
+  var binaryDecisionFromToMap = fromClassCount.gte(minRequiredFromDetectionsThreshold)
+    .and(toClassCount.gte(minRequiredToDetectionsThreshold))
+    .rename("binary_decision_from_to_map");
 
   return {
     changeReport: ee.Image([
@@ -263,9 +286,13 @@ var run_change_detection = function (params) {
       binaryTimeSeriesDecision,
       FCDDecisionMap,
       deltaNDVIChangeDetectionCount,
+      binaryDeltaNdviDecisionMap,
+      binaryDeltaClassDecisionMap,
+      binaryCombinedDeltaDecisionMap,
       fromClassCount,
-      toClassCount]
-    ),
+      toClassCount,
+      binaryDecisionFromToMap
+    ]),
     changeEvents: changeEvents, // an imagecollection
     fromClassCollection: changeEvents.select("is_from_class"), // an imagecollection
     toClassCollection: changeEvents.select("is_to_class") // an imagecollection
