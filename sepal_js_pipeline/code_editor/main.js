@@ -4,10 +4,6 @@ var cloudMasking = require('users/matthewjpayne1/a4f:cloudMasking');
 // 1. PARAMETERS & CONSTANTS 
 // ==============================================================================
  
-// Near Mau Forest in Kenya 35.3095, -0.4223 
-// Map.centerObject(ee.Geometry.Point([35.3095, -0.4223]))
-
-var point = ee.Geometry.Point([35.3095, -0.4223])
 var aoi = ee.Geometry.Rectangle([35.27456, -0.42817, 35.33481, -0.37977])
 
 var BASELINE_START = '2020-01-01';
@@ -96,7 +92,7 @@ var toClassParams = {
 
 var imageCountVisParams = {
   min: 0,
-  max: 21,
+  max: 36,
   palette: [
     '#d7191c', // Red: Very few valid images
     '#fdae61', // Orange
@@ -108,7 +104,7 @@ var imageCountVisParams = {
 
 var changeDetectionCountVisParams = {
   min: 0,
-  max: 21,
+  max: 17,
   palette: [
     "#ffffbf", // Yellow: few changes
     "#d7191c", // Red: max changes
@@ -125,9 +121,9 @@ var occludivityVisParams = {
 };
 
 var visParamsNDVI = {
-  min: -0.2,
+  min: -1,
   max: 1,
-  palette: ["white", "green"] // specifies the upper and lower range
+  palette: ["white", "green"] // white low value, green high value
 }
 
 var visParamsRGB = {
@@ -169,6 +165,18 @@ var postFCDValidImageCountVisParams = {
   min: 1,
   max: 23,
   palette: ["#1E6D08", "#72F24E"] // dark green, light green
+}
+
+var postFCDChangeRepeatabilityVisParams = {
+  min: 0,
+  max: 100,
+  palette: ["white", "red"]
+}
+
+var binaryTimeSeriesDecisionVisParams = {
+  min: 0,
+  max: 1,
+  palette: ["green", "red"] // green no alert, red yes alert
 }
 
 // ==============================================================================
@@ -231,9 +239,11 @@ var monitoringImagesRaw = maskedMonitoringCollection
   
 var monitoringImages = dailyMosaic(monitoringImagesRaw)
 
-var imageList = monitoringImages.toList(40)
-var secondImage = ee.Image(imageList.get(1))
-var thirdImage = ee.Image(imageList.get(2))
+var imageList = monitoringImages.toList(36)
+// var secondImage = ee.Image(imageList.get(1))
+// var thirdImage = ee.Image(imageList.get(2))
+var finalImage = ee.Image(imageList.get(35))
+
 
 // Map.addLayer(
 //   thirdImage.mask().select('B3'), 
@@ -331,7 +341,7 @@ var classifiedMonitoringCollection = monitoringImages.map(function (img) {
 Map.addLayer(
   classifiedBaselineImage.select('classification'),
   visClassParams,
-  'Baseline class map', true
+  'Baseline class map', false
 )
 
 var alerts = pyeo.run_change_detection({
@@ -340,8 +350,16 @@ var alerts = pyeo.run_change_detection({
     classifiedMonitoringCollection: classifiedMonitoringCollection,
     changeFromClasses: changeFromClasses,
     changeToClasses: changeToClasses,
-    minConsecutiveDetections: 2,
-    dNdviGate: {use_ndvi: false,  band: 'NDVI', threshold: 0.3} // -2.0 switches off delta ndvi threshold
+    minRequiredValidatedDetectionsThreshold: 2,
+    minRequiredClassifierDetectionsThreshold: 5,
+    percentageProbabilityThreshold: 50,
+    minRequiredFromDetectionsThreshold: 2,
+    minRequiredToDetectionsThreshold: 2,
+    dNdviGate: {use_ndvi: false,
+      band: 'NDVI',
+      threshold: 0.1,  // -2.0 switches off delta ndvi threshold
+      minRequiredDeltaNDVIDetectionsThreshold: 10
+      }
 });
 
 // // get min and max change dates from the test area, then hardcode earlier for vis
@@ -389,6 +407,14 @@ var alerts = pyeo.run_change_detection({
 // });
 // print("min and max count of unconfirmed change stats", unconfirmedChangeCountStats)
 
+// // get min and max change dates from the test area, then hardcode earlier for vis
+// var dNDVIStats = alerts.changeReport.select("deltaNDVI_change_count").reduceRegion({
+//     reducer: ee.Reducer.minMax(),
+//     geometry: aoi,
+//     scale: 10
+// });
+// print("count of delta ndvi:", dNDVIStats);
+
 // Map.addLayer(
 //   alerts.fromClassCollection.first(),
 //   fromClassParams,
@@ -401,11 +427,18 @@ var alerts = pyeo.run_change_detection({
 //   "First image of the toClassCollection"
 // )
 
-// Map.addLayer(
-//   alerts.changeEvents.first().select("delta_ndvi"),
-//   visParamsNDVI,
-//   "Delta NDVI of the first monitoring image"
-// )
+Map.addLayer(
+  alerts.changeEvents.first().select("delta_ndvi"),
+  visParamsNDVI,
+  "Delta NDVI of the first monitoring image"
+)
+
+Map.addLayer(
+  alerts.changeEvents.first().select("delta_ndvi_thresholded_mask"),
+  {},
+  //visParamsNDVI,
+  "Delta NDVI above threshold of the first monitoring image"
+)
 
 // Map.addLayer(
 //   alerts.changeEvents.first().select("delta_ndvi_thresholded"),
@@ -432,6 +465,12 @@ Map.addLayer(
 // )
 
 Map.addLayer(
+  alerts.changeReport.select("binary_decision_from_to_map"),
+  binaryTimeSeriesDecisionVisParams,
+  "L17 - Binary Decision Thresholds on FROM and TO counts"
+)
+
+Map.addLayer(
   alerts.changeReport.select("to_class_count"),
   imageCountVisParams,
   "L16 - To Class Count"
@@ -441,6 +480,51 @@ Map.addLayer(
   alerts.changeReport.select("from_class_count"),
   imageCountVisParams,
   "L15 - From Class Count"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("binary_combined_delta_decision_map"),
+  binaryTimeSeriesDecisionVisParams,
+  "L14 - Binary dNDVI & dClass Decision Map"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("binary_delta_class_decision_map"),
+  binaryTimeSeriesDecisionVisParams,
+  "L13 - Binary dClass Decision Map"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("binary_delta_ndvi_decision_map"),
+  binaryTimeSeriesDecisionVisParams,
+  "L12 - Binary dNDVI Decision Map"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("deltaNDVI_change_count"),
+  {min: 1,
+  max: 23,
+  palette: ["white", "green"]
+  },
+  "L11 - dNDVI only change detection count"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("fcd_decision_map"),
+  dateVisParams,
+  "L10 - FCD Decision Map"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("binary_timeseries_decision"),
+  binaryTimeSeriesDecisionVisParams,
+  "L09 - Binary timeseries decision"
+)
+
+Map.addLayer(
+  alerts.changeReport.select("post_fcd_change_repeatability_pct"),
+  postFCDChangeRepeatabilityVisParams,
+  "L08 - Post-FCD Change Detection Repeatability"
 )
 
 Map.addLayer(
@@ -491,6 +575,17 @@ Map.addLayer(
   "L00 - Available Image Count", false
 )
 
+Map.addLayer(
+  finalImage,
+  visParamsRGB,
+  "Final Image of Monitoring Stack"
+)
+
+Map.addLayer(
+  baselineImage.select("NDVI"),
+  visParamsNDVI,
+  "NDVI Baseline"
+)
 
 // Map.addLayer(
 //   classifiedMonitoringCollection.first().select("classification"),
@@ -502,7 +597,7 @@ Map.addLayer(
 //    into a readable human date
 var changeReportAtPoint = alerts.changeReport.reduceRegion({
   reducer: ee.Reducer.first(),
-  geometry: inspection_marker,
+  geometry: geometry,
   scale: 10
 })
 
