@@ -48,7 +48,7 @@ var monitoringParams = {
 // ==============================================================================
 // 2. MAP INITIALISATION
 // ==============================================================================
-Map.centerObject(aoi, 14)
+//Map.centerObject(aoi, 14)
 // Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
 
 // ==============================================================================
@@ -220,7 +220,7 @@ var dailyMosaic = function(col) {
   // https://developers.google.com/earth-engine/apidocs/ee-imagecollection-fromimages
 };
 
-//==============================================================================
+// ==============================================================================
 // 5. PIPELINE
 // ==============================================================================
 
@@ -301,7 +301,7 @@ var trainingPoints = ee.FeatureCollection([
 Map.addLayer(
   baselineImage,
   visParamsRGB,
-  'Baseline Image'
+  'Baseline Image', false
 )
 
 // Map.addLayer(
@@ -344,6 +344,10 @@ Map.addLayer(
   'Baseline class map', false
 )
 
+// ==============================================================================
+// 6. RUN CHANGE DETECTION
+// ==============================================================================
+
 var alerts = pyeo.run_change_detection({
     aoi: aoi,
     classifiedBaseline: classifiedBaselineImage,
@@ -361,6 +365,10 @@ var alerts = pyeo.run_change_detection({
       minRequiredDeltaNDVIDetectionsThreshold: 10
       }
 });
+
+// ==============================================================================
+// 7. CHECKING THE CHANGE REPORT
+// ==============================================================================
 
 // // get min and max change dates from the test area, then hardcode earlier for vis
 // var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
@@ -430,14 +438,14 @@ var alerts = pyeo.run_change_detection({
 Map.addLayer(
   alerts.changeEvents.first().select("delta_ndvi"),
   visParamsNDVI,
-  "Delta NDVI of the first monitoring image"
+  "Delta NDVI of the first monitoring image", false
 )
 
 Map.addLayer(
   alerts.changeEvents.first().select("delta_ndvi_thresholded_mask"),
   {},
   //visParamsNDVI,
-  "Delta NDVI above threshold of the first monitoring image"
+  "Delta NDVI above threshold of the first monitoring image", false
 )
 
 // Map.addLayer(
@@ -467,37 +475,37 @@ Map.addLayer(
 Map.addLayer(
   alerts.changeReport.select("binary_decision_from_to_map"),
   binaryTimeSeriesDecisionVisParams,
-  "L17 - Binary Decision Thresholds on FROM and TO counts"
+  "L17 - Binary Decision Thresholds on FROM and TO counts", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("to_class_count"),
   imageCountVisParams,
-  "L16 - To Class Count"
+  "L16 - To Class Count", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("from_class_count"),
   imageCountVisParams,
-  "L15 - From Class Count"
+  "L15 - From Class Count", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("binary_combined_delta_decision_map"),
   binaryTimeSeriesDecisionVisParams,
-  "L14 - Binary dNDVI & dClass Decision Map"
+  "L14 - Binary dNDVI & dClass Decision Map", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("binary_delta_class_decision_map"),
   binaryTimeSeriesDecisionVisParams,
-  "L13 - Binary dClass Decision Map"
+  "L13 - Binary dClass Decision Map", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("binary_delta_ndvi_decision_map"),
   binaryTimeSeriesDecisionVisParams,
-  "L12 - Binary dNDVI Decision Map"
+  "L12 - Binary dNDVI Decision Map", false
 )
 
 Map.addLayer(
@@ -506,31 +514,31 @@ Map.addLayer(
   max: 23,
   palette: ["white", "green"]
   },
-  "L11 - dNDVI only change detection count"
+  "L11 - dNDVI only change detection count", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("fcd_decision_map"),
   dateVisParams,
-  "L10 - FCD Decision Map"
+  "L10 - FCD Decision Map", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("binary_timeseries_decision"),
   binaryTimeSeriesDecisionVisParams,
-  "L09 - Binary timeseries decision"
+  "L09 - Binary timeseries decision", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("post_fcd_change_repeatability_pct"),
   postFCDChangeRepeatabilityVisParams,
-  "L08 - Post-FCD Change Detection Repeatability"
+  "L08 - Post-FCD Change Detection Repeatability", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("post_fcd_valid_image_count"),
   postFCDValidImageCountVisParams,
-  "L07 - Post-FCD Valid Image Count"
+  "L07 - Post-FCD Valid Image Count", false
 )
 
 Map.addLayer(
@@ -542,25 +550,25 @@ Map.addLayer(
 Map.addLayer(
   alerts.changeReport.select("post_fcd_nochange_count"),
   postFCDNoChangeCountVisParams,
-  "L05 - Post-FCD Combined Non-Alert Count"
+  "L05 - Post-FCD Combined Non-Alert Count", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("post_fcd_change_count"),
   postFCDChangeCountVisParams,
-  "L04 - Post-FCD Combined Alert Count"
+  "L04 - Post-FCD Combined Alert Count", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("first_change_date_above_threshold"),
   dateVisParams,
-  "L03 - FCD & Combined Alert Detection"
+  "L03 - FCD & Combined Alert Detection", false
 )
 
 Map.addLayer(
   alerts.changeReport.select("total_changes"),
   changeDetectionCountVisParams,
-  "L02 - Class Change Detection Count"
+  "L02 - Class Change Detection Count", false
 )
 
 Map.addLayer(
@@ -578,26 +586,20 @@ Map.addLayer(
 Map.addLayer(
   finalImage,
   visParamsRGB,
-  "Final Image of Monitoring Stack"
+  "Final Image of Monitoring Stack", false
 )
 
 Map.addLayer(
   baselineImage.select("NDVI"),
   visParamsNDVI,
-  "NDVI Baseline"
+  "NDVI Baseline", false
 )
-
-// Map.addLayer(
-//   classifiedMonitoringCollection.first().select("classification"),
-//   visClassParams,
-//   'First monitoring acquisition - CLASSIFIED', false
-// )
 
 // create a client-side object of the point inspector, so the date string can be formatted
 //    into a readable human date
 var changeReportAtPoint = alerts.changeReport.reduceRegion({
   reducer: ee.Reducer.first(),
-  geometry: geometry,
+  geometry: inspection_marker,
   scale: 10
 })
 
@@ -615,3 +617,46 @@ print("pixel properties at the inspection marker:", changeReportAtPoint)
 //     print("No change at this location")
 //   }
 // })
+
+// ==============================================================================
+// 8. VISUALISING CHANGE REPORT LAYERS COMPARISON
+// ==============================================================================
+
+// create separate map instances for a multi "panel" visualisation
+var mapBaseline = ui.Map();
+var mapFinalChangeImage = ui.Map();
+//var mapChangeReport = ui.Map();
+
+// label map instance titles
+mapBaseline.add(ui.Label("Baseline Image", {position: "top-center"})); 
+mapFinalChangeImage.add(ui.Label("Final Image of Change Period", {position: "top-center"}));
+//mapChangeReport
+
+// add layers to the map instances
+mapBaseline.addLayer(
+  baselineImage,
+  visParamsRGB,
+  "Baseline Image"
+  );
+
+mapFinalChangeImage.addLayer(
+  finalImage,
+  visParamsRGB,
+  "Final Image of Monitoring Stack"
+  )
+  
+// synchronise the maps together
+var linker = ui.Map.Linker([mapBaseline, mapFinalChangeImage]);
+
+// create a layout panel holding the maps side by side
+var mapGrid = ui.Panel(
+  [mapBaseline, mapFinalChangeImage],
+  ui.Panel.Layout.Flow("horizontal"),
+  {stretch: "both"}
+)
+// replace default map instance of the code editor with the new grid
+ui.root.widgets().reset([mapGrid]);
+
+// center the map
+mapBaseline.centerObject(aoi, 14)
+// MapBaseline.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
