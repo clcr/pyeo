@@ -8,12 +8,11 @@ var cloudMasking = require('users/mp730/A4F:cloudMasking');
 var inspection_marker = ee.Geometry.Point(35.30557, -0.39567);
 Map.addLayer(inspection_marker, {color: "red", size: 14}, "Inspection Marker")
 
-// construct a roughly 50 km2 square Area Of Interest
+// construct a roughly 30 km2 square Area Of Interest
 var corner_coordinate = [35.2745, -0.4285]
 var lon = corner_coordinate[0]
 var lat = corner_coordinate[1]
-var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.064, lat + 0.064]);
-//var aoi = ee.Geometry.Rectangle([35.27456, -0.42817, 35.33481, -0.37977])
+var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.05, lat + 0.05]);
 
 print("AOI area (km2)", aoi.area().divide(1000 * 1000))
 
@@ -33,7 +32,7 @@ var AGRICULTURE = 3;
 var URBAN = 4;
 var changeFromClasses = [FOREST];
 var changeToClasses = [SOIL, AGRICULTURE];
-var allClasses = [FOREST, SOIL, AGRICULTURE];
+var allClasses = [FOREST, SOIL, AGRICULTURE, URBAN];
 
 // parameter objects for imagery acquisition and cloud masking
 var baselineParams = {
@@ -59,9 +58,9 @@ var monitoringParams = {
 // ==============================================================================
 // 2. MAP INITIALISATION
 // ==============================================================================
-// Map.centerObject(aoi, 14)
-// Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
 
+Map.centerObject(aoi, 14)
+Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
 
 // ==============================================================================
 // 3. VISUALISATION PARAMETERS
