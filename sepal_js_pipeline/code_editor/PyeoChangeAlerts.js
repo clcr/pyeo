@@ -233,10 +233,13 @@ var run_change_detection = function (params) {
   var binaryTimeSeriesDecision = postFCDChangeDetectionRepeatability.gte(percentageProbabilityThreshold)
     .and(postFCDChangeCount.gte(minRequiredValidatedDetectionsThreshold))
     .rename("binary_timeseries_decision");
+    
+  // update pixels with 0, to be included in the mask, as these are not important to us
+  var binaryTimeSeriesDecisionMasked = binaryTimeSeriesDecision.updateMask(binaryTimeSeriesDecision);
 
   // LAYER 10: FCD Decision Map
   var FCDDecisionMap = firstChangeDateAboveThreshold
-    .updateMask(binaryTimeSeriesDecision)
+    .updateMask(binaryTimeSeriesDecisionMasked)
     .rename("fcd_decision_map");
 
   // LAYER 11: dNDVI only change detection count
@@ -283,7 +286,7 @@ var run_change_detection = function (params) {
       postFCDOccludedCount,
       postFCDValidImageCount,
       postFCDChangeDetectionRepeatability,
-      binaryTimeSeriesDecision,
+      binaryTimeSeriesDecisionMasked,
       FCDDecisionMap,
       deltaNDVIChangeDetectionCount,
       binaryDeltaNdviDecisionMap,
@@ -292,10 +295,10 @@ var run_change_detection = function (params) {
       fromClassCount,
       toClassCount,
       binaryDecisionFromToMap
-    ]),
-    changeEvents: changeEvents, // an imagecollection
-    fromClassCollection: changeEvents.select("is_from_class"), // an imagecollection
-    toClassCollection: changeEvents.select("is_to_class") // an imagecollection
+    ])//,
+    // changeEvents: changeEvents, // an imagecollection
+    // fromClassCollection: changeEvents.select("is_from_class"), // an imagecollection
+    // toClassCollection: changeEvents.select("is_to_class") // an imagecollection
   };
 
 }
