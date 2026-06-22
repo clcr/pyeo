@@ -6,12 +6,12 @@ var cloudMasking = require('users/mp730/A4F:cloudMasking');
 
 // baseline = median over Jan-Mar 2022. Monitoring = individual S2 acquisitions
 // over Apr-Dec 2022 (no compositing — preserves temporal granularity).
-// AOI: ~50 km2 square over Mato Grosso, Brazil.
+// AOI: ~30 km2 square over Mato Grosso, Brazil.
 var corner_coordinate = [-55.30, -11.65]
 var lon = corner_coordinate[0]
 var lat = corner_coordinate[1]
 
-var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.064, lat + 0.064]);
+var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.05, lat + 0.05]);
 
 print("AOI Area (km2)", aoi.area().divide(1000 * 1000))
 

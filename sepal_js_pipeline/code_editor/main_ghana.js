@@ -10,7 +10,7 @@ var corner_coordinate = [-0.91729, 5.78453]
 var lon = corner_coordinate[0]
 var lat = corner_coordinate[1]
 
-var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.064, lat + 0.064]);
+var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.05, lat + 0.05]);
 
 print("AOI Area (km2)", aoi.area().divide(1000 * 1000))
 
