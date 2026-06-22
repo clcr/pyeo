@@ -1,10 +1,21 @@
-var pyeo = require('users/matthewjpayne1/a4f:pyeoChangeAlerts')
-var cloudMasking = require('users/matthewjpayne1/a4f:cloudMasking');
+var pyeo = require('users/mp730/A4F:pyeoChangeAlerts')
+var cloudMasking = require('users/mp730/A4F:cloudMasking');
+
 // ==============================================================================
 // 1. PARAMETERS & CONSTANTS 
 // ==============================================================================
- 
-var aoi = ee.Geometry.Rectangle([35.27456, -0.42817, 35.33481, -0.37977])
+
+var inspection_marker = ee.Geometry.Point(35.30557, -0.39567);
+Map.addLayer(inspection_marker, {color: "red", size: 14}, "Inspection Marker")
+
+// construct a roughly 50 km2 square Area Of Interest
+var corner_coordinate = [35.2745, -0.4285]
+var lon = corner_coordinate[0]
+var lat = corner_coordinate[1]
+var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.064, lat + 0.064]);
+//var aoi = ee.Geometry.Rectangle([35.27456, -0.42817, 35.33481, -0.37977])
+
+print("AOI area (km2)", aoi.area().divide(1000 * 1000))
 
 var BASELINE_START = '2020-01-01';
 var BASELINE_END = '2020-12-31';
@@ -48,8 +59,9 @@ var monitoringParams = {
 // ==============================================================================
 // 2. MAP INITIALISATION
 // ==============================================================================
-//Map.centerObject(aoi, 14)
+// Map.centerObject(aoi, 14)
 // Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
+
 
 // ==============================================================================
 // 3. VISUALISATION PARAMETERS
@@ -240,8 +252,6 @@ var monitoringImagesRaw = maskedMonitoringCollection
 var monitoringImages = dailyMosaic(monitoringImagesRaw)
 
 var imageList = monitoringImages.toList(36)
-// var secondImage = ee.Image(imageList.get(1))
-// var thirdImage = ee.Image(imageList.get(2))
 var finalImage = ee.Image(imageList.get(35))
 
 
@@ -306,13 +316,16 @@ Map.addLayer(
 
 // Map.addLayer(
 //     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
-//     {color: '#ffa6eb'}, 'Training: forest')
+//     {color: 'green'}, 'Training: Forest')
 // Map.addLayer(
 //     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
-//     {color: '#C49852'}, 'Training: non-forest')
+//     {color: 'brown'}, 'Training: Soil')
 // Map.addLayer(
 //     trainingPoints.filter(ee.Filter.eq('class', AGRICULTURE)),
-//     {color: '#27F584'}, 'Training: non-forest')
+//     {color: 'orange'}, 'Training: Agriculture')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', URBAN)),
+//     {color: 'blue'}, 'Training: Urban')
 
 var trainingSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
@@ -526,7 +539,7 @@ Map.addLayer(
 Map.addLayer(
   alerts.changeReport.select("binary_timeseries_decision"),
   binaryTimeSeriesDecisionVisParams,
-  "L09 - Binary timeseries decision", false
+  "L09 - Binary timeseries decision", true
 )
 
 Map.addLayer(
@@ -618,45 +631,45 @@ print("pixel properties at the inspection marker:", changeReportAtPoint)
 //   }
 // })
 
-// ==============================================================================
-// 8. VISUALISING CHANGE REPORT LAYERS COMPARISON
-// ==============================================================================
+// // ==============================================================================
+// // 8. VISUALISING CHANGE REPORT LAYERS COMPARISON
+// // ==============================================================================
 
-// create separate map instances for a multi "panel" visualisation
-var mapBaseline = ui.Map();
-var mapFinalChangeImage = ui.Map();
-//var mapChangeReport = ui.Map();
+// // create separate map instances for a multi "panel" visualisation
+// var mapBaseline = ui.Map();
+// var mapFinalChangeImage = ui.Map();
+// var mapChangeReport = ui.Map();
 
-// label map instance titles
-mapBaseline.add(ui.Label("Baseline Image", {position: "top-center"})); 
-mapFinalChangeImage.add(ui.Label("Final Image of Change Period", {position: "top-center"}));
-//mapChangeReport
+// // label map instance titles
+// mapBaseline.add(ui.Label("Baseline Image", {position: "top-center"})); 
+// mapFinalChangeImage.add(ui.Label("Final Image of Change Period", {position: "top-center"}));
+// //mapChangeReport
 
-// add layers to the map instances
-mapBaseline.addLayer(
-  baselineImage,
-  visParamsRGB,
-  "Baseline Image"
-  );
+// // add layers to the map instances
+// mapBaseline.addLayer(
+//   baselineImage,
+//   visParamsRGB,
+//   "Baseline Image"
+//   );
 
-mapFinalChangeImage.addLayer(
-  finalImage,
-  visParamsRGB,
-  "Final Image of Monitoring Stack"
-  )
+// mapFinalChangeImage.addLayer(
+//   finalImage,
+//   visParamsRGB,
+//   "Final Image of Monitoring Stack"
+//   )
   
-// synchronise the maps together
-var linker = ui.Map.Linker([mapBaseline, mapFinalChangeImage]);
+// // synchronise the maps together
+// var linker = ui.Map.Linker([mapBaseline, mapFinalChangeImage]);
 
-// create a layout panel holding the maps side by side
-var mapGrid = ui.Panel(
-  [mapBaseline, mapFinalChangeImage],
-  ui.Panel.Layout.Flow("horizontal"),
-  {stretch: "both"}
-)
-// replace default map instance of the code editor with the new grid
-ui.root.widgets().reset([mapGrid]);
+// // create a layout panel holding the maps side by side
+// var mapGrid = ui.Panel(
+//   [mapBaseline, mapFinalChangeImage],
+//   ui.Panel.Layout.Flow("horizontal"),
+//   {stretch: "both"}
+// )
+// // replace default map instance of the code editor with the new grid
+// ui.root.widgets().reset([mapGrid]);
 
-// center the map
-mapBaseline.centerObject(aoi, 14)
-// MapBaseline.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
+// // center the map
+// mapBaseline.centerObject(aoi, 14)
+// // MapBaseline.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
