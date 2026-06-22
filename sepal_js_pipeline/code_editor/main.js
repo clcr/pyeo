@@ -5,8 +5,14 @@ var cloudMasking = require('users/mp730/A4F:cloudMasking');
 // 1. PARAMETERS & CONSTANTS 
 // ==============================================================================
 
-var inspection_marker = ee.Geometry.Point(35.30557, -0.39567);
-Map.addLayer(inspection_marker, {color: "red", size: 14}, "Inspection Marker")
+// L9 - binary change detection value of 0
+// var inspection_marker = ee.Geometry.Point(35.30557, -0.39567);
+
+// L9 - binary change detection value of 1
+//var inspection_marker = ee.Geometry.Point(35.305064, -0.395502); 
+
+// L9 - binary change detection value of masked
+var inspection_marker = ee.Geometry.Point(35.304702, -0.39817);
 
 // construct a roughly 30 km2 square Area Of Interest
 var corner_coordinate = [35.2745, -0.4285]
@@ -22,7 +28,6 @@ var MONITORING_START = '2024-06-30';
 var MONITORING_END = '2024-12-31';
 
 var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
-//var MAX_CLOUD_PERCENTAGE = 10; // redundant as per image property, per pixel cloud probability is used
 var MAX_CLOUD_PROBABILITY_PER_PIXEL = 30; // 100 = minimal discrimination
 var MAX_CLOUD_SCORE_PER_PIXEL = 30; // 100 = no discrimination 
 
@@ -33,6 +38,16 @@ var URBAN = 4;
 var changeFromClasses = [FOREST];
 var changeToClasses = [SOIL, AGRICULTURE];
 var allClasses = [FOREST, SOIL, AGRICULTURE, URBAN];
+
+// change detection parameters
+var minRequiredValidatedDetectionsThreshold = 2;
+var minRequiredClassifierDetectionsThreshold = 5;
+var percentageProbabilityThreshold = 50;
+var minRequiredFromDetectionsThreshold = 2;
+var minRequiredToDetectionsThreshold = 2
+var useNdvi = true
+var deltaNdviThreshold = 0.2;  // -2.0 switches off delta ndvi threshold
+var minRequiredDeltaNDVIDetectionsThreshold = 10;
 
 // parameter objects for imagery acquisition and cloud masking
 var baselineParams = {
@@ -55,6 +70,10 @@ var monitoringParams = {
   method: "BOTH"
 }
 
+// DEV PARAMS - hardcoded first and last change date params, only works for the aoi, classifier and time range of this test
+var minDate = 1720080614769
+var maxDate = 1735200612936
+
 // ==============================================================================
 // 2. MAP INITIALISATION
 // ==============================================================================
@@ -72,6 +91,7 @@ var classColourMap = {
   3: "orange", // agriculture
   4: "grey" // urban
 }
+
 // dynamic from and to palettes
 var dynamicFromPalette = changeFromClasses.map(function(classId) {
   return classColourMap[classId];
@@ -142,14 +162,6 @@ var visParamsRGB = {
   max: 2500,
   gamma: 1.4,
   bands: ["B4", "B3", "B2"]
-}
-
-// first and last change date visual parameters
-// hardcoded, only works for the aoi, classifier and time range of this test
-var dateVisParams = {
-  min: 1720080614769,
-  max: 1735200612936, // Milliseconds
-  palette: ['#ffffb2', '#fecc5c', '#fd8d3c'] // pale yellow to orange
 }
 
 // visual parameters for min and max counts of post-fcd changes
@@ -253,15 +265,6 @@ var monitoringImages = dailyMosaic(monitoringImagesRaw)
 var imageList = monitoringImages.toList(36)
 var finalImage = ee.Image(imageList.get(35))
 
-
-// Map.addLayer(
-//   thirdImage.mask().select('B3'), 
-//   {min: 0, max: 1, palette: ['red', 'green']}, 
-//   'Internal Mask (Green=Valid, Red=Masked)'
-// )
-
-// 0 = masked and 1 = valid
-
 // Inline training: forest / non-forest points within the AOI. Test fixture
 // only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
 var trainingPoints = ee.FeatureCollection([
@@ -315,16 +318,16 @@ Map.addLayer(
 
 // Map.addLayer(
 //     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
-//     {color: 'green'}, 'Training: Forest')
+//     {colour: 'green'}, 'Training: Forest')
 // Map.addLayer(
 //     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
-//     {color: 'brown'}, 'Training: Soil')
+//     {colour: 'brown'}, 'Training: Soil')
 // Map.addLayer(
 //     trainingPoints.filter(ee.Filter.eq('class', AGRICULTURE)),
-//     {color: 'orange'}, 'Training: Agriculture')
+//     {colour: 'orange'}, 'Training: Agriculture')
 // Map.addLayer(
 //     trainingPoints.filter(ee.Filter.eq('class', URBAN)),
-//     {color: 'blue'}, 'Training: Urban')
+//     {colour: 'blue'}, 'Training: Urban')
 
 var trainingSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
@@ -366,15 +369,15 @@ var alerts = pyeo.run_change_detection({
     classifiedMonitoringCollection: classifiedMonitoringCollection,
     changeFromClasses: changeFromClasses,
     changeToClasses: changeToClasses,
-    minRequiredValidatedDetectionsThreshold: 2,
-    minRequiredClassifierDetectionsThreshold: 5,
-    percentageProbabilityThreshold: 50,
-    minRequiredFromDetectionsThreshold: 2,
-    minRequiredToDetectionsThreshold: 2,
-    dNdviGate: {use_ndvi: false,
+    minRequiredValidatedDetectionsThreshold: minRequiredValidatedDetectionsThreshold,
+    minRequiredClassifierDetectionsThreshold: minRequiredClassifierDetectionsThreshold,
+    percentageProbabilityThreshold: percentageProbabilityThreshold,
+    minRequiredFromDetectionsThreshold: minRequiredFromDetectionsThreshold,
+    minRequiredToDetectionsThreshold: minRequiredToDetectionsThreshold,
+    dNdviGate: {use_ndvi: useNdvi,
       band: 'NDVI',
-      threshold: 0.1,  // -2.0 switches off delta ndvi threshold
-      minRequiredDeltaNDVIDetectionsThreshold: 10
+      threshold: deltaNdviThreshold,
+      minRequiredDeltaNDVIDetectionsThreshold: minRequiredDeltaNDVIDetectionsThreshold
       }
 });
 
@@ -435,177 +438,7 @@ var alerts = pyeo.run_change_detection({
 // });
 // print("count of delta ndvi:", dNDVIStats);
 
-// Map.addLayer(
-//   alerts.fromClassCollection.first(),
-//   fromClassParams,
-//   "First image of the fromClassCollection", false
-// )
-
-// Map.addLayer(
-//   alerts.toClassCollection.first(),
-//   toClassParams,
-//   "First image of the toClassCollection"
-// )
-
-Map.addLayer(
-  alerts.changeEvents.first().select("delta_ndvi"),
-  visParamsNDVI,
-  "Delta NDVI of the first monitoring image", false
-)
-
-Map.addLayer(
-  alerts.changeEvents.first().select("delta_ndvi_thresholded_mask"),
-  {},
-  //visParamsNDVI,
-  "Delta NDVI above threshold of the first monitoring image", false
-)
-
-// Map.addLayer(
-//   alerts.changeEvents.first().select("delta_ndvi_thresholded"),
-//   visParamsNDVI,
-//   "Delta NDVI thresholded >=0.2 of the first monitoring image"
-// )
-
-Map.addLayer(
-  monitoringImages.first(),
-  visParamsRGB,
-  'First monitoring acquisition', false
-);
-
-// Map.addLayer(
-//   secondImage,
-//   visParamsRGB,
-//   'Second monitoring acquisition', false
-// )
-
-// Map.addLayer(
-//   thirdImage,
-//   visParamsRGB,
-//   'Third monitoring acquisition', false
-// )
-
-Map.addLayer(
-  alerts.changeReport.select("binary_decision_from_to_map"),
-  binaryTimeSeriesDecisionVisParams,
-  "L17 - Binary Decision Thresholds on FROM and TO counts", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("to_class_count"),
-  imageCountVisParams,
-  "L16 - To Class Count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("from_class_count"),
-  imageCountVisParams,
-  "L15 - From Class Count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("binary_combined_delta_decision_map"),
-  binaryTimeSeriesDecisionVisParams,
-  "L14 - Binary dNDVI & dClass Decision Map", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("binary_delta_class_decision_map"),
-  binaryTimeSeriesDecisionVisParams,
-  "L13 - Binary dClass Decision Map", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("binary_delta_ndvi_decision_map"),
-  binaryTimeSeriesDecisionVisParams,
-  "L12 - Binary dNDVI Decision Map", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("deltaNDVI_change_count"),
-  {min: 1,
-  max: 23,
-  palette: ["white", "green"]
-  },
-  "L11 - dNDVI only change detection count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("fcd_decision_map"),
-  dateVisParams,
-  "L10 - FCD Decision Map", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("binary_timeseries_decision"),
-  binaryTimeSeriesDecisionVisParams,
-  "L09 - Binary timeseries decision", true
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_change_repeatability_pct"),
-  postFCDChangeRepeatabilityVisParams,
-  "L08 - Post-FCD Change Detection Repeatability", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_valid_image_count"),
-  postFCDValidImageCountVisParams,
-  "L07 - Post-FCD Valid Image Count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_occluded_count"),
-  postFCDOccludedCountVisParams,
-  "L06 - Post-FCD Occluded Count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_nochange_count"),
-  postFCDNoChangeCountVisParams,
-  "L05 - Post-FCD Combined Non-Alert Count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_change_count"),
-  postFCDChangeCountVisParams,
-  "L04 - Post-FCD Combined Alert Count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("first_change_date_above_threshold"),
-  dateVisParams,
-  "L03 - FCD & Combined Alert Detection", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select("total_changes"),
-  changeDetectionCountVisParams,
-  "L02 - Class Change Detection Count", false
-)
-
-Map.addLayer(
-  alerts.changeReport.select('occluded_count'),
-  occludivityVisParams,
-  'L01 - Occluded Pixel Count', false
-);
-
-Map.addLayer(
-  alerts.changeReport.select("available_image_count"),
-  {palette: "red"},
-  "L00 - Available Image Count", false
-)
-
-Map.addLayer(
-  finalImage,
-  visParamsRGB,
-  "Final Image of Monitoring Stack", false
-)
-
-Map.addLayer(
-  baselineImage.select("NDVI"),
-  visParamsNDVI,
-  "NDVI Baseline", false
-)
+Map.addLayer(inspection_marker, {color: "pink", size: 14}, "Inspection Marker")
 
 // create a client-side object of the point inspector, so the date string can be formatted
 //    into a readable human date
@@ -617,58 +450,164 @@ var changeReportAtPoint = alerts.changeReport.reduceRegion({
 
 print("pixel properties at the inspection marker:", changeReportAtPoint)
 
-// changeReportAtPoint.evaluate(function(result) {
-//   if (result.first_change_date_above_threshold > 0) {
-//     // use JS to create a Date object, which has .toUTCString()
-//     // Date is an EE function that returns a string, strings don't have .toUTCString()
-//     var readableFirstChange = new Date(result.first_change_date_above_threshold).toUTCString();
+changeReportAtPoint.evaluate(function(result) {
+  if (result.first_change_date_above_threshold > 0) {
+    // use JS to create a Date object, which has .toDateString()
+    // Date is an EE function that returns a string, strings don't have .toDateString()
+    var readableFirstChange = new Date(result.first_change_date_above_threshold).toDateString();
 
-//     print("First change was on: ", readableFirstChange);
-//   }
-//   else {
-//     print("No change at this location")
-//   }
-// })
+    print("First change was on: ", readableFirstChange);
+  }
+  else {
+    print("No change at this location")
+  }
+})
 
-// // ==============================================================================
-// // 8. VISUALISING CHANGE REPORT LAYERS COMPARISON
-// // ==============================================================================
+// ==============================================================================
+// 8. VISUALISING CHANGE REPORT LAYER FOR MID TERM REPORT
+// ==============================================================================
 
-// // create separate map instances for a multi "panel" visualisation
-// var mapBaseline = ui.Map();
-// var mapFinalChangeImage = ui.Map();
-// var mapChangeReport = ui.Map();
+// get minMax date stats for first date of change colour ramp
+var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
+    reducer: ee.Reducer.minMax(),
+    geometry: aoi,
+    scale: 10,
+    maxPixels: 1e9
+});
+var dateVisPalette = ['#ffffb2', '#fecc5c', '#fd8d3c']; // pale yellow to orange
 
-// // label map instance titles
-// mapBaseline.add(ui.Label("Baseline Image", {position: "top-center"})); 
-// mapFinalChangeImage.add(ui.Label("Final Image of Change Period", {position: "top-center"}));
-// //mapChangeReport
+// first and last change date visual parameters
+var dateVisParams = {
+  min: minDate,
+  max: maxDate,
+  palette: dateVisPalette
+}
 
-// // add layers to the map instances
-// mapBaseline.addLayer(
-//   baselineImage,
-//   visParamsRGB,
-//   "Baseline Image"
-//   );
+var minVal = ee.Number(dateStats.get("first_change_date_above_threshold_min"));
+var maxVal = ee.Number(dateStats.get("first_change_date_above_threshold_max"));
 
-// mapFinalChangeImage.addLayer(
-//   finalImage,
-//   visParamsRGB,
-//   "Final Image of Monitoring Stack"
-//   )
+// chuck into one dictionary to evaluate in one go
+var serverValues = ee.Dictionary({
+  start: minVal,
+  end: maxVal
+});
+
+// create separate map instances for a multi "panel" visualisation
+var mapBaseline = ui.Map();
+var mapFinalChangeImage = ui.Map();
+var mapChangeReportDates = ui.Map();
+
+// label map instance titles
+mapBaseline.add(ui.Label("Baseline Image", {position: "top-center"})); 
+mapFinalChangeImage.add(ui.Label("Final Image of Change Period", {position: "top-center"}));
+mapChangeReportDates.add(ui.Label("Dates of Detected Changes", {position: "top-center"}))
+
+// add layers to the map instances
+mapBaseline.addLayer(
+  baselineImage,
+  visParamsRGB,
+  "Baseline Image"
+  );
+
+mapFinalChangeImage.addLayer(
+  finalImage,
+  visParamsRGB,
+  "Final Image of Monitoring Stack"
+  );
+
+mapChangeReportDates.addLayer(
+  finalImage,
+  visParamsRGB,
+  "Final Image of Monitoring Stack"
+  );
+
+mapChangeReportDates.addLayer(
+  alerts.changeReport.select("fcd_decision_map"),
+  dateVisParams,
+  "First Dates of Detected Changes"
+  );
   
-// // synchronise the maps together
-// var linker = ui.Map.Linker([mapBaseline, mapFinalChangeImage]);
+// synchronise the maps together
+var linker = ui.Map.Linker([mapBaseline, mapFinalChangeImage, mapChangeReportDates]);
 
-// // create a layout panel holding the maps side by side
-// var mapGrid = ui.Panel(
-//   [mapBaseline, mapFinalChangeImage],
-//   ui.Panel.Layout.Flow("horizontal"),
-//   {stretch: "both"}
-// )
-// // replace default map instance of the code editor with the new grid
-// ui.root.widgets().reset([mapGrid]);
+// create a nested layout:
+// 2 on the top row
+var topRow = ui.Panel(
+  [mapBaseline, mapFinalChangeImage],
+  ui.Panel.Layout.Flow("horizontal"),
+  {stretch: "both"}
+);
 
-// // center the map
-// mapBaseline.centerObject(aoi, 14)
-// // MapBaseline.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
+//  1 on the bottom row
+var mapGrid = ui.Panel(
+  [topRow, mapChangeReportDates],
+  ui.Panel.Layout.Flow("vertical"),
+  {stretch: "both"}
+)
+// replace default map instance of the code editor with the new grid
+ui.root.widgets().reset([mapGrid]);
+
+// center the map
+mapBaseline.centerObject(aoi, 14);
+
+// evaluate, so populates the relevant ui panel later instead of pausing rendering until completed
+serverValues.evaluate(function(clientValues) {
+  
+  // get the start and end values
+  var startMillis = clientValues.start;
+  var endMillis = clientValues.end;
+  
+  // parse date function
+  function parseDate(millis) {
+    var date = new Date(millis) // convert to JS Date object
+    return date.toISOString().split("T")[0] // .toISOString() returns this format "2011-10-05T14:48:00.000Z"
+  }
+  
+  // function to make parameters needed for a colour bar
+  var makeColourBarParams = function(palette) {
+    return {
+      bbox: [0, 0, 1, 0.1],
+      dimensions: '100x10',
+      format: 'png',
+      min: 0,
+      max: 1,
+      palette: palette,
+    };
+  };
+
+  // make the colour bar from ui.Thumbnail
+  var colourBar = ui.Thumbnail({
+    image: ee.Image.pixelLonLat().select(0),
+    params: makeColourBarParams(dateVisPalette),
+    style: {stretch: 'horizontal', margin: '0px 8px', maxHeight: '24px'},
+  });
+
+  // make the date labels
+  var legendLabels = ui.Panel({
+    widgets: [
+      ui.Label(parseDate(startMillis), {margin: '4px 8px'}),
+      ui.Label('', {margin: '4px 8px', textAlign: 'center', stretch: 'horizontal'}),
+      ui.Label(parseDate(endMillis), {margin: '4px 8px'})
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+
+  var legendTitle = ui.Label({
+    value: 'First Date of Detected Change',
+    style: {fontWeight: 'bold', margin: '8px 8px 4px 8px'}
+  });
+
+  // bring the individual colour bar components together as a panel
+  var legendPanel = ui.Panel(
+    [legendTitle, colourBar, legendLabels],
+    ui.Panel.Layout.flow('vertical'),
+    {
+      position: 'bottom-left',
+      padding: '8px',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)'
+    }
+  );
+
+  mapChangeReportDates.add(legendPanel);
+
+})
