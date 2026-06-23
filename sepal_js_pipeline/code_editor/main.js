@@ -73,19 +73,27 @@ var monitoringParams = {
 }
 
 // create a dictionary of pipeline parameters to export as metadata with the images as assets
+// this is added to the images later
 var pipelineParams = {
   'baseline_start': BASELINE_START,
   'baseline_end': BASELINE_END,
   'monitoring_start': MONITORING_START,
   'monitoring_end': MONITORING_END,
-  'min_validated_detections': minRequiredValidatedDetectionsThreshold,
+  'bands': JSON.stringify(BANDS),
+  'max_cloud_probability_per_pixel': MAX_CLOUD_PROBABILITY_PER_PIXEL,
+  'max_cloud_score_per_pixel': MAX_CLOUD_SCORE_PER_PIXEL,
+  'change_from_classes': JSON.stringify(changeFromClasses),
+  'change_to_classes': JSON.stringify(changeToClasses),
+  'all_classes': JSON.stringify(allClasses),
+  'min_validated_detections_threshold': minRequiredValidatedDetectionsThreshold,
+  'min_classifier_detections_threshold': minRequiredClassifierDetectionsThreshold,
+  'percentage_probability_threshold': percentageProbabilityThreshold,
+  'min_from_detections_threshold': minRequiredFromDetectionsThreshold,
+  'min_to_detections_threshold': minRequiredToDetectionsThreshold,
+  'use_ndvi': useNdvi,
   'delta_ndvi_threshold': deltaNdviThreshold,
-  
+  'min_delta_ndvi_detections_threshold': minRequiredDeltaNDVIDetectionsThreshold
 };
-
-// DEV PARAMS - hardcoded first and last change date params, only works for the aoi, classifier and time range of this test
-var minDate = 1720080614769
-var maxDate = 1735200612936
 
 // ==============================================================================
 // 2. MAP INITIALISATION
@@ -274,9 +282,9 @@ var monitoringImagesRaw = maskedMonitoringCollection
   .select(BANDS.concat("NDVI"))
   
 var monitoringImages = dailyMosaic(monitoringImagesRaw)
-
-var imageList = monitoringImages.toList(36)
-var finalImage = ee.Image(imageList.get(35))
+var listLength = monitoringImages.size();
+var imageList = monitoringImages.toList(listLength);
+var finalImage = ee.Image(imageList.get(listLength.subtract(1)));
 
 // Inline training: forest / non-forest points within the AOI. Test fixture
 // only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
@@ -480,27 +488,54 @@ changeReportAtPoint.evaluate(function(result) {
 // 8. SAVING CHANGE REPORT AND PARAMETERS AS ASSETS FOR FIGURE CREATION (PYTHON)
 // ==============================================================================
 
-// // get minMax date stats for first date of change colour ramp
-// var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
-//     reducer: ee.Reducer.minMax(),
-//     geometry: aoi,
-//     scale: 10,
-//     maxPixels: 1e9
-// });
-// var dateVisPalette = ['#ffffb2', '#fecc5c', '#fd8d3c']; // pale yellow to orange
+// get minMax date stats for first date of change colour ramp
+var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
+    reducer: ee.Reducer.minMax(),
+    geometry: aoi,
+    scale: 10,
+    maxPixels: 1e9
+});
+var dateVisPalette = ['#ffffb2', '#fecc5c', '#fd8d3c']; // pale yellow to orange
 
-// // first and last change date visual parameters
-// var dateVisParams = {
-//   min: minDate,
-//   max: maxDate,
-//   palette: dateVisPalette
-// }
+var minVal = ee.Number(dateStats.get("first_change_date_above_threshold_min"));
+var maxVal = ee.Number(dateStats.get("first_change_date_above_threshold_max"));
 
-// var minVal = ee.Number(dateStats.get("first_change_date_above_threshold_min"));
-// var maxVal = ee.Number(dateStats.get("first_change_date_above_threshold_max"));
+// first and last change date visual parameters
+var dateVisParams = {
+  min: minVal,
+  max: maxVal,
+  palette: dateVisPalette
+}
+
+
+
+// assign metadata to the assets
+var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+var finalImageWithMetadata = finalImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+var changeReportWithMetadata = alerts.changeReport.set(pipelineParams).set("dateVisParams", JSON.stringify(dateVisParams))
+var baseline_filename = "baseline_" + BASELINE_START + "_" + BASELINE_END + "_" + aoi_friendly_name
+var finalImage_filename = "final_monitoring_" + MONITORING_START + "_" + MONITORING_END + "_" + aoi_friendly_name
 
 Export.image.toAsset({
-  image: alerts.changeReport,
+  image: baselineImageWithMetadata,
+  description: baseline_filename,
+  assetId: project_asset_path + baseline_filename,
+  region: aoi,
+  scale: 10,
+  maxPixels: 1e13
+});
+
+Export.image.toAsset({
+  image: finalImageWithMetadata,
+  description: finalImage_filename,
+  assetId: project_asset_path + finalImage_filename,
+  region: aoi,
+  scale: 10,
+  maxPixels: 1e13
+});
+
+Export.image.toAsset({
+  image: changeReportWithMetadata,
   description: "change_report_" + aoi_friendly_name,
   assetId: project_asset_path + "change_report_" + aoi_friendly_name,
   region: aoi,
