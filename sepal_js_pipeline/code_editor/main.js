@@ -1,5 +1,7 @@
 var pyeo = require('users/mp730/A4F:pyeoChangeAlerts')
 var cloudMasking = require('users/mp730/A4F:cloudMasking');
+var project_asset_path = 'projects/aim4forests-499914/assets/'
+var aoi_friendly_name = 'Kenya'
 
 // ==============================================================================
 // 1. PARAMETERS & CONSTANTS 
@@ -69,6 +71,17 @@ var monitoringParams = {
   maxCsProbability: MAX_CLOUD_SCORE_PER_PIXEL,
   method: "BOTH"
 }
+
+// create a dictionary of pipeline parameters to export as metadata with the images as assets
+var pipelineParams = {
+  'baseline_start': BASELINE_START,
+  'baseline_end': BASELINE_END,
+  'monitoring_start': MONITORING_START,
+  'monitoring_end': MONITORING_END,
+  'min_validated_detections': minRequiredValidatedDetectionsThreshold,
+  'delta_ndvi_threshold': deltaNdviThreshold,
+  
+};
 
 // DEV PARAMS - hardcoded first and last change date params, only works for the aoi, classifier and time range of this test
 var minDate = 1720080614769
@@ -464,150 +477,33 @@ changeReportAtPoint.evaluate(function(result) {
 })
 
 // ==============================================================================
-// 8. VISUALISING CHANGE REPORT LAYER FOR MID TERM REPORT
+// 8. SAVING CHANGE REPORT AND PARAMETERS AS ASSETS FOR FIGURE CREATION (PYTHON)
 // ==============================================================================
 
-// get minMax date stats for first date of change colour ramp
-var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
-    reducer: ee.Reducer.minMax(),
-    geometry: aoi,
-    scale: 10,
-    maxPixels: 1e9
+// // get minMax date stats for first date of change colour ramp
+// var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
+//     reducer: ee.Reducer.minMax(),
+//     geometry: aoi,
+//     scale: 10,
+//     maxPixels: 1e9
+// });
+// var dateVisPalette = ['#ffffb2', '#fecc5c', '#fd8d3c']; // pale yellow to orange
+
+// // first and last change date visual parameters
+// var dateVisParams = {
+//   min: minDate,
+//   max: maxDate,
+//   palette: dateVisPalette
+// }
+
+// var minVal = ee.Number(dateStats.get("first_change_date_above_threshold_min"));
+// var maxVal = ee.Number(dateStats.get("first_change_date_above_threshold_max"));
+
+Export.image.toAsset({
+  image: alerts.changeReport,
+  description: "change_report_" + aoi_friendly_name,
+  assetId: project_asset_path + "change_report_" + aoi_friendly_name,
+  region: aoi,
+  scale: 10,
+  maxPixels: 1e13
 });
-var dateVisPalette = ['#ffffb2', '#fecc5c', '#fd8d3c']; // pale yellow to orange
-
-// first and last change date visual parameters
-var dateVisParams = {
-  min: minDate,
-  max: maxDate,
-  palette: dateVisPalette
-}
-
-var minVal = ee.Number(dateStats.get("first_change_date_above_threshold_min"));
-var maxVal = ee.Number(dateStats.get("first_change_date_above_threshold_max"));
-
-// chuck into one dictionary to evaluate in one go
-var serverValues = ee.Dictionary({
-  start: minVal,
-  end: maxVal
-});
-
-// create separate map instances for a multi "panel" visualisation
-var mapBaseline = ui.Map();
-var mapFinalChangeImage = ui.Map();
-var mapChangeReportDates = ui.Map();
-
-// label map instance titles
-mapBaseline.add(ui.Label("Baseline Image", {position: "top-center"})); 
-mapFinalChangeImage.add(ui.Label("Final Image of Change Period", {position: "top-center"}));
-mapChangeReportDates.add(ui.Label("Dates of Detected Changes", {position: "top-center"}))
-
-// add layers to the map instances
-mapBaseline.addLayer(
-  baselineImage,
-  visParamsRGB,
-  "Baseline Image"
-  );
-
-mapFinalChangeImage.addLayer(
-  finalImage,
-  visParamsRGB,
-  "Final Image of Monitoring Stack"
-  );
-
-mapChangeReportDates.addLayer(
-  finalImage,
-  visParamsRGB,
-  "Final Image of Monitoring Stack"
-  );
-
-mapChangeReportDates.addLayer(
-  alerts.changeReport.select("fcd_decision_map"),
-  dateVisParams,
-  "First Dates of Detected Changes"
-  );
-  
-// synchronise the maps together
-var linker = ui.Map.Linker([mapBaseline, mapFinalChangeImage, mapChangeReportDates]);
-
-// create a nested layout:
-// 2 on the top row
-var topRow = ui.Panel(
-  [mapBaseline, mapFinalChangeImage],
-  ui.Panel.Layout.Flow("horizontal"),
-  {stretch: "both"}
-);
-
-//  1 on the bottom row
-var mapGrid = ui.Panel(
-  [topRow, mapChangeReportDates],
-  ui.Panel.Layout.Flow("vertical"),
-  {stretch: "both"}
-)
-// replace default map instance of the code editor with the new grid
-ui.root.widgets().reset([mapGrid]);
-
-// center the map
-mapBaseline.centerObject(aoi, 14);
-
-// evaluate, so populates the relevant ui panel later instead of pausing rendering until completed
-serverValues.evaluate(function(clientValues) {
-  
-  // get the start and end values
-  var startMillis = clientValues.start;
-  var endMillis = clientValues.end;
-  
-  // parse date function
-  function parseDate(millis) {
-    var date = new Date(millis) // convert to JS Date object
-    return date.toISOString().split("T")[0] // .toISOString() returns this format "2011-10-05T14:48:00.000Z"
-  }
-  
-  // function to make parameters needed for a colour bar
-  var makeColourBarParams = function(palette) {
-    return {
-      bbox: [0, 0, 1, 0.1],
-      dimensions: '100x10',
-      format: 'png',
-      min: 0,
-      max: 1,
-      palette: palette,
-    };
-  };
-
-  // make the colour bar from ui.Thumbnail
-  var colourBar = ui.Thumbnail({
-    image: ee.Image.pixelLonLat().select(0),
-    params: makeColourBarParams(dateVisPalette),
-    style: {stretch: 'horizontal', margin: '0px 8px', maxHeight: '24px'},
-  });
-
-  // make the date labels
-  var legendLabels = ui.Panel({
-    widgets: [
-      ui.Label(parseDate(startMillis), {margin: '4px 8px'}),
-      ui.Label('', {margin: '4px 8px', textAlign: 'center', stretch: 'horizontal'}),
-      ui.Label(parseDate(endMillis), {margin: '4px 8px'})
-    ],
-    layout: ui.Panel.Layout.flow('horizontal')
-  });
-
-  var legendTitle = ui.Label({
-    value: 'First Date of Detected Change',
-    style: {fontWeight: 'bold', margin: '8px 8px 4px 8px'}
-  });
-
-  // bring the individual colour bar components together as a panel
-  var legendPanel = ui.Panel(
-    [legendTitle, colourBar, legendLabels],
-    ui.Panel.Layout.flow('vertical'),
-    {
-      position: 'bottom-left',
-      padding: '8px',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)'
-    }
-  );
-
-  mapChangeReportDates.add(legendPanel);
-
-})
