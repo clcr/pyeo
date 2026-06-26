@@ -1,37 +1,49 @@
 var pyeo = require('users/mp730/A4F:pyeoChangeAlerts')
 var cloudMasking = require('users/mp730/A4F:cloudMasking');
+var project_asset_path = 'projects/aim4forests-499914/assets/'
+var aoi_friendly_name = 'Brazil_II'
+
 // ==============================================================================
-// 1. PARAMETERS & CONSTANTS
+// 1. PARAMETERS & CONSTANTS 
 // ==============================================================================
 
-// baseline = median over Jan-Mar 2022. Monitoring = individual S2 acquisitions
-// over Apr-Dec 2022 (no compositing — preserves temporal granularity).
-// AOI: ~30 km2 square over Mato Grosso, Brazil.
-var corner_coordinate = [-55.30, -11.65]
+var inspection_marker = ee.Geometry.Point(-59.16104, -15.01913);
+
+// construct a roughly 30 km2 square Area Of Interest
+var corner_coordinate = [-59.161552060067635, -15.02035785032475] 
 var lon = corner_coordinate[0]
 var lat = corner_coordinate[1]
+var aoi = ee.Geometry.Rectangle([lon - 0.025, lat - 0.025, lon + 0.025, lat + 0.025]);
+var CRS = "EPSG:5641";
 
-var aoi = ee.Geometry.Rectangle([lon, lat, lon + 0.05, lat + 0.05]);
+print("AOI area (km2)", aoi.area().divide(1000 * 1000))
 
-print("AOI Area (km2)", aoi.area().divide(1000 * 1000))
-
-
-var BASELINE_START = '2022-01-01';
-var BASELINE_END = '2022-06-01';
-var MONITORING_START = '2022-06-01';
-var MONITORING_END = '2023-01-01';
+var BASELINE_START = '2020-01-01';
+var BASELINE_END = '2020-12-31';
+var MONITORING_START = '2021-01-01';
+var MONITORING_END = '2021-10-12' // '2022-03-31'; // subtract 45, 35, 30 worked with this end date
 
 var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
-//var MAX_CLOUD_PERCENTAGE = 10; // redundant as per image property, per pixel cloud probability is used
-var MAX_CLOUD_PROBABILITY_PER_PIXEL = 50; // 100 = minimal discrimination
-var MAX_CLOUD_SCORE_PER_PIXEL = 50; // 100 = no discrimination 
+var MAX_CLOUD_PROBABILITY_PER_PIXEL = 30; // 100 = minimal discrimination
+var MAX_CLOUD_SCORE_PER_PIXEL = 30; // 100 = no discrimination 
 
 var FOREST = 1;
 var SOIL = 2;
-var CROPS = 3;
+var GRASSLAND = 3;
+var BROWN_FOREST = 4;
 var changeFromClasses = [FOREST];
-var changeToClasses = [SOIL, CROPS];
-var allClasses = [FOREST, SOIL, CROPS];
+var changeToClasses = [SOIL, GRASSLAND, BROWN_FOREST];
+var allClasses = [FOREST, SOIL, GRASSLAND, BROWN_FOREST];
+
+// change detection parameters
+var minRequiredValidatedDetectionsThreshold = 2;
+var minRequiredClassifierDetectionsThreshold = 5;
+var percentageProbabilityThreshold = 50;
+var minRequiredFromDetectionsThreshold = 2;
+var minRequiredToDetectionsThreshold = 2
+var useNdvi = true
+var deltaNdviThreshold = 0.2;  // -2.0 switches off delta ndvi threshold
+var minRequiredDeltaNDVIDetectionsThreshold = 10;
 
 // parameter objects for imagery acquisition and cloud masking
 var baselineParams = {
@@ -54,21 +66,69 @@ var monitoringParams = {
   method: "BOTH"
 }
 
+// create a dictionary of pipeline parameters to export as metadata with the images as assets
+// this is added to the images later
+var pipelineParams = {
+  'baseline_start': BASELINE_START,
+  'baseline_end': BASELINE_END,
+  'monitoring_start': MONITORING_START,
+  'monitoring_end': MONITORING_END,
+  'bands': JSON.stringify(BANDS),
+  'max_cloud_probability_per_pixel': MAX_CLOUD_PROBABILITY_PER_PIXEL,
+  'max_cloud_score_per_pixel': MAX_CLOUD_SCORE_PER_PIXEL,
+  'change_from_classes': JSON.stringify(changeFromClasses),
+  'change_to_classes': JSON.stringify(changeToClasses),
+  'all_classes': JSON.stringify(allClasses),
+  'min_validated_detections_threshold': minRequiredValidatedDetectionsThreshold,
+  'min_classifier_detections_threshold': minRequiredClassifierDetectionsThreshold,
+  'percentage_probability_threshold': percentageProbabilityThreshold,
+  'min_from_detections_threshold': minRequiredFromDetectionsThreshold,
+  'min_to_detections_threshold': minRequiredToDetectionsThreshold,
+  'use_ndvi': useNdvi,
+  'delta_ndvi_threshold': deltaNdviThreshold,
+  'min_delta_ndvi_detections_threshold': minRequiredDeltaNDVIDetectionsThreshold
+};
+
 // ==============================================================================
 // 2. MAP INITIALISATION
 // ==============================================================================
-Map.centerObject(aoi, 12)
+
+Map.centerObject(aoi, 14)
 Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
 
 // ==============================================================================
 // 3. VISUALISATION PARAMETERS
 // ==============================================================================
 
+// named CSS colours https://www.w3schools.com/cssref/css_colors.php
 var classColourMap = {
-  1: "green", // forest
-  2: "yellow", // soil
-  3: "pink" // crops
+  1: "ForestGreen", // forest
+  2: "LightSalmon", // soil
+  3: "LightGreen", // grassland
+  4: "Maroon" // brown forest
 }
+
+// total changes palette
+var totalChangesPalette = ["#FFE2E2", "#9F0712"]; // reds
+
+// fcd decision map palette
+var fcdDecisionMapPalette = ["#DBEAFE", "#1C398E"]; // blues
+
+// fcd repeatability palette
+var fcdRepeatabilityPalette = ["#DCFCE7", "#0D542B"]; // greens
+
+// 1625321810077
+// 1624457809201
+// 1610633808389
+
+// RGB parameters
+var visParamsRGB = {
+  min: 0,
+  max: 2500,
+  gamma: 1.4,
+  bands: ["B4", "B3", "B2"]
+}
+
 // dynamic from and to palettes
 var dynamicFromPalette = changeFromClasses.map(function(classId) {
   return classColourMap[classId];
@@ -97,76 +157,6 @@ var toClassParams = {
   max: Math.max.apply(null, changeToClasses),
   palette: dynamicToPalette 
 };
-
-var imageCountVisParams = {
-  min: 0,
-  max: 21,
-  palette: [
-    '#d7191c', // Red: Very few valid images
-    '#fdae61', // Orange
-    '#ffffbf', // Yellow: Moderate availability
-    '#a6d96a', // Light Green
-    '#1a9641'  // Dark Green: Excellent availability
-  ] 
-};
-
-var changeDetectionCountVisParams = {
-  min: 0,
-  max: 5,
-  palette: [
-    '#d7191c', // Red: Very few changes
-    '#fdae61', // Orange
-    '#ffffbf', // Yellow: some changes
-    '#a6d96a', // Light Green
-    '#1a9641'  // Dark Green: lots of changes
-    ]
-};
-
-var occludivityVisParams = {
-  min: 0,
-  max: 21, // can be made dynamic if so wished
-  palette: [
-    //'#ffffbf', // Yellow: Moderately occluded
-    'black', // low cloud occurrence
-    'white'  // high cloud occurrence
-  ]
-};
-
-var visParamsNDVI = {
-  min: -0.2,
-  max: 1,
-  palette: ["white", "green"] // specifies the upper and lower range
-}
-
-var visParamsRGB = {
-  min: 0,
-  max: 7000,
-  gamma: 1.4,
-  bands: ["B4", "B3", "B2"]
-}
-
-// first and last change date visual parameters
-// hardcoded, only works for the aoi, classifier and time range of this test
-var dateVisParams = {
-  min: 1654437939196,
-  max: 1671285937659, // Milliseconds
-  palette: ['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#F527E4'] // pale yellow to orange to pink
-}
-
-// visual parameters for min and max counts of post-fcd changes
-// hardcoded, only works for the aoi, classifier and time range of this test
-var postFCDChangeCountVisParams = {
-  min: 1,
-  max: 26,
-  palette: ["#FA8FF1", "#700567"] // light pink, dark pink
-};
-
-var postFCDNoChangeCountVisParams = {
-  min: 0,
-  max: 24,
-  palette: ["#8FCBFA", "#054270"] // light blue, dark blue
-}
-
 
 // ==============================================================================
 // 4. HELPER FUNCTIONS
@@ -209,7 +199,7 @@ var dailyMosaic = function(col) {
   // https://developers.google.com/earth-engine/apidocs/ee-imagecollection-fromimages
 };
 
-//==============================================================================
+// ==============================================================================
 // 5. PIPELINE
 // ==============================================================================
 
@@ -227,38 +217,87 @@ var monitoringImagesRaw = maskedMonitoringCollection
   .select(BANDS.concat("NDVI"))
   
 var monitoringImages = dailyMosaic(monitoringImagesRaw)
+var listLength = monitoringImages.size();
+var imageList = monitoringImages.toList(listLength);
+var firstImage = ee.Image(imageList.get(1));
+var finalImage = ee.Image(imageList.get(listLength.subtract(1)));
 
-var imageList = monitoringImages.toList(40)
-var secondImage = ee.Image(imageList.get(1))
-var thirdImage = ee.Image(imageList.get(2))
+print(imageList)
 
-// Map.addLayer(
-//   thirdImage.mask().select('B3'), 
-//   {min: 0, max: 1, palette: ['red', 'green']}, 
-//   'Internal Mask (Green=Valid, Red=Masked)'
-// )
+Map.addLayer(
+  baselineImage,
+  visParamsRGB,
+  'Baseline Image', false
+)
 
-// 0 = masked and 1 = valid
+Map.addLayer(
+  firstImage,
+  visParamsRGB,
+  "Beginning Monitoring Image", false)
+
+Map.addLayer(
+  finalImage,
+  visParamsRGB,
+  "Ending Monitoring Image")
 
 // Inline training: forest / non-forest points within the AOI. Test fixture
 // only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
 var trainingPoints = ee.FeatureCollection([
-    ee.Feature(ee.Geometry.Point([-55.283, -11.560]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.270, -11.585]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.255, -11.610]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.230, -11.555]), {'class': FOREST}),
-    ee.Feature(ee.Geometry.Point([-55.270, -11.620]), {'class': FOREST}), 
-    ee.Feature(ee.Geometry.Point([-55.213, -11.550]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.175, -11.580]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.264, -11.504]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.184, -11.587]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.185, -11.588]), {'class': SOIL}),
-    ee.Feature(ee.Geometry.Point([-55.161, -11.625]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.215, -11.530]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.283, -11.632]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.165, -11.644]), {'class': CROPS}),
-    ee.Feature(ee.Geometry.Point([-55.169, -11.585]), {'class': CROPS})
+    ee.Feature(ee.Geometry.Point([-59.163997, -15.014472]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.157452, -15.01957]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.156873, -15.01584]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.163177, -15.027786]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.160152, -15.022647]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.166697, -15.024864]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.180472, -15.029406]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.165023, -15.034794]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.171653, -15.041881]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.182039, -15.039415]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.18412, -15.033261]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.179399, -15.039602]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.181786, -15.035011]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.179791, -15.036317]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.144097, -15.033533]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.16976, -15.032642]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.163559, -15.030901]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.160598, -15.028414]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.145022, -15.019395]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.145966, -15.024431]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.14116, -15.017405]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.152219, -15.025272]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.138615, -15.021003]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.145889, -15.022164]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.137896, -15.033297]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.14399, -15.033048]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.147757, -15.044781]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.158572, -15.042087]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.15844, -15.028466]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.172623, -15.027513]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.173224, -15.033999]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.160092, -15.032196]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.166323, -15.01849]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.155251, -15.023464]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.139674, -15.0167]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.138344, -15.017031]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15647, -15.000537]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.14514, -14.996101]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.154496, -15.010071]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.156169, -15.007729]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.157907, -15.00605]), {'class': BROWN_FOREST})
 ])
+
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
+//     {colour: 'green'}, 'Training: FOREST')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
+//     {colour: 'brown'}, 'Training: SOIL')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
+//     {colour: 'orange'}, 'Training: GRASSLAND')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', BROWN_FOREST)),
+//     {colour: 'blue'}, 'Training: BROWN FOREST')
 
 var trainingSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
@@ -284,6 +323,15 @@ var classifiedMonitoringCollection = monitoringImages.map(function (img) {
         .copyProperties(img, ['system:time_start'])
 })
 
+Map.addLayer(
+  classifiedBaselineImage.select('classification'),
+  visClassParams,
+  'Baseline class map', false
+)
+
+// ==============================================================================
+// 6. RUN CHANGE DETECTION
+// ==============================================================================
 
 var alerts = pyeo.run_change_detection({
     aoi: aoi,
@@ -291,150 +339,23 @@ var alerts = pyeo.run_change_detection({
     classifiedMonitoringCollection: classifiedMonitoringCollection,
     changeFromClasses: changeFromClasses,
     changeToClasses: changeToClasses,
-    minConsecutiveDetections: 2,
-    dNdviGate: {use_ndvi: false,  band: 'NDVI', threshold: 0.3} // -2.0 switches off delta ndvi threshold
+    minRequiredValidatedDetectionsThreshold: minRequiredValidatedDetectionsThreshold,
+    minRequiredClassifierDetectionsThreshold: minRequiredClassifierDetectionsThreshold,
+    percentageProbabilityThreshold: percentageProbabilityThreshold,
+    minRequiredFromDetectionsThreshold: minRequiredFromDetectionsThreshold,
+    minRequiredToDetectionsThreshold: minRequiredToDetectionsThreshold,
+    dNdviGate: {use_ndvi: useNdvi,
+      band: 'NDVI',
+      threshold: deltaNdviThreshold,
+      minRequiredDeltaNDVIDetectionsThreshold: minRequiredDeltaNDVIDetectionsThreshold
+      }
 });
 
-// // get min and max change dates from the test area, then hardcode earlier for vis
-// var dateStats = alerts.changeReport.select("first_change_date_above_threshold").reduceRegion({
-//     reducer: ee.Reducer.minMax(),
-//     geometry: aoi,
-//     scale: 10
-// });
-// print("Change Date Min/Max (Milliseconds):", dateStats);
+// ==============================================================================
+// 7. CHECKING THE CHANGE REPORT
+// ==============================================================================
 
-// // get min and max change counts from the test area, then hardcode earlier for vis
-// var changeStats = alerts.changeReport.select("post_fcd_change_count").reduceRegion({
-//     reducer: ee.Reducer.minMax(),
-//     geometry: aoi,
-//     scale: 10
-// });
-// print("min and max count of post-fcd changes", changeStats)
-
-// // get min and max no-change counts from the test area, then hardcode earlier for vis
-// var noChangeStats = alerts.changeReport.select("post_fcd_nochange_count").reduceRegion({
-//     reducer: ee.Reducer.minMax(),
-//     geometry: aoi,
-//     scale: 10
-// });
-// print("min and max count of post-fcd no-changes", noChangeStats)
-
-// var postFCDOccludedStats = alerts.changeReport.select("post_fcd_occluded_count").reduceRegion({
-//     reducer: ee.Reducer.minMax(),
-//     geometry: aoi,
-//     scale: 10
-// });
-// print("min and max count of post-fcd occluded", postFCDOccludedStats)
-
-// Map.addLayer(
-//   alerts.fromClassCollection.first(),
-//   fromClassParams,
-//   "First image of the fromClassCollection", false
-// )
-
-// Map.addLayer(
-//   alerts.toClassCollection.first(),
-//   toClassParams,
-//   "First image of the toClassCollection"
-// )
-
-// Map.addLayer(
-//   alerts.changeEvents.first().select("delta_ndvi"),
-//   visParamsNDVI,
-//   "Delta NDVI of the first monitoring image"
-// )
-
-// Map.addLayer(
-//   alerts.changeEvents.first().select("delta_ndvi_thresholded"),
-//   visParamsNDVI,
-//   "Delta NDVI thresholded >=0.2 of the first monitoring image"
-// )
-
-// Map.addLayer(
-//   monitoringImages.first(),
-//   visParamsRGB,
-//   'First monitoring acquisition', false
-// )
-
-// Map.addLayer(
-//   secondImage,
-//   visParamsRGB,
-//   'Second monitoring acquisition', false
-// )
-
-// Map.addLayer(
-//   thirdImage,
-//   visParamsRGB,
-//   'Third monitoring acquisition', false
-// )
-
-Map.addLayer(
-  alerts.changeReport.select("to_class_count"),
-  imageCountVisParams,
-  "L16 - To Class Count"
-)
-
-Map.addLayer(
-  alerts.changeReport.select("from_class_count"),
-  imageCountVisParams,
-  "L15 - From Class Count"
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_occluded_count"),
-  {min: 0, max: 40, palette: ["black", "white"]},
-  "L06 - Post-FCD Occluded Count"
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_nochange_count"),
-  postFCDNoChangeCountVisParams,
-  "L05 - Post-FCD Combined Non-Alert Count"
-)
-
-Map.addLayer(
-  alerts.changeReport.select("post_fcd_change_count"),
-  postFCDChangeCountVisParams,
-  "L04 - Post-FCD Combined Alert Count"
-)
-
-Map.addLayer(
-  alerts.changeReport.select("first_change_date_above_threshold"),
-  dateVisParams,
-  "L03 - FCD & Combined Alert Detection"
-)
-
-Map.addLayer(
-  alerts.changeReport.select("total_changes"),
-  changeDetectionCountVisParams,
-  "L02 - Class Change Detection Count"
-)
-
-Map.addLayer(
-  alerts.changeReport.select('occluded_count'),
-  occludivityVisParams,
-  'L01 - Occluded Pixel Count', false
-);
-
-Map.addLayer(
-  alerts.changeReport.select("available_image_count"),
-  {palette: "red"},
-  "L00 - Available Image Count", false
-)
-
-
-
-// Map.addLayer(
-//   classifiedMonitoringCollection.first().select("classification"),
-//   visClassParams,
-//   'First monitoring acquisition - CLASSIFIED', false
-// )
-
-// Map.addLayer(
-//   classifiedBaselineImage.select('classification'),
-//   visClassParams,
-//   'Baseline class map', true
-// )
+Map.addLayer(inspection_marker, {color: "pink", size: 14}, "Inspection Marker")
 
 // create a client-side object of the point inspector, so the date string can be formatted
 //    into a readable human date
@@ -446,15 +367,124 @@ var changeReportAtPoint = alerts.changeReport.reduceRegion({
 
 print("pixel properties at the inspection marker:", changeReportAtPoint)
 
-// changeReportAtPoint.evaluate(function(result) {
-//   if (result.first_change_date_above_threshold > 0) {
-//     // use JS to create a Date object, which has .toUTCString()
-//     // Date is an EE function that returns a string, strings don't have .toUTCString()
-//     var readableFirstChange = new Date(result.first_change_date_above_threshold).toUTCString();
+changeReportAtPoint.evaluate(function(result) {
+  if (result.first_change_date_above_threshold > 0) {
+    // use JS to create a Date object, which has .toDateString()
+    // Date is an EE function that returns a string, strings don't have .toDateString()
+    var readableFirstChange = new Date(result.first_change_date_above_threshold).toDateString();
 
-//     print("First change was on: ", readableFirstChange);
-//   }
-//   else {
-//     print("No change at this location")
-//   }
-// })
+    print("First change was on: ", readableFirstChange);
+  }
+  else {
+    print("No change at this location")
+  }
+})
+
+// ==============================================================================
+// 8. SAVING CHANGE REPORT AND PARAMETERS AS ASSETS FOR FIGURE CREATION (PYTHON)
+// ==============================================================================
+
+// get minMax date stats for dates of change and total changes colour ramps
+var combinedStats = alerts.changeReport
+  .select(["fcd_decision_map", "total_changes"])
+  .reduceRegion({
+    reducer: ee.Reducer.minMax(),
+    geometry: aoi,
+    scale: 10,
+    maxPixels: 1e9
+  });
+
+// send for evaluation to get client-side numbers for exporting
+combinedStats.evaluate(function(stats) {
+  
+  var dateVisParams = {
+    bands: ["fcd_decision_map"],
+    min: stats.fcd_decision_map_min,
+    max: stats.fcd_decision_map_max,
+    palette: fcdDecisionMapPalette
+  };
+  
+  var totalChangesVisParams = {
+    bands: ["total_changes"],
+    min: stats.total_changes_min,
+    max: stats.total_changes_max,
+    palette: totalChangesPalette
+  };
+  
+  var repeatabilityVisParams = {
+    bands: ["post_fcd_change_repeatability_pct"],
+    min: 0,
+    max: 100,
+    palette: fcdRepeatabilityPalette
+  };
+  
+  Map.addLayer(
+  alerts.changeReport.select("total_changes"),
+  totalChangesVisParams,
+  "L2 - Total Changes");
+  
+  Map.addLayer(
+  alerts.changeReport.select("post_fcd_change_repeatability_pct"),
+  repeatabilityVisParams,
+  "L8 - Post-FCD Change Repeatability");
+
+  Map.addLayer(
+  alerts.changeReport.select("fcd_decision_map"),
+  dateVisParams,
+  "L10 - FCD Decision Map");
+
+  var changeReportWithMetadata = alerts.changeReport
+    .set(pipelineParams)
+    .set("dateVisParams", JSON.stringify(dateVisParams))
+    .set("totalChangesVisParams", JSON.stringify(totalChangesVisParams))
+    .set("repeatabilityVisParams", JSON.stringify(repeatabilityVisParams));
+
+  Export.image.toAsset({
+    image: changeReportWithMetadata,
+    description: aoi_friendly_name + "_change_report",
+    assetId: project_asset_path + aoi_friendly_name + "_" + "change_report",
+    region: aoi,
+    scale: 10,
+    crs: CRS,
+    maxPixels: 1e13
+  });
+
+});
+
+// assign metadata to the assets
+var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+var firstImageWithMetadata = firstImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+var finalImageWithMetadata = finalImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
+var firstImage_filename = aoi_friendly_name +  "_first_monitoring_" + MONITORING_START + "_" + MONITORING_END
+var finalImage_filename = aoi_friendly_name + "_final_monitoring_" + MONITORING_START + "_" + MONITORING_END
+
+Export.image.toAsset({
+  image: baselineImageWithMetadata,
+  description: baseline_filename,
+  assetId: project_asset_path + baseline_filename,
+  region: aoi,
+  scale: 10,
+  crs: CRS,
+  maxPixels: 1e13
+});
+
+Export.image.toAsset({
+  image: firstImageWithMetadata,
+  description: firstImage_filename,
+  assetId: project_asset_path + firstImage_filename,
+  region: aoi,
+  scale: 10,
+  crs: CRS,
+  maxPixels: 1e13
+});
+
+Export.image.toAsset({
+  image: finalImageWithMetadata,
+  description: finalImage_filename,
+  assetId: project_asset_path + finalImage_filename,
+  region: aoi,
+  scale: 10,
+  crs: CRS,
+  maxPixels: 1e13
+});
