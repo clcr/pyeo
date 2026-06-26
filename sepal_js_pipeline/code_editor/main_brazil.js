@@ -397,7 +397,7 @@ var combinedStats = alerts.changeReport
 // send for evaluation to get client-side numbers for exporting
 combinedStats.evaluate(function(stats) {
   
-  var dateVisParams = {
+  var fcdDecisionVisParams = {
     bands: ["fcd_decision_map"],
     min: stats.fcd_decision_map_min,
     max: stats.fcd_decision_map_max,
@@ -430,12 +430,12 @@ combinedStats.evaluate(function(stats) {
 
   Map.addLayer(
   alerts.changeReport.select("fcd_decision_map"),
-  dateVisParams,
+  fcdDecisionVisParams,
   "L10 - FCD Decision Map");
 
   var changeReportWithMetadata = alerts.changeReport
     .set(pipelineParams)
-    .set("dateVisParams", JSON.stringify(dateVisParams))
+    .set("fcdDecisionVisParams", JSON.stringify(fcdDecisionVisParams))
     .set("totalChangesVisParams", JSON.stringify(totalChangesVisParams))
     .set("repeatabilityVisParams", JSON.stringify(repeatabilityVisParams));
 
