@@ -21,9 +21,9 @@ print("AOI area (km2)", aoi.area().divide(1000 * 1000))
 var BASELINE_START = '2020-01-01';
 var BASELINE_END = '2020-12-31';
 var MONITORING_START = '2021-01-01';
-var MONITORING_END = '2021-10-12' // '2022-03-31'; // subtract 45, 35, 30 worked with this end date
+var MONITORING_END = '2021-10-12';
 
-var BANDS = ['B2', 'B3', 'B4', 'B8', 'B11', 'B12'];
+var BANDS = ['B2', 'B3', 'B4', 'B6', 'B8', 'B11', 'B12'];
 var MAX_CLOUD_PROBABILITY_PER_PIXEL = 30; // 100 = minimal discrimination
 var MAX_CLOUD_SCORE_PER_PIXEL = 30; // 100 = no discrimination 
 
@@ -31,8 +31,8 @@ var FOREST = 1;
 var SOIL = 2;
 var GRASSLAND = 3;
 var BROWN_FOREST = 4;
-var changeFromClasses = [FOREST];
-var changeToClasses = [SOIL, GRASSLAND, BROWN_FOREST];
+var changeFromClasses = [FOREST, BROWN_FOREST];
+var changeToClasses = [SOIL, GRASSLAND];
 var allClasses = [FOREST, SOIL, GRASSLAND, BROWN_FOREST];
 
 // change detection parameters
@@ -222,12 +222,10 @@ var imageList = monitoringImages.toList(listLength);
 var firstImage = ee.Image(imageList.get(1));
 var finalImage = ee.Image(imageList.get(listLength.subtract(1)));
 
-print(imageList)
-
 Map.addLayer(
   baselineImage,
   visParamsRGB,
-  'Baseline Image', false
+  'Baseline Image'
 )
 
 Map.addLayer(
@@ -238,7 +236,7 @@ Map.addLayer(
 Map.addLayer(
   finalImage,
   visParamsRGB,
-  "Ending Monitoring Image")
+  "Ending Monitoring Image", false)
 
 // Inline training: forest / non-forest points within the AOI. Test fixture
 // only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
@@ -252,7 +250,47 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.180472, -15.029406]), {'class': FOREST}), 
     ee.Feature(ee.Geometry.Point([-59.165023, -15.034794]), {'class': FOREST}), 
     ee.Feature(ee.Geometry.Point([-59.171653, -15.041881]), {'class': FOREST}), 
-    ee.Feature(ee.Geometry.Point([-59.182039, -15.039415]), {'class': FOREST}), 
+    ee.Feature(ee.Geometry.Point([-59.182039, -15.039415]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15563, -15.00212]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16844, -15.00104]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.14668, -15.00059]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.13802, -15.00279]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.17419, -15.00067]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16522, -15.02024]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.14059, -15.00859]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.17037, -14.9998]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.13844, -15.01825]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.18449, -15.0122]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16604, -15.02177]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.17286, -15.00701]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.14559, -15.03389]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.1855, -15.03029]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.14362, -15.03961]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.17563, -15.02515]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.1458, -15.04341]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.1652, -15.03956]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.13731, -15.04179]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.18233, -15.04407]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.18593, -15.04353]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.13679, -15.03674]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16525, -15.03947]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.1392, -15.02754]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15722, -15.02625]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15919, -15.03549]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.14962, -15.02824]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16194, -15.00384]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16808, -15.00127]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15408, -15.01325]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.14082, -15.00607]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16636, -15.00972]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15327, -15.02386]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.13945, -15.00284]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16241, -15.022364]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15902, -15.017453]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.174577, -15.014841]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.162603, -15.012748]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.145244, -15.016935]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.165286, -15.017743]), {'class': FOREST}),
     ee.Feature(ee.Geometry.Point([-59.18412, -15.033261]), {'class': SOIL}), 
     ee.Feature(ee.Geometry.Point([-59.179399, -15.039602]), {'class': SOIL}), 
     ee.Feature(ee.Geometry.Point([-59.181786, -15.035011]), {'class': SOIL}), 
@@ -262,7 +300,47 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.163559, -15.030901]), {'class': SOIL}), 
     ee.Feature(ee.Geometry.Point([-59.160598, -15.028414]), {'class': SOIL}), 
     ee.Feature(ee.Geometry.Point([-59.145022, -15.019395]), {'class': SOIL}), 
-    ee.Feature(ee.Geometry.Point([-59.145966, -15.024431]), {'class': SOIL}), 
+    ee.Feature(ee.Geometry.Point([-59.145966, -15.024431]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.167346, -15.019256]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.177904, -15.002563]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.177442, -15.003568]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.180479, -15.006273]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.183, -15.006035]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.178075, -15.006211]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.169688, -15.006815]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.168615, -15.009924]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.174537, -15.009281]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.16876, -15.013171]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.179424, -15.015181]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.179607, -15.009046]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.179418, -15.015202]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.182691, -15.017585]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.17435, -15.020339]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.183137, -15.022173]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.180863, -15.021759]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.17126, -15.019023]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.182418, -15.01721]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.183706, -15.022966]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.186367, -15.023225]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.171455, -15.02599]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.179587, -15.028829]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.168779, -15.013177]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.172856, -15.01099]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.171708, -15.012493]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.17203, -15.016358]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.174634, -15.019269]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.166673, -15.019559]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.170632, -15.022492]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.171962, -15.016295]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.175707, -15.022637]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.170062, -15.025189]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.175705, -15.022608]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.169892, -15.028846]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.176114, -15.037985]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.180921, -15.031996]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.1812, -15.027023]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.183152, -15.037799]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-59.139819, -15.044919]), {'class': SOIL}),
     ee.Feature(ee.Geometry.Point([-59.14116, -15.017405]), {'class': GRASSLAND}),
     ee.Feature(ee.Geometry.Point([-59.152219, -15.025272]), {'class': GRASSLAND}),
     ee.Feature(ee.Geometry.Point([-59.138615, -15.021003]), {'class': GRASSLAND}),
@@ -274,6 +352,49 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.15844, -15.028466]), {'class': GRASSLAND}),
     ee.Feature(ee.Geometry.Point([-59.172623, -15.027513]), {'class': GRASSLAND}),
     ee.Feature(ee.Geometry.Point([-59.173224, -15.033999]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.142449, -15.005888]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.141419, -14.998862]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.138308, -15.004313]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.152556, -15.002075]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.147921, -15.003754]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.145836, -15.009684]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.152209, -15.002098]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.143755, -15.013477]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.150509, -15.01707]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.141539, -15.0162]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.151818, -15.023743]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.158169, -15.025301]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.170658, -15.021197]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.171881, -15.027415]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.173855, -15.027207]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.177331, -15.029238]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.182116, -15.025943]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.182781, -15.021011]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.17055, -15.021073]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.182803, -15.021218]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.177503, -15.03535]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.171259, -15.036283]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.172654, -15.042002]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.165079, -15.040345]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.171967, -15.035413]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.174821, -15.044945]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.163363, -15.035786]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.172804, -15.030714]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.17465, -15.030548]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.158122, -15.034481]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.15132, -15.029819]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.161899, -15.033466]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.164474, -15.031373]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.14308, -15.036118]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.160032, -15.030772]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.164602, -15.042356]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.168164, -15.033051]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.148917, -15.038564]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.164559, -15.04248]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.14167, -15.028619]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.142636, -15.026878]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.138537, -15.032452]), {'class': GRASSLAND}),
+    ee.Feature(ee.Geometry.Point([-59.137057, -15.03784]), {'class': GRASSLAND}),
     ee.Feature(ee.Geometry.Point([-59.160092, -15.032196]), {'class': BROWN_FOREST}),
     ee.Feature(ee.Geometry.Point([-59.166323, -15.01849]), {'class': BROWN_FOREST}),
     ee.Feature(ee.Geometry.Point([-59.155251, -15.023464]), {'class': BROWN_FOREST}),
@@ -283,21 +404,27 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.14514, -14.996101]), {'class': BROWN_FOREST}),
     ee.Feature(ee.Geometry.Point([-59.154496, -15.010071]), {'class': BROWN_FOREST}),
     ee.Feature(ee.Geometry.Point([-59.156169, -15.007729]), {'class': BROWN_FOREST}),
-    ee.Feature(ee.Geometry.Point([-59.157907, -15.00605]), {'class': BROWN_FOREST})
+    ee.Feature(ee.Geometry.Point([-59.157907, -15.00605]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.157736, -15.006318]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15559, -15.008224]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.1784, -15.030623]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.152114, -15.029255]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.183983, -15.021827]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.182781, -15.022884]), {'class': BROWN_FOREST})
 ])
 
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
-//     {colour: 'green'}, 'Training: FOREST')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
-//     {colour: 'brown'}, 'Training: SOIL')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
-//     {colour: 'orange'}, 'Training: GRASSLAND')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', BROWN_FOREST)),
-//     {colour: 'blue'}, 'Training: BROWN FOREST')
+Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', FOREST)),
+    {color: 'ForestGreen'}, 'Training: FOREST')
+Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', SOIL)),
+    {color: 'LightSalmon'}, 'Training: SOIL')
+Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
+    {color: 'LightGreen'}, 'Training: GRASSLAND')
+Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', BROWN_FOREST)),
+    {color: 'Maroon'}, 'Training: BROWN FOREST')
 
 var trainingSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
@@ -453,8 +580,14 @@ combinedStats.evaluate(function(stats) {
 
 // assign metadata to the assets
 var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
-var firstImageWithMetadata = firstImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
-var finalImageWithMetadata = finalImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+var firstImageWithMetadata = firstImage
+  .set(pipelineParams)
+  .set("visParamsRGB", JSON.stringify(visParamsRGB))
+  .set("date", firstImage.get("date_str"));
+var finalImageWithMetadata = finalImage
+  .set(pipelineParams)
+  .set("visParamsRGB", JSON.stringify(visParamsRGB))
+  .set("date", finalImage.get("date_str"));
 var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
 var firstImage_filename = aoi_friendly_name +  "_first_monitoring_" + MONITORING_START + "_" + MONITORING_END
 var finalImage_filename = aoi_friendly_name + "_final_monitoring_" + MONITORING_START + "_" + MONITORING_END
