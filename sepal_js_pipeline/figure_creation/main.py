@@ -75,14 +75,21 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
     properties = baseline_img.getInfo().get("properties", {})
     vis_params = json.loads(properties["visParamsRGB"])
 
+    # extract the date metadata
+    first_img_date = first_img.getInfo().get("properties", {})["date"]
+    last_img_date = last_img.getInfo().get("properties", {})["date"]
+    from_date = baseline_image_id.split("_")[-2]
+    end_date = baseline_image_id.split("_")[-1]
+
     properties = change_img.getInfo().get("properties", {})
     total_changes_params = json.loads(properties["totalChangesVisParams"])
     repeatability_params = json.loads(properties["repeatabilityVisParams"])
     fcd_decision_params = json.loads(properties["fcdDecisionVisParams"])
 
+
     # define things to iterate through
     images = [baseline_img, first_img, last_img]
-    titles = ["Baseline Median", "First Monitoring Image", "Last Monitoring Image"]
+    titles = [f"Baseline Median:\n{from_date} - {end_date}", f"First Monitoring Image:\n{first_img_date}", f"Last Monitoring Image:\n{last_img_date}"]
     change_params = [total_changes_params, repeatability_params, fcd_decision_params]
     change_titles = ["Total Changes", "Post FCD Change Repeatability (%)", "FCD Decision"]
 
