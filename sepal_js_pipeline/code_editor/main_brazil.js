@@ -1,13 +1,13 @@
 var pyeo = require('users/mp730/A4F:pyeoChangeAlerts')
 var cloudMasking = require('users/mp730/A4F:cloudMasking');
 var project_asset_path = 'projects/aim4forests-499914/assets/'
-var aoi_friendly_name = 'Brazil_II'
+var aoi_friendly_name = 'Brazil_II_Forest_to_SG'
 
 // ==============================================================================
 // 1. PARAMETERS & CONSTANTS 
 // ==============================================================================
 
-var inspection_marker = ee.Geometry.Point(-59.16104, -15.01913);
+var inspection_marker = ee.Geometry.Point(-59.15863, -15.02081);
 
 // construct a roughly 30 km2 square Area Of Interest
 var corner_coordinate = [-59.161552060067635, -15.02035785032475] 
@@ -18,10 +18,10 @@ var CRS = "EPSG:5641";
 
 print("AOI area (km2)", aoi.area().divide(1000 * 1000))
 
-var BASELINE_START = '2020-01-01';
-var BASELINE_END = '2020-12-31';
-var MONITORING_START = '2021-01-01';
-var MONITORING_END = '2021-10-12';
+var BASELINE_START = '2019-07-01';
+var BASELINE_END = '2020-06-30';
+var MONITORING_START = '2020-09-01';
+var MONITORING_END = '2021-12-31';
 
 var BANDS = ['B2', 'B3', 'B4', 'B6', 'B8', 'B11', 'B12'];
 var MAX_CLOUD_PROBABILITY_PER_PIXEL = 30; // 100 = minimal discrimination
@@ -31,9 +31,12 @@ var FOREST = 1;
 var SOIL = 2;
 var GRASSLAND = 3;
 var BROWN_FOREST = 4;
-var changeFromClasses = [FOREST, BROWN_FOREST];
+var changeFromClasses = [FOREST];
 var changeToClasses = [SOIL, GRASSLAND];
 var allClasses = [FOREST, SOIL, GRASSLAND, BROWN_FOREST];
+var changeFromClassesStr = ["Forest"];
+var changeToClassesStr = ["Soil", "Grassland"];
+var allClassesStr = ["Forest", "Soil", "Grassland", "Brown Forest"];
 
 // change detection parameters
 var minRequiredValidatedDetectionsThreshold = 2;
@@ -77,8 +80,11 @@ var pipelineParams = {
   'max_cloud_probability_per_pixel': MAX_CLOUD_PROBABILITY_PER_PIXEL,
   'max_cloud_score_per_pixel': MAX_CLOUD_SCORE_PER_PIXEL,
   'change_from_classes': JSON.stringify(changeFromClasses),
+  'change_from_classes_str': JSON.stringify(changeFromClassesStr),
   'change_to_classes': JSON.stringify(changeToClasses),
+  'change_to_classes_str': JSON.stringify(changeToClassesStr),
   'all_classes': JSON.stringify(allClasses),
+  'all_classes_str': JSON.stringify(allClassesStr),
   'min_validated_detections_threshold': minRequiredValidatedDetectionsThreshold,
   'min_classifier_detections_threshold': minRequiredClassifierDetectionsThreshold,
   'percentage_probability_threshold': percentageProbabilityThreshold,
@@ -117,10 +123,6 @@ var fcdDecisionMapPalette = ["#DBEAFE", "#1C398E"]; // blues
 // fcd repeatability palette
 var fcdRepeatabilityPalette = ["#DCFCE7", "#0D542B"]; // greens
 
-// 1625321810077
-// 1624457809201
-// 1610633808389
-
 // RGB parameters
 var visParamsRGB = {
   min: 0,
@@ -140,7 +142,8 @@ var dynamicFullPalette = allClasses.map(function(classId) {
   return classColourMap[classId];
 })
 
-var visClassParams = {
+var visClassParams = { 
+  bands: ["classification"],
   min: Math.min.apply(null, allClasses),
   max: Math.max.apply(null, allClasses),
   palette: dynamicFullPalette
@@ -206,21 +209,32 @@ var dailyMosaic = function(col) {
 var maskedBaselineCollection = cloudMasking.build(baselineParams);
 var maskedMonitoringCollection = cloudMasking.build(monitoringParams);
 
+// temporarily remove the problematic image - 6th Sept 2020 T21LTD
+var cleanedMonitoringCollection = maskedMonitoringCollection
+  .filter(ee.Filter.neq("system:index", "20200906T141049_20200906T141049_T21LTD"))
+  .filter(ee.Filter.neq("system:index", "20201220T141051_20201220T141045_T21LTD"))
+  .filter(ee.Filter.neq("system:index", "20210114T141049_20210114T141046_T21LTD"));
+  
 var baselineImage = maskedBaselineCollection
   .map(addNDVI)
   .select(BANDS.concat("NDVI"))
   .median()
   .clip(aoi);
 
-var monitoringImagesRaw = maskedMonitoringCollection
+var monitoringImagesRaw = cleanedMonitoringCollection
   .map(addNDVI)
   .select(BANDS.concat("NDVI"))
   
 var monitoringImages = dailyMosaic(monitoringImagesRaw)
 var listLength = monitoringImages.size();
 var imageList = monitoringImages.toList(listLength);
-var firstImage = ee.Image(imageList.get(1));
-var finalImage = ee.Image(imageList.get(listLength.subtract(1)));
+var firstImage = monitoringImages
+  .filter(ee.Filter.eq("system:index", "20201001T141051_20201001T141609_T21LTD"))
+  .first();
+  
+var finalImage = monitoringImages
+  .filter(ee.Filter.eq("system:index", "20211021T141049_20211021T141047_T21LTD"))
+  .first();
 
 Map.addLayer(
   baselineImage,
@@ -231,12 +245,12 @@ Map.addLayer(
 Map.addLayer(
   firstImage,
   visParamsRGB,
-  "Beginning Monitoring Image", false)
+  "Beginning Monitoring Image")
 
 Map.addLayer(
   finalImage,
   visParamsRGB,
-  "Ending Monitoring Image", false)
+  "Ending Monitoring Image")
 
 // Inline training: forest / non-forest points within the AOI. Test fixture
 // only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
@@ -413,18 +427,19 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.182781, -15.022884]), {'class': BROWN_FOREST})
 ])
 
-Map.addLayer(
-    trainingPoints.filter(ee.Filter.eq('class', FOREST)),
-    {color: 'ForestGreen'}, 'Training: FOREST')
-Map.addLayer(
-    trainingPoints.filter(ee.Filter.eq('class', SOIL)),
-    {color: 'LightSalmon'}, 'Training: SOIL')
-Map.addLayer(
-    trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
-    {color: 'LightGreen'}, 'Training: GRASSLAND')
-Map.addLayer(
-    trainingPoints.filter(ee.Filter.eq('class', BROWN_FOREST)),
-    {color: 'Maroon'}, 'Training: BROWN FOREST')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
+//     {color: 'ForestGreen'}, 'Training: FOREST')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
+//     {color: 'LightSalmon'}, 'Training: SOIL')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
+//     {color: 'LightGreen'}, 'Training: GRASSLAND')
+// Map.addLayer(
+//     trainingPoints.filter(ee.Filter.eq('class', BROWN_FOREST)),
+//     {color: 'Maroon'}, 'Training: BROWN FOREST')
+
 
 var trainingSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
@@ -559,7 +574,7 @@ combinedStats.evaluate(function(stats) {
   alerts.changeReport.select("fcd_decision_map"),
   fcdDecisionVisParams,
   "L10 - FCD Decision Map");
-
+  
   var changeReportWithMetadata = alerts.changeReport
     .set(pipelineParams)
     .set("fcdDecisionVisParams", JSON.stringify(fcdDecisionVisParams))
@@ -576,7 +591,20 @@ combinedStats.evaluate(function(stats) {
     maxPixels: 1e13
   });
 
+  // Export.image.toDrive({
+  //   image: changeReportWithMetadata.toDouble(),
+  //   description: aoi_friendly_name + "_change_report_Drive",
+  //   fileNamePrefix: aoi_friendly_name + "_" + "change_report",
+  //   region: aoi,
+  //   scale: 10,
+  //   crs: CRS,
+  //   maxPixels: 1e13,
+  //   fileFormat: "GeoTIFF"
+  // });
+
 });
+
+stop
 
 // assign metadata to the assets
 var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
@@ -603,7 +631,7 @@ Export.image.toAsset({
 });
 
 Export.image.toAsset({
-  image: firstImageWithMetadata,
+  image: ee.Image(firstImageWithMetadata),
   description: firstImage_filename,
   assetId: project_asset_path + firstImage_filename,
   region: aoi,
@@ -621,3 +649,81 @@ Export.image.toAsset({
   crs: CRS,
   maxPixels: 1e13
 });
+
+// Export.image.toDrive({
+//   image: baselineImageWithMetadata.toDouble(),
+//   description: baseline_filename,
+//   fileNamePrefix: baseline_filename,
+//   region: aoi,
+//   scale: 10,
+//   crs: CRS,
+//   maxPixels: 1e13,
+//   fileFormat: "GeoTIFF"
+// });
+
+// Export.image.toDrive({
+//   image: classifiedBaselineImage
+//     .select("classification")
+//     .visualize(visClassParams),
+//   description: baseline_filename + "_classified_Drive",
+//   fileNamePrefix: baseline_filename + "_classified",
+//   region: aoi,
+//   scale: 10,
+//   maxPixels: 1e13,
+//   fileFormat: "GeoTIFF"
+// });
+
+// ==============================================================================
+// 9. EXPORTING MONITORING COLLECTION TO DRIVE FOR MANUAL INSPECTION OF CHANGE
+// ==============================================================================
+
+var exportCollectionToDrive = function(collection, region, visParams, taskString) {
+  // 1. Prepare the collection for export
+  var toExport = collection.map(function(img) {
+    var dateStr = img.date().format("YYYY-MM-dd");
+    var visual = img.visualize(visParams);
+    return visual.set("date_str", dateStr);
+  });
+  
+  // 2. Convert collection to an ee.List to allow indexing
+  var size = toExport.size();
+  var collectionList = toExport.toList(size);
+  
+  // 3. Get an ee.List of all the date strings
+  var datesList = toExport.aggregate_array("date_str");
+  
+  // 4. Evaluate the dates list to bring it to the client side
+  datesList.evaluate(function(dates, error) {
+    if (error) {
+      print("Error evaluating dates:", error);
+      return;
+    }
+    
+    // Now 'dates' is a standard JavaScript array, so a for-loop works perfectly!
+    for (var i = 0; i < dates.length; i++) {
+      var dateString = dates[i];
+      var safeDate = dateString.replace(/-/g, "_");
+      var taskName = "Export_Quicklook_" + safeDate;
+      
+      // Fetch the specific image from the server-side list using the index
+      var img = ee.Image(collectionList.get(i));
+      
+      // Create the export task
+      Export.image.toDrive({
+        image: img,
+        description: taskName,
+        fileNamePrefix: taskString + safeDate,
+        region: region, 
+        scale: 10,
+        maxPixels: 1e13,
+        fileFormat: "GeoTIFF"
+      });
+    }
+  });
+};
+
+//var taskString = "S2_Quicklook_" 
+//exportCollectionToDrive(monitoringImages, aoi, visParamsRGB, taskString);
+
+// var taskString = "S2_Quicklook_Classified_" 
+// exportCollectionToDrive(classifiedMonitoringCollection, aoi, visClassParams, taskString);
