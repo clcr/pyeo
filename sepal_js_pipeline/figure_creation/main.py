@@ -181,7 +181,8 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
 
     # save
     try:
-        plt.tight_layout()
+        #plt.tight_layout()
+        plt.subplots_adjust(hspace=0.1, wspace=0.3)
         plt.savefig(png_out_path, dpi=300)
         plt.close(fig)
     except (OSError, IOError) as e:
