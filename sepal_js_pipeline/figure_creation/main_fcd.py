@@ -1,3 +1,9 @@
+"""
+main_fcd.py
+Author: Matt Payne
+This script creates First Change Date (FCD) comparison figures from EE Assets.
+"""
+
 import argparse
 import datetime
 import json
