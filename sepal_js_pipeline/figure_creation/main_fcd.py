@@ -10,19 +10,24 @@ import json
 from pathlib import Path
 import requests
 
+import contextily as ctx
 import ee
 from ee.image import Image as eeImage
+import geopandas as gpd
 import google.auth
 from io import BytesIO
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+import matplotlib.gridspec as gridspec
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_map_utils.core.north_arrow import NorthArrow
 import matplotlib.ticker as mticker
+import osmnx as ox
 from PIL import Image
 from pyproj import Transformer
-
+from shapely.geometry import box
 
 def initialise(project_name: str) -> None:
     """
@@ -52,7 +57,7 @@ def initialise(project_name: str) -> None:
 
     return
 
-def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str, change_report_id: str, epsg_code: str, png_out_path: Path):
+def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str, change_report_id: str, epsg_code: str, png_out_path: Path, country_string: str):
     """_summary_
 
     Parameters
@@ -68,6 +73,8 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
     epsg_code : str
         _description_
     png_out_path : Path
+        _description_
+    country_string : str
         _description_
     """
 
@@ -92,7 +99,6 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
     repeatability_params = json.loads(properties["repeatabilityVisParams"])
     fcd_decision_params = json.loads(properties["fcdDecisionVisParams"])
 
-
     # define things to iterate through
     images = [baseline_img, first_img, last_img]
     titles = [f"Baseline Median:\n{from_date} - {end_date}", f"First Monitoring Image:\n{first_img_date}", f"Last Monitoring Image:\n{last_img_date}"]
@@ -111,14 +117,26 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
     transformer = Transformer.from_crs("EPSG:4326", epsg_code, always_xy=True)
     xs, ys = transformer.transform(lons, lats)
     extent = [min(xs), max(xs), min(ys), max(ys)]
-    
-    # construct the graph
-    fig, axes = plt.subplots(figsize=(18, 12), nrows=2, ncols=3, dpi=300)
+
+    ############
+    #  construct the graph
+    ############
+
+    fig = plt.figure(figsize=(18, 16), layout="constrained")
+    gs = gridspec.GridSpec(nrows=3, ncols=3, figure=fig)
+
+    # create the axes
+    axes_top_rgb = [fig.add_subplot(gs[0, i]) for i in range(3)] # 3 cols
+    axes_middle_report = [fig.add_subplot(gs[1, i]) for i in range(3)] # 3 cols
+    ax_bottom_extent = [fig.add_subplot(gs[2, 1])][0] # 1 plot in the 2nd col
 
     title_dict = {"fontweight": "bold", "fontsize": 16}
 
-    # iterate through the top three plots
-    for ax, img, title in zip(axes[0], images, titles):
+    ###################
+    # PLOT THE RGB IMAGERY
+    ###################
+
+    for ax, img, title in zip(axes_top_rgb, images, titles):
 
         # get the image as a thumbnail, adequate for plotting
         url = img.getThumbURL(vis_params)
@@ -136,12 +154,16 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
         ax.add_artist(north)
 
         # scale bar
-        scalebar = ScaleBar(dx=1, units="m", location="lower left", 
+        scalebar = ScaleBar(dx=1, units="deg", dimension="angle", location="lower left", 
                             scale_formatter=lambda value, unit: f"{value} {unit}",
                             box_alpha=0.6)
         ax.add_artist(scalebar)
 
-    for ax, vis, title in zip(axes[1], change_params, change_titles):
+    ###################
+    # PLOT THREE CHANGE REPORT LAYERS
+    ###################
+
+    for ax, vis, title in zip(axes_middle_report, change_params, change_titles):
 
         # get the image as a thumbnail, adequate for plotting
         url = change_img.getThumbURL(vis)
@@ -157,7 +179,7 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
         ax.add_artist(north)
 
         # scale bar
-        scalebar = ScaleBar(dx=1, units="m", location="lower left", 
+        scalebar = ScaleBar(dx=1, units="deg", dimension="angle", location="lower left", 
                             scale_formatter=lambda value, unit: f"{value} {unit}",
                             box_alpha=0.6)
         ax.add_artist(scalebar)
@@ -185,11 +207,75 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
                 lambda x, _: datetime.datetime.fromtimestamp(x / 1000.0).strftime("%d %B %Y"))
             cbar.ax.yaxis.set_major_formatter(date_formatter)
 
+    ###################
+    # PLOT EXTENT
+    ###################
+
+    region_gdf = ox.geocode_to_gdf(country_string)
+    region_gdf = region_gdf.to_crs(epsg_code)
+
+    # plot state boundary
+    region_gdf.plot(ax=ax_bottom_extent, facecolor="none", edgecolor="black", linewidth=2, zorder=2)
+
+    # plot the image AOI as an extent indicator onto the state boundary
+    aoi_box = box(min(lons), min(lats), max(lons), max(lats))
+    aoi_gdf = gpd.GeoDataFrame({"geometry": [aoi_box]}, crs="EPSG:4326")
+
+    aoi_gdf = aoi_gdf.to_crs(epsg_code)    
+    aoi_gdf.plot(ax=ax_bottom_extent, facecolor="none", edgecolor="red", alpha=0.6, zorder=3, linewidth=10)
+
+    ####### basemap
+    ctx.add_basemap(ax_bottom_extent, crs=region_gdf.crs.to_string(), source=ctx.providers.CartoDB.Positron, zorder=1)
+
+    ####### format extent map
+    # north arrow
+    north = NorthArrow(size="medium", location="upper right", rotation={"degrees": 0})
+    ax_bottom_extent.add_artist(north)
+    
+    # scale bar
+    ax_bottom_extent.set_aspect("equal")
+    scalebar = ScaleBar(dx=1, units="deg", dimension="angle", location="lower left", 
+                        scale_formatter=lambda value, unit: f"{value} {unit}",
+                        box_alpha=0.8)
+    
+    ax_bottom_extent.add_artist(scalebar)
+    ax_bottom_extent.set_title(f"Location of pilot site within {county_country_string}", fontdict=title_dict)
+    ax_bottom_extent.set_xlabel("Longitude")
+    ax_bottom_extent.set_ylabel("Latitude")
+
+    # legend time
+    aoi_patch = mpatches.Patch(facecolor="none", edgecolor="red", alpha=1, label="AOI Boundary")
+    state_patch = mpatches.Patch(facecolor="none", edgecolor="black", alpha=1, label="State Boundary")
+    ax_bottom_extent.legend(handles=[aoi_patch, state_patch], loc="lower right")
+
+    ######### plotting bounds
+    bounds = region_gdf.total_bounds
+    minx, miny, maxx, maxy = bounds
+    
+    # calculate the geographic width and height
+    dx = maxx - minx
+    dy = maxy - miny
+
+    # calculate centre coords
+    cx = (maxx + minx) / 2.0
+    cy = (maxy + miny) / 2.0
+
+    # find the max dimension to force a square plot window
+    max_dim = max(dx, dy)
+
+    buffer = 0.05
+    padded_dim = max_dim * (1 + buffer)
+
+    # set the extents
+    ax_bottom_extent.set_xlim(cx - (padded_dim / 2.0), cx + (padded_dim / 2.0))
+    ax_bottom_extent.set_ylim(cy - (padded_dim / 2.0), cy + (padded_dim / 2.0))
+    #######
+
     # save
     try:
         #plt.tight_layout()
-        plt.subplots_adjust(hspace=0.1, wspace=0.3)
-        plt.savefig(png_out_path, dpi=300)
+        # plt.subplots_adjust(hspace=0.1, wspace=0.3)
+        plt.savefig(png_out_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
     except (OSError, IOError) as e:
         print(f"Could not save plot, encountered: {e}")
@@ -204,10 +290,12 @@ if __name__ == "__main__":
     parser.add_argument("change_report_asset_path", help="The string corresponding to the path of the change report asset.", type=str)
     parser.add_argument("png_out_path", help="The string of the output path to write the .png to.", type=str)
     parser.add_argument("epsg", help="A string of the EPSG to use.", type=str)
+    parser.add_argument("country_string", help="A string where the AOI is located, taken in the <COUNTRY> format.", type=str)
 
     args = parser.parse_args()
     png_out_path = Path(args.png_out_path)
     epsg = args.epsg
+    country_string = args.county_country_string
 
     # TODO put into a function
     # define the scopes required for Earth Engine and Google Cloud
@@ -229,4 +317,5 @@ if __name__ == "__main__":
                 last_image_id=args.last_monitoring_image_asset_path,
                 change_report_id=args.change_report_asset_path,
                 png_out_path=png_out_path,
-                epsg_code=epsg)
+                epsg_code=epsg,
+                country_string=country_string)
