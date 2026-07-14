@@ -239,13 +239,13 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
                         box_alpha=0.8)
     
     ax_bottom_extent.add_artist(scalebar)
-    ax_bottom_extent.set_title(f"Location of pilot site within {county_country_string}", fontdict=title_dict)
+    ax_bottom_extent.set_title(f"Location of pilot site within {country_string}", fontdict=title_dict)
     ax_bottom_extent.set_xlabel("Longitude")
     ax_bottom_extent.set_ylabel("Latitude")
 
     # legend time
     aoi_patch = mpatches.Patch(facecolor="none", edgecolor="red", alpha=1, label="AOI Boundary")
-    state_patch = mpatches.Patch(facecolor="none", edgecolor="black", alpha=1, label="State Boundary")
+    state_patch = mpatches.Patch(facecolor="none", edgecolor="black", alpha=1, label="Country Boundary")
     ax_bottom_extent.legend(handles=[aoi_patch, state_patch], loc="lower right")
 
     ######### plotting bounds
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     png_out_path = Path(args.png_out_path)
     epsg = args.epsg
-    country_string = args.county_country_string
+    country_string = args.country_string
 
     # TODO put into a function
     # define the scopes required for Earth Engine and Google Cloud
