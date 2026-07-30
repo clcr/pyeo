@@ -133,14 +133,21 @@ var run_change_detection = function (params) {
 
     // flag where both conditions (class and NDVI change) are met
     var isChangeMask = transitionMask.and(deltaNdviThresholdedMask).rename("is_change");
-      
-    // store the image_date as a band for change reporting
-    var imgMillis = ee.Image.constant(image.getNumber("system:time_start"));
-    var imgMillisGeneric = imgMillis.double();
     
-    // build dates of all changes above the NDVI threshold
-    var changeDateAboveThreshold = imgMillisGeneric.updateMask(isChangeMask).rename("change_date_above_threshold")
+    // *********  
+    // store the image date as fractional date band for change reporting
+    var imgDate = ee.Date(image.get("system:time_start"));
+    var year = imgDate.get("year");
+    var fraction = imgDate.getFraction("year");
+    var fractionalYear = year.add(fraction);
+    var imgFracYear = ee.Image.constant(fractionalYear).double();
+    // *********
 
+    // build dates of all changes above the NDVI threshold
+    var changeDateAboveThreshold = imgFracYear
+      .updateMask(isChangeMask)
+      .rename("change_date_above_threshold");
+    
     return image.addBands([isChangeMask, changeDateAboveThreshold, deltaNdviThresholdedMask, deltaNDVI, isFromClass, isToClass, currentClass, transitionMask]);
   }); // end of changeEvents function
   // an imagecollection, each image has the six bands above
@@ -154,17 +161,22 @@ var run_change_detection = function (params) {
 
   // map over the change images in changeEvents a second time, to evaluate temporal consistency of the first changes
   var postChangeEvaluation = changeEvents.map(function(image) {
-    // get the timestamp, cast to double to ensure homogeneity of types
-    var currentMillis = ee.Image.constant(image.getNumber("system:time_start")).double();
-
+    // *********  
+    // store the image date as fractional date band for change reporting
+    var imgDate = ee.Date(image.get("system:time_start"));
+    var year = imgDate.get("year");
+    var fraction = imgDate.getFraction("year");
+    var fractionalYear = year.add(fraction);
+    var imgFracYear = ee.Image.constant(fractionalYear).double();
+    // *********
+    
     // create a temporal window mask
     // pixel has a value of 1 if it has a change that is the first change or is afterwards
-    var isAfterFirstChange = currentMillis.gte(firstChangeDateAboveThreshold);
+    var isAfterFirstChange = imgFracYear.gte(firstChangeDateAboveThreshold);
+
     var isPostFCD = isAfterFirstChange.rename("post_fcd"); // boolean (1, 0) indicating whether the pixel is post-FCD
     var isChange = image.select("is_change") // 1 for change, 0 for no change
     // here find out if masked, then unmasked and eq
-    // var isPostFCDOccluded = isPostFCD.mask().unmask(0).eq(0).rename("post_fcd_occluded") 
-
     var isOccluded = image.select("classification").mask().not();
     
     // combine first change date with whether was occluded
@@ -295,10 +307,7 @@ var run_change_detection = function (params) {
       fromClassCount,
       toClassCount,
       binaryDecisionFromToMap
-    ])//,
-    // changeEvents: changeEvents, // an imagecollection
-    // fromClassCollection: changeEvents.select("is_from_class"), // an imagecollection
-    // toClassCollection: changeEvents.select("is_to_class") // an imagecollection
+    ])
   };
 
 }
