@@ -1,4 +1,3 @@
-import ee from '#sepal/ee/ee'
 /**
  * PyEO Change Alerts — GEE function.
  *
@@ -610,3 +609,5 @@ var run_change_detection = function (params) {
   } // END OF BRANCH
   
 };
+
+exports.run_change_detection = run_change_detection;
