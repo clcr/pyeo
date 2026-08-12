@@ -1,22 +1,20 @@
 var pyeo = require('users/mp730/A4F:pyeoChangeAlerts')
 var cloudMasking = require('users/mp730/A4F:cloudMasking');
 var project_asset_path = 'projects/aim4forests-499914/assets/'
-var aoi_friendly_name = 'Brazil_II_Forest_to_SG'
+var aoi_friendly_name = 'Brazil_II'
 
 // ==============================================================================
 // 1. PARAMETERS & CONSTANTS 
 // ==============================================================================
 
-var inspection_marker = ee.Geometry.Point(-59.15863, -15.02081);
+var inspection_marker = ee.Geometry.Point(-59.16421, -15.0234);
 
 // construct a roughly 30 km2 square Area Of Interest
 var corner_coordinate = [-59.161552060067635, -15.02035785032475] 
 var lon = corner_coordinate[0]
 var lat = corner_coordinate[1]
 var aoi = ee.Geometry.Rectangle([lon - 0.025, lat - 0.025, lon + 0.025, lat + 0.025]);
-var CRS = "EPSG:5641";
-
-print("AOI area (km2)", aoi.area().divide(1000 * 1000))
+var CRS = "EPSG:5641"
 
 var BASELINE_START = '2019-07-01';
 var BASELINE_END = '2020-06-30';
@@ -34,6 +32,7 @@ var BROWN_FOREST = 4;
 var changeFromClasses = [FOREST];
 var changeToClasses = [SOIL, GRASSLAND];
 var allClasses = [FOREST, SOIL, GRASSLAND, BROWN_FOREST];
+
 var changeFromClassesStr = ["Forest"];
 var changeToClassesStr = ["Soil", "Grassland"];
 var allClassesStr = ["Forest", "Soil", "Grassland", "Brown Forest"];
@@ -44,9 +43,13 @@ var minRequiredClassifierDetectionsThreshold = 5;
 var percentageProbabilityThreshold = 50;
 var minRequiredFromDetectionsThreshold = 2;
 var minRequiredToDetectionsThreshold = 2
-var useNdvi = true
-var deltaNdviThreshold = 0.2;  // -2.0 switches off delta ndvi threshold
-var minRequiredDeltaNDVIDetectionsThreshold = 10;
+var useIndex = true
+var index = "NDVI"
+var deltaIndexThreshold = 0.2;
+var minRequiredDeltaIndexDetectionsThreshold = 2;
+var useHazeFilter = true;
+var fromAvailabilityThresholdPct = 0.1;
+var hazeLikelihoodThresholdPct = 0.3;
 
 // parameter objects for imagery acquisition and cloud masking
 var baselineParams = {
@@ -90,9 +93,12 @@ var pipelineParams = {
   'percentage_probability_threshold': percentageProbabilityThreshold,
   'min_from_detections_threshold': minRequiredFromDetectionsThreshold,
   'min_to_detections_threshold': minRequiredToDetectionsThreshold,
-  'use_ndvi': useNdvi,
-  'delta_ndvi_threshold': deltaNdviThreshold,
-  'min_delta_ndvi_detections_threshold': minRequiredDeltaNDVIDetectionsThreshold
+  'use_index': useIndex,
+  'delta_index_threshold': deltaIndexThreshold,
+  'min_delta_index_detections_threshold': minRequiredDeltaIndexDetectionsThreshold,
+  "use_haze_filter": useHazeFilter,
+  "haze_filter_from_availability_threshold_pct": fromAvailabilityThresholdPct,
+  "haze_filter_likelihood_threshold_pct": hazeLikelihoodThresholdPct
 };
 
 // ==============================================================================
@@ -112,6 +118,13 @@ var classColourMap = {
   2: "LightSalmon", // soil
   3: "LightGreen", // grassland
   4: "Maroon" // brown forest
+}
+
+var classNameMap = {
+  1: allClassesStr[0],
+  2: allClassesStr[1],
+  3: allClassesStr[2],
+  4: allClassesStr[3]
 }
 
 // total changes palette
@@ -167,7 +180,7 @@ var toClassParams = {
 
 // NDVI calculation
 var addNDVI = function (img) {
-    return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('NDVI'));
+    return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('gate_index'));
 };
 
 // group images by date and mosaics overlapping tiles from the same orbit pass
@@ -209,48 +222,29 @@ var dailyMosaic = function(col) {
 var maskedBaselineCollection = cloudMasking.build(baselineParams);
 var maskedMonitoringCollection = cloudMasking.build(monitoringParams);
 
-// temporarily remove the problematic image - 6th Sept 2020 T21LTD
+// temporarily remove problematic images - problematic because poor cloud masking / haze
 var cleanedMonitoringCollection = maskedMonitoringCollection
-  .filter(ee.Filter.neq("system:index", "20200906T141049_20200906T141049_T21LTD"))
-  .filter(ee.Filter.neq("system:index", "20201220T141051_20201220T141045_T21LTD"))
-  .filter(ee.Filter.neq("system:index", "20210114T141049_20210114T141046_T21LTD"));
+  // .filter(ee.Filter.neq("system:index", "20200906T141049_20200906T141049_T21LTD"))
+  // .filter(ee.Filter.neq("system:index", "20201220T141051_20201220T141045_T21LTD"))
+  // .filter(ee.Filter.neq("system:index", "20210114T141049_20210114T141046_T21LTD"));
   
 var baselineImage = maskedBaselineCollection
   .map(addNDVI)
-  .select(BANDS.concat("NDVI"))
+  .select(BANDS.concat("gate_index"))
   .median()
   .clip(aoi);
 
 var monitoringImagesRaw = cleanedMonitoringCollection
   .map(addNDVI)
-  .select(BANDS.concat("NDVI"))
+  .select(BANDS.concat("gate_index"))
   
 var monitoringImages = dailyMosaic(monitoringImagesRaw)
-var listLength = monitoringImages.size();
-var imageList = monitoringImages.toList(listLength);
-var firstImage = monitoringImages
-  .filter(ee.Filter.eq("system:index", "20201001T141051_20201001T141609_T21LTD"))
-  .first();
-  
-var finalImage = monitoringImages
-  .filter(ee.Filter.eq("system:index", "20211021T141049_20211021T141047_T21LTD"))
-  .first();
 
 Map.addLayer(
   baselineImage,
   visParamsRGB,
-  'Baseline Image'
+  'Baseline Image', false
 )
-
-Map.addLayer(
-  firstImage,
-  visParamsRGB,
-  "Beginning Monitoring Image")
-
-Map.addLayer(
-  finalImage,
-  visParamsRGB,
-  "Ending Monitoring Image")
 
 // Inline training: forest / non-forest points within the AOI. Test fixture
 // only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
@@ -427,20 +421,6 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.182781, -15.022884]), {'class': BROWN_FOREST})
 ])
 
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
-//     {color: 'ForestGreen'}, 'Training: FOREST')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
-//     {color: 'LightSalmon'}, 'Training: SOIL')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
-//     {color: 'LightGreen'}, 'Training: GRASSLAND')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', BROWN_FOREST)),
-//     {color: 'Maroon'}, 'Training: BROWN FOREST')
-
-
 var trainingSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
     properties: ['class'],
@@ -450,25 +430,25 @@ var trainingSamples = baselineImage.sampleRegions({
 var classifier = ee.Classifier.smileRandomForest(50).train({
     features: trainingSamples,
     classProperty: 'class',
-    inputProperties: BANDS.concat(['NDVI'])
+    inputProperties: BANDS.concat(['gate_index'])
 })
 
 // Pre-classify to match the contract runPyeoChangeAlerts expects.
 var classifiedBaselineImage = baselineImage
     .classify(classifier).rename('classification')
-    .addBands(baselineImage.select('NDVI'))
+    .addBands(baselineImage.select('gate_index'))
     .clip(aoi)
 
 var classifiedMonitoringCollection = monitoringImages.map(function (img) {
     return img.classify(classifier).rename('classification')
-        .addBands(img.select('NDVI'))
+        .addBands(img.select('gate_index'))
         .copyProperties(img, ['system:time_start'])
 })
 
 Map.addLayer(
   classifiedBaselineImage.select('classification'),
   visClassParams,
-  'Baseline class map', false
+  'Baseline class map'
 )
 
 // ==============================================================================
@@ -486,11 +466,17 @@ var alerts = pyeo.run_change_detection({
     percentageProbabilityThreshold: percentageProbabilityThreshold,
     minRequiredFromDetectionsThreshold: minRequiredFromDetectionsThreshold,
     minRequiredToDetectionsThreshold: minRequiredToDetectionsThreshold,
-    dNdviGate: {use_ndvi: useNdvi,
-      band: 'NDVI',
-      threshold: deltaNdviThreshold,
-      minRequiredDeltaNDVIDetectionsThreshold: minRequiredDeltaNDVIDetectionsThreshold
-      }
+    indexGate: {
+      use: useIndex,
+      index: index,
+      threshold: deltaIndexThreshold,
+      minRequiredDeltaIndexDetectionsThreshold: minRequiredDeltaIndexDetectionsThreshold
+      },
+    hazeFilter: {
+      use: useHazeFilter,
+      fromAvailabilityThresholdPct: fromAvailabilityThresholdPct,
+      hazeLikelihoodThresholdPct: hazeLikelihoodThresholdPct
+    }
 });
 
 // ==============================================================================
@@ -511,9 +497,25 @@ print("pixel properties at the inspection marker:", changeReportAtPoint)
 
 changeReportAtPoint.evaluate(function(result) {
   if (result.first_change_date_above_threshold > 0) {
-    // use JS to create a Date object, which has .toDateString()
-    // Date is an EE function that returns a string, strings don't have .toDateString()
-    var readableFirstChange = new Date(result.first_change_date_above_threshold).toDateString();
+    
+    var fractionalYear = result.first_change_date_above_threshold;
+    
+    // get the whole year and the fraction
+    var year = Math.floor(fractionalYear);
+    var fraction = fractionalYear - year;
+    
+    // use Date.UTC to prevent the browser's local timezone from shifting the results
+    var startOfYearMillis = new Date(Date.UTC(year, 0, 1)).getTime();
+    var startOfNextYearMillis = new Date(Date.UTC(year + 1, 0, 1)).getTime();
+    
+    // calculate total milliseconds
+    var millisInYear = startOfNextYearMillis - startOfYearMillis;
+    
+    // multiply the fraction by the year's total milliseconds and add to the start of the year
+    var targetMillis = startOfYearMillis + (fraction * millisInYear);
+    
+    // convert back to a readable string
+    var readableFirstChange = new Date(targetMillis).toDateString();
 
     print("First change was on: ", readableFirstChange);
   }
@@ -581,20 +583,20 @@ combinedStats.evaluate(function(stats) {
     .set("totalChangesVisParams", JSON.stringify(totalChangesVisParams))
     .set("repeatabilityVisParams", JSON.stringify(repeatabilityVisParams));
 
-  Export.image.toAsset({
-    image: changeReportWithMetadata,
-    description: aoi_friendly_name + "_change_report",
-    assetId: project_asset_path + aoi_friendly_name + "_" + "change_report",
-    region: aoi,
-    scale: 10,
-    crs: CRS,
-    maxPixels: 1e13
-  });
+  // Export.image.toAsset({
+  //   image: changeReportWithMetadata,
+  //   description: aoi_friendly_name + "_change_report",
+  //   assetId: project_asset_path + aoi_friendly_name + "_" + "change_report",
+  //   region: aoi,
+  //   scale: 10,
+  //   crs: CRS,
+  //   maxPixels: 1e13
+  // });
 
   // Export.image.toDrive({
   //   image: changeReportWithMetadata.toDouble(),
-  //   description: aoi_friendly_name + "_change_report_Drive",
-  //   fileNamePrefix: aoi_friendly_name + "_" + "change_report",
+  //   description: aoi_friendly_name + "_change_report_Drive_fractionalyear",
+  //   fileNamePrefix: aoi_friendly_name + "_" + "change_report_fractionalyear",
   //   region: aoi,
   //   scale: 10,
   //   crs: CRS,
@@ -604,51 +606,50 @@ combinedStats.evaluate(function(stats) {
 
 });
 
-stop
 
-// assign metadata to the assets
-var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
-var firstImageWithMetadata = firstImage
-  .set(pipelineParams)
-  .set("visParamsRGB", JSON.stringify(visParamsRGB))
-  .set("date", firstImage.get("date_str"));
-var finalImageWithMetadata = finalImage
-  .set(pipelineParams)
-  .set("visParamsRGB", JSON.stringify(visParamsRGB))
-  .set("date", finalImage.get("date_str"));
-var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
-var firstImage_filename = aoi_friendly_name +  "_first_monitoring_" + MONITORING_START + "_" + MONITORING_END
-var finalImage_filename = aoi_friendly_name + "_final_monitoring_" + MONITORING_START + "_" + MONITORING_END
+// // assign metadata to the assets
+// var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+// var firstImageWithMetadata = firstImage
+//   .set(pipelineParams)
+//   .set("visParamsRGB", JSON.stringify(visParamsRGB))
+//   .set("date", firstImage.get("date_str"));
+// var finalImageWithMetadata = finalImage
+//   .set(pipelineParams)
+//   .set("visParamsRGB", JSON.stringify(visParamsRGB))
+//   .set("date", finalImage.get("date_str"));
+// var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
+// var firstImage_filename = aoi_friendly_name +  "_first_monitoring_" + MONITORING_START + "_" + MONITORING_END
+// var finalImage_filename = aoi_friendly_name + "_final_monitoring_" + MONITORING_START + "_" + MONITORING_END
 
-Export.image.toAsset({
-  image: baselineImageWithMetadata,
-  description: baseline_filename,
-  assetId: project_asset_path + baseline_filename,
-  region: aoi,
-  scale: 10,
-  crs: CRS,
-  maxPixels: 1e13
-});
+// Export.image.toAsset({
+//   image: baselineImageWithMetadata,
+//   description: baseline_filename,
+//   assetId: project_asset_path + baseline_filename,
+//   region: aoi,
+//   scale: 10,
+//   crs: CRS,
+//   maxPixels: 1e13
+// });
 
-Export.image.toAsset({
-  image: ee.Image(firstImageWithMetadata),
-  description: firstImage_filename,
-  assetId: project_asset_path + firstImage_filename,
-  region: aoi,
-  scale: 10,
-  crs: CRS,
-  maxPixels: 1e13
-});
+// Export.image.toAsset({
+//   image: ee.Image(firstImageWithMetadata),
+//   description: firstImage_filename,
+//   assetId: project_asset_path + firstImage_filename,
+//   region: aoi,
+//   scale: 10,
+//   crs: CRS,
+//   maxPixels: 1e13
+// });
 
-Export.image.toAsset({
-  image: finalImageWithMetadata,
-  description: finalImage_filename,
-  assetId: project_asset_path + finalImage_filename,
-  region: aoi,
-  scale: 10,
-  crs: CRS,
-  maxPixels: 1e13
-});
+// Export.image.toAsset({
+//   image: finalImageWithMetadata,
+//   description: finalImage_filename,
+//   assetId: project_asset_path + finalImage_filename,
+//   region: aoi,
+//   scale: 10,
+//   crs: CRS,
+//   maxPixels: 1e13
+// });
 
 // Export.image.toDrive({
 //   image: baselineImageWithMetadata.toDouble(),
@@ -678,37 +679,36 @@ Export.image.toAsset({
 // ==============================================================================
 
 var exportCollectionToDrive = function(collection, region, visParams, taskString) {
-  // 1. Prepare the collection for export
+  // prepare the collection for export
   var toExport = collection.map(function(img) {
     var dateStr = img.date().format("YYYY-MM-dd");
     var visual = img.visualize(visParams);
     return visual.set("date_str", dateStr);
   });
   
-  // 2. Convert collection to an ee.List to allow indexing
+  // convert collection to an ee.List to allow indexing
   var size = toExport.size();
   var collectionList = toExport.toList(size);
   
-  // 3. Get an ee.List of all the date strings
+  // get an ee.List of all the date strings
   var datesList = toExport.aggregate_array("date_str");
   
-  // 4. Evaluate the dates list to bring it to the client side
+  // evaluate the dates list to bring it to the client side
   datesList.evaluate(function(dates, error) {
     if (error) {
       print("Error evaluating dates:", error);
       return;
     }
     
-    // Now 'dates' is a standard JavaScript array, so a for-loop works perfectly!
     for (var i = 0; i < dates.length; i++) {
       var dateString = dates[i];
       var safeDate = dateString.replace(/-/g, "_");
       var taskName = "Export_Quicklook_" + safeDate;
       
-      // Fetch the specific image from the server-side list using the index
+      // fetch the specific image from the server-side list using the index
       var img = ee.Image(collectionList.get(i));
       
-      // Create the export task
+      // create the export task
       Export.image.toDrive({
         image: img,
         description: taskName,
@@ -722,8 +722,8 @@ var exportCollectionToDrive = function(collection, region, visParams, taskString
   });
 };
 
-//var taskString = "S2_Quicklook_" 
-//exportCollectionToDrive(monitoringImages, aoi, visParamsRGB, taskString);
+// var taskString = "S2_Quicklook_" 
+// exportCollectionToDrive(monitoringImages, aoi, visParamsRGB, taskString);
 
 // var taskString = "S2_Quicklook_Classified_" 
 // exportCollectionToDrive(classifiedMonitoringCollection, aoi, visClassParams, taskString);
