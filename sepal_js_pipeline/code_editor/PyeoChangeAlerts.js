@@ -203,7 +203,7 @@ var run_change_detection = function (params) {
     // *********
   
     // build dates of all changes above the index threshold
-    var changeDateAboveThreshold = imgFracYear
+    var changeDateAboveThreshold = imgFracYear //imgMillisGeneric
         .updateMask(isChangeMask)
         .rename("change_date_above_threshold");
   
@@ -233,19 +233,10 @@ var run_change_detection = function (params) {
   // we define the function at the same time as using .map to iterate our function across the timeseries
   // map over the change images in changeEvents a second time, to evaluate the temporal consistency of the first changes
   var postChangeEvaluation = changeEvents.map(function(image) {
-    
-    // *********  
-    // store the image date as fractional date band for change reporting
-    var imgDate = ee.Date(image.get("system:time_start"));
-    var year = imgDate.get("year");
-    var fraction = imgDate.getFraction("year");
-    var fractionalYear = year.add(fraction);
-    var imgFracYear = ee.Image.constant(fractionalYear).double();
-    // *********
-    
+        
     // create a temporal window mask
     // pixel has a value of 1 if it has a change that is the first change or is afterwards
-    var isAfterFirstChange = imgFracYear.gte(firstChangeDateAboveThreshold);
+    var isAfterFirstChange = image.select("change_date_above_threshold").gte(firstChangeDateAboveThreshold); //imgFracYear
 
     var isPostFCD = isAfterFirstChange.rename("post_fcd"); // boolean (1, 0) indicating whether the pixel is post-FCD
     var isChange = image.select("is_change") // 1 for change, 0 for no change
