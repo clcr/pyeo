@@ -213,7 +213,6 @@ var run_change_detection = function (params) {
       changeDateAboveThreshold,
       isFromClass,
       isToClass,
-      currentClass,
       transitionMask
     );
 
