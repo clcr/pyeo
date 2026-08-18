@@ -5,8 +5,9 @@ This script creates First Change Date (FCD) comparison figures from EE Assets.
 """
 
 import argparse
-import datetime
+from datetime import datetime, timedelta, timezone
 import json
+import math
 from pathlib import Path
 import requests
 
@@ -57,6 +58,79 @@ def initialise(project_name: str) -> None:
 
     return
 
+def fractional_year_to_datetime(fractional_year: float) -> datetime:
+    """
+    Convert a fractional calendar year float to a timezone-aware UTC datetime object.
+
+    Parameters
+    ----------
+    fractional_year: float
+        The fractional year value (e.g., 2020.66).
+
+    Returns
+    -------
+    datetime: A datetime object set to UTC representing the interpolated point in time.
+    """
+
+    year = math.floor(fractional_year)
+    fraction = fractional_year - year
+    
+    start_of_year = datetime(year, 1, 1, tzinfo=timezone.utc)
+    start_of_next_year = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+    
+    year_duration = start_of_next_year - start_of_year
+
+    return start_of_year + (year_duration * fraction)
+
+def fractional_year_to_readable(fractional_year: float, date_format: str = "%d %B %Y") -> str:
+    """
+    Convert a fractional calendar year float into a formatted date string.
+
+    Parameters
+    ----------
+    fractional_year: float
+        The fractional year value.
+    date_format: str
+        strftime format string (defaults to "%d %B %Y").
+
+    Returns
+    -------
+    str: The formatted date string.
+    """
+
+    dt = fractional_year_to_datetime(fractional_year)
+
+    return dt.strftime(date_format)
+
+def format_fractional_year(x, _):
+    """
+    Format a tick value representing a fractional year into a readable date string.
+
+    Parameters
+    ----------
+    x: 
+        Tick coordinate value as a fractional year.
+    _: 
+        Tick position index (unused), but must be passed for FuncFormatter
+
+    Returns
+    -------
+    str: Formatted date string (e.g., '01 September 2020').
+    """
+
+    if math.isnan(x):
+        return ""
+    
+    year = math.floor(x)
+    fraction = x - year
+    
+    start_of_year = datetime(year, 1, 1, tzinfo=timezone.utc)
+    start_of_next_year = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+    
+    target_dt = start_of_year + (start_of_next_year - start_of_year) * fraction
+
+    return target_dt.strftime("%d %B %Y")
+
 def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str, change_report_id: str, epsg_code: str, png_out_path: Path, country_string: str):
     """_summary_
 
@@ -98,6 +172,8 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
     total_changes_params = json.loads(properties["totalChangesVisParams"])
     repeatability_params = json.loads(properties["repeatabilityVisParams"])
     fcd_decision_params = json.loads(properties["fcdDecisionVisParams"])
+
+    print(fcd_decision_params)
 
     # define things to iterate through
     images = [baseline_img, first_img, last_img]
@@ -202,9 +278,7 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
         # format the dates of fcd decision map colour map
         if title == "FCD Decision":
             cbar.set_label("Date")
-
-            date_formatter = mticker.FuncFormatter(
-                lambda x, _: datetime.datetime.fromtimestamp(x / 1000.0).strftime("%d %B %Y"))
+            date_formatter = mticker.FuncFormatter(format_fractional_year)
             cbar.ax.yaxis.set_major_formatter(date_formatter)
 
     ###################
@@ -279,6 +353,8 @@ def plot_figure(baseline_image_id: str, first_image_id: str, last_image_id: str,
         plt.close(fig)
     except (OSError, IOError) as e:
         print(f"Could not save plot, encountered: {e}")
+
+
 
 if __name__ == "__main__":
     
