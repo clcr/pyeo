@@ -1,4 +1,4 @@
-var pyeo = require('users/mp730/A4F:pyeoChangeAlerts')
+var pyeo = require('users/mp730/A4F:pyeoChangeAlertsSEPAL')
 var cloudMasking = require('users/mp730/A4F:cloudMasking');
 var project_asset_path = 'projects/aim4forests-499914/assets/'
 var aoi_friendly_name = 'Brazil_II'
@@ -25,10 +25,11 @@ var BANDS = ['B2', 'B3', 'B4', 'B6', 'B8', 'B11', 'B12'];
 var MAX_CLOUD_PROBABILITY_PER_PIXEL = 30; // 100 = minimal discrimination
 var MAX_CLOUD_SCORE_PER_PIXEL = 30; // 100 = no discrimination 
 
-var FOREST = 1;
-var SOIL = 2;
-var GRASSLAND = 3;
-var BROWN_FOREST = 4;
+// class integers must be indexed from 0 for the confusion matrix export to work
+var FOREST = 0;
+var SOIL = 1;
+var GRASSLAND = 2;
+var BROWN_FOREST = 3;
 var changeFromClasses = [FOREST];
 var changeToClasses = [SOIL, GRASSLAND];
 var allClasses = [FOREST, SOIL, GRASSLAND, BROWN_FOREST];
@@ -47,9 +48,17 @@ var useIndex = true
 var index = "NDVI"
 var deltaIndexThreshold = 0.2;
 var minRequiredDeltaIndexDetectionsThreshold = 2;
-var useHazeFilter = true;
+var useHazeFilter = false;
 var fromAvailabilityThresholdPct = 0.1;
 var hazeLikelihoodThresholdPct = 0.3;
+var researchModeOn = true // whether to export imagery as quicklook geotiffs at 10 m spatial resolution, 
+// but compressed to 0-255 bit range
+// all export toggles below require research mode to be true. 
+var exportChangeReport = false
+var exportBaseline = false
+var exportTimeSeriesRGBQuicklooks = false
+var exportTimeSeriesClfQuicklooks = false
+var exportClassifierPerformance = false
 
 // parameter objects for imagery acquisition and cloud masking
 var baselineParams = {
@@ -98,7 +107,8 @@ var pipelineParams = {
   'min_delta_index_detections_threshold': minRequiredDeltaIndexDetectionsThreshold,
   "use_haze_filter": useHazeFilter,
   "haze_filter_from_availability_threshold_pct": fromAvailabilityThresholdPct,
-  "haze_filter_likelihood_threshold_pct": hazeLikelihoodThresholdPct
+  "haze_filter_likelihood_threshold_pct": hazeLikelihoodThresholdPct,
+  "research_mode_on": researchModeOn
 };
 
 // ==============================================================================
@@ -114,17 +124,17 @@ Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
 
 // named CSS colours https://www.w3schools.com/cssref/css_colors.php
 var classColourMap = {
-  1: "ForestGreen", // forest
-  2: "LightSalmon", // soil
-  3: "LightGreen", // grassland
-  4: "Maroon" // brown forest
+  0: "ForestGreen", // forest
+  1: "LightSalmon", // soil
+  2: "LightGreen", // grassland
+  3: "Maroon" // brown forest
 }
 
 var classNameMap = {
-  1: allClassesStr[0],
-  2: allClassesStr[1],
-  3: allClassesStr[2],
-  4: allClassesStr[3]
+  0: allClassesStr[0],
+  1: allClassesStr[1],
+  2: allClassesStr[2],
+  3: allClassesStr[3]
 }
 
 // total changes palette
@@ -133,7 +143,7 @@ var totalChangesPalette = ["#FFE2E2", "#9F0712"]; // reds
 // fcd decision map palette
 var fcdDecisionMapPalette = ["#DBEAFE", "#1C398E"]; // blues
 
-// fcd repeatability palette
+// fcd repeatability palette 
 var fcdRepeatabilityPalette = ["#DCFCE7", "#0D542B"]; // greens
 
 // RGB parameters
@@ -246,8 +256,6 @@ Map.addLayer(
   'Baseline Image', false
 )
 
-// Inline training: forest / non-forest points within the AOI. Test fixture
-// only — disappears once the SEPAL CLASSIFICATION recipe wrapper is in place.
 var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.163997, -15.014472]), {'class': FOREST}), 
     ee.Feature(ee.Geometry.Point([-59.157452, -15.01957]), {'class': FOREST}), 
@@ -418,20 +426,65 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-59.1784, -15.030623]), {'class': BROWN_FOREST}),
     ee.Feature(ee.Geometry.Point([-59.152114, -15.029255]), {'class': BROWN_FOREST}),
     ee.Feature(ee.Geometry.Point([-59.183983, -15.021827]), {'class': BROWN_FOREST}),
-    ee.Feature(ee.Geometry.Point([-59.182781, -15.022884]), {'class': BROWN_FOREST})
+    ee.Feature(ee.Geometry.Point([-59.182781, -15.022884]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.178387, -15.030615]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.176714, -15.028978]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.16047, -15.030905]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.180812, -15.025144]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.175169, -15.028356]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.184254, -15.021957]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.185509, -15.014906]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.184715, -15.007154]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.156648, -15.00744]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.158214, -15.005429]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.155981, -15.007854]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.15803, -15.0062]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.157923, -15.00594]), {'class': BROWN_FOREST}),
+    ee.Feature(ee.Geometry.Point([-59.157408, -15.006562]), {'class': BROWN_FOREST})
 ])
 
-var trainingSamples = baselineImage.sampleRegions({
+if (researchModeOn) {
+  Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', FOREST)),
+    {color: classColourMap[0]}, 'Training: Forest')
+  Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', SOIL)),
+    {color: classColourMap[1]}, 'Training: Soil')
+  Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
+    {color: classColourMap[2]}, 'Training: Grassland')
+  Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', BROWN_FOREST)),
+    {color: classColourMap[3]}, 'Training: Brown Forest')
+}
+
+var allSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
     properties: ['class'],
     scale: 10
-})
+}).randomColumn("random")// add a column of 0 to 1, to use for training/validation split
+
+var trainingSamples = allSamples.filter(ee.Filter.lt("random", 0.6))
+var testingSamples = allSamples.filter(ee.Filter.gte("random", 0.6))
 
 var classifier = ee.Classifier.smileRandomForest(50).train({
     features: trainingSamples,
     classProperty: 'class',
     inputProperties: BANDS.concat(['gate_index'])
 })
+
+// classify on testing dataset to assess how the model generalises to unseen data
+var tested = testingSamples.classify(classifier);
+var testedMatrix = tested.errorMatrix("class", "classification")
+
+var trained = trainingSamples.classify(classifier)
+var trainedMatrix = trained.errorMatrix("class", "classification")
+print("Accuracy (%) on Trained Matrix:", trainedMatrix.accuracy())
+
+print("full classification points size:", allSamples.size())
+
+print("training points size:", trainingSamples.size())
+print("testing points size:", testingSamples.size())
 
 // Pre-classify to match the contract runPyeoChangeAlerts expects.
 var classifiedBaselineImage = baselineImage
@@ -446,16 +499,79 @@ var classifiedMonitoringCollection = monitoringImages.map(function (img) {
 })
 
 Map.addLayer(
-  classifiedBaselineImage.select('classification'),
+  classifiedBaselineImage.select("classification"),
   visClassParams,
   'Baseline class map'
 )
+
+// evaluate classifier performance
+if (researchModeOn) {
+  
+  if (exportClassifierPerformance) {
+    
+    // make a dynamic dictionary
+    // map over allClasses returning a list of integers as strings
+    var allClassesKeys = allClasses.map(function(class_name) {
+      return String(class_name)
+    })
+    var classDict = ee.Dictionary.fromLists(allClassesKeys, allClassesStr)
+    
+    var matrixArray = testedMatrix.array();
+    var classIds = testedMatrix.order();
+    
+    // create list of column names for the predicted classes
+    var colNames = classIds.map(function(id) {
+      var idStr = ee.Number(id).format("%d");
+      return classDict.get(idStr)
+    })
+    
+    // convert the confusion matrix to a list of features
+    var matrixList = matrixArray.toList();
+    var featureList = matrixList.zip(classIds).map(function(rowWithId) {
+      var rowWithIdList = ee.List(rowWithId);
+      var rowValues = ee.List(rowWithIdList.get(0)); // count for the row
+      var classId = ee.List(rowWithIdList.get(1)); // class ID
+      var idStr = ee.Number(classId).format("%d");
+      
+      var className = classDict.get(idStr);      
+      var featureProperties = ee.Dictionary.fromLists(colNames, rowValues);
+      
+      // update featureProperties
+      featureProperties = featureProperties.set("Class", className)
+      
+      return ee.Feature(null, featureProperties)
+    });
+    
+    // calculate testing accuracy and append to the list of features
+    var testedAccuracy = testedMatrix.accuracy().format("%.2f");
+    var firstColName = ee.String(colNames.get(0));
+    var secondColName = ee.String(colNames.get(1));
+    var accuracyProperties = ee.Dictionary({
+      "Class": "Testing Dataset Accuracy"
+      })
+      .set(firstColName, testedAccuracy);
+    var accuracyFeature = ee.Feature(null, accuracyProperties);
+    
+    var matrixFeatureCol = ee.FeatureCollection(featureList.add(accuracyFeature))
+    var exportColumns = ["Class", allClassesStr[0], allClassesStr[1], allClassesStr[2], allClassesStr[3]]
+    
+    Export.table.toDrive({
+      collection: matrixFeatureCol,
+      description: 'Testing_Samples_Confusion_Matrix_Task',
+      fileNamePrefix: 'Testing_Samples_Confusion_Matrix',
+      fileFormat: 'CSV',
+      selectors: exportColumns
+    })
+    
+  }
+  
+}
 
 // ==============================================================================
 // 6. RUN CHANGE DETECTION
 // ==============================================================================
 
-var alerts = pyeo.run_change_detection({
+var alerts = pyeo.runPyeoChangeAlerts({
     aoi: aoi,
     classifiedBaseline: classifiedBaselineImage,
     classifiedMonitoringCollection: classifiedMonitoringCollection,
@@ -487,7 +603,7 @@ Map.addLayer(inspection_marker, {color: "pink", size: 14}, "Inspection Marker")
 
 // create a client-side object of the point inspector, so the date string can be formatted
 //    into a readable human date
-var changeReportAtPoint = alerts.changeReport.reduceRegion({
+var changeReportAtPoint = alerts.reduceRegion({
   reducer: ee.Reducer.first(),
   geometry: inspection_marker,
   scale: 10
@@ -529,7 +645,7 @@ changeReportAtPoint.evaluate(function(result) {
 // ==============================================================================
 
 // get minMax date stats for dates of change and total changes colour ramps
-var combinedStats = alerts.changeReport
+var combinedStats = alerts
   .select(["fcd_decision_map", "total_changes"])
   .reduceRegion({
     reducer: ee.Reducer.minMax(),
@@ -563,122 +679,100 @@ combinedStats.evaluate(function(stats) {
   };
   
   Map.addLayer(
-  alerts.changeReport.select("total_changes"),
+  alerts.select("total_changes"),
   totalChangesVisParams,
   "L2 - Total Changes");
   
   Map.addLayer(
-  alerts.changeReport.select("post_fcd_change_repeatability_pct"),
+  alerts.select("post_fcd_change_repeatability_pct"),
   repeatabilityVisParams,
   "L8 - Post-FCD Change Repeatability");
 
   Map.addLayer(
-  alerts.changeReport.select("fcd_decision_map"),
+  alerts.select("fcd_decision_map"),
   fcdDecisionVisParams,
   "L10 - FCD Decision Map");
   
-  var changeReportWithMetadata = alerts.changeReport
+  var changeReportWithMetadata = alerts
     .set(pipelineParams)
     .set("fcdDecisionVisParams", JSON.stringify(fcdDecisionVisParams))
     .set("totalChangesVisParams", JSON.stringify(totalChangesVisParams))
     .set("repeatabilityVisParams", JSON.stringify(repeatabilityVisParams));
 
-  // Export.image.toAsset({
-  //   image: changeReportWithMetadata,
-  //   description: aoi_friendly_name + "_change_report",
-  //   assetId: project_asset_path + aoi_friendly_name + "_" + "change_report",
-  //   region: aoi,
-  //   scale: 10,
-  //   crs: CRS,
-  //   maxPixels: 1e13
-  // });
+  if (researchModeOn) {
 
-  // Export.image.toDrive({
-  //   image: changeReportWithMetadata.toDouble(),
-  //   description: aoi_friendly_name + "_change_report_Drive_fractionalyear",
-  //   fileNamePrefix: aoi_friendly_name + "_" + "change_report_fractionalyear",
-  //   region: aoi,
-  //   scale: 10,
-  //   crs: CRS,
-  //   maxPixels: 1e13,
-  //   fileFormat: "GeoTIFF"
-  // });
-
+    if (exportChangeReport) {
+      
+      Export.image.toAsset({
+        image: changeReportWithMetadata,
+        description: aoi_friendly_name + "_change_report_fractionalyear",
+        assetId: project_asset_path + aoi_friendly_name + "_" + "change_report_fractionalyear",
+        region: aoi,
+        scale: 10,
+        crs: CRS,
+        maxPixels: 1e13
+      });
+      
+      Export.image.toDrive({
+        image: changeReportWithMetadata.toDouble(),
+        description: aoi_friendly_name + "_change_report_Drive_fractionalyear",
+        fileNamePrefix: aoi_friendly_name + "_" + "change_report_fractionalyear",
+        region: aoi,
+        scale: 10,
+        crs: CRS,
+        maxPixels: 1e13,
+        fileFormat: "GeoTIFF"
+      });
+    }
+  }
+  
 });
 
+// ==============================================================================
+// 9. EXPORTING CLASSIFIED BASELINE AND BASELINE IMAGE TO DRIVE FOR MANUAL INSPECTION OF CHANGE
+// ==============================================================================
 
-// // assign metadata to the assets
-// var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
-// var firstImageWithMetadata = firstImage
-//   .set(pipelineParams)
-//   .set("visParamsRGB", JSON.stringify(visParamsRGB))
-//   .set("date", firstImage.get("date_str"));
-// var finalImageWithMetadata = finalImage
-//   .set(pipelineParams)
-//   .set("visParamsRGB", JSON.stringify(visParamsRGB))
-//   .set("date", finalImage.get("date_str"));
-// var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
-// var firstImage_filename = aoi_friendly_name +  "_first_monitoring_" + MONITORING_START + "_" + MONITORING_END
-// var finalImage_filename = aoi_friendly_name + "_final_monitoring_" + MONITORING_START + "_" + MONITORING_END
 
-// Export.image.toAsset({
-//   image: baselineImageWithMetadata,
-//   description: baseline_filename,
-//   assetId: project_asset_path + baseline_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13
-// });
-
-// Export.image.toAsset({
-//   image: ee.Image(firstImageWithMetadata),
-//   description: firstImage_filename,
-//   assetId: project_asset_path + firstImage_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13
-// });
-
-// Export.image.toAsset({
-//   image: finalImageWithMetadata,
-//   description: finalImage_filename,
-//   assetId: project_asset_path + finalImage_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13
-// });
-
-// Export.image.toDrive({
-//   image: baselineImageWithMetadata.toDouble(),
-//   description: baseline_filename,
-//   fileNamePrefix: baseline_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13,
-//   fileFormat: "GeoTIFF"
-// });
-
-// Export.image.toDrive({
-//   image: classifiedBaselineImage
-//     .select("classification")
-//     .visualize(visClassParams),
-//   description: baseline_filename + "_classified_Drive",
-//   fileNamePrefix: baseline_filename + "_classified",
-//   region: aoi,
-//   scale: 10,
-//   maxPixels: 1e13,
-//   fileFormat: "GeoTIFF"
-// });
+if (researchModeOn) {
+  
+  if (exportBaseline) {
+    // assign metadata to the assets
+    var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+    var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
+ 
+    Export.image.toDrive({
+      image: baselineImageWithMetadata
+        .visualize(visParamsRGB),
+      description: baseline_filename,
+      fileNamePrefix: baseline_filename,
+      region: aoi,
+      scale: 10,
+      crs: CRS,
+      maxPixels: 1e13,
+      fileFormat: "GeoTIFF"
+    });
+  
+    Export.image.toDrive({
+      image: classifiedBaselineImage
+        .select("classification")
+        .visualize(visClassParams),
+      description: baseline_filename + "_classified_Drive",
+      fileNamePrefix: baseline_filename + "_classified",
+      region: aoi,
+      scale: 10,
+      maxPixels: 1e13,
+      fileFormat: "GeoTIFF"
+    });
+  }
+}
 
 // ==============================================================================
 // 9. EXPORTING MONITORING COLLECTION TO DRIVE FOR MANUAL INSPECTION OF CHANGE
 // ==============================================================================
 
-var exportCollectionToDrive = function(collection, region, visParams, taskString) {
+if (researchModeOn) {
+  
+  var exportCollectionToDrive = function(collection, region, visParams, taskString) {
   // prepare the collection for export
   var toExport = collection.map(function(img) {
     var dateStr = img.date().format("YYYY-MM-dd");
@@ -720,10 +814,14 @@ var exportCollectionToDrive = function(collection, region, visParams, taskString
       });
     }
   });
-};
-
-// var taskString = "S2_Quicklook_" 
-// exportCollectionToDrive(monitoringImages, aoi, visParamsRGB, taskString);
-
-// var taskString = "S2_Quicklook_Classified_" 
-// exportCollectionToDrive(classifiedMonitoringCollection, aoi, visClassParams, taskString);
+  };
+  
+  if (exportTimeSeriesRGBQuicklooks) {
+    exportCollectionToDrive(monitoringImages, aoi, visParamsRGB, "S2_Quicklook_RGB_");
+  }
+  
+  if (exportTimeSeriesClfQuicklooks) {
+    exportCollectionToDrive(classifiedMonitoringCollection, aoi, visClassParams, "S2_Quicklook_Classified_")
+  }
+  
+}

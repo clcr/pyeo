@@ -1,4 +1,4 @@
-var pyeo = require('users/mp730/A4F:pyeoChangeAlerts')
+var pyeo = require('users/mp730/A4F:pyeoChangeAlertsSEPAL')
 var cloudMasking = require('users/mp730/A4F:cloudMasking');
 var project_asset_path = 'projects/aim4forests-499914/assets/'
 var aoi_friendly_name = 'Ghana'
@@ -16,31 +16,24 @@ var lat = centroid[1]
 var aoi = ee.Geometry.Rectangle([lon - 0.025, lat - 0.025, lon + 0.025, lat + 0.025]);
 var CRS = "EPSG:32630";
 
-//print("AOI area (km2)", aoi.area().divide(1000 * 1000))
-
 var BASELINE_START = '2021-01-01';
 var BASELINE_END = '2022-12-31';
 var MONITORING_START = '2023-01-01';
 var MONITORING_END = '2023-12-31';
 
-// var BASELINE_START = '2021-01-01';
-// var BASELINE_END = '2021-12-31';
-// var MONITORING_START = '2022-01-01';
-// var MONITORING_END = '2022-12-31';
-
 var BANDS = ['B2', 'B3', 'B4', 'B6', 'B8', 'B11', 'B12'];
 var MAX_CLOUD_PROBABILITY_PER_PIXEL = 20; // 100 = minimal discrimination
 var MAX_CLOUD_SCORE_PER_PIXEL = 20; // 100 = no discrimination 
 
-var FOREST = 1;
-var SOIL = 2;
-var GRASSLAND = 3;
+var FOREST = 0;
+var SOIL = 1;
+var DISTURBED = 2;
 var changeFromClasses = [FOREST];
-var changeToClasses = [SOIL, GRASSLAND];
-var allClasses = [FOREST, SOIL, GRASSLAND];
+var changeToClasses = [SOIL, DISTURBED];
+var allClasses = [FOREST, SOIL, DISTURBED];
 var changeFromClassesStr = ["Forest"];
-var changeToClassesStr = ["Soil", "Grassland"];
-var allClassesStr = ["Forest", "Soil", "Grassland"];
+var changeToClassesStr = ["Soil", "Disturbed"];
+var allClassesStr = ["Forest", "Soil", "Disturbed"];
 
 // change detection parameters
 var minRequiredValidatedDetectionsThreshold = 2;
@@ -48,9 +41,21 @@ var minRequiredClassifierDetectionsThreshold = 5;
 var percentageProbabilityThreshold = 50;
 var minRequiredFromDetectionsThreshold = 2;
 var minRequiredToDetectionsThreshold = 2
-var useNdvi = true
-var deltaNdviThreshold = 0.2;  // -2.0 switches off delta ndvi threshold
-var minRequiredDeltaNDVIDetectionsThreshold = 10;
+var useIndex = true
+var index = "NDVI"
+var deltaIndexThreshold = 0.2;
+var minRequiredDeltaIndexDetectionsThreshold = 2;
+var useHazeFilter = false;
+var fromAvailabilityThresholdPct = 0.1;
+var hazeLikelihoodThresholdPct = 0.3;
+var researchModeOn = true // whether to export imagery as quicklook geotiffs at 10 m spatial resolution, 
+// but compressed to 0-255 bit range
+// all export toggles below require research mode to be true. 
+var exportChangeReport = false
+var exportBaseline = false
+var exportTimeSeriesRGBQuicklooks = false
+var exportTimeSeriesClfQuicklooks = false
+var exportClassifierPerformance = false
 
 // parameter objects for imagery acquisition and cloud masking
 var baselineParams = {
@@ -94,9 +99,13 @@ var pipelineParams = {
   'percentage_probability_threshold': percentageProbabilityThreshold,
   'min_from_detections_threshold': minRequiredFromDetectionsThreshold,
   'min_to_detections_threshold': minRequiredToDetectionsThreshold,
-  'use_ndvi': useNdvi,
-  'delta_ndvi_threshold': deltaNdviThreshold,
-  'min_delta_ndvi_detections_threshold': minRequiredDeltaNDVIDetectionsThreshold
+  'use_index': useIndex,
+  'delta_index_threshold': deltaIndexThreshold,
+  'min_delta_index_detections_threshold': minRequiredDeltaIndexDetectionsThreshold,
+  "use_haze_filter": useHazeFilter,
+  "haze_filter_from_availability_threshold_pct": fromAvailabilityThresholdPct,
+  "haze_filter_likelihood_threshold_pct": hazeLikelihoodThresholdPct,
+  "research_mode_on": researchModeOn
 };
 
 // ==============================================================================
@@ -113,10 +122,17 @@ Map.addLayer(aoi, {color: 'red'}, 'AOI Outline', false);
 
 // named CSS colours https://www.w3schools.com/cssref/css_colors.php
 var classColourMap = {
-  1: "ForestGreen", // forest
-  2: "LightSalmon", // soil
-  3: "LightGreen" // grassland
+  0: "ForestGreen", // forest
+  1: "LightSalmon", // soil
+  2: "LightGreen" // disturbed vegetation
 }
+
+var classNameMap = {
+  0: allClassesStr[0],
+  1: allClassesStr[1],
+  2: allClassesStr[2]
+}
+
 
 // total changes palette
 var totalChangesPalette = ["#FFE2E2", "#9F0712"]; // reds
@@ -124,7 +140,7 @@ var totalChangesPalette = ["#FFE2E2", "#9F0712"]; // reds
 // fcd decision map palette
 var fcdDecisionMapPalette = ["#DBEAFE", "#1C398E"]; // blues
 
-// fcd repeatability palette
+// fcd repeatability palette 
 var fcdRepeatabilityPalette = ["#DCFCE7", "#0D542B"]; // greens
 
 // RGB parameters
@@ -146,7 +162,7 @@ var dynamicFullPalette = allClasses.map(function(classId) {
   return classColourMap[classId];
 })
 
-var visClassParams = {
+var visClassParams = { 
   bands: ["classification"],
   min: Math.min.apply(null, allClasses),
   max: Math.max.apply(null, allClasses),
@@ -171,7 +187,7 @@ var toClassParams = {
 
 // NDVI calculation
 var addNDVI = function (img) {
-    return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('NDVI'));
+    return img.addBands(img.normalizedDifference(['B8', 'B4']).rename('gate_index'));
 };
 
 // group images by date and mosaics overlapping tiles from the same orbit pass
@@ -215,55 +231,22 @@ var maskedMonitoringCollection = cloudMasking.build(monitoringParams);
 
 var baselineImage = maskedBaselineCollection
   .map(addNDVI)
-  .select(BANDS.concat("NDVI"))
+  .select(BANDS.concat("gate_index"))
   .median()
   .clip(aoi);
-  
+
 var monitoringImagesRaw = maskedMonitoringCollection
   .map(addNDVI)
-  .select(BANDS.concat("NDVI"))
+  .select(BANDS.concat("gate_index"))
   
 var monitoringImages = dailyMosaic(monitoringImagesRaw)
-
-// temporarily remove any problematic images
-// var cleanedMonitoringCollection = monitoringImages
-  // .filter(ee.Filter.neq("system:index", "20190107T102411_20190107T103313_T30NXN"))
-  // .filter(ee.Filter.neq("system:index", "20190112T102409_20190112T103742_T30NXN"))
-  // .filter(ee.Filter.neq("system:index", "20190117T102351_20190117T103132_T30NXN"))
-  //.filter(ee.Filter.neq("system:index", "20190107T102411_20190107T103313_T30NWN"))
-var listLength = monitoringImages.size();
-var imageList = monitoringImages.toList(listLength);
-var firstImage = ee.Image(imageList.get(8));
-var finalImage = ee.Image(imageList.get(listLength.subtract(1))); // 8
 
 Map.addLayer(
   baselineImage,
   visParamsRGB,
-  'Baseline Image'
+  'Baseline Image', false
 )
 
-
-// Map.addLayer(
-//   baselineImage,
-//   {min: 0,
-//   max: 5000,
-//   gamma: 1.4,
-//   bands: ["B8", "B4", "B3"] // R - NIR, G - Red, B - Green
-// },
-//   'Baseline Image'
-// )
-
-
-Map.addLayer(
-  firstImage,
-  visParamsRGB,
-  "Beginning Monitoring Image")
-
-Map.addLayer(
-  finalImage,
-  visParamsRGB,
-  "Ending Monitoring Image")
-  
 var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-2.26487, 6.611966]), {'class': FOREST}),
     ee.Feature(ee.Geometry.Point([-2.257596, 6.605721]), {'class': FOREST}),
@@ -305,7 +288,16 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-2.233355, 6.573078]), {'class': FOREST}),
     ee.Feature(ee.Geometry.Point([-2.234814, 6.578194]), {'class': FOREST}),
     ee.Feature(ee.Geometry.Point([-2.222712, 6.567152]), {'class': FOREST}),
-
+    ee.Feature(ee.Geometry.Point([-2.24101, 6.58565]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.23667, 6.57985]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.25899, 6.59221]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.25023, 6.59196]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.26366, 6.59622]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.26706, 6.58863]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.23083, 6.59226]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.269492, 6.576851]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.269321, 6.583203]), {'class': FOREST}),
+    ee.Feature(ee.Geometry.Point([-2.265458, 6.57084]), {'class': FOREST}),
     ee.Feature(ee.Geometry.Point([-2.247789, 6.609233]), {'class': SOIL}),
     ee.Feature(ee.Geometry.Point([-2.244227, 6.605482]), {'class': SOIL}),
     ee.Feature(ee.Geometry.Point([-2.24294, 6.60465]), {'class': SOIL}),
@@ -339,85 +331,204 @@ var trainingPoints = ee.FeatureCollection([
     ee.Feature(ee.Geometry.Point([-2.248669, 6.569086]), {'class': SOIL}),
     ee.Feature(ee.Geometry.Point([-2.227631, 6.584617]), {'class': SOIL}),
     ee.Feature(ee.Geometry.Point([-2.22555, 6.586898]), {'class': SOIL}),
-    
-    ee.Feature(ee.Geometry.Point([-2.224586, 6.601175]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.223063, 6.598298]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.232933, 6.598873]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.227655, 6.602006]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.22553, 6.601218]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.242971, 6.597042]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.240826, 6.595017]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.243057, 6.599515]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.226238, 6.583054]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.225938, 6.58655]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.250068, 6.582922]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.249339, 6.588016]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.252364, 6.578381]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.251783, 6.583708]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.256568, 6.58618]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.256138, 6.588205]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.261782, 6.586393]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.253328, 6.58034]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.249701, 6.5878]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.261846, 6.586543]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.27103, 6.590955]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.263262, 6.578806]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.264164, 6.576376]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.265237, 6.584455]), {'class': GRASSLAND}),
-    ee.Feature(ee.Geometry.Point([-2.240473, 6.571197]), {'class': GRASSLAND})
-    // ee.Feature(ee.Geometry.Point([]), {'class': GRASSLAND}),
-    // ee.Feature(ee.Geometry.Point([]), {'class': GRASSLAND}),
-    // ee.Feature(ee.Geometry.Point([]), {'class': GRASSLAND}),
-    // ee.Feature(ee.Geometry.Point([]), {'class': GRASSLAND}),
-    // ee.Feature(ee.Geometry.Point([]), {'class': GRASSLAND})
+    ee.Feature(ee.Geometry.Point([-2.267256, 6.586498]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.265743, 6.588715]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.26644, 6.584985]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.265707, 6.590776]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.26679, 6.592119]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.260911, 6.588911]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.269998, 6.591991]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.265363, 6.591363]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.271189, 6.592194]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.259559, 6.58922]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.255174, 6.590734]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.253329, 6.590403]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.258833, 6.589497]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.260785, 6.588911]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.262459, 6.590286]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.2435, 6.567635]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.24689, 6.57192]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.244423, 6.572048]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.250259, 6.567401]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.2435, 6.567721]), {'class': SOIL}),
+    ee.Feature(ee.Geometry.Point([-2.25728, 6.571046]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.263954, 6.573114]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.247388, 6.568232]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.259169, 6.567529]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.258911, 6.573839]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.265477, 6.566804]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.25874, 6.564097]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.265434, 6.566655]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.247496, 6.568232]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.2661, 6.573604]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.270437, 6.57742]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.25885, 6.573775]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.261189, 6.572453]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.269708, 6.573114]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.2657, 6.582524]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.251602, 6.580116]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.253233, 6.582141]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.270721, 6.577835]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.25171, 6.582724]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.248792, 6.582873]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.258558, 6.575582]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.265531, 6.577735]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.270038, 6.585153]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.269372, 6.580613]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.249588, 6.587093]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.254116, 6.586837]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.260339, 6.587775]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.261862, 6.586709]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.254223, 6.589629]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.261884, 6.584876]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.270885, 6.591015]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.270176, 6.58754]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.270091, 6.585537]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.252667, 6.588436]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.270198, 6.585622]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.265928, 6.583831]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.257976, 6.589267]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.230013, 6.592734]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.229949, 6.594546]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.224896, 6.588833]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.228457, 6.60088]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.225539, 6.601242]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.232277, 6.597874]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.230453, 6.595572]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.233135, 6.599537]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.227256, 6.598514]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.22996, 6.600453]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.226264, 6.583112]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.224398, 6.589166]), {'class': DISTURBED}),
+    ee.Feature(ee.Geometry.Point([-2.243826, 6.573011]), {'class': DISTURBED})
 ])
 
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', FOREST)),
-//     {color: 'ForestGreen'}, 'Training: Forest')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', SOIL)),
-//     {color: 'LightSalmon'}, 'Training: Soil')
-// Map.addLayer(
-//     trainingPoints.filter(ee.Filter.eq('class', GRASSLAND)),
-//     {color: 'LightGreen'}, 'Training: Grassland')
+if (researchModeOn) {
+  Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', FOREST)),
+    {color: classColourMap[0]}, 'Training: Forest')
+  Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', SOIL)),
+    {color: classColourMap[1]}, 'Training: Soil')
+  Map.addLayer(
+    trainingPoints.filter(ee.Filter.eq('class', DISTURBED)),
+    {color: classColourMap[2]}, 'Training: Disturbed')
+}
 
-var trainingSamples = baselineImage.sampleRegions({
+var allSamples = baselineImage.sampleRegions({
     collection: trainingPoints,
     properties: ['class'],
     scale: 10
-})
+}).randomColumn("random")// add a column of 0 to 1, to use for training/validation split
+
+var trainingSamples = allSamples.filter(ee.Filter.lt("random", 0.6))
+var testingSamples = allSamples.filter(ee.Filter.gte("random", 0.6))
 
 var classifier = ee.Classifier.smileRandomForest(50).train({
     features: trainingSamples,
     classProperty: 'class',
-    inputProperties: BANDS.concat(['NDVI'])
+    inputProperties: BANDS.concat(['gate_index'])
 })
 
-// // Pre-classify to match the contract runPyeoChangeAlerts expects.
+// classify on testing dataset to assess how the model generalises to unseen data
+var tested = testingSamples.classify(classifier);
+var testedMatrix = tested.errorMatrix("class", "classification")
+
+var trained = trainingSamples.classify(classifier)
+var trainedMatrix = trained.errorMatrix("class", "classification")
+print("Accuracy (%) on Trained Matrix:", trainedMatrix.accuracy())
+
+print("full classification points size:", allSamples.size())
+
+print("training points size:", trainingSamples.size())
+print("testing points size:", testingSamples.size())
+
+// Pre-classify to match the contract runPyeoChangeAlerts expects.
 var classifiedBaselineImage = baselineImage
     .classify(classifier).rename('classification')
-    .addBands(baselineImage.select('NDVI'))
+    .addBands(baselineImage.select('gate_index'))
     .clip(aoi)
-
-Map.addLayer(
-  classifiedBaselineImage.select('classification'),
-  visClassParams,
-  'Baseline class map', false
-)
 
 var classifiedMonitoringCollection = monitoringImages.map(function (img) {
     return img.classify(classifier).rename('classification')
-        .addBands(img.select('NDVI'))
+        .addBands(img.select('gate_index'))
         .copyProperties(img, ['system:time_start'])
 })
+
+Map.addLayer(
+  classifiedBaselineImage.select("classification"),
+  visClassParams,
+  'Baseline class map'
+)
+
+// evaluate classifier performance
+if (researchModeOn) {
+  
+  if (exportClassifierPerformance) {
+    
+    // make a dynamic dictionary
+    // map over allClasses returning a list of integers as strings
+    var allClassesKeys = allClasses.map(function(class_name) {
+      return String(class_name)
+    })
+    var classDict = ee.Dictionary.fromLists(allClassesKeys, allClassesStr)
+    
+    var matrixArray = testedMatrix.array();
+    var classIds = testedMatrix.order();
+    
+    // create list of column names for the predicted classes
+    var colNames = classIds.map(function(id) {
+      var idStr = ee.Number(id).format("%d");
+      return classDict.get(idStr)
+    })
+    
+    // convert the confusion matrix to a list of features
+    var matrixList = matrixArray.toList();
+    var featureList = matrixList.zip(classIds).map(function(rowWithId) {
+      var rowWithIdList = ee.List(rowWithId);
+      var rowValues = ee.List(rowWithIdList.get(0)); // count for the row
+      var classId = ee.List(rowWithIdList.get(1)); // class ID
+      var idStr = ee.Number(classId).format("%d");
+      
+      var className = classDict.get(idStr);      
+      var featureProperties = ee.Dictionary.fromLists(colNames, rowValues);
+      
+      // update featureProperties
+      featureProperties = featureProperties.set("Class", className)
+      
+      return ee.Feature(null, featureProperties)
+    });
+    
+    // calculate testing accuracy and append to the list of features
+    var testedAccuracy = testedMatrix.accuracy().format("%.2f");
+    var firstColName = ee.String(colNames.get(0));
+    var secondColName = ee.String(colNames.get(1));
+    var accuracyProperties = ee.Dictionary({
+      "Class": "Testing Dataset Accuracy"
+      })
+      .set(firstColName, testedAccuracy);
+    var accuracyFeature = ee.Feature(null, accuracyProperties);
+    
+    var matrixFeatureCol = ee.FeatureCollection(featureList.add(accuracyFeature))
+    var exportColumns = ["Class", allClassesStr[0], allClassesStr[1], allClassesStr[2], allClassesStr[3]]
+    
+    Export.table.toDrive({
+      collection: matrixFeatureCol,
+      description: 'Testing_Samples_Confusion_Matrix_Task',
+      fileNamePrefix: 'Testing_Samples_Confusion_Matrix',
+      fileFormat: 'CSV',
+      selectors: exportColumns
+    })
+    
+  }
+  
+}
 
 // ==============================================================================
 // 6. RUN CHANGE DETECTION
 // ==============================================================================
 
-
-var alerts = pyeo.run_change_detection({
+var alerts = pyeo.runPyeoChangeAlerts({
     aoi: aoi,
     classifiedBaseline: classifiedBaselineImage,
     classifiedMonitoringCollection: classifiedMonitoringCollection,
@@ -428,13 +539,18 @@ var alerts = pyeo.run_change_detection({
     percentageProbabilityThreshold: percentageProbabilityThreshold,
     minRequiredFromDetectionsThreshold: minRequiredFromDetectionsThreshold,
     minRequiredToDetectionsThreshold: minRequiredToDetectionsThreshold,
-    dNdviGate: {use_ndvi: useNdvi,
-      band: 'NDVI',
-      threshold: deltaNdviThreshold,
-      minRequiredDeltaNDVIDetectionsThreshold: minRequiredDeltaNDVIDetectionsThreshold
-      }
+    indexGate: {
+      use: useIndex,
+      index: index,
+      threshold: deltaIndexThreshold,
+      minRequiredDeltaIndexDetectionsThreshold: minRequiredDeltaIndexDetectionsThreshold
+      },
+    hazeFilter: {
+      use: useHazeFilter,
+      fromAvailabilityThresholdPct: fromAvailabilityThresholdPct,
+      hazeLikelihoodThresholdPct: hazeLikelihoodThresholdPct
+    }
 });
-
 
 // ==============================================================================
 // 7. CHECKING THE CHANGE REPORT
@@ -444,7 +560,7 @@ Map.addLayer(inspection_marker, {color: "pink", size: 14}, "Inspection Marker")
 
 // create a client-side object of the point inspector, so the date string can be formatted
 //    into a readable human date
-var changeReportAtPoint = alerts.changeReport.reduceRegion({
+var changeReportAtPoint = alerts.reduceRegion({
   reducer: ee.Reducer.first(),
   geometry: inspection_marker,
   scale: 10
@@ -454,9 +570,25 @@ print("pixel properties at the inspection marker:", changeReportAtPoint)
 
 changeReportAtPoint.evaluate(function(result) {
   if (result.first_change_date_above_threshold > 0) {
-    // use JS to create a Date object, which has .toDateString()
-    // Date is an EE function that returns a string, strings don't have .toDateString()
-    var readableFirstChange = new Date(result.first_change_date_above_threshold).toDateString();
+    
+    var fractionalYear = result.first_change_date_above_threshold;
+    
+    // get the whole year and the fraction
+    var year = Math.floor(fractionalYear);
+    var fraction = fractionalYear - year;
+    
+    // use Date.UTC to prevent the browser's local timezone from shifting the results
+    var startOfYearMillis = new Date(Date.UTC(year, 0, 1)).getTime();
+    var startOfNextYearMillis = new Date(Date.UTC(year + 1, 0, 1)).getTime();
+    
+    // calculate total milliseconds
+    var millisInYear = startOfNextYearMillis - startOfYearMillis;
+    
+    // multiply the fraction by the year's total milliseconds and add to the start of the year
+    var targetMillis = startOfYearMillis + (fraction * millisInYear);
+    
+    // convert back to a readable string
+    var readableFirstChange = new Date(targetMillis).toDateString();
 
     print("First change was on: ", readableFirstChange);
   }
@@ -470,8 +602,8 @@ changeReportAtPoint.evaluate(function(result) {
 // ==============================================================================
 
 // get minMax date stats for dates of change and total changes colour ramps
-var combinedStats = alerts.changeReport
-  .select(["fcd_decision_map", "total_changes", "first_change_date_above_threshold"])
+var combinedStats = alerts
+  .select(["fcd_decision_map", "total_changes"])
   .reduceRegion({
     reducer: ee.Reducer.minMax(),
     geometry: aoi,
@@ -496,13 +628,6 @@ combinedStats.evaluate(function(stats) {
     palette: totalChangesPalette
   };
   
-  var fcdVisParams = {
-    bands: ["first_change_date_above_threshold"],
-    min: stats.first_change_date_above_threshold_min,
-    max: stats.first_change_date_above_threshold_max,
-    palette: fcdDecisionMapPalette
-  };
-  
   var repeatabilityVisParams = {
     bands: ["post_fcd_change_repeatability_pct"],
     min: 0,
@@ -511,157 +636,130 @@ combinedStats.evaluate(function(stats) {
   };
   
   Map.addLayer(
-  alerts.changeReport.select("total_changes"),
+  alerts.select("total_changes"),
   totalChangesVisParams,
   "L2 - Total Changes");
   
   Map.addLayer(
-  alerts.changeReport.select("first_change_date_above_threshold"),
-  fcdVisParams,
-  "L3 - FCD Map");
-  
-  Map.addLayer(
-  alerts.changeReport.select("post_fcd_change_repeatability_pct"),
+  alerts.select("post_fcd_change_repeatability_pct"),
   repeatabilityVisParams,
   "L8 - Post-FCD Change Repeatability");
 
   Map.addLayer(
-  alerts.changeReport.select("fcd_decision_map"),
+  alerts.select("fcd_decision_map"),
   fcdDecisionVisParams,
   "L10 - FCD Decision Map");
   
-//   var changeReportWithMetadata = alerts.changeReport
-//     .set(pipelineParams)
-//     .set("fcdDecisionVisParams", JSON.stringify(fcdDecisionVisParams))
-//     .set("totalChangesVisParams", JSON.stringify(totalChangesVisParams))
-//     .set("repeatabilityVisParams", JSON.stringify(repeatabilityVisParams));
+  var changeReportWithMetadata = alerts
+    .set(pipelineParams)
+    .set("fcdDecisionVisParams", JSON.stringify(fcdDecisionVisParams))
+    .set("totalChangesVisParams", JSON.stringify(totalChangesVisParams))
+    .set("repeatabilityVisParams", JSON.stringify(repeatabilityVisParams));
 
-//   Export.image.toAsset({
-//     image: changeReportWithMetadata,
-//     description: aoi_friendly_name + "_change_report",
-//     assetId: project_asset_path + aoi_friendly_name + "_" + "change_report",
-//     region: aoi,
-//     scale: 10,
-//     crs: CRS,
-//     maxPixels: 1e13
-//   });
+  if (researchModeOn) {
 
-//   // Export.image.toDrive({
-//   //   image: changeReportWithMetadata.toDouble(),
-//   //   description: aoi_friendly_name + "_change_report_Drive",
-//   //   fileNamePrefix: aoi_friendly_name + "_" + "change_report",
-//   //   region: aoi,
-//   //   scale: 10,
-//   //   crs: CRS,
-//   //   maxPixels: 1e13,
-//   //   fileFormat: "GeoTIFF"
-//   // });
-
+    if (exportChangeReport) {
+      
+      Export.image.toAsset({
+        image: changeReportWithMetadata,
+        description: aoi_friendly_name + "_change_report_fractionalyear",
+        assetId: project_asset_path + aoi_friendly_name + "_" + "change_report_fractionalyear",
+        region: aoi,
+        scale: 10,
+        crs: CRS,
+        maxPixels: 1e13
+      });
+      
+      Export.image.toDrive({
+        image: changeReportWithMetadata.toDouble(),
+        description: aoi_friendly_name + "_change_report_Drive_fractionalyear",
+        fileNamePrefix: aoi_friendly_name + "_" + "change_report_fractionalyear",
+        region: aoi,
+        scale: 10,
+        crs: CRS,
+        maxPixels: 1e13,
+        fileFormat: "GeoTIFF"
+      });
+    }
+  }
+  
 });
 
-// /// assign metadata to the assets
-// var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
-// var firstImageWithMetadata = firstImage
-//   .set(pipelineParams)
-//   .set("visParamsRGB", JSON.stringify(visParamsRGB))
-//   .set("date", firstImage.get("date_str"));
-// var finalImageWithMetadata = finalImage
-//   .set(pipelineParams)
-//   .set("visParamsRGB", JSON.stringify(visParamsRGB))
-//   .set("date", finalImage.get("date_str"));
-// var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
-// var firstImage_filename = aoi_friendly_name +  "_first_monitoring_" + MONITORING_START + "_" + MONITORING_END
-// var finalImage_filename = aoi_friendly_name + "_final_monitoring_" + MONITORING_START + "_" + MONITORING_END
+// ==============================================================================
+// 9. EXPORTING CLASSIFIED BASELINE AND BASELINE IMAGE TO DRIVE FOR MANUAL INSPECTION OF CHANGE
+// ==============================================================================
 
-// Export.image.toAsset({
-//   image: baselineImageWithMetadata,
-//   description: baseline_filename,
-//   assetId: project_asset_path + baseline_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13
-// });
 
-// Export.image.toAsset({
-//   image: ee.Image(firstImageWithMetadata),
-//   description: firstImage_filename,
-//   assetId: project_asset_path + firstImage_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13
-// });
-
-// Export.image.toAsset({
-//   image: finalImageWithMetadata,
-//   description: finalImage_filename,
-//   assetId: project_asset_path + finalImage_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13
-// });
-
-// Export.image.toDrive({
-//   image: baselineImageWithMetadata.toDouble(),
-//   description: baseline_filename,
-//   fileNamePrefix: baseline_filename,
-//   region: aoi,
-//   scale: 10,
-//   crs: CRS,
-//   maxPixels: 1e13,
-//   fileFormat: "GeoTIFF"
-// });
-
-// Export.image.toDrive({
-//   image: classifiedBaselineImage
-//     .select("classification")
-//     .visualize(visClassParams),
-//   description: baseline_filename + "_classified_Drive",
-//   fileNamePrefix: baseline_filename + "_classified",
-//   region: aoi,
-//   scale: 10,
-//   maxPixels: 1e13,
-//   fileFormat: "GeoTIFF"
-// });
+if (researchModeOn) {
+  
+  if (exportBaseline) {
+    // assign metadata to the assets
+    var baselineImageWithMetadata = baselineImage.set(pipelineParams).set("visParamsRGB", JSON.stringify(visParamsRGB));
+    var baseline_filename = aoi_friendly_name + "_baseline_" + BASELINE_START + "_" + BASELINE_END
+ 
+    Export.image.toDrive({
+      image: baselineImageWithMetadata
+        .visualize(visParamsRGB),
+      description: baseline_filename,
+      fileNamePrefix: baseline_filename,
+      region: aoi,
+      scale: 10,
+      crs: CRS,
+      maxPixels: 1e13,
+      fileFormat: "GeoTIFF"
+    });
+  
+    Export.image.toDrive({
+      image: classifiedBaselineImage
+        .select("classification")
+        .visualize(visClassParams),
+      description: baseline_filename + "_classified_Drive",
+      fileNamePrefix: baseline_filename + "_classified",
+      region: aoi,
+      scale: 10,
+      maxPixels: 1e13,
+      fileFormat: "GeoTIFF"
+    });
+  }
+}
 
 // ==============================================================================
 // 9. EXPORTING MONITORING COLLECTION TO DRIVE FOR MANUAL INSPECTION OF CHANGE
 // ==============================================================================
 
-var exportCollectionToDrive = function(collection, region, visParams, taskString) {
-  // 1. Prepare the collection for export
+if (researchModeOn) {
+  
+  var exportCollectionToDrive = function(collection, region, visParams, taskString) {
+  // prepare the collection for export
   var toExport = collection.map(function(img) {
     var dateStr = img.date().format("YYYY-MM-dd");
     var visual = img.visualize(visParams);
     return visual.set("date_str", dateStr);
   });
   
-  // 2. Convert collection to an ee.List to allow indexing
+  // convert collection to an ee.List to allow indexing
   var size = toExport.size();
   var collectionList = toExport.toList(size);
   
-  // 3. Get an ee.List of all the date strings
+  // get an ee.List of all the date strings
   var datesList = toExport.aggregate_array("date_str");
   
-  // 4. Evaluate the dates list to bring it to the client side
+  // evaluate the dates list to bring it to the client side
   datesList.evaluate(function(dates, error) {
     if (error) {
       print("Error evaluating dates:", error);
       return;
     }
     
-    // Now 'dates' is a standard JavaScript array, so a for-loop works perfectly!
     for (var i = 0; i < dates.length; i++) {
       var dateString = dates[i];
       var safeDate = dateString.replace(/-/g, "_");
       var taskName = "Export_Quicklook_" + safeDate;
       
-      // Fetch the specific image from the server-side list using the index
+      // fetch the specific image from the server-side list using the index
       var img = ee.Image(collectionList.get(i));
       
-      //Create the export task
+      // create the export task
       Export.image.toDrive({
         image: img,
         description: taskName,
@@ -673,12 +771,14 @@ var exportCollectionToDrive = function(collection, region, visParams, taskString
       });
     }
   });
-};
-
-
-
-// var taskString = "S2_Quicklook_" 
-// exportCollectionToDrive(monitoringImages, aoi, visParamsRGB, taskString);
-
-// var taskString = "S2_Quicklook_Classified_" 
-// exportCollectionToDrive(classifiedMonitoringCollection, aoi, visClassParams, taskString);
+  };
+  
+  if (exportTimeSeriesRGBQuicklooks) {
+    exportCollectionToDrive(monitoringImages, aoi, visParamsRGB, "S2_Quicklook_RGB_");
+  }
+  
+  if (exportTimeSeriesClfQuicklooks) {
+    exportCollectionToDrive(classifiedMonitoringCollection, aoi, visClassParams, "S2_Quicklook_Classified_")
+  }
+  
+}
