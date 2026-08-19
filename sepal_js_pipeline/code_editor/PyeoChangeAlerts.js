@@ -2,8 +2,7 @@
  * PyEO Change Alerts — GEE function.
  *
  * The input parameters and output band spec below are the contract between
- * UoL and SEPAL. Implementation strategy is up to you (per-image .map(),
- * ImageCollection.iterate with running state, two-pass, ...).
+ * UoL and SEPAL.
  *
  * This function does not classify. It receives baseline and monitoring
  * inputs that already carry a 'class' band; the SEPAL recipe wrapper
@@ -14,8 +13,8 @@
  *     Area of interest. Output should be clipped to this.
  * @param {ee.Image} params.classifiedBaseline
  *     Baseline classification map with a 'class' band (integer class IDs).
- *     If params.indexGate is set, must also carry the index band
- *     (typically 'NDVI').
+ *     If params.indexGate is set, must also carry the gate index band
+ *     (`gate_index`).
  * @param {ee.ImageCollection} params.classifiedMonitoringCollection
  *     Monitoring images, time-sorted (system:time_start ascending). Each
  *     image carries the same 'class' band (and optional gate band) as the
@@ -27,10 +26,32 @@
  * @param {number} [params.minConsecutiveDetections=2]
  *     Temporal-confidence parameter. Interpretation up to the algorithm.
  * @param {{use: boolean, index: string, threshold: number, minRequiredDeltaIndexDetectionsThreshold: number}} [params.indexGate]
+ *      Experimental haze filtering parameters, defaulted to false as not tested extensively, yet.
+ * @param {{use: boolean, fromAvailabilityThresholdPct: number, hazeLikelihoodThresholdPct: number}} [params.hazeFilter]
  *
+ * @returns {ee.Image}
+ *     available_image_count,
+ *     occluded_count,
+ *     total_changes,
+ *     first_change_date_above_threshold,
+ *     post_fcd_change_count,
+ *     post_fcd_nochange_count,
+ *     post_fcd_occluded_count,
+ *     post_fcd_valid_image_count,
+ *     post_fcd_change_repeatability_pct,
+ *     binary_timeseries_decision,
+ *     fcd_decision_map,
+ *     delta_index_change_count,
+ *     binary_delta_index_decision_map,
+ *     binary_delta_class_decision_map,
+ *     binary_combined_delta_decision_map,
+ *     from_class_count,
+ *     to_class_count,
+ *     binary_decision_from_to_map
  */
-
-var run_change_detection = function (params) {
+ //
+ 
+var runPyeoChangeAlerts = function (params) {
   // ==============================================================================
   // 1. INPUT PARAMETERS
   // ==============================================================================
@@ -46,8 +67,7 @@ var run_change_detection = function (params) {
   var minRequiredToDetectionsThreshold = params.minRequiredToDetectionsThreshold || 2
   var indexGate = params.indexGate || {use: false, index: 'ndvi', threshold: 0.2, minRequiredDeltaIndexDetectionsThreshold: 5}
   var hazeFilter = params.hazeFilter || {use: false, fromAvailabilityThresholdPct: 0.1, hazeLikelihoodThresholdPct: 0.3}
-  var researchMode = params.researchMode || {use: false}
-  
+
   // *********
   // haze is misclassifying scenes, impacting the timing and position of changes detected.
   // since we can't apply haze spectral detection to the source imagery, we apply detection to the
@@ -203,7 +223,7 @@ var run_change_detection = function (params) {
     // *********
   
     // build dates of all changes above the index threshold
-    var changeDateAboveThreshold = imgFracYear //imgMillisGeneric
+    var changeDateAboveThreshold = imgFracYear
         .updateMask(isChangeMask)
         .rename("change_date_above_threshold");
   
@@ -232,10 +252,19 @@ var run_change_detection = function (params) {
   // we define the function at the same time as using .map to iterate our function across the timeseries
   // map over the change images in changeEvents a second time, to evaluate the temporal consistency of the first changes
   var postChangeEvaluation = changeEvents.map(function(image) {
-        
+    
+    // *********  
+    // store the image date as fractional date band for change reporting
+    var imgDate = ee.Date(image.get("system:time_start"));
+    var year = imgDate.get("year");
+    var fraction = imgDate.getFraction("year");
+    var fractionalYear = year.add(fraction);
+    var imgFracYear = ee.Image.constant(fractionalYear).double();
+    // *********
+    
     // create a temporal window mask
     // pixel has a value of 1 if it has a change that is the first change or is afterwards
-    var isAfterFirstChange = image.select("change_date_above_threshold").gte(firstChangeDateAboveThreshold); //imgFracYear
+    var isAfterFirstChange = imgFracYear.gte(firstChangeDateAboveThreshold);
 
     var isPostFCD = isAfterFirstChange.rename("post_fcd"); // boolean (1, 0) indicating whether the pixel is post-FCD
     var isChange = image.select("is_change") // 1 for change, 0 for no change
@@ -383,8 +412,7 @@ var run_change_detection = function (params) {
     .and(toClassCount.gte(minRequiredToDetectionsThreshold))
     .rename("binary_decision_from_to_map");
   
-  return {
-    changeReport: ee.Image([
+  return ee.Image([
       availableImageCount,
       occludedCount,
       classChangeDetectionCount,
@@ -404,6 +432,5 @@ var run_change_detection = function (params) {
       toClassCount,
       binaryDecisionFromToMap
     ])
-  }
 }
-exports.run_change_detection = run_change_detection;
+exports.runPyeoChangeAlerts = runPyeoChangeAlerts;
