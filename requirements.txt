@@ -136,7 +136,7 @@ scikit-learn==1.5.0
 scipy==1.10.1
 
 # Current version of GDAL installed in SEPAL
-GDAL==3.8.3
+GDAL==3.13.1
 
 # pyeo
 git+https://github.com/clcr/pyeo
