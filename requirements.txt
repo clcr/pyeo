@@ -6,7 +6,7 @@ asttokens==2.2.1
 attrs==23.1.0
 backcall==0.2.0
 beautifulsoup4==4.12.2
-bleach==6.0.0
+bleach==6.4.0
 boto3==1.26.151
 botocore==1.29.151
 certifi==2026.10.18
